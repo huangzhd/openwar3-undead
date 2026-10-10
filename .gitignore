@@ -1,0 +1,13 @@
+__pycache__/
+.venv/
+vendor/
+artifacts/
+models/
+
+# Local secrets and machine-specific credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.pytest_cache/

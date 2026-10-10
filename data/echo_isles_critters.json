@@ -1,0 +1,37 @@
+{
+  "source": "Fixed CreateUnit coordinates in local map war3map.j / CreateNeutralPassive; public map knowledge, not live positions.",
+  "map_sha256": "081cf08ec48ace39670cc786a896ee1ede6c5bab0bab3f9fe3232160d1b5bf9a",
+  "script_sha256": "944740287ad66a199d0d7e8527f9aec5e0212dde7cfea278f15e94564d16dfbd",
+  "spawns": [
+    {
+      "code": "npig",
+      "x": 827.4,
+      "y": -2742.0
+    },
+    {
+      "code": "npig",
+      "x": -1486.1,
+      "y": 231.8
+    },
+    {
+      "code": "nrac",
+      "x": -4276.5,
+      "y": -2479.9
+    },
+    {
+      "code": "nrac",
+      "x": 3336.5,
+      "y": -2964.9
+    },
+    {
+      "code": "nshe",
+      "x": -3372.9,
+      "y": 2002.9
+    },
+    {
+      "code": "nshe",
+      "x": 3594.6,
+      "y": 1095.9
+    }
+  ]
+}

@@ -1,0 +1,161 @@
+"""Conservative consumables using own inventories and fair nearby threats."""
+from .equipment import can_receive,BLUE_POTIONS
+
+# Pinned installation AbilityData.slk: ability, heal, mana, radius, buff.
+ITEMS={
+    'phea':('AIh1',250,0,0,None), 'pghe':('AIh2',500,0,0,None),
+    'pman':('AIm1',0,150,0,None), 'pgma':('AIm2',0,300,0,None),
+    'pres':('AIre',500,200,0,None),
+    'pnvu':('AIvu',0,0,0,'Bvul'), 'pnvl':('AIvl',0,0,0,'Bvul'),
+    'shea':('AIha',150,0,600,None), 'sres':('AIra',300,150,600,None),
+    'spro':('AIda',0,0,600,'Bdef'), 'sror':('AIrr',0,0,500,'Broa'),
+}
+SCROLLS={'shea','sres'}
+ORGANIC={'Udea','Ulic','Nbrn','Nngs','ucry','ugho'}
+
+class Consumables:
+    def __init__(self,log):
+        self.log=log;self.pending={};self.attempts={};self.retry={};self.group_until=0;self.buff_until={}
+
+    def observe(self,g,now):
+        for handle,p in list(self.pending.items()):
+            hero=g.unit(handle);bag=g.inventory(hero) if hero else None
+            ability,heal,mana,radius,buff=ITEMS[p['code']]
+            consumed=bag is not None and bag.count(p['code'])<p['count']
+            if consumed:
+                # A later item may reuse the same engine address or inventory slot.
+                self.attempts.pop(p['key'],None);self.retry.pop(p['key'],None)
+            gains=[];buffed=[]
+            for h,(hp,mp) in p['before'].items():
+                u=g.unit(h)
+                if u:
+                    dh=u.hp-hp;dm=getattr(u,'mana',0)-mp
+                    if (heal and dh>=50) or (mana and dm>=40):
+                        gains.append(dict(handle=h,hp_gain=round(dh,2),mana_gain=round(dm,2)))
+                    if buff and buff in g.buffs(u):buffed.append(h)
+            # Receipt alone, passive regeneration, and disappearance alone are not effects.
+            if (consumed and gains) or buffed:
+                self.log('consumable_effect_observed',clock=now,hero=p['hero'],code=p['code'],
+                         consumed=consumed,gains=gains,buffed=buffed)
+                self.pending.pop(handle)
+            elif now-p['started']>=3:
+                self.log('consumable_effect_unconfirmed',clock=now,hero=p['hero'],code=p['code'],consumed=consumed)
+                self.pending.pop(handle)
+
+    def tick(self,g,army,hostiles,now,cast_until,blocked=(),coil_needed=False,attacking=False):
+        self.observe(g,now)
+        # Most injured hero first; only one area scroll per observation window.
+        for hero in sorted((u for u in army if u.is_hero),key=lambda u:u.hp/max(1,u.hp_max)):
+            if hero.handle in blocked or hero.handle in self.pending or now<cast_until.get(hero.handle,0):continue
+            bag=g.inventory(hero)
+            if not bag:continue
+            candidates=[]
+            threat=any(g.dist(e,hero)<700 for e in hostiles)
+            ratio=hero.hp/max(1,hero.hp_max)
+            buffs=set(g.buffs(hero)) if any(c in ITEMS for c in bag) else set()
+            for slot,code in enumerate(bag):
+                if code not in ITEMS:continue
+                if code=='sror' and (not attacking or not any(0<=getattr(e,'owner',12)<12 and g.dist(e,hero)<700 for e in hostiles)):continue
+                ability,heal,mana,radius,buff=ITEMS[code]
+                if g.cooldown(hero,ability)!=0:continue # unknown is not ready
+                addrs=getattr(hero,'item_addrs',()) or ()
+                identity=addrs[slot] if len(addrs)>slot and addrs[slot] else (slot,code)
+                key=(hero.handle,identity)
+                if self.attempts.get(key,0)>=3 or now<self.retry.get(key,0):continue
+                targets=[u for u in army if u.type in ORGANIC and g.dist(u,hero)<=radius] if radius else [hero]
+                if buff=='Bvul':
+                    if not threat or ratio>.35 or buff in buffs:continue
+                    priority=0
+                elif radius:
+                    if buff:
+                        if now<self.buff_until.get(buff,0):continue
+                        targets=[u for u in targets if buff not in g.buffs(u)]
+                        if not threat or len(targets)<3:continue
+                        priority=5
+                    else:
+                        if now<self.group_until:continue
+                        injured=[u for u in targets if u.hp_max-u.hp>=75]
+                        useful=sum(min(heal,max(0,u.hp_max-u.hp)) for u in injured)
+                        mana_need=sum(min(mana,max(0,getattr(u,'mana_max',0)-getattr(u,'mana',0))) for u in targets)
+                        emergency=threat and any(u.is_hero and u.hp/u.hp_max<=.25 and u.hp_max-u.hp>=100 for u in targets)
+                        if not emergency and not (len(injured)>=2 and useful>=250) and not (code=='sres' and len(injured)>=1 and useful>=150 and mana_need>=150):continue
+                        priority=2
+                else:
+                    missing=hero.hp_max-hero.hp;mp=getattr(hero,'mana',0);missing_mp=getattr(hero,'mana_max',0)-mp
+                    if heal and now<self.group_until and ratio>.25:continue
+                    need_hp=heal and ratio<=.60 and missing>=min(heal*.6,300)
+                    minimum={'Udea':75,'Ulic':125,'Nngs':120,'Nbrn':75}.get(hero.type,100)
+                    need_mp=mana and mp<minimum and missing_mp>=mana*.65
+                    if code in BLUE_POTIONS:
+                        need_mp=hero.type=='Udea' and coil_needed and mp<75
+                    if not (need_hp or need_mp):continue
+                    priority=1 if need_hp else 4
+                candidates.append((priority,slot,code,key,targets))
+            if not candidates:continue
+            _,slot,code,key,targets=min(candidates,key=lambda x:x[:2])
+            before={u.handle:(u.hp,getattr(u,'mana',0)) for u in targets}
+            count=bag.count(code)
+            r=g.use_item(hero,slot)
+            self.attempts[key]=self.attempts.get(key,0)+1;self.retry[key]=now+4
+            # Protect even an uncertain receipt until fresh observation; never spam.
+            cast_until[hero.handle]=now+1.2
+            if ITEMS[code][3]:
+                if ITEMS[code][4]:self.buff_until[ITEMS[code][4]]=now+3
+                else:self.group_until=now+3
+            self.pending[hero.handle]=dict(code=code,key=key,hero=hero.type,count=count,started=now,before=before)
+            self.log('consumable_use_attempt',clock=now,hero=hero.type,handle=hero.handle,code=code,
+                     hp=hero.hp,hp_max=hero.hp_max,accepted=bool(r),attempt=self.attempts[key],targets=[u.handle for u in targets])
+
+class ScrollSupply:
+    def __init__(self,log):
+        self.log=log;self.pending=None;self.next_at=0;self.attempts={};self.transfer_attempts={}
+
+    def tick(self,g,heroes,shops,now,reserved_gold,cast_until,safe=True):
+        bags={h.handle:g.inventory(h) for h in heroes}
+        if any(b is None for b in bags.values()):return
+        total=sum(sum(b.count(c) for c in SCROLLS) for b in bags.values())
+        if self.pending:
+            p=self.pending
+            if total>p['total']:
+                self.log('healing_scroll_purchase_confirmed',clock=now,total=total,
+                         inventories=[dict(hero=h.type,bag=bags[h.handle]) for h in heroes])
+                self.pending=None
+            elif now-p['started']<3:return
+            else:
+                self.log('healing_scroll_purchase_unconfirmed',clock=now,shop=p['shop'])
+                self.pending=None
+        if not safe:return
+        # The engine chooses the recipient. Redistribute an unexpected second
+        # scroll before another purchase; never sell/drop/replace equipment.
+        for donor in heroes:
+            bag=bags[donor.handle]
+            if sum(bag.count(c) for c in SCROLLS)<=1:continue
+            receiver=next((h for h in heroes if not any(c in bags[h.handle] for c in SCROLLS)
+                and can_receive(h,bags[h.handle],'shea') and g.dist(h,donor)<350),None)
+            if not receiver:return
+            key=(donor.handle,tuple(bag),receiver.handle)
+            if now<self.next_at or self.transfer_attempts.get(key,0)>=3:return
+            if now<cast_until.get(donor.handle,0):return
+            code=next(c for c in bag if c in SCROLLS)
+            r=g.give_item(donor,bag.index(code),receiver)
+            self.transfer_attempts[key]=self.transfer_attempts.get(key,0)+1
+            cast_until[donor.handle]=now+1.2;self.next_at=now+3
+            self.log('healing_scroll_distribution_attempt',clock=now,donor=donor.type,receiver=receiver.type,accepted=bool(r))
+            return
+        res=g.resources()
+        if now<self.next_at or total>=3 or res.get('food_used',0)<50 or res.get('gold',0)-reserved_gold<500:return
+        candidates=[h for h in heroes if not any(c in bags[h.handle] for c in SCROLLS)
+                    and can_receive(h,bags[h.handle],'shea') and now>=cast_until.get(h.handle,0) and h.hp/h.hp_max>.6]
+        for h in candidates:
+            for shop in sorted(shops,key=lambda s:g.dist(s,h)):
+                if g.dist(h,shop)>300:continue # optional purchase only when already at a safe shop
+                nearby=[v for v in heroes if g.dist(v,shop)<900]
+                if any(not can_receive(v,bags[v.handle],'shea') for v in nearby):continue
+                # At most three attempts per stock regeneration interval, with fresh funds each time.
+                key=(shop.handle,int(now//120))
+                if self.attempts.get(key,0)>=3:continue
+                r=g.buy(shop,'shea');self.attempts[key]=self.attempts.get(key,0)+1
+                self.next_at=now+3;self.pending=dict(total=total,started=now,shop=shop.handle)
+                self.log('healing_scroll_purchase_attempt',clock=now,hero=h.type,shop=shop.type,
+                         accepted=bool(r),gold=res['gold'],reserved_gold=reserved_gold,total_before=total)
+                return

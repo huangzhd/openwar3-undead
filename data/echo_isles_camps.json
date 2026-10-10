@@ -1,0 +1,725 @@
+{
+  "source": "Static neutral-hostile placements from local map war3map.j; no live hidden state.",
+  "map_sha256": "081cf08ec48ace39670cc786a896ee1ede6c5bab0bab3f9fe3232160d1b5bf9a",
+  "camps": [
+    {
+      "id": "echo-0",
+      "kind": "marketplace",
+      "x": -251.4,
+      "y": 2977.7,
+      "max_level": 5,
+      "hp": 2200,
+      "spawns": [
+        {
+          "code": "nomg",
+          "x": -250.2,
+          "y": 3193.5,
+          "level": 5,
+          "poison_abilities": []
+        },
+        {
+          "code": "nftt",
+          "x": -514.6,
+          "y": 3033.7,
+          "level": 3,
+          "poison_abilities": []
+        },
+        {
+          "code": "nftt",
+          "x": 5.4,
+          "y": 3038.1,
+          "level": 3,
+          "poison_abilities": []
+        },
+        {
+          "code": "nogr",
+          "x": 14.4,
+          "y": 2812.4,
+          "level": 3,
+          "poison_abilities": []
+        },
+        {
+          "code": "nogr",
+          "x": -511.8,
+          "y": 2810.7,
+          "level": 3,
+          "poison_abilities": []
+        }
+      ],
+      "level_sum": 17,
+      "poison_units": 0,
+      "difficulty": 17
+    },
+    {
+      "id": "echo-1",
+      "kind": "gnoll",
+      "x": -5620.3,
+      "y": 679.2,
+      "max_level": 3,
+      "hp": 880,
+      "spawns": [
+        {
+          "code": "ngnb",
+          "x": -5542.7,
+          "y": 660.0,
+          "level": 3,
+          "poison_abilities": []
+        },
+        {
+          "code": "ngna",
+          "x": -5656.4,
+          "y": 594.6,
+          "level": 1,
+          "poison_abilities": []
+        },
+        {
+          "code": "ngna",
+          "x": -5661.9,
+          "y": 783.0,
+          "level": 1,
+          "poison_abilities": []
+        }
+      ],
+      "level_sum": 5,
+      "poison_units": 0,
+      "difficulty": 5
+    },
+    {
+      "id": "echo-2",
+      "kind": "ogre",
+      "x": 2878.6,
+      "y": 4444.3,
+      "max_level": 3,
+      "hp": 1200,
+      "spawns": [
+        {
+          "code": "nogr",
+          "x": 2904.5,
+          "y": 4349.3,
+          "level": 3,
+          "poison_abilities": []
+        },
+        {
+          "code": "nftt",
+          "x": 3009.0,
+          "y": 4492.5,
+          "level": 3,
+          "poison_abilities": []
+        },
+        {
+          "code": "nftt",
+          "x": 2722.3,
+          "y": 4491.2,
+          "level": 3,
+          "poison_abilities": []
+        }
+      ],
+      "level_sum": 9,
+      "poison_units": 0,
+      "difficulty": 9
+    },
+    {
+      "id": "echo-3",
+      "kind": "expansion",
+      "x": -4653.8,
+      "y": -2971.9,
+      "max_level": 5,
+      "hp": 1400,
+      "spawns": [
+        {
+          "code": "nomg",
+          "x": -4608.6,
+          "y": -2948.8,
+          "level": 5,
+          "poison_abilities": []
+        },
+        {
+          "code": "nftt",
+          "x": -4838.0,
+          "y": -2811.8,
+          "level": 3,
+          "poison_abilities": []
+        },
+        {
+          "code": "nftt",
+          "x": -4514.8,
+          "y": -3155.1,
+          "level": 3,
+          "poison_abilities": []
+        }
+      ],
+      "level_sum": 11,
+      "poison_units": 0,
+      "difficulty": 11
+    },
+    {
+      "id": "echo-4",
+      "kind": "expansion",
+      "x": 4140.0,
+      "y": -2977.4,
+      "max_level": 5,
+      "hp": 1400,
+      "spawns": [
+        {
+          "code": "nomg",
+          "x": 4109.6,
+          "y": -2948.0,
+          "level": 5,
+          "poison_abilities": []
+        },
+        {
+          "code": "nftt",
+          "x": 4274.8,
+          "y": -2860.1,
+          "level": 3,
+          "poison_abilities": []
+        },
+        {
+          "code": "nftt",
+          "x": 4035.7,
+          "y": -3124.1,
+          "level": 3,
+          "poison_abilities": []
+        }
+      ],
+      "level_sum": 11,
+      "poison_units": 0,
+      "difficulty": 11
+    },
+    {
+      "id": "echo-5",
+      "kind": "murloc",
+      "x": -3130.4,
+      "y": -3666.1,
+      "max_level": 3,
+      "hp": 1240,
+      "spawns": [
+        {
+          "code": "nmrm",
+          "x": -3126.1,
+          "y": -3591.8,
+          "level": 3,
+          "poison_abilities": [
+            "ACvs"
+          ]
+        },
+        {
+          "code": "nmrl",
+          "x": -3128.2,
+          "y": -3751.3,
+          "level": 1,
+          "poison_abilities": []
+        },
+        {
+          "code": "nmrr",
+          "x": -2945.0,
+          "y": -3657.8,
+          "level": 2,
+          "poison_abilities": []
+        },
+        {
+          "code": "nmrr",
+          "x": -3322.2,
+          "y": -3663.5,
+          "level": 2,
+          "poison_abilities": []
+        }
+      ],
+      "level_sum": 8,
+      "poison_units": 1,
+      "difficulty": 10
+    },
+    {
+      "id": "echo-6",
+      "kind": "murloc",
+      "x": 2820.7,
+      "y": -3791.4,
+      "max_level": 3,
+      "hp": 1240,
+      "spawns": [
+        {
+          "code": "nmrm",
+          "x": 2922.9,
+          "y": -3781.8,
+          "level": 3,
+          "poison_abilities": [
+            "ACvs"
+          ]
+        },
+        {
+          "code": "nmrl",
+          "x": 2731.2,
+          "y": -3793.9,
+          "level": 1,
+          "poison_abilities": []
+        },
+        {
+          "code": "nmrr",
+          "x": 2821.0,
+          "y": -3974.1,
+          "level": 2,
+          "poison_abilities": []
+        },
+        {
+          "code": "nmrr",
+          "x": 2807.8,
+          "y": -3615.8,
+          "level": 2,
+          "poison_abilities": []
+        }
+      ],
+      "level_sum": 8,
+      "poison_units": 1,
+      "difficulty": 10
+    },
+    {
+      "id": "echo-7",
+      "kind": "mercenary",
+      "x": -6324.4,
+      "y": -769.8,
+      "max_level": 5,
+      "hp": 2030,
+      "spawns": [
+        {
+          "code": "nkot",
+          "x": -6349.4,
+          "y": -1039.5,
+          "level": 3,
+          "poison_abilities": []
+        },
+        {
+          "code": "nwzg",
+          "x": -6639.0,
+          "y": -773.6,
+          "level": 5,
+          "poison_abilities": []
+        },
+        {
+          "code": "nkot",
+          "x": -6216.4,
+          "y": -568.0,
+          "level": 3,
+          "poison_abilities": []
+        },
+        {
+          "code": "nkob",
+          "x": -6148.3,
+          "y": -768.5,
+          "level": 1,
+          "poison_abilities": []
+        },
+        {
+          "code": "nkog",
+          "x": -6418.7,
+          "y": -528.7,
+          "level": 3,
+          "poison_abilities": []
+        },
+        {
+          "code": "nkob",
+          "x": -6174.7,
+          "y": -940.4,
+          "level": 1,
+          "poison_abilities": []
+        }
+      ],
+      "level_sum": 16,
+      "poison_units": 0,
+      "difficulty": 16
+    },
+    {
+      "id": "echo-8",
+      "kind": "shop",
+      "x": -240.4,
+      "y": -3144.3,
+      "max_level": 5,
+      "hp": 1750,
+      "spawns": [
+        {
+          "code": "nftb",
+          "x": -435.7,
+          "y": -3173.5,
+          "level": 4,
+          "poison_abilities": []
+        },
+        {
+          "code": "nogm",
+          "x": -235.6,
+          "y": -3114.5,
+          "level": 5,
+          "poison_abilities": []
+        },
+        {
+          "code": "nftb",
+          "x": -49.8,
+          "y": -3145.0,
+          "level": 4,
+          "poison_abilities": []
+        }
+      ],
+      "level_sum": 13,
+      "poison_units": 0,
+      "difficulty": 13
+    },
+    {
+      "id": "echo-9",
+      "kind": "mercenary",
+      "x": 5832.8,
+      "y": -777.7,
+      "max_level": 5,
+      "hp": 2030,
+      "spawns": [
+        {
+          "code": "nkob",
+          "x": 5656.6,
+          "y": -778.9,
+          "level": 1,
+          "poison_abilities": []
+        },
+        {
+          "code": "nkog",
+          "x": 5927.0,
+          "y": -1018.7,
+          "level": 3,
+          "poison_abilities": []
+        },
+        {
+          "code": "nwzg",
+          "x": 6147.3,
+          "y": -773.9,
+          "level": 5,
+          "poison_abilities": []
+        },
+        {
+          "code": "nkob",
+          "x": 5683.0,
+          "y": -607.1,
+          "level": 1,
+          "poison_abilities": []
+        },
+        {
+          "code": "nkot",
+          "x": 5724.8,
+          "y": -979.5,
+          "level": 3,
+          "poison_abilities": []
+        },
+        {
+          "code": "nkot",
+          "x": 5857.8,
+          "y": -508.0,
+          "level": 3,
+          "poison_abilities": []
+        }
+      ],
+      "level_sum": 16,
+      "poison_units": 0,
+      "difficulty": 16
+    },
+    {
+      "id": "echo-10",
+      "kind": "murloc",
+      "x": -3472.2,
+      "y": -847.2,
+      "max_level": 3,
+      "hp": 2120,
+      "spawns": [
+        {
+          "code": "nmrr",
+          "x": -3699.7,
+          "y": -786.0,
+          "level": 2,
+          "poison_abilities": []
+        },
+        {
+          "code": "nmrm",
+          "x": -3614.7,
+          "y": -955.8,
+          "level": 3,
+          "poison_abilities": [
+            "ACvs"
+          ]
+        },
+        {
+          "code": "nmrl",
+          "x": -3476.8,
+          "y": -903.1,
+          "level": 1,
+          "poison_abilities": []
+        },
+        {
+          "code": "nmrr",
+          "x": -3258.0,
+          "y": -767.9,
+          "level": 2,
+          "poison_abilities": []
+        },
+        {
+          "code": "nmrm",
+          "x": -3313.1,
+          "y": -927.1,
+          "level": 3,
+          "poison_abilities": [
+            "ACvs"
+          ]
+        },
+        {
+          "code": "nmrl",
+          "x": -3557.3,
+          "y": -803.7,
+          "level": 1,
+          "poison_abilities": []
+        },
+        {
+          "code": "nmrl",
+          "x": -3386.0,
+          "y": -787.1,
+          "level": 1,
+          "poison_abilities": []
+        }
+      ],
+      "level_sum": 13,
+      "poison_units": 2,
+      "difficulty": 17
+    },
+    {
+      "id": "echo-11",
+      "kind": "turtle",
+      "x": 6013.7,
+      "y": -4621.2,
+      "max_level": 7,
+      "hp": 2650,
+      "spawns": [
+        {
+          "code": "nmrr",
+          "x": 5953.2,
+          "y": -4770.8,
+          "level": 2,
+          "poison_abilities": []
+        },
+        {
+          "code": "ntrg",
+          "x": 5966.3,
+          "y": -4551.9,
+          "level": 7,
+          "poison_abilities": []
+        },
+        {
+          "code": "nmrm",
+          "x": 5790.9,
+          "y": -4694.7,
+          "level": 3,
+          "poison_abilities": [
+            "ACvs"
+          ]
+        },
+        {
+          "code": "nmrr",
+          "x": 6185.2,
+          "y": -4632.7,
+          "level": 2,
+          "poison_abilities": []
+        },
+        {
+          "code": "nmrm",
+          "x": 6172.8,
+          "y": -4455.8,
+          "level": 3,
+          "poison_abilities": [
+            "ACvs"
+          ]
+        }
+      ],
+      "level_sum": 17,
+      "poison_units": 2,
+      "difficulty": 21
+    },
+    {
+      "id": "echo-12",
+      "kind": "gnoll",
+      "x": 5198.1,
+      "y": 813.6,
+      "max_level": 3,
+      "hp": 880,
+      "spawns": [
+        {
+          "code": "ngnb",
+          "x": 5162.5,
+          "y": 850.9,
+          "level": 3,
+          "poison_abilities": []
+        },
+        {
+          "code": "ngna",
+          "x": 5175.0,
+          "y": 690.2,
+          "level": 1,
+          "poison_abilities": []
+        },
+        {
+          "code": "ngna",
+          "x": 5256.9,
+          "y": 899.8,
+          "level": 1,
+          "poison_abilities": []
+        }
+      ],
+      "level_sum": 5,
+      "poison_units": 0,
+      "difficulty": 5
+    },
+    {
+      "id": "echo-13",
+      "kind": "murloc",
+      "x": 2824.2,
+      "y": -724.9,
+      "max_level": 3,
+      "hp": 2120,
+      "spawns": [
+        {
+          "code": "nmrm",
+          "x": 2617.2,
+          "y": -599.6,
+          "level": 3,
+          "poison_abilities": [
+            "ACvs"
+          ]
+        },
+        {
+          "code": "nmrl",
+          "x": 2762.8,
+          "y": -657.0,
+          "level": 1,
+          "poison_abilities": []
+        },
+        {
+          "code": "nmrr",
+          "x": 3055.4,
+          "y": -823.8,
+          "level": 2,
+          "poison_abilities": []
+        },
+        {
+          "code": "nmrr",
+          "x": 2740.4,
+          "y": -499.2,
+          "level": 2,
+          "poison_abilities": []
+        },
+        {
+          "code": "nmrm",
+          "x": 2976.7,
+          "y": -920.3,
+          "level": 3,
+          "poison_abilities": [
+            "ACvs"
+          ]
+        },
+        {
+          "code": "nmrl",
+          "x": 2719.9,
+          "y": -789.7,
+          "level": 1,
+          "poison_abilities": []
+        },
+        {
+          "code": "nmrl",
+          "x": 2897.0,
+          "y": -784.4,
+          "level": 1,
+          "poison_abilities": []
+        }
+      ],
+      "level_sum": 13,
+      "poison_units": 2,
+      "difficulty": 17
+    },
+    {
+      "id": "echo-14",
+      "kind": "turtle",
+      "x": -6453.8,
+      "y": -3565.5,
+      "max_level": 7,
+      "hp": 2650,
+      "spawns": [
+        {
+          "code": "nmrr",
+          "x": -6473.6,
+          "y": -3791.5,
+          "level": 2,
+          "poison_abilities": []
+        },
+        {
+          "code": "ntrg",
+          "x": -6522.9,
+          "y": -3507.0,
+          "level": 7,
+          "poison_abilities": []
+        },
+        {
+          "code": "nmrm",
+          "x": -6675.3,
+          "y": -3708.1,
+          "level": 3,
+          "poison_abilities": [
+            "ACvs"
+          ]
+        },
+        {
+          "code": "nmrr",
+          "x": -6264.0,
+          "y": -3503.1,
+          "level": 2,
+          "poison_abilities": []
+        },
+        {
+          "code": "nmrm",
+          "x": -6333.3,
+          "y": -3317.9,
+          "level": 3,
+          "poison_abilities": [
+            "ACvs"
+          ]
+        }
+      ],
+      "level_sum": 17,
+      "poison_units": 2,
+      "difficulty": 21
+    },
+    {
+      "id": "echo-15",
+      "kind": "ogre",
+      "x": -3333.3,
+      "y": 4453.7,
+      "max_level": 3,
+      "hp": 1200,
+      "spawns": [
+        {
+          "code": "nftt",
+          "x": -3489.6,
+          "y": 4500.6,
+          "level": 3,
+          "poison_abilities": []
+        },
+        {
+          "code": "nftt",
+          "x": -3202.8,
+          "y": 4501.9,
+          "level": 3,
+          "poison_abilities": []
+        },
+        {
+          "code": "nogr",
+          "x": -3307.4,
+          "y": 4358.7,
+          "level": 3,
+          "poison_abilities": []
+        }
+      ],
+      "level_sum": 9,
+      "poison_units": 0,
+      "difficulty": 9
+    }
+  ],
+  "difficulty_rule": "Sum of public spawn levels + 2 per poison-capable creep; heuristic, not a win probability."
+}
