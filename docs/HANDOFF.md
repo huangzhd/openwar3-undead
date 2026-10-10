@@ -1,15 +1,15 @@
 # 开发交接 · 2026-10-10 · 0.1.51-dev
 
 ## 当前状态
-更新时间：2026-10-10。当前0.1.51-dev/rules0.1.51，P1部分完成，449项离线通过。用户实际两次重开182138→182411→182727，前两局分别528.23/688.955秒aborted/manual_restart；末局851.88秒loss/manual_surrender后无接续，runner已退出、session closed=true/processes=[]。每局均核验发狂不死族400%，旧进程按身份核验清理，按钮事件/接续/终止有实机证据，视觉满意度未代确认。授权剩余0。当前按用户要求准备上传到GitHub私有仓库openwar3-undead，尚未推送。本地main已初始化并暂存117个文件；GitHub网络连接超时，用户将手动完成Git Credential Manager登录后继续，尚无Git提交或远端仓库。
+更新时间：2026-10-10。当前0.1.51-dev/rules0.1.51，P1部分完成，449项离线通过。两次人工重开182138→182411→182727，末局851.88秒manual_surrender后无接续；runner及受控进程已退出，session空，开局授权0。117个源码/测试/文档文件已上传GitHub私有仓库https://github.com/huangzhd/openwar3-undead，main首次提交4062261与远端完全一致。常规git push端点连接超时，已通过官方Git数据库API完成同提交上传；当前补充归档完成状态，战术代码未改。P2–P4未开始。
 
 <!-- CURRENT_RUN_STATE -->
-182138→182411→182727，两次人工重开后末局manual_surrender已结束。runner及受控PID已退出，session空，未消耗授权0。当前上传GitHub私有仓库，不自动开局。
+无运行中对局：182138→182411两次manual_restart，182727末局manual_surrender已清理。开局授权0。GitHub私有huangzhd/openwar3-undead已上传，main/origin/main已关联；本次上传提交已授权，后续新工作提交仍需用户授权。
 <!-- END_CURRENT_RUN_STATE -->
 
 ## 当前接续提示
 
-> 继续openwar3-undead，先读AGENTS/PLAN/HANDOFF及session/最新result/events。更新时间：2026-10-10。当前0.1.51-dev/rules0.1.51，P1部分完成，449项离线通过。用户实际两次重开182138→182411→182727，前两局分别528.23/688.955秒aborted/manual_restart；末局851.88秒loss/manual_surrender后无接续，runner已退出、session closed=true/processes=[]。每局均核验发狂不死族400%，旧进程按身份核验清理，按钮事件/接续/终止有实机证据，视觉满意度未代确认。授权剩余0。当前按用户要求准备上传到GitHub私有仓库openwar3-undead，尚未推送。 用户已授权首次Git提交与私有仓库上传；不自动开局。末局详细战斗复盘待继续。
+> 继续C:/Users/huangzhiduo/Documents/Codex/openwar3-undead。先读AGENTS/PLAN/HANDOFF，核对session和最新result/events，不重复开局。更新时间：2026-10-10。当前0.1.51-dev/rules0.1.51，P1部分完成，449项离线通过。两次人工重开182138→182411→182727，末局851.88秒manual_surrender后无接续；runner及受控进程已退出，session空，开局授权0。117个源码/测试/文档文件已上传GitHub私有仓库https://github.com/huangzhd/openwar3-undead，main首次提交4062261与远端完全一致。常规git push端点连接超时，已通过官方Git数据库API完成同提交上传；当前补充归档完成状态，战术代码未改。P2–P4未开始。 调试台重开/认输已有两次接续与一次终止实机证据；未代确认用户视觉满意度。最新局182727不是自然失败，是人工认输；成型前撤退实际效果及末局详细战斗复盘待继续。保留救援/N-C-F、长寿骷髅招募、持续扩军/第二地穴/分矿五工与稳定性待办。只用OpenWar3AI，正常对战不限时，未经新授权不开始游戏或新Git提交，交付同步三份文档。Git传输直连有超时，官方API上传已核验，详见artifacts/github-upload-verification.json。
 
 ## 关键文件与命令
 - bot.py、run_match.py：CLI启动、人工认输/串行重开、终局与清理；undead/debug_console.py：两个按钮和禁用状态。
@@ -17,6 +17,16 @@
 - `.venv/Scripts/python.exe -B bot.py check`；`.venv/Scripts/python.exe -B -m unittest discover -s tests -v`。
 - 仅获新授权后启动`.venv/Scripts/python.exe -B bot.py play --enemy-race 3 --difficulty 4 --speed 400`；正常局不传时限，停止用`.venv/Scripts/python.exe -B bot.py stop`。局中手动重开按钮本身授权下一局。
 - 最新实机artifacts/20261010-180922/{result,single-match-summary,additional-evidence,growth-review,closing-check}.json，冻结0.1.50；新版离线artifacts/p1-tests-0.1.51-final.log、p1-check-0.1.51.json、p1-delivery-0.1.51.json。
+
+## 2026-10-10 · GitHub私有仓库首次上传完成
+
+- [x] 用户明确授权新建私有仓库openwar3-undead并手动完成Git Credential Manager登录，核验账号huangzhd。创建https://github.com/huangzhd/openwar3-undead，private=true；本地main配置origin与上游分支。
+- [x] 首次提交406226170b76ea8b3846503d95683733672fb8ce包含117个文件，远端同提交哈希及内容树a82804d1559658b26ebd89adf2a67a63d0a86e42已一致。包含源码、测试、项目数据和文档；排除vendor、.venv、artifacts、models及本地凭据。原始对局证据继续保存在本机，不把仓库文档链接中的本地artifacts当作已上传。
+- [x] 首次git push因github.com:443连接超时失败，GitHub API正常。通过官方Git数据库API上传相同文件树及提交；空仓库需先初始化，只有本次任务创建的一文件临时初始化被完整源码替代，没有覆盖既有用户历史。令牌只在进程内认证，未写入项目或日志。随后提交本记录和最新交接状态，使用非强制前进更新远端。
+- [x] 上传前逐文件核对0.1.51交付源码哈希一致；449项离线测试是本版本此前通过的结果，本次仅上传与文档整理，没有重跑、不声称远端CI已运行。没有开新局。
+- [ ] 常规Git传输网络问题仍需环境侧解决，后续git push不保证直连成功。P1仍部分完成；末局详细战斗复盘、救援/经济/避战效果和长期稳定等旧待办保留。
+
+验收：登录GitHub打开上述仓库，应显示Private、默认main，并有README.md、bot.py、tests、undead及三份状态文档；远端main应等于本地HEAD、117个文件内容哈希相同，工作区干净。下一步继续原项目待办；新的开局和非本次上传的Git提交仍需授权。
 
 ## 2026-10-10 · 0.1.51按钮实机链与GitHub上传准备
 
