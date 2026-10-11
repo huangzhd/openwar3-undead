@@ -9,7 +9,15 @@ from .nc_combo import spell_data, DISABLED_CASTERS
 @lru_cache(maxsize=256)
 def unit_stats(code):return combat.stats(code)
 
+def can_engage(target):
+    # Local 1.27a Abur transforms ucry into ucrm. Terrain visibility in the
+    # fair SDK does not establish detection. Pass buried fiends until they
+    # surface instead of using unrestricted JASS to query hidden state.
+    return target.hp>0 and getattr(target,'alive',True) and target.type!='ucrm'
+
+
 def in_weapon_range(g,attacker,target):
+    if not can_engage(target):return False
     a=unit_stats(attacker.type);t=unit_stats(target.type)
     if not a or not t:return False
     kind='ground' if webbed_air(g,target) else 'air' if t.is_air else 'structure' if is_structure(target) else 'ground'

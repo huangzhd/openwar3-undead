@@ -1,5 +1,201 @@
 # 不死族科技蜘蛛学习机器人计划
 
+## 2026-10-12 · 0.1.60-dev 发布整理
+
+- [x] 用户明确授权将所有更新提交并推送GitHub，覆盖上次提交1222352以来0.1.52–0.1.60源码、测试与文档。
+- [x] 新增CHANGELOG.md，按北京时间区分10月11日晚与10月12日改动，并列出每版主要文件、测试、实机证据和未验证项；README增加文档索引。已有PLAN/STATUS/HANDOFF逐轮记录保留。
+- [x] 明确控制台仅登录时自动打开，关闭后不会随每次开游戏弹出；后台自动接管是独立功能。纠正接管指南中已被后续实机结果取代的当前时态表述。
+- [x] 已核对最近完整533项通过记录；本次仅发布与文档整理，没有额外修改战术，也不重跑无关对局。源码与精选测试夹具上传，artifacts/vendor/.venv/游戏文件和生成的本机配置不上传。
+
+P0完成，P1部分完成，P2–P4未开始。下方各节保留当时的状态、失败及验证边界；“未Git提交”“仍运行”等历史描述不代表当前发布状态。实际提交和远端同步结果以Git记录与交付消息为准。
+
+## 2026-10-12 · 0.1.60-dev 独立接管控制台已打开
+
+- [x] 新增bot_console.py原生Tk窗口与console_state.py模型。显示接管中/已停止/未连接/等待更新、最近游戏时间、策略建议与实际战术、当前意图采样时间、科技/蜘蛛/英雄等级血量、最近操作和下局自动接管状态。每秒读取本机状态与增量日志，不创建另一个游戏接口或获取隐藏敌情；现有旧运行器意图日志间隔约15游戏秒，界面明确显示采样时间。
+- [x] “停止接管”发送pause交还操作，“继续接管”发送resume；按钮等待attachment状态确认，超时提示而非假报完成。命令绑定显示中的session并校验SDK/游戏进程创建时间，旧面板不会把命令发给新局。连接异常或不存在时禁用按钮；暂停保留已有游戏订单，不结束游戏、不全局停用下一局自动接管。
+- [x] 安装当前用户Startup和桌面OpenWar3AI Console.lnk，普通权限pythonw启动，无额外UAC。控制台已运行PID7416、created1791740593.3753011，读取当前b7ee25会话显示AI正在接管与“集中攻击敌方建筑”；当前游戏仍由原SDK控制，未重启游戏或助手。关闭窗口不停止AI；下次Windows登录自动打开控制台，桌面快捷方式用于手动重新打开。
+- [x] 新增7项回归覆盖UTF8半行/日志截断、旧会话拒绝、新局状态重置、死亡或PID复用进程、指令与完成语义及Tk按钮确认状态；完整533项通过artifacts/p1-tests-0.1.60.log。Tk按钮调用使用模拟运行器，未为测试而暂停真实战斗；未进行像素截图检查或重新登录实测。
+- [ ] 下一局自动接管、重新登录触发、真实手动点击按钮的确认闭环及完整KK同步/对局稳定性仍待实测。当前正在运行的战术/接管器仍是冻结的0.1.58，控制台读取其现成日志；新源码版本0.1.60/rules0.1.54不代表热更新了这局策略。
+
+证据：artifacts/console.json、console-verification.json、console-shortcuts.json、p1-tests-0.1.60.log。P0完成，P1部分完成，P2–P4未开始。未使用computer-use、未改变当前游戏操作、未Git提交。
+
+## 2026-10-12 · 0.1.59-dev 自动接管常驻任务已安装
+
+- [x] 用户明确要求每次开始自动接管、无需提醒或逐局授权。新增persistent_auto_load.py与install_auto_takeover.py，通过正常Windows UAC注册当前用户登录触发的OpenWar3AI-KK-AutoTakeover-38993任务，InteractiveToken/HighestAvailable；不存密码、不修改UAC。实际任务Running，安装结果installed=true。
+- [x] 常驻入口自动恢复AI，无20分钟空闲退出限制；对局就绪等待亦不因150秒大厅等待超时。继续严格核对KK父进程、配置目录War3.exe、运行时hash、不死族/双出生点/100%条件。每个进程只尝试一次；失败保留日志并继续等新进程，不循环加载失败目标。策略暂固定为用户最近确认的人族enemy_race=1，不推断隐藏敌情。
+- [x] 通过共享文件锁等待当前旧助手完成，不打断已接管游戏。安装后常驻PID33456、created1791739956.283474，stage=waiting_for_previous_watcher；原session b7ee251a2abd42ada3f9d92191197c64仍closed=false/paused=false，游戏PID27472身份有效。锁释放后常驻接班，等待期间新启动游戏仍在时间范围内。
+- [x] auto-takeover-stop.cmd持久保存enabled=false并发送STOP，登录后仍停用；只释放AI/助手，不关闭游戏。auto-takeover-enable.cmd可重新启用（正常Windows授权）。任务不随本次聊天结束而停止；无需逐局向助手发消息。
+- [x] 新增5项回归覆盖任务当前用户/交互会话/权限、停用持久化、等待旧锁时停止、无空闲超时、多局及首局失败后继续；完整526项通过，artifacts/p1-tests-0.1.59.log。当前游戏冻结代码仍0.1.58，未热改策略；新入口版本0.1.59/rules0.1.54。
+- [ ] 下一新KK游戏自动加载/接管及重新登录触发仍待实机；安装和任务Running不是这两项通过。此机制处理KK每次新启动的游戏进程；同一进程里返回菜单再换图仍不会自动抢回手动释放的接管。整局稳定性/联机同步/中期停滞修复亦未完成验证。
+
+证据：artifacts/auto-takeover-install.json、auto-takeover-task.xml、auto-takeover-service.json、auto-takeover-install-verification.json。P0完成，P1部分完成，P2–P4未开始。未操作游戏界面、未重开当前局、未Git提交。
+
+## 2026-10-12 · 新KK人族电脑局接管成功，仍在进行
+
+- [x] 用户新开局并确认对手为人族，按enemy_race=1连接；目标PID27472、created1791739410.4741564及配置War3.exe/KK父进程核验通过。原一次性助手已结束，新局初查mapping_absent；显式记录当前目标后通过Windows正常RunAs启动本局助手，无需重开游戏。
+- [x] 管理员日志administrator=true，原生loader handshake_ready；新会话b7ee251a2abd42ada3f9d92191197c64在85.33游戏秒attachment_resumed。己方new_units于89.525观察到祭坛uaod、91.025观察到通灵塔uzig，证明本机建造已开始；不是仅命令回执。侍僧训练已下达，当前不将接受回执当作产出完成。
+- [x] 交付核验paused=false/closed=false、游戏身份仍有效。助手PID19396（created1791739695.1958053），SDK PID2612（created1791739696.530104）。本局助手保留运行至游戏退出或手动停止；一次性模式不会接管后续新游戏。
+- [ ] 完整对局、跨客户端同步及中期停滞修复的实战效果仍待；当前接管始于1:25，并非从0秒正常开局的评估。
+
+证据：artifacts/current-practice-27472/{target.json,administrator.log,takeover-verification.json}；artifacts/auto-load-20261012-012815-27472/loader.log；artifacts/attach-20261012-012816-b7ee25/events.jsonl。P0完成，P1部分完成并继续实机验证，P2–P4未开始。未修改战术代码、未使用computer-use、未Git提交；未重复运行既有521项测试。
+
+## 2026-10-12 · KK当前局实际接管成功，随后用户主动退出
+
+- [x] 用户询问能否开始接管/是否需重开后，确认原PID9976、同一epoch1及player0接口有效，直接对session bd802c1f6e654162884a6c8131f1c541发送resume；没有重开游戏。305.78游戏秒记录attachment_resumed，状态paused=false。
+- [x] 305.905起下达祭坛uaod建造指令；310.0的己方new_units观察到uaod，311.48观察到通灵塔uzig。之后出现侍僧训练接受回执，但退出前未观察到侍僧产出，不冒充训练完成。这里确认的是本机游戏内建造开始/建筑出现，不是完整建筑竣工或另一联机客户端同步。
+- [x] 连续决策推进到336.225游戏秒。随后时钟归零，接管器按clock_reset释放；助手后报game_exited并退出。用户明确回答“我主动退出了游戏”，因此记录人工退出，不记插件崩溃、自动认输或自然胜负。
+- [x] takeover-before.json在305.475采样6个己方单位；takeover-after.json读取时已退出所以clock0/无单位，不能将这个跨退出比较解释为接管时钟没推进。行为证据来自同会话events.jsonl中resume/new_units及后续连续时钟，补充到takeover-verification.json。
+- [ ] 完整KK对局、稳定性与跨客户端同步仍待。接管是在5:05且尚无英雄的局面开始，不代表正常从开局执行的战术表现；本局可见敌军hfoo/Hblm/hrif属于人族，而连接时沿用默认enemy-race3，下次需按实际对手设置或选择不死族电脑，不能当作固定对手策略评估。
+
+当前P0完成，P1新增KK本机实际建造行为证据但仍部分完成，P2–P4未开始。记录的当前游戏、SDK及助手进程核查结果见takeover-verification.json；未自动补开下一局、未使用computer-use、未修改战术代码或重复测试、未Git提交。要继续测试需用户新开局；旧auto-load一次性助手已结束，下一次需重新启用助手。
+
+## 2026-10-12 · 0.1.58-dev KK实机加载与暂停连接成功
+
+- [x] 本次新开KK游戏PID9976、created1791738615.3043005，被自动助手捕获。首次普通权限运行到initialization_handshake阶段PostThreadMessageW失败，原始失败保留artifacts/auto-load-20261012-011015-9976。补查无操作自定义消息返回Windows错误5，而WM_NULL成功；普通助手elevated=0，目标Token访问被拒绝，不能仅凭此证明目标完整性级别。微软文档说明UIPI拒绝会返回5，故以正常管理员方式验证，而非宣称已确定平台反作弊拦截。
+- [x] 补充原生NativeErrorCode、窗口/线程/管理员状态日志；新增显式auto-load-retry按旧target.json核对同一PID创建时间、原路径、KK父进程和运行时hash，只针对记录的本局重试，初始暂停。用户经Windows正常RunAs流程授权，管理员Python日志administrator=true。
+- [x] 同一游戏管理员重试完成loader_elevated=True、thread_hook_registered、handshake_ready；SDK ready=true/bridge=true，本机player0/epoch1/clock217.45，己方不死族初始单位，100%倍率。连接session bd802c1f6e654162884a6c8131f1c541，runner PID15144、created1791738897.9069817；attachment closed=false/paused=true。事件仅attachment_ready，无Controller策略指令。
+- [x] 独立只读核验世界发布计数736→768（约2秒），接口持续更新；游戏时钟两次都217.45，因此不能证明游戏模拟正在推进，原因尚未确定，可能与暂停/切出有关但未证实。不会把接口发布当作部队行为或整局通过。
+- [x] 新增auto_load_entry.py，以标准UAC请求启动管理员后台助手；auto-load-practice.cmd改走此入口，默认下一局/暂停，连续监听和自动恢复仍须显式参数。不会禁用UAC或修改消息过滤器。管理员入口被取消则不启动。已有当前会话未重启；正常权限可核对当前机器人进程身份，后续可用attach-resume/pause/release。
+- [x] 新增3项重试身份/父进程与取消授权回归，全部521项通过，artifacts/p1-tests-0.1.58-final.log；此前518项权限日志修复测试也通过。当前代码0.1.58/rules0.1.54；本局实际冻结启动代码为0.1.57加权限修复，源码快照保留，之后入口改动不伪称已在本局执行。
+- [ ] 尚未恢复AI、验证实际指令执行/联机同步/完整KK对局。当前仅达到加载、握手、接口读取与暂停连接；P1仍部分完成，P2–P4未开始。后续先确认当前游戏状态和时钟，再按用户指示测试接管，不自动重开。
+
+成功证据：artifacts/auto-load-20261012-011456-9976/{loader.log,latest-probe.json,connection-verification.json,source-manifest.json}；SDK日志artifacts/attach-20261012-011458-bd802c/events.jsonl；管理员启动记录artifacts/auto-load-admin-retry.log。当前观察器PID7316（管理员），SDK客户端PID15144，游戏PID9976；不关闭用户游戏。没有computer-use、模拟鼠标键盘、Git提交或自动恢复AI。
+
+## 2026-10-12 · 0.1.57-dev KK启动自动加载原型，等待首次实机
+
+- [x] 用户要求游戏启动同步加载插件，并暂按KK不拦截处理。进一步静态核对固定发布war3_launch.exe：WH_GETMESSAGE=3、_War3RenderHookProc@12、Local/War3UiControl大小0xf9b4、Ready/Done事件与Mutex、InstallNative消息的wParam为游戏窗口句柄、lParam=0。Windows机制核对微软SetWindowsHookExW文档；分析辅助依赖仅装在artifacts/loader-analysis-deps，不修改运行依赖或上游二进制。
+- [x] 新增native/RuntimeAttach.cs，编译x86助手，校验固定render_hook.dll SHA256、Game.dll版本/hash、目标路径/PID创建时间；仅定向目标线程的窗口钩子与初始化握手，不替换文件、修改远程内存、提权或终止游戏。已有共享对象拒绝重复安装；独立助手持有钩子至游戏退出或停止请求，停止不等于DLL从游戏卸载。
+- [x] 新增auto_load.py、auto-load-practice.cmd和bot.py auto-load/build/status/stop。只匹配监听开始后由已确认KK路径直接启动的配置War3.exe；默认下一局、等待20分钟，加载后等待SDK就绪（至多150秒）、本机不死族/双出生点/100%检查后连接并暂停。可显式选择--watch-restarts及--auto-resume；未安装系统服务或开机启动项。
+- [x] 客户端控制核对会话、进程身份及子进程归属；其他接管客户端不被恢复或停止。用户释放客户端后不自动抢回控制；停止仅结束本助手及自己启动的Python客户端，游戏保留。日志保留目标身份/父进程、源码快照、loader/bot日志和接口检测结果；同PID失败不重复安装。
+- [x] 9项新增回归，全套518项通过（artifacts/p1-tests-0.1.57-final.log）；初次517项也通过，后补初始暂停/显式恢复和退出释放集成测试。32位编译/自检通过；真实原生预检针对错误进程返回Target executable mismatch，发生在共享对象及钩子建立之前，证据artifacts/runtime-loader/preflight-wrong-process.log。build.json保存源码和exe哈希。
+- [x] 已启动首轮后台等待，artifacts/auto-load.json记录实际观察器PID11404、created1791738436.724103，closed=false/stage=waiting_for_new_kk_game/auto_resume=false/once=true。外层虚拟环境启动壳PID16052；首次日志artifacts/auto-load-first-run.log。下一次先核对这个状态，不重复启动助手。
+- [ ] 当前无游戏进程，尚未完成真实加载/握手/命令同步或部队行为验证；静态调用对齐和测试不等于KK兼容通过。等待用户从KK新开电脑练习局并回复开局，检查加载阶段错误、桥接及初始暂停状态。此前“没有加载器”的记录为历史，现在是本地实验原型，仍非上游正式支持。
+
+当前P0完成、P1部分完成，P2–P4未开始。规则仍0.1.54；没有新开游戏、自动接管、computer-use或Git提交。后台助手的下一局加载尝试已获本轮用户授权；只在真正接口就绪后才能讨论接管成功。
+
+## 2026-10-12 · KK 启动实测已捕获：平台直接启动游戏并加载自身组件
+
+- [x] 用户“已开局”后确认PID11040、创建时间1791737551.2000053；启动链explorer.exe→KK Platform.exe（PID29816）→用户配置目录War3.exe。实际参数-window、-opengl、-plogdir；最后一项解码为平台本次游戏日志目录，并非AI加载参数。
+- [x] KK本次war3dll.log自报初始化plugins/Game/War3Plugin.dll，Game.dll1.27.0.52240，加载ydbase/kkapi/yd_jass_api/SlkLib/luacore/yd_lua_engine.dll，并安装Load library hook。这是平台日志证据，不冒充直接枚举到全部模块；已筛出启动行保存artifacts/kk-platform-startup-evidence-11040.json。
+- [x] bot.py attach-check --pid11040明确mapping_absent、Windows错误2。修复后补采集30秒持续收到同一错误；直接模块枚举被拒绝（错误5），与共享内存不存在是不同检查，不能据此断言反作弊拦截或简单提权可修好。
+- [x] 修复记录器AccessDenied/短暂信息缺失被当成游戏退出的问题：独立核对PID创建时间，权限未知保留为unknown；模块枚举失败也继续独立检查IPC，采样间身份变化停止读取。新增4项回归，全套509项通过，artifacts/p1-tests-startup-trace.log。
+- [x] 保留首次失败：artifacts/kk-startup-20261012-005140误报observed_game_exited，后续已确认同PID同创建时间仍活着。首个live-11040.json的模块错误码受后续GetLastError覆盖，不作依据；以live-11040-corrected.json为准。补采集目录和结束状态见artifacts/kk-startup-findings-11040.json。
+- [ ] 尚未加载OpenWar3AI、未接管；KK会加载自身组件不证明存在通用插件入口。下一步评估受支持的运行时初始化接入位置及与KK组件兼容性，不替换平台/游戏文件，不将记录结果当作兼容通过。
+
+当前P0完成、P1部分完成，P2–P4未开始。本轮仅只读采集及记录器修复；没有向游戏发命令、关闭/重开游戏、使用computer-use或创建Git提交。
+
+## 2026-10-12 · KK 启动流程只读采集进行中
+
+- [x] 用户“ok，来试一下”授权只读记录启动过程。确认 KK 主程序为 C:/Program Files (x86)/kkduizhan/Platform.exe，PID29816；采集前没有魔兽进程。
+- [x] 新增 trace_kk_startup.py 并启动后台记录器，等待最多600秒，发现魔兽后采集180秒或游戏退出后结束。日志目录 artifacts/kk-startup-20261012-005140，入口指针 artifacts/kk-startup-current.json；实际观察器身份以目录内status.json为准（虚拟环境启动壳与Python进程PID可能不同）。
+- [x] 记录相关进程路径、父进程链、游戏启动参数及工作目录、映射的DLL/EXE路径和桥接访问错误码。不记录平台辅助进程命令行；常见口令/令牌参数遮盖。仅轮询，可能漏过极短暂的中间进程，映射映像列表不等同完整初始化顺序。参数遮盖与路径归属边界断言通过，实际status持续更新；未更改战术或重跑505项既有测试。
+- [ ] 等待用户从KK启动所述电脑练习局，收到“已开局”后读取status/events分析真实链路。当前尚无此次启动结果，不宣称加载成功或可接管。
+
+记录器仅采集，不加载DLL、不发送游戏命令、不关闭任何游戏；写入本次日志目录STOP文件可仅停止记录器。当前P0完成、P1部分完成，P2–P4未开始；无computer-use、无Git提交。下一次先读现有采集状态，勿重复启动记录器。
+
+## 2026-10-12 · 0.1.56-dev 接管误诊修复；KK 加载仍未解决
+
+- [x] 修复 SDK WorldUnavailable 被统一解释为“未加载”的问题。新增 bridge_diagnostics.py，区分 Windows 错误2（共享内存不存在）、错误5（访问拒绝）、SDK 所需完整访问权限不足、配套接口/协议问题、其他错误及检测期间进程退出；保留原始错误和下一步建议，不把这些结果说成平台拦截。
+- [x] 诊断只打开/关闭既有映射句柄，不读取映射内容、不创建映射、不提权、不注入或修改游戏。接管源码快照包含新增诊断模块，运行器升至0.1.56-dev、rules仍0.1.54。
+- [x] 新增9项测试（含真实 Windows 临时共享内存生命周期与进程退出回归）；全套505项通过，artifacts/p1-tests-0.1.56-attempt1.log。bot.py check全部true，active_project_pids=[]；本轮attach-check返回[]（artifacts/kk-attach-check-0.1.56.json），此前PID28968已经不在当前游戏进程列表，未启动新局。
+- [x] 复核固定上游源码和发布二进制：tools/play.py --attach依赖既有上游启动实例；war3_launch.exe参数无已有PID入口。二进制可见SetWindowsHookExW、War3RenderHook.InstallNative.v1和握手事件；render_hook.dll仅导出_War3RenderHookProc@12。prebuilt/README_ZH.md说明原生源码不开源。未尝试猜测私有握手参数或将单独LoadLibrary当成初始化完成。
+- [ ] 用户要求的KK接管修复仍未完成：需已有进程的运行时加载/初始化入口或源码及生命周期约定，然后再验证命令同步和实际操控。上游README明确不用于有反作弊的服务器；没有平台兼容性证据。新诊断不能补回上一轮未采集的Windows错误码，故旧PID缺DLL仍非确定结论。
+
+当前P0完成、P1部分完成，P2–P4未开始。未使用computer-use、未关闭用户游戏、未创建Git提交；已纠正文档中要求用户直接在KK开局试用的流程，避免未满足加载前提时重复开局。
+
+## 2026-10-12 · KK 开局后实际检测：缺少可用桥接，未接管
+
+- [x] 用户通知“我开局了”后运行 `bot.py attach-check`，找到用户提供目录下的 War3.exe（PID 28968），退出码 1；ready=false、bridge=false，无法打开 `Local\War3World_28968`。证据：artifacts/kk-attach-check-20261012.json（本轮首次检测输出存档）。
+- [x] 未启动接管、未发送游戏指令、未关闭或重开用户游戏。本次仅证明当前无法访问运行时桥接，不能据此断言 KK 反作弊拦截；己方槽位、地图、倍率与联机操控均未能验证。
+- [ ] KK 适配仍未打通：需要确认并实现受支持的运行时加载途径，之后才能验证接管。本次不是策略失败，也不能算 KK 实机通过；原 496 项离线测试不覆盖此加载环节。代码未改，未重跑离线测试。
+
+当前 P0 完成、P1 部分完成，P2–P4 未开始。下一步解决 KK 启动实例的运行时加载问题；下方“尚未开局/未检测”保留为此前时点记录。
+
+## 2026-10-12 · 0.1.55-dev 已运行对局接管入口（最新；KK尚未验证）
+
+- [x] 按用户“帮我做这个适配，我尝试一下”新增attach-check、attach、attach-pause/resume/release/status和attach-control.cmd，操作说明docs/ATTACH.md。运行器0.1.55-dev，战术rules仍0.1.54；不把新增连接方式当成战术实机通过。
+- [x] attach-check只扫描/检测已有魔兽进程与OpenWar3AI桥接，核对Game.dll与本机已验证1.27a文件一致、有效己方槽位、不死族、对局已开始、100%倍率、地图就绪且两个出生点。没有改平台文件、注入或绕过保护。
+- [x] 接管使用SDK玩家槽位车道及fair=True；初始暂停，经attach-resume才发策略指令。暂停释放己方租约、保留现有游戏订单，恢复重建短期策略并保留已观察英雄历史；同一接管锁防止多个运行器争夺控制，拒绝重复接管本地单机运行器的游戏。
+- [x] 不调用加速、偏好写入、单机全图胜负裁判、认输、重开、end_game或kill；停止只关闭SDK客户端。进程身份变化、换局/槽位变化、时钟重置、倍率变化和快照失联自动结束连接，不跟随下一局。控制文件绑定会话标识，过期/异常指令不跨会话生效。
+- [x] 实际房间地图未获哈希证明，因此禁用单机默认Echo Isles的固定野怪和小动物目录，改用实际可见目标；动态地图策略及开局强度仍待实机。允许已开局接入不代表完整恢复了对局此前历史。
+- [x] 新增14项接管/生命周期测试，全套496项通过，artifacts/p1-tests-0.1.55-final.log；首次全套495项也通过，随后补英雄历史跨暂停回归。覆盖暂停无命令、正常恢复、冻结时钟、换局/槽位/倍率变化、接口失联、旧PID复用、缺桥接诊断、互斥锁、退出仅关闭客户端、未知地图目录隔离。check全部true、无项目进程；实际attach-check扫描返回[]，当前没有运行中魔兽进程，未开展实机接管。
+- [ ] 关键未完成项：普通KK启动不会自动加载OpenWar3AI桥接。固定上游tools/play.py的--attach只连接此前已经由其启动器装好运行时的实例；现有仓库没有普通KK进程的受支持加载流程。当前交付是桥接已存在时的接管适配与检测工具，不能称KK可用版。若检测缺桥接，明确停止，需上游支持的加载方式；联机命令同步、KK保护兼容、游戏结束事件和操控效果均未验证。
+
+下一步：用户在KK开启所述电脑练习局后先运行attach-check；保留检测结果再决定是否具备接管条件。当前P0完成、P1部分完成，P2–P4未开始。未自动登录/启动KK、未开新游戏、未使用computer-use、未创建Git提交。
+
+## 2026-10-12 · 0.1.54-dev 埋地目标停滞与进攻目标抖动修复（最新）
+
+- [x] 用户报告“18分钟一次，之前鱼人营地附近一次”，并选择可忽视埋地/隐身目标继续原计划进攻，或购物反隐。本轮采用忽视方案，不实现全军往返商店。
+- [x] 实机20261011-234536的908.800–986.700秒（15:09–16:27）附近只剩同句柄[14403,41473]的ucrm，坐标(-4118,303)，血153→543；两端共同己方单位位移中位数0，至少77.9秒无行军进展。本机AbilityData.slk明确Abur的原型ucry、变形UnitID1=ucrm。冻结旧Controller.go因battle_enemies非空就进入fight并return，没有效果超时，埋地目标一直阻断战略移动。不能凭原日志推定未采集的引擎IsUnitInvisible/IsUnitDetected标志。
+- [x] 18分钟附近另有独立问题：1085.675/1098.180/1113.455/1126.975秒恢复echo-7练级目标(-6324.4,-769.8)，又反复切回敌基地(3648,3008)。third_hero每拍都要求距中心小于1200，英雄暂时分离即令attack_ready失效，造成整队回头。不是将所有停顿都归因于埋地。
+- [x] can_engage排除ucrm，覆盖根战况、交战、行军拦截、围城选择及紧急撤离威胁；同句柄钻出地面变回ucry立即重新纳入，混合场景仍处理其他真实敌军。新增burrow_target_deferred证据。公平SDK的地形可见位不保证反隐侦测，本轮不调用受限JASS或读隐藏状态；保守策略也会略过已经显形但仍处于ucrm形态的蜘蛛。
+- [x] 新增CombatProgress：进攻/骚扰中近处交战连续8游戏秒既无明显主体位移（中位数80以内），也无双方可观察净掉血，则暂时绕过该批目标10秒，以普通移动继续原目标，避免attack-move立即重新吸附；新敌军、形态变化、己方掉血/单位缺席撤销绕过。无连续采样、建筑攻坚和防守不触发。它是无进展保护，不是假称能识别全部隐身；净回血可能遮盖伤害，实机误触率仍待。
+- [x] 第三英雄首次出发仍须入队且距主力小于1200；已出发后允许暂时分离，由阵形追赶处理，不再因此切回练级。死亡/缺失、尚未入队仍阻止进攻，其余三本/双英雄/腐蚀球与安全优先条件保留。
+- [x] 12项专项回归通过，完整482项通过（artifacts/p1-tests-0.1.54-attempt1.log）。同一真实坐标夹具在本局冻结旧controller中出现1个预期断言失败、0异常，新代码通过；路径为模拟开阔路径，不冒充真实地图重放。覆盖埋地/出土、混合目标、围城、无进展绕过、真实伤害/移动/新威胁打断、进攻准备与英雄死亡条件。check全部true且无项目进程。
+- [ ] 0.1.54尚未实机；本局31:10获胜属于0.1.53，不算本次防停滞修复的实机通过。巫妖救援不足、其他隐身类型和无进展保护的实际表现仍待。下一步按新的开局授权验证同类情形，不自动补局。
+
+证据：artifacts/20261011-234536/stall-analysis-0.1.54.json、stall-raw-evidence.json；夹具tests/fixtures/burrow-stall-234536.json；旧码对照artifacts/p1-old-code-stall-0.1.54.log。原events/result/source保留，0.1.53胜局记录在下方。本轮无新对局、无computer-use、无Git提交。当前P0完成、P1部分完成，P2–P4未开始。
+
+## 2026-10-11 · 0.1.53-dev 单局实机验证获胜（最新）
+
+- [x] 按用户“再开一局验证效果”授权仅启动20261011-234536。Echo Isles、发狂不死族经接口核验race=3/ai_difficulty=2、全程400%、正常不限时。1869.725游戏秒（31:10）、515.20墙钟秒后终局win/all_enemy_buildings_destroyed；不是人工认输或提前推定胜利。
+- [x] 终局三英雄均在（DK7/巫妖6/黑暗游侠6），18蜘蛛、3雕像。runner退出码0，无cleanup_error/ui_cleanup_error，session closed=true/processes=[]，bot.py check active_project_pids=[]；没有自动补开新局。
+- [x] 首雕像实际出现416.750秒，较上一局459.330秒提前42.580秒。屠宰场310.675秒下单、381.025秒首雕像下单、382.455秒三本下单；389.150/404.580秒生产快照确认雕像在队列，419.580秒单位快照确认雕像存在。对应的顺序优化已见实机行为，不能把全部时间差归于单一改动。
+- [x] 前期伤害缠绕仅在255/186.714/187.564蓝时使用，没有重演上一局116.54蓝继续打野的第三发。本局按中立单位代码筛出的普通伤害缠绕没有低于150蓝的记录；259.930秒用125.218蓝治疗蜘蛛，261.530秒观察到净回血148，352.975秒另一次净回血200。整局41条coil_heal_observed为治疗观察记录，不等同41次独立救命。
+- [x] 基地受围撤离记录81条（45蜘蛛/14雕像/8DK/14骷髅，包含安全位置停留），不是81次成功逃生。DK602.750秒撤离起点(-4987,2014)，606.880秒实际到(-5008,2519)，位移约506；635.975秒另一撤离起点(-5509,2383)，639.875秒到(-5878,2629)，位移444、血量725/725，局部可见敌军基础射程外余量约312。后续DK活到终局，未重演上一局被统一回家覆盖后原地停留致死；位移和回血不能排除其他微操/雕像的共同作用。
+- [x] 保留失败：巫妖600.805秒最后战斗采样52血，603.980秒首次缺席，decision602.750秒已无巫妖；随后revive记录，647.505秒decision确认重新出现，终局存活。不能宣称三英雄全程不死或所有英雄救援已解决。review_combat记录521战斗样本、6蜘蛛/3雕像/1巫妖消失窗口，消失窗口不伪造精确死亡时刻。
+- [x] 冻结源码清单与当前运行源码全部匹配，本局没有热改战术。新增只读离线比较artifacts/verify_0153_match.py，结果artifacts/20261011-234536/effect-verification.json、combat-review.json、dk-review.json，原events/result完整保留；运行日志artifacts/live-insane-undead-0.1.53-attempt1.log。代码未改，本轮未重复470项既有离线测试、未使用computer-use、未提交Git。
+- [ ] 一局胜利不足以证明稳定胜率提升；本局首个基地受威胁summary588.505秒，上一局417.505秒，敌方节奏不一致，非同种子受控比较。无安全路径分支未触发，巫妖集火救援、撤退施法与长期稳定性仍待。下一步优先复盘巫妖约10分钟的阵亡窗口，再按新的开局授权验证；不自动多开局。
+
+当前P0已完成、P1部分完成（本机新增完整胜局及三项改动的行为证据），P2–P4未开始。下方“新版尚未实机”等为历史时点记录，已由本节更新。
+
+## 2026-10-11 · 0.1.53-dev 败局复盘与撤退/续航优化（最新）
+
+- [x] 上一局20261011-232932已于509.105游戏秒、146.01墙钟秒结束，result=loss/manual_surrender（人工认输），不是自然基地全灭。400%发狂不死族，清理无错误、session closed=true/processes=[]；0.1.52实机启动和本局退出完成，旧“仍运行”记录已被此状态取代。
+- [x] 438.55秒可见敌军为6食尸鬼/3蜘蛛/恐惧魔王；局部敌血4253.93、己方2615.06。DK164/725血，9个可见敌方目标指向DK。441.08和446.08的march_state仍把撤退目标设为已被围攻的主基地(-5184,2944)；DK在438.55–450.8多帧停在(-5160,2769)，微操已有脱离点却被collective_retreat统一回家覆盖。
+- [x] DK最后存活战斗采样450.8→首次缺席453.355；巫妖460.705→463.255。之后多帧及终局均无存活英雄，记录时间窗而不伪造精确击杀时刻。巫妖期间仍330魔法、原策略RETREAT不释放进攻法术，保留后续复盘，不声称本轮全部解决。
+- [x] 前期165.73/172.48/180.005秒连续用缠绕打野，第三次施法前116.54蓝，186.605秒仅47.14蓝；治疗续航不足。327.63先升三本，345.175才造屠宰场，423.655才排首雕像、459.33实际出现，晚于DK失去；不是金币大量闲置，战前多次仅数十至两百金币。
+- [x] 0.1.53新增undead/retreat.py：集体撤退时若已见敌军进入基地1200范围，按各单位可见威胁射程筛选更安全落点，再校验可走地形/实际路径及路径沿线；每单位1.5秒规划一次、最多8条候选路径，不读隐藏敌情。已安全的增援不向围城中央送；没有安全路线则停止旧危险命令并记录，施法、回城、闪电盾与接仇恨保护保留。可达/射程启发式不保证逃生或保住基地。
+- [x] 练野怪的普通伤害缠绕需至少150蓝，留75蓝治疗；有效友军治疗优先、对玩家战斗及原英雄斩杀规则保留。二本保留巫妖优先，其后屠宰场→首雕像在产/实际存在→三本升级，避免抢占第一份续航预算；不是声称实际雕像出场时间已提前，后续实机验证。
+- [x] 新增12项行为测试和上一局438.55秒公平位置夹具，470项全套通过（artifacts/p1-tests-0.1.53-final.log）。旧冻结controller/economy在3个重点测试共5处断言失败、无异常，新代码同用例通过。第一次旧码对照未替换辅助夹具中的Controller引用，只有2处失败；修正对照装载后5处失败，两次日志均保留。历史位置用模拟开阔路径，不冒充实机地形重放。
+- [ ] 新版未启动对局，不能声称胜率提升、脱围成功或完整P1通过。英雄复活资源预留、巫妖防守/撤退施法、练级磨损与路径长期表现仍待。下一步对同一发狂不死族配置逐局实机，核对真实撤离位移/血量、首雕像出现时点和完整结果。
+
+详细证据：artifacts/20261011-232932/loss-analysis-0.1.53.json、combat-review.json、dk-review.json及原events；旧码对照artifacts/p1-old-code-regression-0.1.53-final.log。本轮未使用computer-use、未新开局、未提交Git。当前0.1.53-dev/rules0.1.53，P1部分完成、P2–P4未开始。
+
+## 2026-10-11 · 0.1.52-dev 启动修复与本机实机成功（最新）
+
+- [x] 用户明确授权“解决问题直到实机启动成功”。界面初始化的input_enable/canvas_enable改为共享45墙钟秒预算，之后立即恢复普通命令超时；初始化成功后才安装APM计数器，失败也恢复发送方法，避免半初始化污染。上游固定源码未修改。
+- [x] Session清理按启动器→游戏顺序，允许Windows Job带走游戏；消失/AccessDenied后再核对身份和存活，确认退出后才清空session。身份无法读取时保留记录并报错；客户端close异常仍完成进程清理。PID复用、真实权限拒绝不误报成功。
+- [x] 新增9项行为测试，全套458项通过，artifacts/p1-tests-0.1.52-attempt1.log；冷初始化13+12秒模拟可成功，45秒总预算、发送器恢复/APM和6项清理分支已验证。最初专项运行因导入TestCase额外发现4个旧用例，随后改为模块导入，全套458不重复计数。发布版本0.1.52-dev，战术rules仍0.1.51。
+- [x] 实机20261011-232932启动成功，接口核验发狂不死族（race3/ai_difficulty2/insane）、400%、正常不限时。ui_ready为0.180墙钟秒；截至371.88游戏秒，实际采金3370、伐木1000，侍僧3→6，祭坛/通灵塔/地穴已完成，DK与骷髅实际出现、DK骷髅棒背包确认，持续决策及练级已有日志。不是仅以命令回执或进程启动验收。
+- [x] 启动阶段源码清单与当前一致；证据artifacts/20261011-232932/startup-verification.json和events.jsonl。当前受控PID为[20680, 31480]，游戏仍在运行；本轮成功后没有另开新局、没有使用computer-use、没有Git提交。
+- [ ] 此局初始化只耗时0.180秒，未在实机强制复现首次12.876秒字体预热；延长等待的冷启动分支依据针对性测试。完整胜负、退出清理实机及长期稳定性尚待；不能把启动成功当作P1全部完成。
+
+当前P1部分完成，P2–P4未开始。用户的“修复直到实机启动成功”已达到；保留正在进行的授权对局。下一次接续先核对session、此局result/events，避免重复启动。运行器日志artifacts/live-insane-undead-0.1.52-attempt1.log；停止用 `.venv/Scripts/python.exe -B bot.py stop`。
+
+## 2026-10-11 · 本机首局发狂不死族测试：启动失败（最新）
+
+- [x] 用户授权一局发狂不死族，启动 `20261011-232047`，请求400%、正常不限时。游戏接口实际核验对手race=3、ai_difficulty=2/insane；1.53游戏秒读到己方不死族初始单位。
+- [x] 本局于 DebugConsole → SpeedControl → g.ui 初始化失败，input_enable 等待5秒超时，结果为 error/InputUnavailable，墙钟51.83秒。events仅记录match_settings，没有Controller.tick的决策/生产证据，不能算完整比赛、战败或P1通过。
+- [x] 原始清理记录 psutil.AccessDenied(pid=26404)。后续核查两个原受控PID（6536/26404）均已不存在，session更新为closed=true/processes=[]，bot.py check为空PID；保留原result中的cleanup_error，不覆盖失败历史。
+- [x] 冻结源码与当前全部一致，未修改战术或运行器、未新建Git提交、未使用computer-use。本局之后没有自动补局。证据保存在artifacts/20261011-232047/{result,cleanup-followup,startup-review}.json及runner.log、runtime-startup.log。
+- [ ] 运行时首次字体预热为12876ms，高于SDK输入启用5秒等待，冷启动延迟是可能原因，尚未证明唯一根因。下一步修复/验证调试台初始化等待及退出竞态，再经新的开局授权验证实机。449项离线通过为此前环境恢复结果，本轮未重跑。
+
+当前P1仍部分完成，P2–P4未开始；本机已验证启动/连接/对手配置，未验证机器人实际操作、完整胜负或稳定性。一局授权已使用，当前无运行中对局。
+
+## 2026-10-11 · 新机器环境恢复（最新）
+
+- [x] 项目恢复到 `D:/codex/war3 AI/openwar3-undead`，来源提交 `12223529df9b4789591df78586bc91741a7cea8c`；战术源码未修改。
+- [x] 用户提供游戏目录 `C:/Users/38993/Downloads/War3_1.27a/Warcraft III Frozen Throne 1.27a publish`，Game.dll 版本为 `1.27.0.52240`。FrozenThrone/(2)EchoIsles.w3x SHA-256 与项目营地目录一致：`081cf08ec48ace39670cc786a896ee1ede6c5bab0bab3f9fe3232160d1b5bf9a`。
+- [x] 从官方 OPENXXAI/OpenWar3AI 下载固定提交 `ffd7dd25a3c2478f457b74bde89d23e605b24243` 的源码归档到 vendor。git clone 连接重置，首次 ZIP 下载超时；最终官方 tar.gz 下载并完整解压成功。上游目录为归档解压结果，不含 Git 历史。
+- [x] 新建 Python 3.14.3 独立 .venv，安装 requirements-p0.lock 四项锁定依赖，pip check 通过。配置上游 openwar3.json 的 game_dir、python 和默认地图；三个运行时文件均通过发布清单的大小及 SHA-256 校验后复制到上游 bin。
+- [x] 从本机 MPQ 提取全部 18 项数据，五个生成器全部成功；bot.py check 全部 true、active_project_pids=[]。本机完整离线测试实际运行 449 项，全部通过，无跳过。
+- [ ] 本机尚未启动游戏或验证接口实际操作，不能将环境检查与离线测试当作本机 P0 实机通过。项目历史 P0 完成、当前 P1 部分完成的阶段状态不变，P2–P4 未开始；Python 3.14 实机兼容性仍待验证。
+
+恢复期间先行运行的 8 项 baseline 测试为 7 通过、1 因尚未下载 SDK 而报 ModuleNotFoundError: w3paths；依赖恢复后由完整 449 项通过覆盖。不删除或掩盖该首次环境缺失。没有修改游戏文件、启动对局、使用 computer-use 或创建 Git 提交。
+
+本机证据：artifacts/setup-environment-20261011.json、runtime-verification-20261011.json、setup-extract-20261011.log、setup-check-20261011.json、setup-tests-20261011.log。旧 artifacts 属于原开发机，未随仓库迁移。下一步获开局授权后进行本机接口/单局验证，再继续 P1 战损、救援、经济与稳定性待办。
+
 ## 执行状态
 
 更新时间：2026-10-10。当前0.1.51-dev/rules0.1.51，P1部分完成，449项离线通过。两次人工重开182138→182411→182727，末局851.88秒manual_surrender后无接续；runner及受控进程已退出，session空，开局授权0。117个源码/测试/文档文件已上传GitHub私有仓库https://github.com/huangzhd/openwar3-undead，main首次提交4062261与远端完全一致。常规git push端点连接超时，已通过官方Git数据库API完成同提交上传；当前补充归档完成状态，战术代码未改。P2–P4未开始。

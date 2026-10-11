@@ -1,0 +1,513 @@
+{
+  "run": "20261011-234536",
+  "frame": {
+    "event": "combat_state",
+    "clock": 919.705,
+    "center": [
+      -4257.796875,
+      -111.99072265625
+    ],
+    "army_hp": 5346.547073364258,
+    "enemy_hp": 207.7410430908203,
+    "army_health": 0.6235040318792138,
+    "recent_losses": 0,
+    "army": [
+      {
+        "handle": [
+          7334,
+          177903
+        ],
+        "type": "ucry",
+        "x": -4601,
+        "y": 736,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          7348,
+          124242
+        ],
+        "type": "ucry",
+        "x": -4284,
+        "y": -208,
+        "hp": 198,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          8958,
+          130316
+        ],
+        "type": "Nbrn",
+        "x": -4258,
+        "y": -112,
+        "hp": 521,
+        "hp_max": 550.0,
+        "mana": 225,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          12513,
+          66266
+        ],
+        "type": "uobs",
+        "x": -4168,
+        "y": -79,
+        "hp": 46,
+        "hp_max": 550.0,
+        "mana": 6,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          12537,
+          61649
+        ],
+        "type": "ucry",
+        "x": -4073,
+        "y": -102,
+        "hp": 350,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          12760,
+          131361
+        ],
+        "type": "ucry",
+        "x": -4366,
+        "y": 29,
+        "hp": 148,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          12909,
+          53544
+        ],
+        "type": "Ulic",
+        "x": -4267,
+        "y": 84,
+        "hp": 625,
+        "hp_max": 625.0,
+        "mana": 283,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          13236,
+          41302
+        ],
+        "type": "ucry",
+        "x": -4369,
+        "y": -69,
+        "hp": 190,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          13415,
+          20682
+        ],
+        "type": "Udea",
+        "x": -4132,
+        "y": 16,
+        "hp": 800,
+        "hp_max": 800.0,
+        "mana": 38,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          13423,
+          114352
+        ],
+        "type": "uobs",
+        "x": -4378,
+        "y": -271,
+        "hp": 165,
+        "hp_max": 550.0,
+        "mana": 354,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          14119,
+          104679
+        ],
+        "type": "ucry",
+        "x": -4273,
+        "y": -314,
+        "hp": 352,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          15400,
+          150045
+        ],
+        "type": "ucry",
+        "x": -4174,
+        "y": -284,
+        "hp": 542,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          15731,
+          72323
+        ],
+        "type": "ucry",
+        "x": -4176,
+        "y": -190,
+        "hp": 269,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          15819,
+          88416
+        ],
+        "type": "ucry",
+        "x": -4374,
+        "y": -180,
+        "hp": 280,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          16163,
+          141330
+        ],
+        "type": "ucry",
+        "x": -4274,
+        "y": -9,
+        "hp": 310,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      }
+    ],
+    "enemies": [
+      {
+        "handle": [
+          14403,
+          41473
+        ],
+        "type": "ucrm",
+        "x": -4118,
+        "y": 303,
+        "hp": 208,
+        "target": null
+      }
+    ]
+  },
+  "separated_march": {
+    "event": "march_state",
+    "clock": 1113.455,
+    "target": [
+      -6324.4,
+      -769.8
+    ],
+    "stage": "advance",
+    "army": [
+      {
+        "handle": [
+          5515,
+          214854
+        ],
+        "type": "ucry",
+        "x": -1872,
+        "y": 1382,
+        "point": [
+          -2112.0,
+          1216.0
+        ],
+        "hold": false,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          7348,
+          124242
+        ],
+        "type": "ucry",
+        "x": -1499,
+        "y": 1525,
+        "point": [
+          -1728.0,
+          1344.0
+        ],
+        "hold": false,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          8958,
+          130316
+        ],
+        "type": "Nbrn",
+        "x": -319,
+        "y": 1872,
+        "point": [
+          -1614.0517578125,
+          1478.2685546875
+        ],
+        "hold": false,
+        "catching_up": true
+      },
+      {
+        "handle": [
+          12513,
+          66266
+        ],
+        "type": "uobs",
+        "x": -1966,
+        "y": 1412,
+        "point": [
+          -1728.0,
+          1344.0
+        ],
+        "hold": false,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          12760,
+          131361
+        ],
+        "type": "ucry",
+        "x": -1946,
+        "y": 1202,
+        "point": [
+          -1728.0,
+          1344.0
+        ],
+        "hold": false,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          12909,
+          53544
+        ],
+        "type": "Ulic",
+        "x": 589,
+        "y": 1870,
+        "point": [
+          -1614.0517578125,
+          1478.2685546875
+        ],
+        "hold": false,
+        "catching_up": true
+      },
+      {
+        "handle": [
+          13415,
+          20682
+        ],
+        "type": "Udea",
+        "x": -729,
+        "y": 1740,
+        "point": [
+          -1614.0517578125,
+          1478.2685546875
+        ],
+        "hold": false,
+        "catching_up": true
+      },
+      {
+        "handle": [
+          13423,
+          114352
+        ],
+        "type": "uobs",
+        "x": -1831,
+        "y": 1280,
+        "point": [
+          -2112.0,
+          1216.0
+        ],
+        "hold": false,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          13570,
+          222959
+        ],
+        "type": "ucry",
+        "x": -2022,
+        "y": 1326,
+        "point": [
+          -1728.0,
+          1344.0
+        ],
+        "hold": false,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          14119,
+          104679
+        ],
+        "type": "ucry",
+        "x": -1845,
+        "y": 1160,
+        "point": [
+          -2112.0,
+          1216.0
+        ],
+        "hold": false,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          14314,
+          182664
+        ],
+        "type": "ucry",
+        "x": -1614,
+        "y": 1478,
+        "point": [
+          -1856.0,
+          1344.0
+        ],
+        "hold": false,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          15400,
+          150045
+        ],
+        "type": "ucry",
+        "x": -1002,
+        "y": 1701,
+        "point": [
+          -1728.0,
+          1344.0
+        ],
+        "hold": false,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          15731,
+          72323
+        ],
+        "type": "ucry",
+        "x": -1910,
+        "y": 1709,
+        "point": [
+          -1728.0,
+          1344.0
+        ],
+        "hold": false,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          15775,
+          201836
+        ],
+        "type": "uobs",
+        "x": -1836,
+        "y": 1611,
+        "point": [
+          -1728.0,
+          1344.0
+        ],
+        "hold": false,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          15819,
+          88416
+        ],
+        "type": "ucry",
+        "x": -1705,
+        "y": 1579,
+        "point": [
+          -1856.0,
+          1344.0
+        ],
+        "hold": false,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          16143,
+          180362
+        ],
+        "type": "ucry",
+        "x": 729,
+        "y": 1882,
+        "point": [
+          -1614.0517578125,
+          1478.2685546875
+        ],
+        "hold": false,
+        "catching_up": true
+      },
+      {
+        "handle": [
+          16163,
+          141330
+        ],
+        "type": "ucry",
+        "x": -1011,
+        "y": 1848,
+        "point": [
+          -1728.0,
+          1344.0
+        ],
+        "hold": false,
+        "catching_up": false
+      }
+    ]
+  },
+  "goal": [
+    3648,
+    3008
+  ],
+  "limitations": [
+    "Coordinates from live fair logs; test navigation uses open paths, not actual map replay."
+  ]
+}

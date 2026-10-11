@@ -1,6 +1,6 @@
 """Shared local siege focus, using only fair visible units/orders/production."""
 from .structures import is_structure
-from .targeting import enemy_player,unit_stats,in_weapon_range,buffs,abilities
+from .targeting import enemy_player,unit_stats,in_weapon_range,buffs,abilities,can_engage
 from openwar3.orders import REPAIR,REVIVE,ORDER
 
 TOWERS={'hgtw','hctw','hatw','owtw','uzg1','uzg2','etrp'}
@@ -38,7 +38,7 @@ class SiegeFocus:
         if not fighters:self.target=None;return None
         core=[u for u in fighters if u.type not in {'uske','uskm'}] or fighters
         anchor=min(core,key=lambda u:sum(g.dist(u,v) for v in core))
-        visible=[e for e in foes if e.hp>0 and getattr(e,'alive',True) and enemy_player(g,e) and
+        visible=[e for e in foes if can_engage(e) and enemy_player(g,e) and
                  (not hasattr(e,'visible_to') or e.visible_to(g.me())) and g.dist(e,anchor)<950]
         buildings=[e for e in visible if is_structure(e)]
         if not buildings:self.target=None;return None

@@ -14,10 +14,12 @@ from .debug_console import camp_name,region
 from .scouting import SkeletonScouts,SKELETONS,CritterSearch
 from .coil import can_damage
 from .nc_combo import NCCombo,spell_data,DISABLED_CASTERS
-from .targeting import in_weapon_range,priority,enemy_player,HeroPressure,webbed_air
+from .targeting import in_weapon_range,priority,enemy_player,HeroPressure,webbed_air,can_engage
 from .structures import is_structure
 from .siege import SiegeFocus,attackable as siege_attackable,reachable as siege_reachable
 from .creep_aggro import CreepAggro
+from .retreat import escape_point
+from .combat_progress import CombatProgress
 import json
 from bootstrap import UPSTREAM
 from openwar3 import combat
@@ -62,6 +64,7 @@ class Controller:
         self.shield_moves={}
         self.loot=Loot(json.loads((UPSTREAM/'data/game/items.json').read_text(encoding='utf-8')),log)
         self.battle_enemies=[]
+        self.combat_progress=CombatProgress(log)
         self.teleport=None
         self.portal_handoff=None
         self.portal_pulls={}
@@ -148,17 +151,36 @@ class Controller:
         self.last[key]=now
         return True
 
+    def active_foes(self,foes,now):
+        ignored={e.handle for e in foes if e.type=='ucrm' and e.hp>0}
+        previous=getattr(self,'buried_foes',set())
+        for handle in ignored-previous:
+            self.log('burrow_target_deferred',clock=now,handle=handle,
+                     reason='buried_form_without_fair_detection_evidence')
+        self.buried_foes=ignored
+        return [e for e in foes if can_engage(e)]
+
+    def third_hero_ready(self,heroes,center):
+        # Initial departure waits for the tavern hero. After departure,
+        # formation handles separation; death still removes readiness.
+        return any(h.type==self.third_hero and h.hp>0 and
+                   h.handle not in self.tavern_joiners and
+                   (self.attack_committed or self.g.dist(h,center)<1200) for h in heroes)
+
     def go(self,units,point,now,attack=False):
         # Creeping uses explicit creep targets; attack-move must not acquire a player base.
         if self.action==Action.CREEP and not attack_ready(self.situation):attack=False
         units=[u for u in units if u.handle not in self.shield_moves and u.handle not in self.creep_aggro.protected and (u.handle not in self.shopping or self.action in (Action.RETREAT,Action.DEFEND) or self.battle_enemies)]
         combat={'Udea','Ulic','Nbrn','Nngs','ucry','uobs','uske','uskm'}
-        if attack and self.battle_enemies and len(units)>=2 and self.action!=Action.RETREAT:
+        battle=[e for e in self.battle_enemies if can_engage(e) and self.combat_progress.allowed(e,now)]
+        if attack and not battle and self.combat_progress.deferred:
+            attack=False # Resume the route without reacquiring the same ineffective target.
+        if attack and battle and len(units)>=2 and self.action!=Action.RETREAT:
             anchor=min(units,key=lambda u:sum(self.g.dist(u,v) for v in units))
             for u in units:
                 if self.g.dist(u,anchor)>700:
                     self.go_raw([u],(anchor.x,anchor.y),now,False)
-            self.fight(units,self.battle_enemies,now)
+            self.fight(units,battle,now)
             return
         if len(units)>=2 and all(u.type in combat for u in units):
             key=(tuple(sorted(u.handle for u in units)),round(point[0]/128),round(point[1]/128),attack)
@@ -228,7 +250,7 @@ class Controller:
         army=g.units('me',{'Udea','Ulic','Nbrn','Nngs','ucry','uobs','uske','uskm'})
         army=[u for u in army if u.handle not in self.skeleton_scouts.assignments]
         self.observe_rod_skeletons(now)
-        foes=g.enemies()
+        foes=self.active_foes(g.enemies(),now)
         self.observe_air(foes,now)
         local_defended=self.home_defense.tick(g,self.home,foes,now,airborne)
         self.economy.ghoul_reserved=self.home_defense.reserved
@@ -248,6 +270,10 @@ class Controller:
         center=(anchor.x,anchor.y)
         self.clear_attack_sites(foes,center,now)
         hostiles=foes+g.creeps()
+        self.combat_progress.observe(army,[e for e in hostiles if g.dist(e,center)<600],now,
+                                     self.action in (Action.ATTACK,Action.HARASS))
+        foes=[e for e in foes if self.combat_progress.allowed(e,now)]
+        hostiles=[e for e in hostiles if self.combat_progress.allowed(e,now)]
         self.battle_enemies=[e for e in hostiles if g.dist(e,center)<600]
         local_army=[u for u in army if g.dist(u,center)<1200]
         self.creep_strength=local_army
@@ -273,8 +299,7 @@ class Controller:
             sum(e.hp for e in hostiles if not is_structure(e) and e.type not in {'hpea','opeo','uaco','ewsp'} and g.dist(e,center)<1000),sum(u.hp for u in local_army),len(fiends),tier,
             bool(lich),bool(lich and 'ocor' in (g.inventory(lich) or [])),len(g.units('me',{'uobs'})),dk.level if dk else 1,
             sum(u.hp for u in local_army)/max(1,sum(u.hp_max for u in local_army)),len(self.micro.losses))
-        self.situation.third_hero=any(h.type==self.third_hero and h.hp>0 and g.dist(h,center)<1200
-                                      and h.handle not in self.tavern_joiners for h in heroes)
+        self.situation.third_hero=self.third_hero_ready(heroes,center)
         self.situation.dk=bool(dk and dk.hp>0)
         if not self.attack_committed and attack_ready(self.situation):
             self.attack_committed=True
@@ -633,7 +658,7 @@ class Controller:
     def emergency_portal(self,army,now):
         g=self.g;s=self.situation
         if self.teleport:return False
-        enemies=list({e.handle:e for e in [*self.battle_enemies,*g.enemies()] if e.hp>0}.values())
+        enemies=list({e.handle:e for e in [*self.battle_enemies,*g.enemies()] if can_engage(e)}.values())
         targets={e.handle:g.current_target(e) for e in enemies}
         def threatened(u):
             return any(in_weapon_range(g,e,u) or
@@ -715,6 +740,23 @@ class Controller:
     def collective_retreat(self,army,now):
         self.set_intent("撤退回家 · 恢复部队")
         if not self.emergency_portal(army,now):
+            enemies=[e for e in self.g.enemies() if can_engage(e)]
+            if any(self.g.dist(e,self.home)<1200 for e in enemies):
+                self.set_intent('基地受围 · 脱离敌军射程')
+                # Formation's home rally used to overwrite pullbacks inside the enemy army.
+                for u in army:
+                    if now<self.cast_until.get(u.handle,0) or u.handle in self.creep_aggro.protected:continue
+                    if u.handle in self.shield_moves:
+                        self.go_raw([u],self.shield_moves[u.handle],now);continue
+                    if not self.due(('retreat_escape',u.handle),now,1.5):continue
+                    point=escape_point(self.g,u,enemies,ground_attack_range,self.portal_pulls.get(u.handle))
+                    if point is not None and self.g.dist(u,point)>40:
+                        self.go_raw([u],point,now)
+                    elif self.due(('retreat_hold',u.handle),now,3):
+                        self.g.hold(u);self.last.pop(('go',u.handle),None)
+                    self.log('retreat_escape_order',clock=now,unit=u.type,handle=u.handle,
+                             origin=(u.x,u.y),point=point,reason='safe_point' if point else 'no_safe_route')
+                return
             escaping=[u for u in army if u.handle in self.portal_escaping]
             for u in escaping:self.go_raw([u],self.portal_pulls[u.handle],now)
             self.go([u for u in army if u.handle not in self.portal_escaping],(self.home.x,self.home.y),now)
@@ -1167,7 +1209,8 @@ class Controller:
         g=self.g
         # Refresh the full fair enemy list: a caller's melee subset must not hide
         # a defender or a higher-priority tower on the other side of this base.
-        visible=g.enemies() if hasattr(g,'enemies') else foes
+        visible=[e for e in (g.enemies() if hasattr(g,'enemies') else foes)
+                 if can_engage(e) and self.combat_progress.allowed(e,now)]
         army=[u for u in army if u.handle not in self.shield_moves and
               u.handle not in self.creep_aggro.protected and u.handle not in self.micro.pulling and
               (u.handle not in self.shopping or self.battle_enemies) and
@@ -1197,6 +1240,7 @@ class Controller:
 
     def fight(self,army,foes,now):
         g=self.g
+        foes=[e for e in foes if can_engage(e) and self.combat_progress.allowed(e,now)]
         army=[u for u in army if u.handle not in self.shield_moves and u.handle not in self.creep_aggro.protected and (u.handle not in self.shopping or self.action in (Action.RETREAT,Action.DEFEND) or self.battle_enemies)]
         self.stop_hero_chases(army,now)
         if self.action==Action.CREEP and not attack_ready(self.situation):
@@ -1221,7 +1265,8 @@ class Controller:
         lich=next((u for u in army if u.type=='Ulic'),None)
         if not single_finishing and dk and dk.mana>=COIL_MANA and now>=self.cast_until.get(dk.handle,0) and g.cooldown(dk,'AUdc')==0 and self.due('coil',now,1):
             wounded=self.heal_candidates(dk)
-            if not wounded and can_damage(target.type) and not is_structure(target) and g.dist(dk,target)<750:
+            if (not wounded and can_damage(target.type) and not is_structure(target) and g.dist(dk,target)<750
+                    and (player_fight or dk.mana>=2*COIL_MANA)):
                 receipt=g.cast(dk,'deathcoil',target=target)
                 self.log('coil_damage_attempt',clock=now,target=target.type,accepted=bool(receipt),mana=dk.mana)
                 if receipt:

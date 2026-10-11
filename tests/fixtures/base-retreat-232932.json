@@ -1,0 +1,266 @@
+{
+  "source_run": "20261011-232932",
+  "source_clock": 438.55,
+  "home": [
+    -5184,
+    2944
+  ],
+  "frame": {
+    "event": "combat_state",
+    "clock": 438.55,
+    "center": [
+      -5183.2236328125,
+      2671.9296875
+    ],
+    "army_hp": 2615.0615997314453,
+    "enemy_hp": 4253.932830810547,
+    "army_health": 0.6537653999328613,
+    "recent_losses": 0,
+    "army": [
+      {
+        "handle": [
+          12238,
+          38875
+        ],
+        "type": "ucry",
+        "x": -5183,
+        "y": 2672,
+        "hp": 229,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": true,
+        "pull": [
+          -5549.714136739397,
+          2607.958286541806
+        ]
+      },
+      {
+        "handle": [
+          12295,
+          30085
+        ],
+        "type": "ucry",
+        "x": -5546,
+        "y": 2674,
+        "hp": 140,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          12793,
+          44533
+        ],
+        "type": "ucry",
+        "x": -5518,
+        "y": 2826,
+        "hp": 457,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          13218,
+          57850
+        ],
+        "type": "ucry",
+        "x": -4905,
+        "y": 2007,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          13975,
+          20527
+        ],
+        "type": "Udea",
+        "x": -5160,
+        "y": 2769,
+        "hp": 164,
+        "hp_max": 725.0,
+        "mana": 5,
+        "pulling": true,
+        "pull": [
+          -5558.031507915068,
+          2609.320763263266
+        ]
+      },
+      {
+        "handle": [
+          15625,
+          52242
+        ],
+        "type": "Ulic",
+        "x": -5160,
+        "y": 2315,
+        "hp": 525,
+        "hp_max": 525.0,
+        "mana": 330,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          15885,
+          62319
+        ],
+        "type": "ucry",
+        "x": -4907,
+        "y": 1716,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      }
+    ],
+    "enemies": [
+      {
+        "handle": [
+          7182,
+          20145
+        ],
+        "type": "ugho",
+        "x": -5310,
+        "y": 2800,
+        "hp": 340,
+        "target": [
+          13975,
+          20527
+        ]
+      },
+      {
+        "handle": [
+          11879,
+          34722
+        ],
+        "type": "ucry",
+        "x": -5009,
+        "y": 3127,
+        "hp": 550,
+        "target": [
+          13975,
+          20527
+        ]
+      },
+      {
+        "handle": [
+          12341,
+          47040
+        ],
+        "type": "ugho",
+        "x": -5418,
+        "y": 2789,
+        "hp": 340,
+        "target": [
+          13975,
+          20527
+        ]
+      },
+      {
+        "handle": [
+          13002,
+          31147
+        ],
+        "type": "ugho",
+        "x": -5275,
+        "y": 2672,
+        "hp": 340,
+        "target": [
+          13975,
+          20527
+        ]
+      },
+      {
+        "handle": [
+          13385,
+          21268
+        ],
+        "type": "Udre",
+        "x": -5054,
+        "y": 2736,
+        "hp": 740,
+        "target": [
+          13975,
+          20527
+        ]
+      },
+      {
+        "handle": [
+          13562,
+          21134
+        ],
+        "type": "ugho",
+        "x": -5156,
+        "y": 3276,
+        "hp": 178,
+        "target": null
+      },
+      {
+        "handle": [
+          14709,
+          29025
+        ],
+        "type": "ugho",
+        "x": -5365,
+        "y": 2777,
+        "hp": 340,
+        "target": [
+          13975,
+          20527
+        ]
+      },
+      {
+        "handle": [
+          14805,
+          44800
+        ],
+        "type": "ucry",
+        "x": -4727,
+        "y": 2823,
+        "hp": 550,
+        "target": [
+          13975,
+          20527
+        ]
+      },
+      {
+        "handle": [
+          15242,
+          15254
+        ],
+        "type": "ugho",
+        "x": -5306,
+        "y": 2736,
+        "hp": 326,
+        "target": [
+          13975,
+          20527
+        ]
+      },
+      {
+        "handle": [
+          15570,
+          40005
+        ],
+        "type": "ucry",
+        "x": -4906,
+        "y": 3114,
+        "hp": 550,
+        "target": [
+          13975,
+          20527
+        ]
+      }
+    ]
+  },
+  "limitations": "Fair logged positions and base target only; tests supply synthetic open terrain, not an engine replay."
+}

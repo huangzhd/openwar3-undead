@@ -209,8 +209,13 @@ class Economy:
             if not g.production(altars[0]):
                 return # reserve Lich resources
         if tier==2 and not upgrading:
-            if threat and not g.my_buildings({'uslh'}):
+            # First sustain unit gets its budget before tier three, even before a raid.
+            if not g.my_buildings({'uslh'}):
                 self.build(g,'uslh',home,now)
+                return
+            if self.count(g,'uobs')<1:
+                slaughter=self.ready(g,'uslh')
+                if slaughter:self.train(g,slaughter[0],'uobs',now)
                 return
             self.train(g,home,'unp2',now)
             return

@@ -4,6 +4,26 @@ import time
 from .speed_control import SpeedControl
 
 
+def initialize_ui(g,log,clock=time.monotonic):
+    """Allow cold font/render setup up to 45 seconds, only for UI enable calls."""
+    started=clock()
+    original=g.lane.commands
+    enable_ops={g._w3fast.OP[n] for n in ('input_enable','canvas_enable') if n in g._w3fast.OP}
+    def commands(calls,timeout=.25):
+        if calls and all(c.op in enable_ops for c in calls):
+            timeout=45-(clock()-started)
+            if timeout<=0:raise TimeoutError('UI initialization exceeded 45 seconds')
+        return original(calls,timeout=timeout)
+    log('ui_initializing',timeout_seconds=45)
+    g.lane.commands=commands
+    try:
+        ui=g.ui
+    finally:
+        g.lane.commands=original
+    log('ui_ready',wall_seconds=round(clock()-started,3))
+    return ui
+
+
 def region(point):
     x,y=point
     return ('西' if x<-1800 else '东' if x>1800 else '')+('北' if y>1800 else '南' if y<-1800 else '')+'侧' if abs(x)>1800 or abs(y)>1800 else '中央'
@@ -58,8 +78,9 @@ class DebugConsole:
     """Compact in-game HUD with click-to-move placement through OpenWar3AI only."""
     def __init__(self,g,log,clock=time.monotonic):
         self.g,self.log,self.clock=g,log,clock
-        self.meter=ActionMeter(g)
+        initialize_ui(g,log,clock)
         self.speed=SpeedControl(g,log,clock,embedded=True)
+        self.meter=ActionMeter(g)
         self.speed.position=lambda:(self.layout()[0]+158,self.layout()[1]+34)
         self.collapsed=True;self.history_open=False;self.speed.visible=False
         self.match_action=None
@@ -198,7 +219,7 @@ class DebugConsole:
                 button('toggle','调试台 +',218,0,82,28,lambda:self.toggle('panel'))
             else:
                 text('frame','',0,0,300,self.panel_height(),bg=(19,25,36,230),border=(80,98,122),radius=4)
-                button('move','移动中 · 点击固定' if self.moving else '调试台 0.1.51 · 点此移动',6,4,194,26,self.start_move)
+                button('move','移动中 · 点击固定' if self.moving else '调试台 0.1.55 · 点此移动',6,4,194,26,self.start_move)
                 button('history','历史' if not self.history_open else '折叠',204,4,46,26,self.toggle_history,selected=self.history_open)
                 button('toggle','－',254,4,40,26,lambda:self.toggle('panel'))
                 text('metrics',f'{self.stamp(game_now)}  APM {apm}',8,35,144,26,14)

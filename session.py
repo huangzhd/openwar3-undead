@@ -93,31 +93,46 @@ class Session:
         try:
             p = psutil.Process(row['pid'])
             return p.create_time() == row['created'] and p.name().lower() == row['name'].lower()
-        except psutil.Error:
+        except psutil.NoSuchProcess:
             return False
 
     def stop(self):
         if not self.owned:
             return
+        def remaining_owned():
+            remaining=[]
+            for row in self.owned:
+                try:
+                    if self.matches(row):remaining.append(row)
+                except psutil.Error:
+                    remaining.append(row) # Unknown identity/liveness is not confirmed exit.
+            return remaining
+        close_error=None
         if self.game:
             try:
                 self.game.end_game()
             except Exception as exc:
                 print('Game end request failed:',repr(exc),flush=True)
             finally:
-                self.game.close()
+                try:self.game.close()
+                except Exception as exc:close_error=exc
                 self.game = None
         deadline = time.monotonic() + 5
-        while time.monotonic() < deadline and any(self.matches(r) for r in self.owned):
+        while time.monotonic() < deadline and remaining_owned():
             time.sleep(.2)
-        for row in reversed(self.owned):
-            if self.matches(row):
-                psutil.Process(row['pid']).kill()
-        remaining = [r for r in self.owned if self.matches(r)]
+        errors=[]
+        # Launcher owns a Windows Job: stopping it first also releases its game.
+        for row in self.owned:
+            try:
+                if self.matches(row):psutil.Process(row['pid']).kill()
+            except psutil.NoSuchProcess:pass
+            except psutil.Error as exc:errors.append(repr(exc))
+        deadline=time.monotonic()+3
+        while True:
+            remaining=remaining_owned()
+            if not remaining or time.monotonic()>=deadline:break
+            time.sleep(.2)
         self.record.write_text(json.dumps({'processes':remaining,'closed':not remaining},indent=2),encoding='utf-8')
-        if remaining:
-            psutil.wait_procs([psutil.Process(r['pid']) for r in remaining],timeout=3)
-            if any(self.matches(r) for r in remaining):
-                raise RuntimeError('Owned process did not exit')
-            self.record.write_text(json.dumps({'processes':[],'closed':True}),encoding='utf-8')
+        if remaining:raise RuntimeError('Owned process did not exit: '+repr(errors))
         self.owned = []
+        if close_error is not None:raise RuntimeError('Game client cleanup failed') from close_error
