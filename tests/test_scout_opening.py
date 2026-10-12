@@ -80,7 +80,7 @@ class ScoutCorpseTests(unittest.TestCase):
                 elif cause=='old':now=186
                 else:b.opening_rod_started=110
                 self.assertFalse(b.use_scout_corpse([dk],dk,now))
-                self.assertTrue(b.opening_rod_finished);self.assertFalse(any(o[0]=='rod' for o in orders))
+                self.assertTrue(b.scout_corpse_abandoned);self.assertFalse(b.opening_rod_finished);self.assertFalse(any(o[0]=='rod' for o in orders))
 
     def test_cooldown_or_combat_does_not_cast(self):
         b,g,dk,corpse,own,all_units,orders,events,inv,cool=self.make();b.scout(100);dk.x=-1200

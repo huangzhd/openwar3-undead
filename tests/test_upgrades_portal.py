@@ -26,9 +26,9 @@ class UpgradeTests(unittest.TestCase):
         e.ever_heroes={h.type for h in g.my_heroes()}
         return g,e
     def test_real_population_threshold_and_spare_resources(self):
-        g,e=self.make();g.food=49
+        g,e=self.make();g.food=47
         e.research_upgrades(g,1);self.assertFalse(g.commands)
-        g.food=50;g.gold=149
+        g.food=48;g.gold=149;e.mass_army=True
         e.research_upgrades(g,4);self.assertFalse(g.commands)
         g.gold=150;g.lumber=50
         self.assertTrue(e.research_upgrades(g,7))
@@ -81,6 +81,7 @@ class PortalGame:
     def __init__(self):
         self.dk=unit('Udea',1,owner=0);self.lich=unit('Ulic',2,owner=0)
         self.shop=unit('utom',3,owner=0);self.home=unit('unp2',4,owner=0)
+        self.dk.mana=200;self.lich.mana=200
         self.heroes=[self.dk,self.lich];self.inv={self.dk.handle:[None]*6,self.lich.handle:[None]*6}
         self.gold=1000;self.purchases=[];self.transfers=[];self.shops=[self.shop]
     def my_heroes(self):return self.heroes

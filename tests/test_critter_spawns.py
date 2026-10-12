@@ -15,6 +15,16 @@ class CritterSpawnTests(unittest.TestCase):
         s=CritterSearch(lambda e,**kw:events.append(dict(event=e,**kw)))
         return s,g,u,h,events
 
+    def test_two_nearest_regions_exhaust_without_visiting_third(self):
+        s,g,u,h,e=self.make((0,0))
+        s.spawns=[dict(code='nshe',x=x,y=0) for x in (1000,2000,4000)]
+        first=s.choose(g,u,h,60);self.assertLessEqual(dist(first,(1000,0)),451)
+        g.visible=lambda x,y:dist((x,y),(1000,0))<=451
+        second=s.choose(g,u,h,61);self.assertLessEqual(dist(second,(2000,0)),451)
+        g.visible=lambda *p:True
+        self.assertIsNone(s.choose(g,u,h,62));self.assertTrue(s.reported)
+        self.assertTrue(all(dist(p,(4000,0))>451 for p in s.points))
+
     def test_catalog_matches_actual_static_map_creation_function(self):
         cfg=json.loads((bootstrap.UPSTREAM/'openwar3.json').read_text(encoding='utf-8'))
         script=Mpq((Path(cfg['game_dir'])/'Maps'/cfg['default_map']).read_bytes()).read('war3map.j').decode('utf-8')
@@ -47,11 +57,11 @@ class CritterSpawnTests(unittest.TestCase):
         self.assertLessEqual(dist(point,center),451);self.assertNotEqual(point,center)
         self.assertEqual(e[-1]['search_kind'],'spawn_region')
 
-    def test_seen_neighborhood_releases_general_search(self):
+    def test_seen_neighborhood_moves_to_second_nearby_region(self):
         s,g,u,h,e=self.make();center=(-3372.9,2002.9)
         g.visible=lambda x,y:dist((x,y),center)<=451
         point=s.choose(g,u,h,66)
-        self.assertEqual(e[-1]['search_kind'],'general')
+        self.assertEqual(e[-1]['search_kind'],'spawn_region')
         self.assertGreater(dist(point,center),451)
 
     def test_blocked_exact_spawn_uses_nearby_walkable_point(self):
@@ -73,13 +83,13 @@ class CritterSpawnTests(unittest.TestCase):
         self.assertEqual(orders[-1],('attack',[own[1].handle],[c.handle]))
         self.assertEqual(b.scout_critter_point,(-3500,2200))
 
-    def test_unsafe_spawn_area_falls_back_to_safe_general_points(self):
+    def test_unsafe_spawn_area_falls_back_to_second_region(self):
         s,g,u,h,e=self.make();center=(-3372.9,2002.9)
         point=None
         for now in range(66,70):
             point=s.choose(g,u,h,now,safe_route=lambda a,b:dist(b,center)>600)
             if point:break
         self.assertIsNotNone(point);self.assertGreater(dist(point,center),600)
-        self.assertEqual(e[-1]['search_kind'],'general')
+        self.assertEqual(e[-1]['search_kind'],'spawn_region')
 
 if __name__=='__main__':unittest.main()

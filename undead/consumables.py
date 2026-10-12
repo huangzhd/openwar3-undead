@@ -1,15 +1,24 @@
 """Conservative consumables using own inventories and fair nearby threats."""
 from .equipment import can_receive,BLUE_POTIONS
+from .targeting import enemy_player,can_engage
 
 # Pinned installation AbilityData.slk: ability, heal, mana, radius, buff.
 ITEMS={
     'phea':('AIh1',250,0,0,None), 'pghe':('AIh2',500,0,0,None),
     'pman':('AIm1',0,150,0,None), 'pgma':('AIm2',0,300,0,None),
+    # LR 20261012-145656: DK kept mnst while unable to cast Coil.
+    # Local ItemData/AbilityData: active AIm2 restores 300, like pgma.
+    'mnst':('AIm2',0,300,0,None),
     'pres':('AIre',500,200,0,None),
     'pnvu':('AIvu',0,0,0,'Bvul'), 'pnvl':('AIvl',0,0,0,'Bvul'),
     'shea':('AIha',150,0,600,None), 'sres':('AIra',300,150,600,None),
     'spro':('AIda',0,0,600,'Bdef'), 'sror':('AIrr',0,0,500,'Broa'),
 }
+REGEN={f'rej{i}':(f'AIp{i}',hp,mp,area,'BIrg') for i,hp,mp,area in
+       [(1,100,25,0),(2,150,50,0),(3,200,75,0),(4,400,125,0),(5,250,100,600),(6,450,150,600)]}
+REGEN['envl']=REGEN['rej3']
+ITEMS.update(REGEN)
+ITEMS['fgsk']=('AIfs',0,0,0,None)
 SCROLLS={'shea','sres'}
 ORGANIC={'Udea','Ulic','Nbrn','Nngs','ucry','ugho'}
 
@@ -34,15 +43,18 @@ class Consumables:
                         gains.append(dict(handle=h,hp_gain=round(dh,2),mana_gain=round(dm,2)))
                     if buff and buff in g.buffs(u):buffed.append(h)
             # Receipt alone, passive regeneration, and disappearance alone are not effects.
-            if (consumed and gains) or buffed:
+            summoned=[]
+            if p['code']=='fgsk':
+                summoned=[u.handle for u in g.units('me',{'nsce','nsca'}) if u.handle not in p['summons_before']]
+            if (consumed and gains) or buffed or (consumed and summoned):
                 self.log('consumable_effect_observed',clock=now,hero=p['hero'],code=p['code'],
-                         consumed=consumed,gains=gains,buffed=buffed)
+                         consumed=consumed,gains=gains,buffed=buffed,summoned=summoned)
                 self.pending.pop(handle)
             elif now-p['started']>=3:
                 self.log('consumable_effect_unconfirmed',clock=now,hero=p['hero'],code=p['code'],consumed=consumed)
                 self.pending.pop(handle)
 
-    def tick(self,g,army,hostiles,now,cast_until,blocked=(),coil_needed=False,attacking=False):
+    def tick(self,g,army,hostiles,now,cast_until,blocked=(),coil_needed=False,attacking=False,urgent=(),preparing=False):
         self.observe(g,now)
         # Most injured hero first; only one area scroll per observation window.
         for hero in sorted((u for u in army if u.is_hero),key=lambda u:u.hp/max(1,u.hp_max)):
@@ -53,6 +65,7 @@ class Consumables:
             threat=any(g.dist(e,hero)<700 for e in hostiles)
             ratio=hero.hp/max(1,hero.hp_max)
             buffs=set(g.buffs(hero)) if any(c in ITEMS for c in bag) else set()
+            dk=next((u for u in army if u.type=='Udea'),None)
             for slot,code in enumerate(bag):
                 if code not in ITEMS:continue
                 if code=='sror' and (not attacking or not any(0<=getattr(e,'owner',12)<12 and g.dist(e,hero)<700 for e in hostiles)):continue
@@ -63,8 +76,18 @@ class Consumables:
                 key=(hero.handle,identity)
                 if self.attempts.get(key,0)>=3 or now<self.retry.get(key,0):continue
                 targets=[u for u in army if u.type in ORGANIC and g.dist(u,hero)<=radius] if radius else [hero]
-                if buff=='Bvul':
-                    if not threat or ratio>.35 or buff in buffs:continue
+                if code=='fgsk':
+                    if ratio<.35 or not any(enemy_player(g,e) and can_engage(e) and g.dist(e,hero)<700 for e in hostiles):continue
+                    priority=6
+                elif code in REGEN:
+                    if threat or buffs & {'BIrg','BIrl','BIrm'}:continue
+                    hp_need=sum(min(heal,max(0,u.hp_max-u.hp)) for u in targets)
+                    mp_need=sum(min(mana,max(0,getattr(u,'mana_max',0)-getattr(u,'mana',0))) for u in targets)
+                    if hp_need<heal*.6 and mp_need<mana*.6:continue
+                    priority=3
+                elif buff=='Bvul':
+                    if not threat or (ratio>.35 and hero.handle not in urgent) or buff in buffs:continue
+                    if hero.type=='Ulic' and dk and dk.mana>=75:continue
                     priority=0
                 elif radius:
                     if buff:
@@ -87,7 +110,7 @@ class Consumables:
                     minimum={'Udea':75,'Ulic':125,'Nngs':120,'Nbrn':75}.get(hero.type,100)
                     need_mp=mana and mp<minimum and missing_mp>=mana*.65
                     if code in BLUE_POTIONS:
-                        need_mp=hero.type=='Udea' and coil_needed and mp<75
+                        need_mp=hero.type=='Udea' and (coil_needed or preparing) and mp<75
                     if not (need_hp or need_mp):continue
                     priority=1 if need_hp else 4
                 candidates.append((priority,slot,code,key,targets))
@@ -95,6 +118,7 @@ class Consumables:
             _,slot,code,key,targets=min(candidates,key=lambda x:x[:2])
             before={u.handle:(u.hp,getattr(u,'mana',0)) for u in targets}
             count=bag.count(code)
+            summons_before={u.handle for u in g.units('me',{'nsce','nsca'})} if code=='fgsk' else set()
             r=g.use_item(hero,slot)
             self.attempts[key]=self.attempts.get(key,0)+1;self.retry[key]=now+4
             # Protect even an uncertain receipt until fresh observation; never spam.
@@ -102,7 +126,8 @@ class Consumables:
             if ITEMS[code][3]:
                 if ITEMS[code][4]:self.buff_until[ITEMS[code][4]]=now+3
                 else:self.group_until=now+3
-            self.pending[hero.handle]=dict(code=code,key=key,hero=hero.type,count=count,started=now,before=before)
+            self.pending[hero.handle]=dict(code=code,key=key,hero=hero.type,count=count,started=now,before=before,
+                summons_before=summons_before)
             self.log('consumable_use_attempt',clock=now,hero=hero.type,handle=hero.handle,code=code,
                      hp=hero.hp,hp_max=hero.hp_max,accepted=bool(r),attempt=self.attempts[key],targets=[u.handle for u in targets])
 

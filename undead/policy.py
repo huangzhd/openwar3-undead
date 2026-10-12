@@ -76,15 +76,17 @@ class Situation:
     attack_committed: bool = False
     third_hero: bool = False
     dk: bool = True
+    base_enemy_hp: float = 0
 
 def attack_ready(s):
     return s.tier==3 and s.dk and s.lich and s.orb and s.third_hero
 
 def choose_rule(s):
-    if s.local_enemy_hp > s.army_hp * 1.4 and s.local_enemy_hp > 600:
+    threat=max(s.local_enemy_hp,s.base_enemy_hp if s.threatened else 0)
+    if threat > s.army_hp * 1.4 and threat > 600:
         return Action.RETREAT
     # Dead units leave the health denominator: healthy survivors do not erase attrition.
-    if s.recent_losses>=2 and s.local_enemy_hp>400 and (s.army_health<.5 or s.local_enemy_hp>s.army_hp):
+    if s.recent_losses>=2 and threat>400 and (s.army_health<.5 or threat>s.army_hp):
         return Action.RETREAT
     if s.threatened:
         return Action.DEFEND

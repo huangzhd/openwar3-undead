@@ -36,7 +36,7 @@ class SiegeFocus:
     def choose(self,g,army,foes,now):
         fighters=[u for u in army if u.type!='uobs' and (s:=unit_stats(u.type)) and s.weapons]
         if not fighters:self.target=None;return None
-        core=[u for u in fighters if u.type not in {'uske','uskm'}] or fighters
+        core=[u for u in fighters if u.type not in {'uske','uskm','nsce','nsca'}] or fighters
         anchor=min(core,key=lambda u:sum(g.dist(u,v) for v in core))
         visible=[e for e in foes if can_engage(e) and enemy_player(g,e) and
                  (not hasattr(e,'visible_to') or e.visible_to(g.me())) and g.dist(e,anchor)<950]

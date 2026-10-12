@@ -178,7 +178,7 @@ class Attachment:
 
 
 def run_attachment(pid,enemy_race=3):
-    from openwar3 import Game
+    from undead.game_view import Game
     with RunnerLock():
         metadata=probe(pid)
         if not metadata['ready']:raise RuntimeError(metadata['reason'])

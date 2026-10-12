@@ -1,0 +1,1498 @@
+{
+  "run": "20261012-115406",
+  "home": [
+    -3904,
+    -3968
+  ],
+  "frames": [
+    {
+      "event": "combat_state",
+      "clock": 1077.53,
+      "center": [
+        -2940.16357421875,
+        -1050.125
+      ],
+      "army_hp": 4601.559555053711,
+      "enemy_hp": 2226.9531860351562,
+      "army_health": 0.876487534295945,
+      "recent_losses": 3,
+      "army": [
+        {
+          "handle": [
+            4072,
+            153917
+          ],
+          "type": "ucry",
+          "x": -2940,
+          "y": -1050,
+          "hp": 521,
+          "hp_max": 550.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            13000,
+            50923
+          ],
+          "type": "Ulic",
+          "x": -2962,
+          "y": -1265,
+          "hp": 575,
+          "hp_max": 575.0,
+          "mana": 108,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            13153,
+            88311
+          ],
+          "type": "Nbrn",
+          "x": -3014,
+          "y": -1169,
+          "hp": 575,
+          "hp_max": 575.0,
+          "mana": 244,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            13572,
+            27773
+          ],
+          "type": "ucry",
+          "x": -2768,
+          "y": -1089,
+          "hp": 550,
+          "hp_max": 550.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            13936,
+            20515
+          ],
+          "type": "Udea",
+          "x": -2794,
+          "y": -995,
+          "hp": 738,
+          "hp_max": 800.0,
+          "mana": 113,
+          "pulling": true,
+          "pull": [
+            -2824.6648998179367,
+            -1778.384637209114
+          ]
+        },
+        {
+          "handle": [
+            14866,
+            35719
+          ],
+          "type": "ucry",
+          "x": -2854,
+          "y": -1143,
+          "hp": 550,
+          "hp_max": 550.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            16003,
+            70860
+          ],
+          "type": "uobs",
+          "x": -3019,
+          "y": -900,
+          "hp": 316,
+          "hp_max": 550.0,
+          "mana": 489,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            16081,
+            62364
+          ],
+          "type": "uobs",
+          "x": -2917,
+          "y": -1578,
+          "hp": 255,
+          "hp_max": 550.0,
+          "mana": 542,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            16237,
+            80881
+          ],
+          "type": "ucry",
+          "x": -2929,
+          "y": -946,
+          "hp": 521,
+          "hp_max": 550.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        }
+      ],
+      "enemies": [
+        {
+          "handle": [
+            12158,
+            37322
+          ],
+          "type": "ucry",
+          "x": -3183,
+          "y": 218,
+          "hp": 507,
+          "target": [
+            16003,
+            70860
+          ]
+        },
+        {
+          "handle": [
+            12287,
+            54828
+          ],
+          "type": "Ulic",
+          "x": -3268,
+          "y": 201,
+          "hp": 625,
+          "target": null
+        },
+        {
+          "handle": [
+            12586,
+            207916
+          ],
+          "type": "ugar",
+          "x": -2992,
+          "y": 234,
+          "hp": 321,
+          "target": [
+            16003,
+            70860
+          ]
+        },
+        {
+          "handle": [
+            12777,
+            41664
+          ],
+          "type": "ucry",
+          "x": -3288,
+          "y": 363,
+          "hp": 550,
+          "target": [
+            16003,
+            70860
+          ]
+        },
+        {
+          "handle": [
+            12872,
+            153619
+          ],
+          "type": "uabo",
+          "x": -3194,
+          "y": -241,
+          "hp": 1175,
+          "target": [
+            16003,
+            70860
+          ]
+        },
+        {
+          "handle": [
+            13041,
+            31515
+          ],
+          "type": "ucry",
+          "x": -3036,
+          "y": 86,
+          "hp": 531,
+          "target": [
+            16003,
+            70860
+          ]
+        },
+        {
+          "handle": [
+            13407,
+            188981
+          ],
+          "type": "ugar",
+          "x": -3106,
+          "y": 46,
+          "hp": 368,
+          "target": null
+        },
+        {
+          "handle": [
+            13494,
+            225695
+          ],
+          "type": "uabo",
+          "x": -3285,
+          "y": -60,
+          "hp": 1175,
+          "target": [
+            16003,
+            70860
+          ]
+        },
+        {
+          "handle": [
+            13658,
+            236439
+          ],
+          "type": "uplg",
+          "x": -3065,
+          "y": 283,
+          "hp": 100,
+          "target": null
+        },
+        {
+          "handle": [
+            14185,
+            21197
+          ],
+          "type": "Udre",
+          "x": -3087,
+          "y": 253,
+          "hp": 870,
+          "target": null
+        },
+        {
+          "handle": [
+            15991,
+            133116
+          ],
+          "type": "ugar",
+          "x": -2963,
+          "y": -396,
+          "hp": 410,
+          "target": [
+            16003,
+            70860
+          ]
+        },
+        {
+          "handle": [
+            16028,
+            128775
+          ],
+          "type": "Ucrl",
+          "x": -3120,
+          "y": -658,
+          "hp": 442,
+          "target": [
+            13936,
+            20515
+          ]
+        },
+        {
+          "handle": [
+            16701,
+            234681
+          ],
+          "type": "uplg",
+          "x": -3152,
+          "y": -304,
+          "hp": 100,
+          "target": null
+        },
+        {
+          "handle": [
+            16734,
+            235786
+          ],
+          "type": "uplg",
+          "x": -3088,
+          "y": 208,
+          "hp": 100,
+          "target": null
+        },
+        {
+          "handle": [
+            17007,
+            234352
+          ],
+          "type": "uplg",
+          "x": -3152,
+          "y": -304,
+          "hp": 100,
+          "target": null
+        }
+      ]
+    },
+    {
+      "event": "combat_state",
+      "clock": 1139.705,
+      "center": [
+        -4029.72412109375,
+        -4591.08056640625
+      ],
+      "army_hp": 2549.855682373047,
+      "enemy_hp": 3337.89892578125,
+      "army_health": 0.9074219510224366,
+      "recent_losses": 1,
+      "army": [
+        {
+          "handle": [
+            13000,
+            50923
+          ],
+          "type": "Ulic",
+          "x": -2318,
+          "y": -4356,
+          "hp": 575,
+          "hp_max": 575.0,
+          "mana": 164,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            13921,
+            255118
+          ],
+          "type": "uobs",
+          "x": -4080,
+          "y": -5008,
+          "hp": 550,
+          "hp_max": 550.0,
+          "mana": 400,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            13936,
+            20515
+          ],
+          "type": "Udea",
+          "x": -4030,
+          "y": -4591,
+          "hp": 800,
+          "hp_max": 800.0,
+          "mana": 34,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            14312,
+            249561
+          ],
+          "type": "ucry",
+          "x": -4400,
+          "y": -4629,
+          "hp": 290,
+          "hp_max": 550.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            14866,
+            35719
+          ],
+          "type": "ucry",
+          "x": -4816,
+          "y": -4615,
+          "hp": 550,
+          "hp_max": 550.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            16432,
+            246500
+          ],
+          "type": "uske",
+          "x": -2860,
+          "y": -4396,
+          "hp": 180,
+          "hp_max": 180.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            16575,
+            246518
+          ],
+          "type": "uske",
+          "x": -2967,
+          "y": -4445,
+          "hp": 180,
+          "hp_max": 180.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        }
+      ],
+      "enemies": [
+        {
+          "handle": [
+            6984,
+            165318
+          ],
+          "type": "ufro",
+          "x": -3711,
+          "y": -3914,
+          "hp": 1350,
+          "target": [
+            16898,
+            255432
+          ]
+        },
+        {
+          "handle": [
+            12158,
+            37322
+          ],
+          "type": "ucry",
+          "x": -4330,
+          "y": -3186,
+          "hp": 533,
+          "target": [
+            14866,
+            35719
+          ]
+        },
+        {
+          "handle": [
+            12287,
+            54828
+          ],
+          "type": "Ulic",
+          "x": -4284,
+          "y": -3278,
+          "hp": 625,
+          "target": [
+            16898,
+            255432
+          ]
+        },
+        {
+          "handle": [
+            12586,
+            207916
+          ],
+          "type": "ugar",
+          "x": -4720,
+          "y": -4112,
+          "hp": 262,
+          "target": [
+            14587,
+            17143
+          ]
+        },
+        {
+          "handle": [
+            12777,
+            41664
+          ],
+          "type": "ucry",
+          "x": -4211,
+          "y": -3190,
+          "hp": 550,
+          "target": [
+            16898,
+            255432
+          ]
+        },
+        {
+          "handle": [
+            12872,
+            153619
+          ],
+          "type": "uabo",
+          "x": -4091,
+          "y": -3690,
+          "hp": 596,
+          "target": null
+        },
+        {
+          "handle": [
+            13041,
+            31515
+          ],
+          "type": "ucry",
+          "x": -4113,
+          "y": -3460,
+          "hp": 550,
+          "target": [
+            16898,
+            255432
+          ]
+        },
+        {
+          "handle": [
+            13407,
+            188981
+          ],
+          "type": "ugar",
+          "x": -4419,
+          "y": -3807,
+          "hp": 410,
+          "target": [
+            15251,
+            15257
+          ]
+        },
+        {
+          "handle": [
+            13494,
+            225695
+          ],
+          "type": "uabo",
+          "x": -4089,
+          "y": -3568,
+          "hp": 1175,
+          "target": [
+            14357,
+            17422
+          ]
+        },
+        {
+          "handle": [
+            14185,
+            21197
+          ],
+          "type": "Udre",
+          "x": -3952,
+          "y": -3304,
+          "hp": 741,
+          "target": [
+            14866,
+            35719
+          ]
+        },
+        {
+          "handle": [
+            15891,
+            152709
+          ],
+          "type": "ugar",
+          "x": -4265,
+          "y": -4028,
+          "hp": 410,
+          "target": [
+            14381,
+            17963
+          ]
+        },
+        {
+          "handle": [
+            15991,
+            133116
+          ],
+          "type": "ugar",
+          "x": -4406,
+          "y": -3996,
+          "hp": 310,
+          "target": [
+            15251,
+            15257
+          ]
+        },
+        {
+          "handle": [
+            16028,
+            128775
+          ],
+          "type": "Ucrl",
+          "x": -4396,
+          "y": -3302,
+          "hp": 243,
+          "target": [
+            14866,
+            35719
+          ]
+        }
+      ]
+    },
+    {
+      "event": "combat_state",
+      "clock": 1141.705,
+      "center": [
+        -4096.0615234375,
+        -4437.7119140625
+      ],
+      "army_hp": 2554.8453063964844,
+      "enemy_hp": 5295.039642333984,
+      "army_health": 0.9091976179346919,
+      "recent_losses": 1,
+      "army": [
+        {
+          "handle": [
+            13000,
+            50923
+          ],
+          "type": "Ulic",
+          "x": -2524,
+          "y": -4356,
+          "hp": 575,
+          "hp_max": 575.0,
+          "mana": 167,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            13921,
+            255118
+          ],
+          "type": "uobs",
+          "x": -4099,
+          "y": -4808,
+          "hp": 550,
+          "hp_max": 550.0,
+          "mana": 403,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            13936,
+            20515
+          ],
+          "type": "Udea",
+          "x": -4096,
+          "y": -4438,
+          "hp": 800,
+          "hp_max": 800.0,
+          "mana": 36,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            14312,
+            249561
+          ],
+          "type": "ucry",
+          "x": -4400,
+          "y": -4467,
+          "hp": 295,
+          "hp_max": 550.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            14866,
+            35719
+          ],
+          "type": "ucry",
+          "x": -4658,
+          "y": -4599,
+          "hp": 550,
+          "hp_max": 550.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            16432,
+            246500
+          ],
+          "type": "uske",
+          "x": -3006,
+          "y": -4341,
+          "hp": 180,
+          "hp_max": 180.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            16575,
+            246518
+          ],
+          "type": "uske",
+          "x": -3114,
+          "y": -4414,
+          "hp": 180,
+          "hp_max": 180.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        }
+      ],
+      "enemies": [
+        {
+          "handle": [
+            6984,
+            165318
+          ],
+          "type": "ufro",
+          "x": -3711,
+          "y": -3914,
+          "hp": 1350,
+          "target": [
+            16898,
+            255432
+          ]
+        },
+        {
+          "handle": [
+            12158,
+            37322
+          ],
+          "type": "ucry",
+          "x": -4385,
+          "y": -3269,
+          "hp": 537,
+          "target": [
+            16898,
+            255432
+          ]
+        },
+        {
+          "handle": [
+            12287,
+            54828
+          ],
+          "type": "Ulic",
+          "x": -4284,
+          "y": -3278,
+          "hp": 625,
+          "target": [
+            16898,
+            255432
+          ]
+        },
+        {
+          "handle": [
+            12586,
+            207916
+          ],
+          "type": "ugar",
+          "x": -4720,
+          "y": -4112,
+          "hp": 266,
+          "target": [
+            14587,
+            17143
+          ]
+        },
+        {
+          "handle": [
+            12777,
+            41664
+          ],
+          "type": "ucry",
+          "x": -4211,
+          "y": -3190,
+          "hp": 550,
+          "target": [
+            16898,
+            255432
+          ]
+        },
+        {
+          "handle": [
+            12872,
+            153619
+          ],
+          "type": "uabo",
+          "x": -4144,
+          "y": -3786,
+          "hp": 567,
+          "target": [
+            13875,
+            20404
+          ]
+        },
+        {
+          "handle": [
+            13041,
+            31515
+          ],
+          "type": "ucry",
+          "x": -4113,
+          "y": -3460,
+          "hp": 550,
+          "target": [
+            16898,
+            255432
+          ]
+        },
+        {
+          "handle": [
+            13407,
+            188981
+          ],
+          "type": "ugar",
+          "x": -4419,
+          "y": -3807,
+          "hp": 410,
+          "target": [
+            15251,
+            15257
+          ]
+        },
+        {
+          "handle": [
+            13494,
+            225695
+          ],
+          "type": "uabo",
+          "x": -4089,
+          "y": -3568,
+          "hp": 1175,
+          "target": [
+            14357,
+            17422
+          ]
+        },
+        {
+          "handle": [
+            14185,
+            21197
+          ],
+          "type": "Udre",
+          "x": -3440,
+          "y": -3318,
+          "hp": 751,
+          "target": [
+            14866,
+            35719
+          ]
+        },
+        {
+          "handle": [
+            15891,
+            152709
+          ],
+          "type": "ugar",
+          "x": -4265,
+          "y": -4028,
+          "hp": 410,
+          "target": [
+            14381,
+            17963
+          ]
+        },
+        {
+          "handle": [
+            15991,
+            133116
+          ],
+          "type": "ugar",
+          "x": -4406,
+          "y": -3996,
+          "hp": 314,
+          "target": [
+            15251,
+            15257
+          ]
+        },
+        {
+          "handle": [
+            16028,
+            128775
+          ],
+          "type": "Ucrl",
+          "x": -4400,
+          "y": -3523,
+          "hp": 253,
+          "target": [
+            16898,
+            255432
+          ]
+        }
+      ]
+    }
+  ],
+  "summaries": [
+    {
+      "clock": 1007.28,
+      "situation": {
+        "now": 1007.28,
+        "hero_health": 0.9633316703464674,
+        "threatened": false,
+        "expansion": false,
+        "local_enemy_hp": 0,
+        "army_hp": 5948.452087402344,
+        "fiends": 7,
+        "tier": 3,
+        "lich": true,
+        "orb": true,
+        "statues": 2,
+        "dk_level": 3,
+        "army_health": 0.8620945054206295,
+        "recent_losses": 2,
+        "creep_targets_available": true,
+        "attack_committed": true,
+        "third_hero": true,
+        "dk": true
+      },
+      "units": {
+        "ucry": 7,
+        "uzig": 7,
+        "uslh": 1,
+        "Ulic": 1,
+        "Nbrn": 1,
+        "ugho": 3,
+        "Udea": 1,
+        "ugrv": 1,
+        "usep": 1,
+        "uaco": 5,
+        "utom": 1,
+        "uaod": 1,
+        "unp2": 1,
+        "ugol": 1,
+        "uobs": 2
+      },
+      "heroes": [
+        {
+          "type": "Ulic",
+          "hp": 553.9157104492188,
+          "mana": 63.99773406982422
+        },
+        {
+          "type": "Nbrn",
+          "hp": 575.0,
+          "mana": 255.0
+        },
+        {
+          "type": "Udea",
+          "hp": 800.0,
+          "mana": 21.48923683166504
+        }
+      ]
+    },
+    {
+      "clock": 1022.455,
+      "situation": {
+        "now": 1022.455,
+        "hero_health": 1.0,
+        "threatened": false,
+        "expansion": false,
+        "local_enemy_hp": 0,
+        "army_hp": 6100.536331176758,
+        "fiends": 7,
+        "tier": 3,
+        "lich": true,
+        "orb": true,
+        "statues": 2,
+        "dk_level": 3,
+        "army_health": 0.8841357001705447,
+        "recent_losses": 0,
+        "creep_targets_available": true,
+        "attack_committed": true,
+        "third_hero": true,
+        "dk": true
+      },
+      "units": {
+        "ucry": 7,
+        "uzig": 7,
+        "uslh": 1,
+        "Ulic": 1,
+        "Nbrn": 1,
+        "ugho": 3,
+        "Udea": 1,
+        "ugrv": 1,
+        "usep": 1,
+        "uaco": 5,
+        "utom": 1,
+        "uaod": 1,
+        "unp2": 1,
+        "ugol": 1,
+        "uobs": 2
+      },
+      "heroes": [
+        {
+          "type": "Ulic",
+          "hp": 575.0,
+          "mana": 109.580810546875
+        },
+        {
+          "type": "Nbrn",
+          "hp": 575.0,
+          "mana": 255.0
+        },
+        {
+          "type": "Udea",
+          "hp": 800.0,
+          "mana": 60.90573501586914
+        }
+      ]
+    },
+    {
+      "clock": 1038.28,
+      "situation": {
+        "now": 1038.28,
+        "hero_health": 1.0,
+        "threatened": false,
+        "expansion": false,
+        "local_enemy_hp": 0,
+        "army_hp": 6287.488250732422,
+        "fiends": 7,
+        "tier": 3,
+        "lich": true,
+        "orb": true,
+        "statues": 2,
+        "dk_level": 3,
+        "army_health": 0.9112301812655684,
+        "recent_losses": 0,
+        "creep_targets_available": true,
+        "attack_committed": true,
+        "third_hero": true,
+        "dk": true
+      },
+      "units": {
+        "ucry": 7,
+        "uzig": 7,
+        "uslh": 1,
+        "Ulic": 1,
+        "Nbrn": 1,
+        "ugho": 3,
+        "Udea": 1,
+        "ugrv": 1,
+        "usep": 1,
+        "uaco": 5,
+        "utom": 1,
+        "uaod": 1,
+        "unp2": 1,
+        "ugol": 1,
+        "uobs": 2
+      },
+      "heroes": [
+        {
+          "type": "Ulic",
+          "hp": 575.0,
+          "mana": 161.35545349121094
+        },
+        {
+          "type": "Nbrn",
+          "hp": 575.0,
+          "mana": 255.0
+        },
+        {
+          "type": "Udea",
+          "hp": 800.0,
+          "mana": 31.459064483642578
+        }
+      ]
+    },
+    {
+      "clock": 1053.755,
+      "situation": {
+        "now": 1053.955,
+        "hero_health": 1.0,
+        "threatened": false,
+        "expansion": false,
+        "local_enemy_hp": 0,
+        "army_hp": 4703.382568359375,
+        "fiends": 7,
+        "tier": 3,
+        "lich": true,
+        "orb": true,
+        "statues": 2,
+        "dk_level": 3,
+        "army_health": 0.8958823939732142,
+        "recent_losses": 0,
+        "creep_targets_available": true,
+        "attack_committed": true,
+        "third_hero": true,
+        "dk": true
+      },
+      "units": {
+        "ucry": 7,
+        "uzig": 7,
+        "uslh": 1,
+        "Ulic": 1,
+        "Nbrn": 1,
+        "ugho": 3,
+        "Udea": 1,
+        "ugrv": 1,
+        "usep": 1,
+        "uaco": 5,
+        "utom": 1,
+        "uaod": 1,
+        "unp2": 1,
+        "ugol": 1,
+        "uobs": 2
+      },
+      "heroes": [
+        {
+          "type": "Ulic",
+          "hp": 575.0,
+          "mana": 213.56915283203125
+        },
+        {
+          "type": "Nbrn",
+          "hp": 575.0,
+          "mana": 255.0
+        },
+        {
+          "type": "Udea",
+          "hp": 800.0,
+          "mana": 74.32601928710938
+        }
+      ]
+    },
+    {
+      "clock": 1069.08,
+      "situation": {
+        "now": 1069.08,
+        "hero_health": 1.0,
+        "threatened": false,
+        "expansion": false,
+        "local_enemy_hp": 0,
+        "army_hp": 4716.474578857422,
+        "fiends": 6,
+        "tier": 3,
+        "lich": true,
+        "orb": true,
+        "statues": 2,
+        "dk_level": 3,
+        "army_health": 0.8983761102585566,
+        "recent_losses": 1,
+        "creep_targets_available": true,
+        "attack_committed": true,
+        "third_hero": true,
+        "dk": true
+      },
+      "units": {
+        "ucry": 6,
+        "uzig": 7,
+        "uslh": 1,
+        "Ulic": 1,
+        "Nbrn": 1,
+        "ugho": 3,
+        "Udea": 1,
+        "ugrv": 1,
+        "usep": 1,
+        "uaco": 5,
+        "utom": 1,
+        "uaod": 1,
+        "unp2": 1,
+        "ugol": 1,
+        "uobs": 2
+      },
+      "heroes": [
+        {
+          "type": "Ulic",
+          "hp": 575.0,
+          "mana": 255.38580322265625
+        },
+        {
+          "type": "Nbrn",
+          "hp": 575.0,
+          "mana": 255.0
+        },
+        {
+          "type": "Udea",
+          "hp": 800.0,
+          "mana": 104.19506072998047
+        }
+      ]
+    },
+    {
+      "clock": 1084.23,
+      "situation": {
+        "now": 1084.23,
+        "hero_health": 0.889846138332201,
+        "threatened": false,
+        "expansion": false,
+        "local_enemy_hp": 8376.026885986328,
+        "army_hp": 3625.626609802246,
+        "fiends": 4,
+        "tier": 3,
+        "lich": true,
+        "orb": true,
+        "statues": 2,
+        "dk_level": 3,
+        "army_health": 0.6905955447242373,
+        "recent_losses": 3,
+        "creep_targets_available": true,
+        "attack_committed": true,
+        "third_hero": true,
+        "dk": true
+      },
+      "units": {
+        "ucry": 4,
+        "uzig": 7,
+        "uslh": 1,
+        "Ulic": 1,
+        "Nbrn": 1,
+        "ugho": 3,
+        "Udea": 1,
+        "ugrv": 1,
+        "usep": 1,
+        "uaco": 5,
+        "utom": 1,
+        "uaod": 1,
+        "unp2": 1,
+        "ugol": 1,
+        "uobs": 2
+      },
+      "heroes": [
+        {
+          "type": "Ulic",
+          "hp": 543.4182739257812,
+          "mana": 86.55171966552734
+        },
+        {
+          "type": "Nbrn",
+          "hp": 511.6615295410156,
+          "mana": 247.17604064941406
+        },
+        {
+          "type": "Udea",
+          "hp": 790.830810546875,
+          "mana": 53.313602447509766
+        }
+      ]
+    },
+    {
+      "clock": 1099.88,
+      "situation": {
+        "now": 1099.88,
+        "hero_health": 0.5875730829653533,
+        "threatened": true,
+        "expansion": false,
+        "local_enemy_hp": 4308.020568847656,
+        "army_hp": 2574.407272338867,
+        "fiends": 2,
+        "tier": 3,
+        "lich": true,
+        "orb": true,
+        "statues": 1,
+        "dk_level": 3,
+        "army_health": 0.7151131312052409,
+        "recent_losses": 3,
+        "creep_targets_available": true,
+        "attack_committed": true,
+        "third_hero": true,
+        "dk": true
+      },
+      "units": {
+        "ucry": 2,
+        "uzig": 7,
+        "uslh": 1,
+        "Ulic": 1,
+        "Nbrn": 1,
+        "ugho": 3,
+        "Udea": 1,
+        "ugrv": 1,
+        "usep": 1,
+        "uaco": 5,
+        "utom": 1,
+        "uaod": 1,
+        "unp2": 1,
+        "ugol": 1,
+        "uobs": 1
+      },
+      "heroes": [
+        {
+          "type": "Ulic",
+          "hp": 575.0,
+          "mana": 109.18465423583984
+        },
+        {
+          "type": "Nbrn",
+          "hp": 339.4736633300781,
+          "mana": 249.19508361816406
+        },
+        {
+          "type": "Udea",
+          "hp": 800.0,
+          "mana": 69.47998046875
+        }
+      ]
+    },
+    {
+      "clock": 1115.305,
+      "situation": {
+        "now": 1115.305,
+        "hero_health": 0.33519663935122285,
+        "threatened": true,
+        "expansion": false,
+        "local_enemy_hp": 3372.753646850586,
+        "army_hp": 2002.2901611328125,
+        "fiends": 2,
+        "tier": 3,
+        "lich": true,
+        "orb": true,
+        "statues": 0,
+        "dk_level": 3,
+        "army_health": 0.8090061257102272,
+        "recent_losses": 2,
+        "creep_targets_available": true,
+        "attack_committed": true,
+        "third_hero": true,
+        "dk": true
+      },
+      "units": {
+        "uzig": 7,
+        "uslh": 1,
+        "Ulic": 1,
+        "Nbrn": 1,
+        "ugho": 3,
+        "Udea": 1,
+        "ugrv": 1,
+        "ucry": 2,
+        "usep": 1,
+        "uaco": 5,
+        "utom": 1,
+        "uaod": 1,
+        "unp2": 1,
+        "ugol": 1,
+        "uske": 2
+      },
+      "heroes": [
+        {
+          "type": "Ulic",
+          "hp": 572.961181640625,
+          "mana": 129.9664306640625
+        },
+        {
+          "type": "Nbrn",
+          "hp": 192.73806762695312,
+          "mana": 249.6997833251953
+        },
+        {
+          "type": "Udea",
+          "hp": 800.0,
+          "mana": 9.32411003112793
+        }
+      ]
+    },
+    {
+      "clock": 1131.58,
+      "situation": {
+        "now": 1131.58,
+        "hero_health": 0.3478373386548913,
+        "threatened": true,
+        "expansion": false,
+        "local_enemy_hp": 3580.603271484375,
+        "army_hp": 1932.1245727539062,
+        "fiends": 2,
+        "tier": 3,
+        "lich": true,
+        "orb": true,
+        "statues": 0,
+        "dk_level": 3,
+        "army_health": 0.8549223773247373,
+        "recent_losses": 0,
+        "creep_targets_available": true,
+        "attack_committed": true,
+        "third_hero": true,
+        "dk": true
+      },
+      "units": {
+        "uzig": 7,
+        "uslh": 1,
+        "Ulic": 1,
+        "Nbrn": 1,
+        "ugho": 2,
+        "Udea": 1,
+        "ugrv": 1,
+        "ucry": 2,
+        "usep": 1,
+        "uaco": 5,
+        "utom": 1,
+        "uaod": 1,
+        "unp2": 1,
+        "ugol": 1,
+        "uske": 2
+      },
+      "heroes": [
+        {
+          "type": "Ulic",
+          "hp": 575.0,
+          "mana": 152.7041473388672
+        },
+        {
+          "type": "Nbrn",
+          "hp": 200.0064697265625,
+          "mana": 251.5048065185547
+        },
+        {
+          "type": "Udea",
+          "hp": 765.7415161132812,
+          "mana": 25.56533432006836
+        }
+      ]
+    },
+    {
+      "clock": 1147.18,
+      "situation": {
+        "now": 1147.18,
+        "hero_health": 0.9376020050048828,
+        "threatened": true,
+        "expansion": false,
+        "local_enemy_hp": 7807.020919799805,
+        "army_hp": 3004.4432373046875,
+        "fiends": 2,
+        "tier": 0,
+        "lich": true,
+        "orb": true,
+        "statues": 1,
+        "dk_level": 3,
+        "army_health": 0.8875755501638664,
+        "recent_losses": 1,
+        "creep_targets_available": true,
+        "attack_committed": true,
+        "third_hero": false,
+        "dk": true
+      },
+      "units": {
+        "uzig": 7,
+        "uslh": 1,
+        "Ulic": 1,
+        "ugho": 2,
+        "uobs": 1,
+        "Udea": 1,
+        "ugrv": 1,
+        "ucry": 2,
+        "usep": 1,
+        "uaco": 5,
+        "utom": 1,
+        "uaod": 1,
+        "ugol": 1,
+        "uske": 2
+      },
+      "heroes": [
+        {
+          "type": "Ulic",
+          "hp": 575.0,
+          "mana": 49.498817443847656
+        },
+        {
+          "type": "Udea",
+          "hp": 750.0816040039062,
+          "mana": 41.132957458496094
+        }
+      ]
+    }
+  ]
+}

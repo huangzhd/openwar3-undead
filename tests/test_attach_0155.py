@@ -134,7 +134,7 @@ class LifecycleTests(unittest.TestCase):
                 if error:
                     def fail(action):raise RuntimeError('disconnected')
                     loop.step=fail
-                with patch.object(a,'ROOT',root),patch.object(a,'STATE',root/'state.json'),patch.object(a,'COMMAND',root/'command.json'),patch.object(a,'RunnerLock',return_value=nullcontext()),patch.object(a,'probe',return_value=meta),patch.object(a,'still_same',return_value=True),patch('openwar3.Game',return_value=g) as connect,patch.object(a,'Attachment',return_value=loop):
+                with patch.object(a,'ROOT',root),patch.object(a,'STATE',root/'state.json'),patch.object(a,'COMMAND',root/'command.json'),patch.object(a,'RunnerLock',return_value=nullcontext()),patch.object(a,'probe',return_value=meta),patch.object(a,'still_same',return_value=True),patch('undead.game_view.Game',return_value=g) as connect,patch.object(a,'Attachment',return_value=loop):
                     r=a.run_attachment(123)
                 connect.assert_called_once_with(pid=123,player=4,fair=True)
                 self.assertTrue(g.closed);self.assertEqual(g.released,[10])

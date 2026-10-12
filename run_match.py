@@ -16,7 +16,7 @@ from undead.structures import is_structure
 from undead.speed_control import speed_percent,SPEEDS
 from undead.debug_console import DebugConsole
 
-def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty=3,restarted_from=None):
+def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty=3,restarted_from=None,map_alias=None):
     speed=speed_percent(speed)
     if max_game_seconds is not None:
         positive_minutes(max_game_seconds/60)
@@ -29,7 +29,7 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
     source=out/'source'
     source.mkdir()
     manifest={}
-    for path in [ROOT/'session.py',ROOT/'run_match.py',ROOT/'game_preferences.py',*([ROOT/'run_window.py'] if (ROOT/'run_window.py').exists() else []),*sorted((ROOT/'undead').glob('*.py')),*sorted((ROOT/'data').glob('*.json'))]:
+    for path in [ROOT/'session.py',ROOT/'run_match.py',*([ROOT/'extract_map_pool.py'] if (ROOT/'extract_map_pool.py').exists() else []),ROOT/'game_preferences.py',*([ROOT/'run_window.py'] if (ROOT/'run_window.py').exists() else []),*sorted((ROOT/'undead').glob('*.py')),*sorted((ROOT/'data').glob('*.json'))]:
         name=path.relative_to(ROOT).as_posix()
         manifest[name]=hashlib.sha256(path.read_bytes()).hexdigest()
         dest=source/name
@@ -38,7 +38,7 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
     (out/'source-manifest.json').write_text(json.dumps(manifest,indent=2))
     fh=(out/'events.jsonl').open('w',encoding='utf-8')
     started=time.monotonic()
-    result={'id':run_id,'version':'0.1.60-dev','rules_version':'0.1.54','policy':'rule','requested_speed':speed,
+    result={'id':run_id,'version':'0.1.87-dev','rules_version':'0.1.87','policy':'rule','requested_speed':speed,
             'opponent':{'race':enemy_race,'difficulty':difficulty},'result':'unknown','reason':'not_started','until_epoch':until,'max_game_seconds':max_game_seconds}
     if restarted_from is not None:result['restarted_from']=restarted_from
     def log(event,**data):
@@ -47,14 +47,23 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
         fh.flush()
         if event in ('decision','new_units','item_confirmed','buy','hire','clock_waiting','clock_resumed'):
             print(json.dumps(row,ensure_ascii=False),flush=True)
-    session=Session(speed,enemy_race,difficulty)
+    session=Session(speed,enemy_race,difficulty,**({"map_alias":map_alias} if map_alias else {}))
     console=None
     try:
         ensure_time(until)
         g=session.start(until=until) if until is not None else session.start()
         result['launch_settings']=getattr(session,'settings',{})
         log('match_settings',settings=result['launch_settings'])
+        spawn=result['launch_settings'].get('own_start_sample')
+        if spawn is not None:
+            (out/'spawn-audit.json').write_text(json.dumps(spawn,indent=2),encoding='utf-8')
         bot=Controller(g,log,enemy_race)
+        if getattr(session,'map_catalog',None):
+            catalog=session.map_catalog
+            bot.creeping.catalog=catalog['camps']
+            bot.critter_search.spawns=catalog['critters']
+            log('map_catalog_bound',name=catalog['name'],map_sha256=catalog['map_sha256'],
+                camps=len(catalog['camps']),critters=len(catalog['critters']))
         console=DebugConsole(g,log)
         speed_control=console.speed
         last_pub=None
@@ -153,11 +162,12 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
     print(json.dumps(result,ensure_ascii=False,indent=2),flush=True)
     return result
 
-def play_matches(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty=3):
+def play_matches(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty=3,map_alias=None):
     """Each manual restart consumes one click, only after the old session closes."""
     previous=None
     while True:
         kwargs={'restarted_from':previous} if previous is not None else {}
+        if map_alias:kwargs['map_alias']=map_alias
         result=run_match(speed,max_game_seconds,until,enemy_race,difficulty,**kwargs)
         if result.get('reason')!='manual_restart':return result
         blocked=None
@@ -184,8 +194,9 @@ if __name__=='__main__':
     parser.add_argument('--speed',type=speed_percent,choices=SPEEDS,default=400)
     parser.add_argument('--minutes',type=positive_minutes,default=None,help='Optional game-time limit; default is no limit')
     parser.add_argument('--until',type=parse_deadline,help='Absolute ISO cutoff, including timezone offset')
-    parser.add_argument('--enemy-race',type=int,choices=(1,2,3,4),default=3)
+    parser.add_argument('--enemy-race',type=int,choices=(0,1,2,3,4),default=3)
+    parser.add_argument('--map',dest='map_alias',choices=('AZ','AL','CH','LR','NI','TH','TR','TM'))
     parser.add_argument('--difficulty',type=int,choices=(2,3,4),default=3)
     args=parser.parse_args()
-    r=play_matches(args.speed,args.minutes*60 if args.minutes is not None else None,args.until,args.enemy_race,args.difficulty)
+    r=play_matches(args.speed,args.minutes*60 if args.minutes is not None else None,args.until,args.enemy_race,args.difficulty,map_alias=args.map_alias)
     raise SystemExit(1 if r['result']=='error' else 0)

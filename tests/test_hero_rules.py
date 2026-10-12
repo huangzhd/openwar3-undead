@@ -99,6 +99,7 @@ class HeroRuleTests(unittest.TestCase):
                     nearest=lambda units,h:units[0],buy=lambda shop,c:buys.append(c) or N(reason=0),
                     use_item=lambda *a:True)
                 b=Controller(g,lambda *a,**kw:None,race);b.home=N(x=0,y=0)
+                g.all_production=lambda owner:[]
                 b.economy.ready=lambda *a:[];b.situation.fiends=4;b.situation.statues=1
                 b.recruit_tavern([dk,lich,fiend],[],10,3,set());self.assertEqual(buys,[expected])
                 b.economy.ever_heroes.add(expected);b.recruit_tavern([dk,lich,fiend],[],20,3,set())

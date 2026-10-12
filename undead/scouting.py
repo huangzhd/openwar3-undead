@@ -1,7 +1,7 @@
 """Spare summoned skeletons scout public expansion sites using fair vision only."""
 from .structures import is_structure
 
-SKELETONS={'uske','uskm','ndr1','ndr2','ndr3'}
+SKELETONS={'uske','uskm','nsce','nsca','ndr1','ndr2','ndr3'}
 
 
 class SkeletonScouts:
@@ -85,15 +85,18 @@ class CritterSearch:
         self.log=log;self.checked=set();self.failed=set();self.points=None;self.job=None
         self.route_attempts={};self.retry_at={};self.last_eval=-100;self.reported=False
         self.hunt=None;self.hunt_failed=set()
+        self.general_visits=0
 
     def cancel(self):
         # Combat/lost-target recovery must not inherit a stale waypoint timer.
         self.job=None
 
     def target(self,g,scout,home,now,safe_route=None):
-        if now>=self.DEADLINE:return None
+        if now>=self.DEADLINE or self.reported:return None
+        centers=sorted(((p['x'],p['y']) for p in self.spawns),key=lambda p:g.dist(home,p))[:2]
         visible=[u for u in g.units('all') if 12<=u.owner<=15 and u.type in ground_critters()
-                 and u.hp>0 and g.dist(u,home)<=3000 and u.handle not in self.hunt_failed]
+                 and u.hp>0 and (g.dist(u,home)<=3000 or any(g.dist(u,p)<=600 for p in centers))
+                 and u.handle not in self.hunt_failed]
         current=next((u for u in visible if self.hunt and u.handle==self.hunt['handle']),None)
         if current:
             distance=g.path_distance(scout,current)
@@ -130,21 +133,26 @@ class CritterSearch:
                 if point in self.point_priority:return
                 if hasattr(mp,'walkable') and not mp.walkable(*point):return
                 self.points.append(point);self.point_priority[point]=priority
-            local=[spawn for spawn in self.spawns if g.dist(home,(spawn['x'],spawn['y']))<=3000]
-            if local:
-                spawn=min(local,key=lambda s:g.dist(home,(s['x'],s['y'])))
-                center=(spawn['x'],spawn['y']);self.spawn_center=center
-                add(center,0)
-                # Wander makes this a search area, not a guaranteed current position.
+            local=sorted(self.spawns,
+                         key=lambda spawn:g.dist(home,(spawn['x'],spawn['y'])))[:2]
+            for rank,spawn in enumerate(local):
+                center=(spawn['x'],spawn['y'])
+                if rank==0:self.spawn_center=center
+                add(center,rank*2)
                 for i in range(8):
-                    add((round(center[0]+450*cos(i*pi/4)),round(center[1]+450*sin(i*pi/4))),1)
+                    add((round(center[0]+450*cos(i*pi/4)),round(center[1]+450*sin(i*pi/4))),rank*2+1)
                 self.log('scout_spawn_region',clock=now,code=spawn['code'],center=center,radius=450,
                          source='fingerprint_verified_static_map',evidence='initial_placement_only')
-            for radius,count in ((900,8),(1700,12),(2500,16)):
-                for i in range(count):
-                    add((round(home.x+radius*cos(2*pi*i/count)),round(home.y+radius*sin(2*pi*i/count))),2)
-            self.log('scout_search_plan',clock=now,candidates=len(self.points),radii=[900,1700,2500],
-                     spawn_region=center if local else None,deadline=self.DEADLINE)
+            if not local:
+                for radius,count in ((900,8),(1700,12),(2500,16)):
+                    for i in range(count):
+                        add((round(home.x+radius*cos(2*pi*i/count)),round(home.y+radius*sin(2*pi*i/count))),4)
+            self.log('scout_search_plan',clock=now,candidates=len(self.points),regions=len(local),
+                     max_general_visits=2,deadline=self.DEADLINE)
+        if self.spawn_center is None and self.general_visits>=2 and not self.job:
+            if not self.reported:self.log('scout_search_exhausted',clock=now,reason='two_local_points')
+            self.reported=True
+            return None
         # At most 12 engine visibility queries per second. None is not evidence.
         pending=[p for p in self.points if p not in self.checked and p not in self.failed]
         nearby=sorted(pending,key=lambda p:(self.point_priority[p],g.dist(scout,p)))[:12]
@@ -165,6 +173,10 @@ class CritterSearch:
                 self.log('scout_search_finished',clock=now,point=point,reason=reason,
                          scout=(scout.x,scout.y),ground_distance=route)
             else:return point
+        if self.spawn_center is None and self.general_visits>=2:
+            if not self.reported:self.log('scout_search_exhausted',clock=now,reason='two_local_points')
+            self.reported=True
+            return None
         # Only a local batch is path-tested; distant points remain eligible later.
         pending=[p for p in self.points if p not in self.checked and p not in self.failed and now>=self.retry_at.get(p,0)]
         reachable=[]
@@ -187,7 +199,8 @@ class CritterSearch:
                 self.log('scout_search_exhausted',clock=now,visible_points=len(self.checked),failed_points=len(self.failed))
             return None
         _,distance,point=min(reachable)
+        if self.point_priority[point]==4:self.general_visits+=1
         self.job=dict(point=point,started=now,progress=now,distance=distance)
         self.log('scout_search_started',clock=now,point=point,ground_distance=distance,
-                 radius=round(g.dist(home,point)),search_kind='spawn_region' if self.point_priority[point]<2 else 'general')
+                 radius=round(g.dist(home,point)),search_kind='spawn_region' if self.point_priority[point]<4 else 'general')
         return point

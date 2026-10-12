@@ -1,0 +1,281 @@
+"""Bounded, fair-view item trading and independent DK orb delivery."""
+from .equipment import can_receive
+
+RINGS={'rde0':25,'rde1':62,'rde2':150,'rde3':300,'rde4':400}
+
+def sellable(hero,code):
+    return code in RINGS or (hero.type=='Udea' and code=='woms')
+
+class BattleShop:
+    def __init__(self,log):
+        self.log=log;self.pending=None;self.attempts={};self.next_at=0
+        self.defense=None;self.defense_retry=0
+        self.orb=None;self.orb_retry=0;self.potion=None;self.potion_retry=0
+
+    @property
+    def reserved(self):return {self.orb['hero']} if self.orb else set()
+
+    def orb_reserve(self,g):
+        # A dispatched courier owns the orb budget until an actual team bag
+        # confirms it. LR 0.1.74 spent this money on a fiend before buying.
+        if not self.orb:return 0
+        return 0 if any('ocor' in (g.inventory(h) or []) for h in g.my_heroes()) else 375
+
+    def observe(self,g,now):
+        p=self.pending
+        if not p:return
+        hero=g.unit(p['hero']);bag=g.inventory(hero) if hero else None
+        changed=bag is not None and bag.count(p['code'])<p['before']
+        if p['kind']=='buy':changed=bag is not None and bag.count(p['code'])>p['before']
+        if p['kind']=='give':
+            receiver=g.unit(p['receiver']);target=g.inventory(receiver) if receiver else None
+            changed=changed and target is not None and target.count(p['code'])>p['receiver_before']
+        refund=None
+        if p['kind']=='sell':
+            res=g.resources();refund=res['gold']-p['gold']-(res.get('gold_gathered',0)-p['gathered'])
+            changed=changed and (refund>0 if p['code']=='woms' else refund>=RINGS[p['code']])
+        # A neutral shop may choose a different friendly recipient.
+        if p['kind']=='buy' and not changed:
+            changed=any((g.inventory(h) or []).count(p['code'])>p['team_before'].get(h.handle,0) for h in g.my_heroes())
+        if changed or now-p['started']>=3:
+            self.log('shop_transaction_confirmed' if changed else 'shop_transaction_unconfirmed',clock=now,
+                     kind=p['kind'],code=p['code'],hero=p['hero'],refund_excluding_gathering=refund)
+            self.pending=None
+
+    def transact(self,g,hero,code,kind,now,cast_until,target):
+        if self.pending or now<self.next_at or now<cast_until.get(hero.handle,0):return False
+        bag=g.inventory(hero)
+        if bag is None:return False
+        key=(kind,hero.handle,code,tuple(bag),target.handle,int(now//120))
+        if self.attempts.get(key,0)>=3:return False
+        res=g.resources();p=dict(kind=kind,hero=hero.handle,code=code,before=bag.count(code),started=now,
+                                gold=res['gold'],gathered=res.get('gold_gathered',0))
+        if kind=='buy':
+            p['team_before']={h.handle:(g.inventory(h) or []).count(code) for h in g.my_heroes()}
+            result=g.buy(target,code)
+        elif kind=='give':
+            other=g.inventory(target)
+            if other is None or None not in other or code not in bag:return False
+            p.update(receiver=target.handle,receiver_before=other.count(code))
+            result=g.give_item(hero,bag.index(code),target)
+            cast_until[target.handle]=now+1.2
+        else:
+            if not sellable(hero,code) or code not in bag:return False
+            result=g.sell_item(hero,bag.index(code),target)
+        self.attempts[key]=self.attempts.get(key,0)+1;self.next_at=now+3;self.pending=p
+        cast_until[hero.handle]=now+1.2
+        self.log('shop_transaction_attempt',clock=now,kind=kind,code=code,hero=hero.type,accepted=bool(result),reason=getattr(result,'reason',None),attempt=self.attempts[key])
+        return True
+
+    def sell_nearby(self,b,heroes,hostiles,now):
+        g=b.g
+        if self.pending:return True
+        if not any(sellable(h,c) for h in heroes for c in g.inventory(h) or []):return False
+        shops=b.economy.ready(g,'utom')+[u for u in g.units('all',{'ngme'}) if u.alive and u.visible_to(g.me())]
+        for hero in heroes:
+            if any(g.dist(e,hero)<950 for e in hostiles):continue
+            ring=next((c for c in g.inventory(hero) or [] if sellable(hero,c)),None)
+            if ring:
+                shop=next((s for s in shops if g.dist(hero,s)<300),None)
+                if shop and self.transact(g,hero,ring,'sell',now,b.cast_until,shop):return True
+        return False
+
+    def end_orb(self,now,reason):
+        self.log('orb_courier_end',clock=now,reason=reason)
+        self.orb=None;self.orb_retry=now+(0 if reason=='delivered' else 5 if reason in {'unsafe_or_hero_missing','player_contact','home_defense'} else 120)
+
+    def orb_tick(self,b,army,hostiles,now,tier):
+        g=b.g;heroes=g.my_heroes();dk=next((h for h in heroes if h.type=='Udea'),None)
+        lich=next((h for h in heroes if h.type=='Ulic'),None)
+        unsafe=b.action.name in {'RETREAT','DEFEND'} or b.teleport or b.situation.threatened
+        players=[e for e in hostiles if 0<=getattr(e,'owner',12)<12 and e.owner!=g.me()]
+        if self.orb and (not dk or not lich or unsafe or dk.handle in b.micro.pulling or any(g.dist(e,dk)<950 for e in players)):
+            self.end_orb(now,'unsafe_or_hero_missing');return set()
+        if not dk or not lich or tier!=3 or unsafe or now<self.orb_retry:return set()
+        db=g.inventory(dk);lb=g.inventory(lich)
+        if db is None or lb is None:return self.reserved
+        if 'ocor' in lb:
+            if self.orb:self.end_orb(now,'delivered');b.formation.reset();b.formation_at=-100
+            return set()
+        if any('ocor' in (g.inventory(h) or []) for h in heroes if h not in (dk,lich)):
+            if self.orb:self.end_orb(now,'team_item_pending_transfer')
+            return set()
+        if not self.orb:
+            if dk.handle in b.micro.pulling or any(g.dist(e,h)<950 for e in players for h in heroes):return set()
+            if dk.hp/dk.hp_max<.6 or not can_receive(lich,lb,'ocor'):return set()
+            if 'ocor' not in db and (None not in db and not any(sellable(dk,c) for c in db)):return set()
+            if 'ocor' not in db and g.resources()['gold']+sum(RINGS.get(c,0) for c in db)<375:return set()
+            # Collect nearby rings before DK departs; transactions are observed before continuing.
+            for h in heroes:
+                ring=next((c for c in g.inventory(h) or [] if c in RINGS),None)
+                if h is not dk and ring and None in db and g.dist(h,dk)<350:
+                    if self.transact(g,h,ring,'give',now,b.cast_until,dk):return {dk.handle}
+                    if self.pending:return {dk.handle}
+            shops=b.economy.ready(g,'utom')
+            shop=min(shops,key=lambda s:g.dist(dk,s)) if shops else None
+            if not shop:return set()
+            if not b.creeping.safe_route(g,(dk.x,dk.y),(shop.x,shop.y)):return set()
+            self.orb=dict(hero=dk.handle,shop=shop.handle,started=now,progress_at=now,best=None,target=None)
+            b.micro.dk_recovering=None;b.formation.reset();b.formation_at=-100
+            self.log('orb_courier_started',clock=now,hero=dk.handle,shop=shop.handle)
+        mission=self.orb
+        if now-mission['started']>120:
+            self.end_orb(now,'travel_timeout');return set()
+        if self.pending:return self.reserved
+        shop=g.unit(mission['shop'])
+        target=lich if 'ocor' in db else shop
+        if target is None:self.end_orb(now,'shop_missing');return set()
+        point=(target.x,target.y);route=g.path_distance((dk.x,dk.y),point)
+        if route is None or not b.creeping.safe_route(g,(dk.x,dk.y),point):
+            self.end_orb(now,'unsafe_route');return set()
+        if mission['target']!=target.handle:
+            mission.update(target=target.handle,best=route,progress_at=now)
+        elif mission['best'] is None or route<mission['best']-80:
+            mission.update(best=route,progress_at=now)
+        if g.dist(dk,target)>280:
+            if now-mission['progress_at']>25:
+                self.end_orb(now,'travel_timeout');return set()
+            b.go_raw([dk],point,now);return self.reserved
+        # Waiting for funds at the shop is not travel stagnation. The whole
+        # mission still has its 120s ceiling, with bounded transaction retries.
+        if 'ocor' not in db and g.resources()['gold']<375 and now-mission.get('wait_log',-100)>=5:
+            mission['wait_log']=now
+            self.log('orb_purchase_wait',clock=now,gold=g.resources()['gold'],required=375)
+        if 'ocor' in db:
+            self.transact(g,dk,'ocor','give',now,b.cast_until,lich)
+        else:
+            ring=next((c for c in db if sellable(dk,c)),None)
+            if ring:self.transact(g,dk,ring,'sell',now,b.cast_until,shop)
+            elif not b.economy.revival_pending(g) and g.resources()['gold']>=375 and None in db:
+                self.transact(g,dk,'ocor','buy',now,b.cast_until,shop)
+        return self.reserved
+
+    def defend_tick(self,b,hostiles,now,tier):
+        """Local defensive supply: reserve only the buyer, never the whole army."""
+        from .retreat import clearance
+        from .controller import ground_attack_range
+        from math import ceil
+        g=b.g;heroes=g.my_heroes()
+        dk=next((h for h in heroes if h.type=='Udea'),None)
+        lich=next((h for h in heroes if h.type=='Ulic'),None)
+        if self.orb:self.end_orb(now,'home_defense')
+        if not dk or not lich or b.teleport or b.economy.revival_pending(g):return set()
+        if self.pending:
+            return {self.pending['hero'],*([self.pending['receiver']] if 'receiver' in self.pending else [])}
+        if now<self.defense_retry:return set()
+        bags={h.handle:g.inventory(h) for h in heroes}
+        if any(bag is None for bag in bags.values()):return set()
+        code=None;receiver=None
+        if dk.mana<75 and now>=440 and g.dist(dk,b.home)<1600 and g.dist(dk,lich)<1100:
+            if not any(c in bags[dk.handle] for c in ('pman','pgma','mnst','pres')):
+                code='pman';receiver=dk
+        if code is None and tier==3 and 'ocor' not in bags[lich.handle]:
+            code='ocor';receiver=lich
+        if code is None or not can_receive(receiver,bags[receiver.handle],code):return set()
+        codes=('pman','pgma','mnst') if code=='pman' else ('ocor',)
+        donor=next((h for h in heroes if any(c in bags[h.handle] for c in codes)),None)
+        if donor:
+            if donor is not receiver and g.dist(donor,receiver)<350:
+                item=next(c for c in bags[donor.handle] if c in codes)
+                if self.transact(g,donor,item,'give',now,b.cast_until,receiver):return {donor.handle,receiver.handle}
+            return set() # Never duplicate an item carried by another hero.
+        if g.resources()['gold']<({'pman':200,'ocor':375}[code]):return set()
+        shops=[s for s in b.economy.ready(g,'utom') if g.dist(s,b.home)<1200 and clearance((s.x,s.y),hostiles,ground_attack_range)>=100]
+        buyers=[receiver] if code=='pman' else [lich,dk]
+        for hero in buyers:
+            if hero.hp/hero.hp_max<.6 or g.dist(hero,b.home)>1600 or now<b.cast_until.get(hero.handle,0):continue
+            if None not in bags[hero.handle]:continue
+            for shop in sorted(shops,key=lambda s:g.dist(hero,s)):
+                start=(hero.x,hero.y);point=(shop.x,shop.y);length=g.path_distance(start,point)
+                if length is None or length>900:continue
+                before=clearance(start,hostiles,ground_attack_range)
+                path=g.walk_path(start,point)
+                if not path or g.dist(path[-1],point)>128:continue
+                safe=True;a=start
+                for z in path:
+                    count=max(1,ceil(g.dist(a,z)/96))
+                    if any(clearance((a[0]+(z[0]-a[0])*i/count,a[1]+(z[1]-a[1])*i/count),hostiles,ground_attack_range)<min(100,before)-32 for i in range(1,count+1)):
+                        safe=False;break
+                    a=z
+                if not safe:continue
+                if g.dist(hero,shop)<=280:
+                    self.defense=None
+                    if self.transact(g,hero,code,'buy',now,b.cast_until,shop):
+                        self.log('defense_supply',clock=now,hero=hero.type,code=code,stage='purchase')
+                        return {hero.handle}
+                    return set()
+                key=(hero.handle,shop.handle,code)
+                if not self.defense or self.defense['key']!=key:self.defense=dict(key=key,started=now)
+                if now-self.defense['started']>12:
+                    self.defense=None;self.defense_retry=now+30;return set()
+                b.go_raw([hero],point,now)
+                self.log('defense_supply',clock=now,hero=hero.type,code=code,stage='approach')
+                return {hero.handle}
+        return set()
+
+    def prepare_mana(self,b,army,dk,now):
+        # Local ItemData.slk: 200 gold, first stock 440s, replenishment 120s.
+        g=b.g;bag=g.inventory(dk)
+        if now<440 or bag is None or any(c in bag for c in ('pman','pgma','mnst','pres')):return False
+        if None not in bag or b.economy.revival_pending(g):return False
+        heroes=g.my_heroes();foes=g.enemies()+g.creeps()
+        if any(g.dist(e,h)<950 for e in foes for h in heroes):return False
+        donor=next((h for h in heroes if h.handle!=dk.handle and any(c in (g.inventory(h) or []) for c in ('pman','pgma','mnst'))),None)
+        if donor:
+            if g.dist(donor,dk)<350:
+                code=next(c for c in g.inventory(donor) if c in ('pman','pgma','mnst'))
+                self.transact(g,donor,code,'give',now,b.cast_until,dk)
+                return True
+            return False
+        shops=[s for s in b.economy.ready(g,'utom') if not any(g.dist(e,s)<950 for e in foes)]
+        shop=g.nearest(shops,dk) if shops else None
+        if shop is None or g.resources()['gold']<200:return False
+        point=(shop.x,shop.y);route=g.path_distance((dk.x,dk.y),point)
+        if route is None or route>2400 or not b.creeping.safe_route(g,(dk.x,dk.y),point):return False
+        b.set_intent('出征补给 · 死亡骑士魔法药水')
+        b.go(army,point,now)
+        if g.dist(dk,shop)>280 or self.pending:return True
+        if b.clear_full_shop_heroes(heroes,dk,shop,now):return True
+        self.transact(g,dk,'pman','buy',now,b.cast_until,shop)
+        return True
+
+    def needs_potion(self,b,now):
+        g=b.g;heroes=g.my_heroes();lich=next((h for h in heroes if h.type=='Ulic'),None)
+        if not lich or now<440 or now<self.potion_retry:return False
+        if any(c in {'pnvl','pnvu'} for h in heroes for c in g.inventory(h) or []):return False
+        if not can_receive(lich,g.inventory(lich),'pnvl'):return False
+        return any(u.alive and u.visible_to(g.me()) for u in g.units('all',{'ngme'}))
+
+    def prepare_potion(self,b,army,hostiles,now,opportunistic=False):
+        g=b.g;heroes=g.my_heroes();lich=next((h for h in heroes if h.type=='Ulic'),None)
+        if not lich:return True
+        bag=g.inventory(lich)
+        if bag is None:return True
+        if any(c in bag for c in ('pnvl','pnvu')):self.potion=None;return True
+        donor=next((h for h in heroes if h is not lich and any(c in (g.inventory(h) or []) for c in ('pnvl','pnvu'))),None)
+        if donor and can_receive(lich,bag,'pnvl') and g.dist(donor,lich)<350:
+            code=next(c for c in g.inventory(donor) if c in {'pnvl','pnvu'})
+            self.transact(g,donor,code,'give',now,b.cast_until,lich);return opportunistic
+        if not self.needs_potion(b,now):return True
+        if any(g.dist(e,h)<950 for e in hostiles for h in heroes) or b.economy.revival_pending(g):return True
+        shops=[u for u in g.units('all',{'ngme'}) if u.alive and u.visible_to(g.me())]
+        choices=[]
+        for shop in shops:
+            point=(shop.x,shop.y);route=g.path_distance((lich.x,lich.y),point)
+            if any(g.dist(e,shop)<950 for e in hostiles):continue
+            if (not opportunistic or g.dist(lich,shop)<=280) and route is not None and route<6000 and b.creeping.safe_route(g,(lich.x,lich.y),point):choices.append((route,shop.handle,shop))
+        if not choices:self.potion_retry=now+120;return True
+        _,_,shop=min(choices)
+        if self.potion is None:self.potion=dict(started=now,progress_at=now,best=None)
+        mission=self.potion;distance=g.dist(lich,shop)
+        if mission['best'] is None or distance<mission['best']-80:mission.update(best=distance,progress_at=now)
+        if now-mission['started']>60 or now-mission['progress_at']>20:
+            self.potion=None;self.potion_retry=now+120;return True
+        if not opportunistic:
+            b.set_intent('出征补给 · 巫妖小型无敌药水')
+            b.go(army,(shop.x,shop.y),now)
+        if distance>280 or self.pending:return opportunistic
+        if self.sell_nearby(b,heroes,hostiles,now):return opportunistic
+        if g.resources()['gold']>=150:
+            self.transact(g,lich,'pnvl','buy',now,b.cast_until,shop)
+        return opportunistic

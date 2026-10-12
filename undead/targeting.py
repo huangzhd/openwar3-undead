@@ -4,7 +4,7 @@ from math import inf
 from openwar3 import combat
 from .structures import is_structure
 from .coil import can_damage
-from .nc_combo import spell_data, DISABLED_CASTERS
+from .nc_combo import spell_data, DISABLED_CASTERS, aoe_threat
 
 @lru_cache(maxsize=256)
 def unit_stats(code):return combat.stats(code)
@@ -136,8 +136,12 @@ class HeroPressure:
             for key in list(self.history):
                 if key not in visible_keys:self.history.pop(key);self.rises.pop(key,None)
             for hero in heroes:self.sample(g,fighters,hero,now)
+        dangerous=[e for e in heroes if aoe_threat(g,e) and e.handle not in self.downgraded
+                   and self.estimate(g,fighters,e)<inf]
+        if dangerous:
+            current=min(dangerous,key=lambda e:(e.handle!=self.target,self.estimate(g,fighters,e)))
         trapped=[e for e in reachable if webbed_air(g,e)]
-        if trapped:
+        if trapped and not dangerous:
             previous=next((e for e in trapped if e.handle==self.preferred),None)
             target=previous or min(trapped,key=lambda e:self.rank(g,fighters,e))
             self.preferred=target.handle

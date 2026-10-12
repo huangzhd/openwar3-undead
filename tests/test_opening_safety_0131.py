@@ -12,9 +12,12 @@ class OpeningTests(unittest.TestCase):
         g=FakeGame(gold=2000)
         g.own=[u for u in g.own if u.type not in {'ucry','ugho'}]
         g.own.append(base_unit('ugho',100,owner=0))
+        g.opening_dk=next(u for u in g.own if u.type=='Udea')
+        g.own.remove(g.opening_dk)
         g.inventory=lambda u:[]
         g.resources=lambda:dict(gold=g.gold,lumber=500,food_cap=20,food_used=17)
         e=Economy(lambda *a,**k:None)
+        g.busy[g.my_buildings({'uaod'})[0].handle]=N(kind='queue',queue=['Udea'])
         e.build=lambda g,code,home,now:g.commands.append(code) or True
         return g,e
 
@@ -22,18 +25,19 @@ class OpeningTests(unittest.TestCase):
         g,e=self.game();grave=g.my_buildings({'ugrv'})[0];crypt=g.my_buildings({'usep'})[0];home=g.my_buildings({'unpl'})[0]
         g.busy[grave.handle]=N(kind='construction',queue=[]);grave.hp=50
         g.busy[crypt.handle]=N(kind='construction',queue=[]);crypt.hp=50
-        e.tick(g,1);self.assertFalse(g.commands);self.assertFalse(e.opening_rod_allowed)
+        e.tick(g,1);self.assertFalse(g.commands);self.assertTrue(e.opening_rod_allowed)
         crypt.hp=100;g.busy.pop(crypt.handle);e.tick(g,5);self.assertEqual(g.commands,['ugho'])
         g.busy[crypt.handle]=N(kind='queue',queue=['ugho'])
-        e.tick(g,9);self.assertFalse(e.opening_rod_allowed)
+        e.tick(g,9);self.assertTrue(e.opening_rod_allowed)
         g.busy.pop(crypt.handle,None);g.own.append(base_unit('ugho',101,owner=0));e.tick(g,13)
         self.assertEqual(g.commands,['ugho','ugho'])
         g.busy[crypt.handle]=N(kind='queue',queue=['ugho']);e.tick(g,17)
-        self.assertFalse(e.opening_rod_allowed)
+        self.assertTrue(e.opening_rod_allowed)
         g.busy.pop(crypt.handle,None);g.own.append(base_unit('ugho',102,owner=0));e.tick(g,21)
         self.assertTrue(e.opening_rod_allowed);self.assertEqual(g.commands,['ugho','ugho'])
         # Accepted shop order is insufficient until DK inventory actually changes.
         e.tick(g,25);self.assertEqual(g.commands,['ugho','ugho'])
+        g.own.append(g.opening_dk)
         g.inventory=lambda u:['rnec'] if u.type=='Udea' else []
         g.gold=319;e.tick(g,29);self.assertEqual(g.commands,['ugho','ugho'])
         g.gold=320;e.tick(g,33);self.assertEqual(g.commands,['ugho','ugho','unp1'])
@@ -51,14 +55,18 @@ class OpeningTests(unittest.TestCase):
         g,e=self.game();g.own=[u for u in g.own if u.type!='ugrv']
         e.tick(g,1);self.assertEqual(g.commands,['ugho'])
 
-    def test_controller_cannot_buy_rod_until_ghouls_release_opening_gate(self):
-        g,e=self.game();g.dist=dist;g.inventory=lambda h:[None]*6
+    def test_dk_buys_rod_without_waiting_for_third_ghoul(self):
+        g,e=self.game();g.own.append(g.opening_dk);g.dist=dist;g.inventory=lambda h:[None]*6
         b=Controller(g,lambda *a,**k:None);b.home=g.my_buildings({'unpl'})[0]
         purchases=[];b.shop_item=lambda heroes,h,shop,code,now:purchases.append(code) or True
         b.restock_scrolls=lambda *a:None
-        b.items(100,1);self.assertFalse(purchases)
-        b.economy.opening_rod_allowed=True;b.items(104,1)
-        self.assertEqual(purchases,['rnec'])
+        b.economy.tick(g,99);self.assertFalse(g.commands)
+        self.assertEqual(len(g.units('me',{'ugho'})),1)
+        b.items(100,1);self.assertEqual(purchases,['rnec'])
+        b.items(300,2);self.assertEqual(purchases,['rnec','rnec'])
+        for now,tier in ((500,3),(503,3),(510,0),(600,2)):
+            b.items(now,tier)
+        self.assertEqual(purchases,['rnec','rnec'])
 
     def test_late_game_still_recruits_lich_without_replaying_opening(self):
         g=FakeGame(tier=2,gold=425);e=Economy(lambda *a,**k:None)
@@ -73,7 +81,7 @@ class EmergencyTests(unittest.TestCase):
         for u in own:u.owner=0
         # Transport fixtures have no reachable retreat; viable escape is tested separately.
         orders=[];clock=[100]
-        g=N(snapshot=lambda **kw:N(clock=clock[0],in_game=True,units=own),
+        g=N(resources=lambda:dict(food_used=0),snapshot=lambda **kw:N(clock=clock[0],in_game=True,units=own),
             my_buildings=lambda *a:[home],map=lambda:N(starts=[],walkable=lambda *p:False),me=lambda:0,
             my_heroes=lambda:[dk],units=lambda owner,codes:[u for u in own if u.type in codes],
             enemies=lambda:[foe],creeps=lambda:[],my_units=lambda:own,dist=dist,path_distance=dist,
@@ -98,7 +106,7 @@ class EmergencyTests(unittest.TestCase):
                 for ally in allies:ally.x=-4900
                 # Avoid normal post-arrival gameplay in this focused transport test.
                 b.heal_allies=lambda *a:None;b.frost_armor=lambda *a:None
-                b.shields.plan=lambda *a:{};b.support_dk=lambda *a:True
+                b.shields.plan=lambda *a:{};b.support_dk=lambda *a:True;b.defend_base=lambda *a:None
                 clock[0]+=3;b.tick(forced=action);self.assertIsNone(b.teleport)
 
     def test_critical_hero_without_nearby_threat_does_not_trigger_portal(self):

@@ -1,0 +1,490 @@
+{
+  "event": "combat_state",
+  "clock": 568.98,
+  "center": [
+    238.12255859375,
+    -3945.572021484375
+  ],
+  "army_hp": 6175.523193359375,
+  "enemy_hp": 2235.0,
+  "army_health": 0.8911288879306457,
+  "recent_losses": 0,
+  "army": [
+    {
+      "handle": [
+        1182,
+        40478
+      ],
+      "type": "ucry",
+      "x": 602,
+      "y": -4046,
+      "hp": 527,
+      "hp_max": 550.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        3692,
+        91864
+      ],
+      "type": "nsca",
+      "x": -1289,
+      "y": -4016,
+      "hp": 180,
+      "hp_max": 180.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        4072,
+        91830
+      ],
+      "type": "nsce",
+      "x": -128,
+      "y": -4032,
+      "hp": 180,
+      "hp_max": 180.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        11561,
+        70866
+      ],
+      "type": "uobs",
+      "x": 592,
+      "y": -3908,
+      "hp": 550,
+      "hp_max": 550.0,
+      "mana": 297,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        11970,
+        91847
+      ],
+      "type": "nsca",
+      "x": -1459,
+      "y": -4016,
+      "hp": 180,
+      "hp_max": 180.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        11979,
+        98238
+      ],
+      "type": "ucry",
+      "x": -550,
+      "y": -4052,
+      "hp": 550,
+      "hp_max": 550.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        11982,
+        63531
+      ],
+      "type": "uobs",
+      "x": 850,
+      "y": -3784,
+      "hp": 149,
+      "hp_max": 550.0,
+      "mana": 473,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        12251,
+        91881
+      ],
+      "type": "nsca",
+      "x": -327,
+      "y": -3985,
+      "hp": 180,
+      "hp_max": 180.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        12698,
+        91898
+      ],
+      "type": "nsca",
+      "x": 292,
+      "y": -4034,
+      "hp": 130,
+      "hp_max": 180.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        13332,
+        28401
+      ],
+      "type": "ucry",
+      "x": 1075,
+      "y": -3902,
+      "hp": 550,
+      "hp_max": 550.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        13607,
+        91779
+      ],
+      "type": "nsce",
+      "x": 955,
+      "y": -3983,
+      "hp": 162,
+      "hp_max": 180.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        13740,
+        20579
+      ],
+      "type": "Udea",
+      "x": 816,
+      "y": -3981,
+      "hp": 875,
+      "hp_max": 875.0,
+      "mana": 17,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        14998,
+        81402
+      ],
+      "type": "ucry",
+      "x": 63,
+      "y": -3946,
+      "hp": 500,
+      "hp_max": 550.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        15568,
+        63938
+      ],
+      "type": "ucry",
+      "x": 1228,
+      "y": -3959,
+      "hp": 550,
+      "hp_max": 550.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        16012,
+        50893
+      ],
+      "type": "Ulic",
+      "x": 238,
+      "y": -3946,
+      "hp": 462,
+      "hp_max": 575.0,
+      "mana": 72,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        16188,
+        91796
+      ],
+      "type": "nsce",
+      "x": 159,
+      "y": -4022,
+      "hp": 130,
+      "hp_max": 180.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        16200,
+        91813
+      ],
+      "type": "nsce",
+      "x": -9,
+      "y": -4020,
+      "hp": 180,
+      "hp_max": 180.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        16262,
+        88877
+      ],
+      "type": "ucry",
+      "x": 449,
+      "y": -3825,
+      "hp": 500,
+      "hp_max": 550.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    }
+  ],
+  "enemies": [
+    {
+      "handle": [
+        647,
+        18616
+      ],
+      "type": "ugho",
+      "x": 74,
+      "y": -2846,
+      "hp": 340,
+      "target": [
+        14998,
+        81402
+      ],
+      "owner": 1
+    },
+    {
+      "handle": [
+        7306,
+        37243
+      ],
+      "type": "ucry",
+      "x": 406,
+      "y": -2707,
+      "hp": 550,
+      "target": [
+        14998,
+        81402
+      ],
+      "owner": 1
+    },
+    {
+      "handle": [
+        9419,
+        32314
+      ],
+      "type": "ucry",
+      "x": 319,
+      "y": -2725,
+      "hp": 550,
+      "target": [
+        14998,
+        81402
+      ],
+      "owner": 1
+    },
+    {
+      "handle": [
+        12360,
+        85840
+      ],
+      "type": "umtw",
+      "x": 217,
+      "y": -2609,
+      "hp": 380,
+      "target": [
+        16012,
+        50893
+      ],
+      "owner": 1
+    },
+    {
+      "handle": [
+        12388,
+        29363
+      ],
+      "type": "ugho",
+      "x": 202,
+      "y": -2977,
+      "hp": 340,
+      "target": [
+        14998,
+        81402
+      ],
+      "owner": 1
+    },
+    {
+      "handle": [
+        12656,
+        89422
+      ],
+      "type": "ugho",
+      "x": 175,
+      "y": -3752,
+      "hp": 340,
+      "target": [
+        14998,
+        81402
+      ],
+      "owner": 1
+    },
+    {
+      "handle": [
+        12711,
+        57454
+      ],
+      "type": "Ulic",
+      "x": 100,
+      "y": -2972,
+      "hp": 475,
+      "target": null,
+      "owner": 1
+    },
+    {
+      "handle": [
+        13750,
+        21241
+      ],
+      "type": "Udre",
+      "x": 431,
+      "y": -2870,
+      "hp": 750,
+      "target": [
+        16012,
+        50893
+      ],
+      "owner": 1
+    },
+    {
+      "handle": [
+        14110,
+        20116
+      ],
+      "type": "ugho",
+      "x": -33,
+      "y": -3679,
+      "hp": 340,
+      "target": [
+        14998,
+        81402
+      ],
+      "owner": 1
+    },
+    {
+      "handle": [
+        15805,
+        42693
+      ],
+      "type": "ucry",
+      "x": 297,
+      "y": -2509,
+      "hp": 423,
+      "target": [
+        14998,
+        81402
+      ],
+      "owner": 1
+    },
+    {
+      "handle": [
+        15988,
+        61324
+      ],
+      "type": "ugho",
+      "x": 48,
+      "y": -3804,
+      "hp": 340,
+      "target": [
+        16012,
+        50893
+      ],
+      "owner": 1
+    },
+    {
+      "handle": [
+        12940,
+        12940
+      ],
+      "type": "ngst",
+      "x": -287,
+      "y": -4854,
+      "hp": 675,
+      "target": null,
+      "owner": 12
+    },
+    {
+      "handle": [
+        12979,
+        12979
+      ],
+      "type": "nfsh",
+      "x": -435,
+      "y": -5030,
+      "hp": 450,
+      "target": null,
+      "owner": 12
+    },
+    {
+      "handle": [
+        13015,
+        13015
+      ],
+      "type": "ngrk",
+      "x": -471,
+      "y": -4868,
+      "hp": 240,
+      "target": null,
+      "owner": 12
+    },
+    {
+      "handle": [
+        13047,
+        13047
+      ],
+      "type": "nftt",
+      "x": -70,
+      "y": -4826,
+      "hp": 400,
+      "target": null,
+      "owner": 12
+    },
+    {
+      "handle": [
+        13084,
+        13084
+      ],
+      "type": "nftt",
+      "x": -243,
+      "y": -4944,
+      "hp": 400,
+      "target": null,
+      "owner": 12
+    }
+  ]
+}

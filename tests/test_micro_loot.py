@@ -44,7 +44,9 @@ class LocalMicroTests(unittest.TestCase):
         self.assertIn(fiend.handle,moves)
         self.assertGreater(dist(moves[fiend.handle],enemy),700)
         dk.mana=75
-        self.assertFalse(micro.plan([dk,fiend],[enemy],2,lambda _:fiend.handle,dist,lambda *p:True,(-2000,0)))
+        self.assertIn(fiend.handle,micro.plan([dk,fiend],[enemy],2,lambda _:fiend.handle,dist,lambda *p:True,(-2000,0)))
+        fiend.hp=450
+        self.assertNotIn(fiend.handle,micro.plan([dk,fiend],[enemy],2.5,lambda _:fiend.handle,dist,lambda *p:True,(-2000,0)))
         dk.mana=0;fiend.type='uske'
         self.assertFalse(micro.plan([dk,fiend],[enemy],3,lambda _:fiend.handle,dist,lambda *p:True,(-2000,0)))
 
@@ -155,7 +157,7 @@ class ControllerIntegrationTests(unittest.TestCase):
         home=unit('unpl',5,-3000)
         own=[dk,fiend,fiend2,home]
         for obj in own:obj.owner=0
-        g=N(snapshot=lambda **kw:N(clock=100,in_game=True,units=own),
+        g=N(resources=lambda:dict(food_used=0),snapshot=lambda **kw:N(clock=100,in_game=True,units=own),
             my_buildings=lambda *args:[home],map=lambda:N(starts=[],walkable=lambda *p:True),me=lambda:0,
             is_building=lambda u:u.type=='unpl',my_heroes=lambda:[dk],
             units=lambda owner,types:[u for u in own if u.type in types],enemies=lambda:[enemy],
@@ -184,7 +186,7 @@ class BaseLossTests(unittest.TestCase):
         old=unit('unp2',3,-3000);zig=unit('uzig',4,-2800)
         own=[dk,fiend,zig]
         for u in own:u.owner=0
-        g=N(snapshot=lambda **kw:N(clock=1500,in_game=True,units=own),
+        g=N(resources=lambda:dict(food_used=0),snapshot=lambda **kw:N(clock=1500,in_game=True,units=own),
             my_buildings=lambda codes=None:[] if codes else [zig],
             map=lambda:N(starts=[],walkable=lambda *p:True),me=lambda:0,
             is_building=lambda u:u.type=='uzig',my_heroes=lambda:[dk],

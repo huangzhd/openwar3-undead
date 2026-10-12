@@ -76,7 +76,7 @@ class DkSupportTests(unittest.TestCase):
         own=[dk,*allies,home]
         for u in own:u.owner=0
         moves=[];forbidden=[]
-        g=N(snapshot=lambda **kw:N(clock=100,in_game=True,units=own),
+        g=N(resources=lambda:dict(food_used=0),snapshot=lambda **kw:N(clock=100,in_game=True,units=own),
             my_buildings=lambda *a:[home],map=lambda:N(starts=[],walkable=lambda *p:True),me=lambda:0,
             is_building=lambda u:u is home,my_heroes=lambda:[dk],
             units=lambda owner,codes:[u for u in own if u.type in codes],enemies=lambda:[enemy],
@@ -102,7 +102,7 @@ class DkSupportTests(unittest.TestCase):
         dk=unit('Udea',1,100);allies=[unit('ucry',2,0),unit('ucry',3,-100)]
         home=unit('unpl',5,-6000);own=[dk,*allies,home];orders=[]
         for u in own:u.owner=0
-        g=N(snapshot=lambda **kw:N(clock=100,in_game=True,units=own),
+        g=N(resources=lambda:dict(food_used=0),snapshot=lambda **kw:N(clock=100,in_game=True,units=own),
             my_buildings=lambda *a:[home],map=lambda:N(starts=[],walkable=lambda *p:True),me=lambda:0,
             is_building=lambda u:u is home,my_heroes=lambda:[dk],
             units=lambda owner,codes:[u for u in own if u.type in codes],enemies=lambda:[],

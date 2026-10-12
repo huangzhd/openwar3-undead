@@ -22,8 +22,41 @@ class Creeping:
         self.paused=False;self.combat_hp={}
         self.tier=1
         self.opening_gnoll=False
+        self.local_origin=None
+        self.resupply_home=False
+        self.drop_bindings={};self.drop_spawns=set()
+        self.resupply_home=False
+        self.drop_bindings={};self.drop_spawns=set()
+        self.drop_camps={}
         self.enemy_main=None
         self.enemy_structures=[]
+
+    def observe_drop_carriers(self,g,visible,now=None):
+        # Bind only a fair visible unit near a unique static placement; never infer hidden live units.
+        spawns=[(camp,s) for camp,c in enumerate(self.catalog) for s in c.get('spawns',[])]
+        for u in visible:
+            if u.handle in self.drop_bindings:continue
+            choices=sorted((g.dist(u,(s['x'],s['y'])),i,camp,s) for i,(camp,s) in enumerate(spawns)
+                           if s['code']==u.type and i not in self.drop_spawns)
+            if not choices or choices[0][0]>350:continue
+            if len(choices)>1 and choices[1][0]-choices[0][0]<64:continue
+            distance,i,camp,spawn=choices[0]
+            if any(v.handle!=u.handle and v.type==u.type and g.dist(v,(spawn['x'],spawn['y']))<distance for v in visible):continue
+            self.drop_bindings[u.handle]=bool(spawn.get('drops_items'));self.drop_spawns.add(i)
+            self.drop_camps[u.handle]=camp
+            if spawn.get('drops_items'):
+                self.log('creep_drop_carrier_seen',clock=now,code=u.type,handle=u.handle,spawn=(spawn['x'],spawn['y']),distance=round(distance))
+
+    def carries_drop(self,u):return self.drop_bindings.get(u.handle,False)
+
+    def include_drop_carriers(self,g,foes,anchor):
+        # A short-range combat subset must not hide the visible back-row carrier.
+        camps={self.drop_camps[e.handle] for e in foes
+               if getattr(e,'owner',None)==12 and e.handle in self.drop_camps}
+        handles={e.handle for e in foes}
+        return [*foes,*[e for e in (g.creeps() if hasattr(g,'creeps') else [])
+                       if e.hp>0 and e.handle not in handles and self.carries_drop(e)
+                       and self.drop_camps.get(e.handle) in camps and g.dist(e,anchor)<900]]
 
     @staticmethod
     def strength(army):
@@ -43,15 +76,33 @@ class Creeping:
         supported=self.tier>=2 and any(u.type=='uobs' for u in army)
         result=[]
         for c in camps:
+            if self.resupply_home and (not self.own_side(g,c,home) or g.dist((c['x'],c['y']),home)>5000):continue
+            if self.resupply_home and (not self.own_side(g,c,home) or g.dist((c['x'],c['y']),home)>5000):continue
+            if self.local_origin is not None and g.dist((c['x'],c['y']),self.local_origin)>2200:continue
             if c['id'] in self.cleared or c['id'] in self.exhausted or now<self.deferred.get(c['id'],0):continue
             if not healthy:continue
-            if c['kind'] in {'murloc','mercenary','turtle'} and not supported:continue
-            if c.get('difficulty',0)>strength:continue
+            if (c.get('requires_support') or c['kind'] in {'murloc','mercenary','turtle'}) and not supported:continue
+            opening_small=(self.opening_gnoll and not self.cleared and self.own_side(g,c,home)
+                and c['kind'] in {'ogre','gnoll'} and c['max_level']<=3 and c.get('difficulty',0)<=9
+                and not c.get('poison_units') and set(c.get('hazards',[]))<={'ensnare'} and g.dist((c['x'],c['y']),home)<3500
+                and any(u.type=='Udea' and u.level==1 and u.hp/u.hp_max>=.8 for u in army)
+                and sum(u.type in {'uske','uskm'} and u.hp/u.hp_max>=.7 for u in army)>=2)
+            if c.get('difficulty',0)>(max(strength,9) if opening_small else strength):continue
             if not lich and (c['max_level']>5 or hypot(c['x']-home.x,c['y']-home.y)>6500):continue
             # Lich/nova and more ranged units open higher-level camps; avoid suicidal pulls.
             if c['hp']>health*(1.6 if lich else 1.3):continue
             result.append(c)
         return result
+
+    @staticmethod
+    def own_side(g,c,home):
+        mp=g.map()
+        starts=[tuple(p) for p in getattr(mp,'starts',[]) if tuple(p)!=(0,0)]
+        if starts:
+            own=min(starts,key=lambda p:g.dist(home,p))
+            nearest=min(starts,key=lambda p:hypot(c['x']-p[0],c['y']-p[1]))
+            return nearest==own
+        return True
 
     def safe_route(self,g,start,end):
         """Avoid enemy start and fairly observed structures, while allowing outward escape."""
@@ -93,9 +144,23 @@ class Creeping:
 
     def choose(self,g,army,center,home,now,hostiles=()):
         visible=g.creeps()
+        if self.active and self.resupply_home:
+            eligible=self.candidates(g,army,home,now)
+            shops=[c for c in eligible if c['kind']=='shop' and self.safe_route(g,center,(c['x'],c['y']))]
+            outside=not self.own_side(g,self.active,home) or g.dist((self.active['x'],self.active['y']),home)>5000
+            engaged=any(g.dist(u,center)<700 for u in visible)
+            if outside or shops and self.active['kind']!='shop' and not engaged:
+                self.defer(now,'home_shop_resupply')
+        if self.active and self.resupply_home:
+            eligible=self.candidates(g,army,home,now)
+            shops=[c for c in eligible if c['kind']=='shop' and self.safe_route(g,center,(c['x'],c['y']))]
+            outside=not self.own_side(g,self.active,home) or g.dist((self.active['x'],self.active['y']),home)>5000
+            engaged=any(g.dist(u,center)<700 for u in visible)
+            if outside or shops and self.active['kind']!='shop' and not engaged:
+                self.defer(now,'home_shop_resupply')
         if self.active:
             health=sum(u.hp for u in army)/max(1,sum(u.hp_max for u in army))
-            support_lost=self.active['kind'] in {'murloc','mercenary','turtle'} and not (
+            support_lost=(self.active.get('requires_support') or self.active['kind'] in {'murloc','mercenary','turtle'}) and not (
                 self.tier>=2 and any(u.type=='uobs' for u in army))
             # Once engaged, actual remaining camp HP below owns the strength check.
             # Reapplying the full initial level sum after every hit would cause oscillation.
@@ -131,14 +196,14 @@ class Creeping:
             def score(c):
                 distance=g.path_distance(center,(c['x'],c['y']))
                 if distance is None:return float('inf')
-                own_side=(c['x']<-256)==(home.x<-256)
+                own_side=self.own_side(g,c,home)
                 central=c['kind'] in {'marketplace','shop'}
                 # Soft route cost, not a fixed sequence: a nearby cheap camp can win.
                 preference={'ogre':0,'gnoll':0,'expansion':100,'marketplace':200,'murloc':400,'mercenary':600}.get(c['kind'],500)
                 return distance+120*c.get('difficulty',0)+preference+(0 if own_side or central else 2000)
             def opening_score(c):
-                own_gnoll=c['kind']=='gnoll' and (c['x']<-256)==(home.x<-256)
-                return (int(self.opening_gnoll and not own_gnoll),score(c))
+                own_gnoll=c['kind']=='gnoll' and self.own_side(g,c,home)
+                return (int(self.resupply_home and c['kind']!='shop'),int(self.opening_gnoll and not own_gnoll),score(c))
             for c in sorted(self.candidates(g,army,home,now),key=opening_score):
                 point=(c['x'],c['y'])
                 if g.path_distance(center,point) is None:
@@ -153,7 +218,8 @@ class Creeping:
                 self.log('creep_goal',clock=now,point=point,camp=c['id'],kind=c['kind'],
                          level_sum=c.get('level_sum'),poison_units=c.get('poison_units'),
                          difficulty=c.get('difficulty'),army_strength=round(self.strength(army),2),
-                         tier=self.tier,statue_present=any(u.type=='uobs' for u in army))
+                         tier=self.tier,statue_present=any(u.type=='uobs' for u in army),
+                         fiends=sum(u.type=='ucry' for u in army),skeletons=sum(u.type in {'uske','uskm'} for u in army),opening_small=self.opening_gnoll)
                 break
         if self.active:
             point=(self.active['x'],self.active['y'])

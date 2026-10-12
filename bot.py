@@ -32,7 +32,8 @@ def main():
     play.add_argument('--speed',type=speed_percent,choices=SPEEDS,default=400)
     play.add_argument('--minutes',type=positive_minutes,default=None,help='Optional game-time limit; default is no limit')
     play.add_argument('--until',type=parse_deadline,help='Absolute ISO cutoff, including timezone offset')
-    play.add_argument('--enemy-race',type=int,choices=(1,2,3,4),default=3,help='1 human, 2 orc, 3 undead, 4 night elf')
+    play.add_argument('--enemy-race',type=int,choices=(0,1,2,3,4),default=3,help='0 uniform random; 1 human, 2 orc, 3 undead, 4 night elf')
+    play.add_argument('--map',dest='map_alias',choices=('AZ','AL','CH','LR','NI','TH','TR','TM'))
     play.add_argument('--difficulty',type=int,choices=(2,3,4),default=3,help='2 easy, 3 normal, 4 insane')
     sub.add_parser('stop',help='Request graceful stop of the project match')
     args=parser.parse_args()
@@ -77,7 +78,7 @@ def main():
         checks={name:(UPSTREAM/'bin'/name).is_file() for name in ('render_hook.dll','war3_launch.exe','war3_ui_command.exe')}
         checks['game_config']=(UPSTREAM/'openwar3.json').is_file()
         checks['python']=Path(ROOT/'.venv/Scripts/python.exe').is_file()
-        print(json.dumps(dict(version='0.1.60-dev',rules_version='0.1.54',phase='P1',checks=checks,active_project_pids=live,
+        print(json.dumps(dict(version='0.1.87-dev',rules_version='0.1.87',phase='P1',checks=checks,active_project_pids=live,
                               default_opponent=dict(race='undead',race_id=3,difficulty='normal',difficulty_id=3),
                               default_game_minutes=None,default_wall_minutes=None,default_speed=400,speed_presets=list(SPEEDS),computer_use=False),ensure_ascii=False,indent=2))
         return 0 if all(checks.values()) else 1
@@ -89,7 +90,7 @@ def main():
     if stop.exists():
         stop.unlink()
     from run_match import play_matches
-    r=play_matches(args.speed,args.minutes*60 if args.minutes is not None else None,args.until,args.enemy_race,args.difficulty)
+    r=play_matches(args.speed,args.minutes*60 if args.minutes is not None else None,args.until,args.enemy_race,args.difficulty,map_alias=args.map_alias)
     return 1 if r['result']=='error' else 0
 
 if __name__=='__main__': raise SystemExit(main())

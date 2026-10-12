@@ -102,11 +102,11 @@ class CritterSearchTests(unittest.TestCase):
         units.remove(c);b.scout(104)
         self.assertIsNone(b.scout_corpse);self.assertEqual(orders[-1][2],(500,0))
 
-    def test_empty_search_waits_locally_until_deadline_not_enemy_departure(self):
+    def test_empty_search_leaves_for_enemy_without_waiting_until_deadline(self):
         b,g,d,c,own,units,orders,events,inv,cool=opening.ScoutCorpseTests().make()
         units.remove(c);b.scout_critter=None
         for now in range(100,106):b.scout(now)
-        self.assertEqual(orders[-1][2],(b.home.x,b.home.y))
+        self.assertEqual(orders[-1][2],b.enemy_main)
         b.scout(150);self.assertEqual(orders[-1][2],b.enemy_main)
 
     def test_low_health_scout_retreats_before_search_or_hunt(self):

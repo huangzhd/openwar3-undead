@@ -104,8 +104,8 @@ class Strategy0140Tests(unittest.TestCase):
         for t in range(40):
             p=search.choose(g,s,h,t)
             if p is not None:points.append(p);s.x,s.y=p
-        self.assertEqual(len(set(points)),36)
-        self.assertTrue(any(p[1]>0 for p in points));self.assertTrue(any(p[1]<0 for p in points))
+        self.assertEqual(len(set(points)),2)
+        self.assertTrue(search.reported)
         self.assertIsNone(search.choose(g,s,h,45))
 
     def test_unreachable_and_stalled_search_is_bounded(self):

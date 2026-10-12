@@ -50,7 +50,7 @@ class Formation:
     def plan(self,units,target,now,ground_distance,path,retreat=False):
         """Return (unit, point, hold). No desktop or hidden-world access."""
         if not units: return []
-        core=[u for u in units if u.type not in {'uske','uskm'}] or units
+        core=[u for u in units if u.type not in {'uske','uskm','nsce','nsca'}] or units
         veterans=[u for u in core if u.handle in self.known and u.handle not in self.joiners] or core
         leader=min(veterans,key=lambda u:sum(distance(xy(u),xy(v)) for v in veterans))
         for u in core:

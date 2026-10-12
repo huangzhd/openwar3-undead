@@ -142,9 +142,9 @@ class EquipmentTests(unittest.TestCase):
 
     def test_shopping_clearance_cannot_exclude_full_hero_from_retreat_or_defense(self):
         from undead.policy import Action
-        lich=unit('Ulic',1,0);lich.mana=0;foe=unit('ogru',2,100)
+        lich=unit('Ulic',1,0);lich.mana=0;foe=unit('ogru',2,100);foe.owner=1
         moves=[];attacks=[]
-        g=N(dist=dist,move=lambda h,*p:moves.append(h.handle) or True,
+        g=N(me=lambda:0,dist=dist,move=lambda h,*p:moves.append(h.handle) or True,
             current_target=lambda u:None,is_building=lambda u:False,
             attack=lambda h,*a,**kw:attacks.append(h.handle) or True)
         for action in (Action.RETREAT,Action.DEFEND):

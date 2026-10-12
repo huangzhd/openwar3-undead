@@ -38,6 +38,13 @@ def target_legal(g,e):
     return not (BLOCKED_BUFFS & set(g.buffs(e)) or BLOCKED_ABILITIES & abilities.keys() or
                 ('AHav' in abilities and abilities['AHav'].get('cooldown')!=0))
 
+def aoe_threat(g,target):
+    """Visible high area-damage heroes; no hidden cooldown or skill queries."""
+    if not target.is_hero or not getattr(target,'has_detail',False):return False
+    return target.type in {'Otch','Hblm'} or any(
+        a['code'] in {'AOsh','AOws','AHfs','AHbz','ANbf'} and a.get('level',0)>0
+        for a in g.abilities(target))
+
 class NCCombo:
     # Keep the public name/log names for existing match review tools.
     def __init__(self,log):
@@ -97,15 +104,23 @@ class NCCombo:
                                            tuple(a['letter'] for a in s))) if usable else None
         return None
 
-    def try_cast(self,g,army,foes,now,cast_until,blocked=()):
+    def try_cast(self,g,army,foes,now,cast_until,blocked=(),pressure=False):
         if self.pending or not army:return None
         anchor=min(army,key=lambda u:sum(g.dist(u,v) for v in army));candidates=[]
         for e in foes:
             options=self.options(g,army,e,anchor,now,cast_until,blocked)
             chosen=self.select(options,e.hp,now)
             if chosen:candidates.append((e,chosen))
+        pressuring=False
+        if not candidates and pressure:
+            for e in foes:
+                if not aoe_threat(g,e):continue
+                opts=[a for a in self.options(g,army,e,anchor,now,cast_until,blocked)
+                      if a['letter'] in {'N','C'} and self.failures.get(a['key'],0)<3 and now>=self.retry_at.get(a['key'],0)]
+                if {a['letter'] for a in opts}=={'N','C'}:candidates.append((e,tuple(opts)))
+            pressuring=bool(candidates)
         if not candidates:return None
-        target,chosen=min(candidates,key=lambda row:(len(row[1]),sum(a['cost'] for a in row[1]),
+        target,chosen=min(candidates,key=lambda row:(not aoe_threat(g,row[0]),len(row[1]),sum(a['cost'] for a in row[1]),
                           sum(a['damage'] for a in row[1])-row[0].hp,row[0].handle))
         start_hp=target.hp;remaining=list(chosen);sent=[];receipts={};pending_damage=0;last_hp=start_hp
         self.single_attempt_at=now # Suppress all ordinary offensive casts on any attempt.
@@ -116,7 +131,7 @@ class NCCombo:
             pending_damage=max(0,pending_damage-max(0,last_hp-fresh.hp));last_hp=fresh.hp
             ready=self.options(g,army,fresh,anchor,now,cast_until,blocked)
             ready=[a for a in ready if any(a['key']==b['key'] for b in remaining)]
-            next_plan=self.select(ready,max(0,fresh.hp-pending_damage),now)
+            next_plan=(ready if fresh.hp>pending_damage else ()) if pressuring else self.select(ready,max(0,fresh.hp-pending_damage),now)
             if not next_plan:break # Dead, already covered, or newly healed beyond this plan.
             a=next_plan[0] # Nova first whenever included; C/F remain independently legal.
             self.retry_at[a['key']]=now+2
@@ -128,6 +143,7 @@ class NCCombo:
         for a in chosen:cast_until[a['caster'].handle]=max(cast_until.get(a['caster'].handle,0),now+.8)
         combo=''.join(a['letter'] for a in chosen);single=len(chosen)==1
         fields=dict(clock=now,target=target.type,handle=target.handle,hp=start_hp,combination=combo,
+                    intent='aoe_pressure' if pressuring else 'finisher',
                     estimated_damage=sum(a['damage'] for a in chosen),hero_multiplier=spell_data()[1],
                     bracers=chosen[0]['bracers'],accepted=all(receipts.get(a['letter'],False) for a in chosen),
                     failures=max(self.failures.get(a['key'],0) for a in chosen),receipts=receipts,

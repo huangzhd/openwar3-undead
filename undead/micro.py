@@ -1,5 +1,6 @@
 """Local pullback decisions; one damaged unit does not decide the army's retreat."""
 from math import hypot,cos,sin,atan2,pi
+from .damage import DamageTrend
 
 COIL_MANA=75
 DK_SUPPORT_DISTANCE=750
@@ -9,6 +10,7 @@ class Micro:
     def __init__(self,log):
         self.log=log
         self.hp={}
+        self.damage=DamageTrend()
         self.hit={}
         self.pulling=set()
         self.previous=set()
@@ -17,7 +19,8 @@ class Micro:
         self.dk_support=None
 
     def plan(self,army,hostiles,now,target_of,ground_distance,walkable,home,attack_range=lambda e:600,creeping=False,coil_ready=True):
-        core=[u for u in army if u.type not in {'uske','uskm'}]
+        core=[u for u in army if u.type not in {'uske','uskm','nsce','nsca'}]
+        self.damage.observe([u for u in core if u.is_hero],now)
         current={u.handle for u in core}
         self.losses.extend(now for _ in self.previous-current)
         self.losses=[t for t in self.losses if now-t<20]
@@ -36,10 +39,12 @@ class Micro:
         moves={}
         dk=next((u for u in core if u.type=='Udea'),None)
         dk_has_mana=dk is not None and getattr(dk,'mana',0)>=COIL_MANA
-        eligible={u.handle for u in core if (u.type=='Udea' and (not creeping or u.hp/u.hp_max<.45 or u.handle in self.pulling)) or
-                  (u.type=='Ulic' and u.hp/u.hp_max<.45 and not
-                   (dk_has_mana and coil_ready and hypot(u.x-dk.x,u.y-dk.y)<750)) or
-                  (u.type not in {'Udea','Ulic'} and (not dk_has_mana or u.type in {'Nngs','uobs'}) and
+        eligible={u.handle for u in core if (u.type=='Udea' and (not creeping or u.hp/u.hp_max<.45 or u.handle in self.pulling or self.damage.urgent(u))) or
+                  (u.type in {'Ulic','Nbrn'} and (((u.hp/u.hp_max<.45 or u.handle in self.pulling and u.hp/u.hp_max<.7) and not
+                   (dk_has_mana and coil_ready and hypot(u.x-dk.x,u.y-dk.y)<750)) or self.damage.urgent(u))) or
+                  (u.type=='ucry' and ((u.handle in self.pulling and u.hp/u.hp_max<.7) or
+                   (u.hp/u.hp_max<.45 and not (dk_has_mana and coil_ready and hypot(u.x-dk.x,u.y-dk.y)<750)))) or
+                  (u.type not in {'Udea','Ulic','Nbrn','ucry'} and (not dk_has_mana or u.type in {'Nngs','uobs'} or u.is_hero and self.damage.urgent(u)) and
                    (u.is_hero or u.hp/u.hp_max<.45 or u.handle in self.pulling))}
         self.pulling &= eligible
         for u in core:
@@ -47,7 +52,7 @@ class Micro:
             attackers=[e for e in hostiles if targets[e.handle]==u.handle and hypot(e.x-u.x,e.y-u.y)<max(900,attack_range(e)+100)]
             fired=now-self.hit.get(u.handle,-100)<2 or bool(attackers)
             ratio=u.hp/u.hp_max
-            if fired and (u.type=='Udea' or ratio<.7 or len(attackers)>=2):
+            if fired and (u.type=='Udea' or ratio<.7 or len(attackers)>=2 or u.is_hero and self.damage.urgent(u)):
                 if u.handle not in self.pulling:
                     self.log('unit_pullback',clock=now,unit=u.type,handle=u.handle,hp=round(u.hp),attackers=len(attackers))
                 self.pulling.add(u.handle)
@@ -56,6 +61,11 @@ class Micro:
             near=attackers or [e for e in hostiles if hypot(e.x-u.x,e.y-u.y)<max(900,attack_range(e)+100)]
             exposed=any(hypot(e.x-u.x,e.y-u.y)<attack_range(e)+100 for e in near)
             if not fired and not exposed and now-self.hit.get(u.handle,-100)>3:
+                # Escaping fire is not healing. Keep a fragile fiend safely out
+                # of attack orders while this local battle is still active.
+                if u.type=='ucry' and ratio<.7 and any(hypot(e.x-anchor.x,e.y-anchor.y)<1200 for e in hostiles):
+                    moves[u.handle]=(u.x,u.y)
+                    continue
                 self.pulling.remove(u.handle)
                 continue
             if not near: continue
@@ -110,6 +120,9 @@ class Micro:
                         clearance=min(hypot(point[0]-e.x,point[1]-e.y)-attack_range(e) for e in near)
                         reconnect.append((clearance,point))
                 if reconnect:moves[u.handle]=max(reconnect,key=lambda pair:pair[0])[1]
+        # Keep blocked pullbacks out of strategic attack orders.
+        for u in core:
+            if u.type!='Udea' and u.handle in self.pulling:moves.setdefault(u.handle,(u.x,u.y))
         return self.recover_dk(core,moves,ground_distance)
 
     def recover_dk(self,core,moves,ground_distance):

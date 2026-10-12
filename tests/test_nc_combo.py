@@ -12,7 +12,7 @@ class NCTests(unittest.TestCase):
         own=[dk,lich];foes=[hero,footman];orders=[];events=[];buffs={};cooldowns={}
         skills={dk.handle:[dict(code='AUdc',level=1)],lich.handle:[dict(code='AUfn',level=1)]}
         for u in own+foes:u.owner=0 if u in own else 1;u.has_detail=True
-        g=N(dist=dist,me=lambda:0,enemies=lambda:foes,
+        g=N(resources=lambda:dict(food_used=0),dist=dist,me=lambda:0,enemies=lambda:foes,
             units=lambda side,codes:[u for u in own if u.type in codes],
             unit=lambda h:next((u for u in own+foes if u.handle==h),None),
             abilities=lambda u:skills.get(u.handle,[]),buffs=lambda u:buffs.get(u.handle,[]),

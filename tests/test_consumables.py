@@ -76,6 +76,18 @@ class ConsumableTests(unittest.TestCase):
         self.step(blocked=[h.handle],coil_needed=True);self.assertFalse(g.orders)
         self.lock[h.handle]=8;self.step(5,coil_needed=True);self.assertFalse(g.orders)
         self.step(9,coil_needed=True);self.assertEqual(g.orders,[('use','Udea','pgma')])
+    def test_mana_stone_waits_for_coil_need_and_confirms_actual_mana_gain(self):
+        g=self.g;dk=g.heroes[0];dk.mana=10;dk.mana_max=400
+        g.bags[dk.handle][0]='mnst';g.effect=True
+        self.step();self.assertFalse(g.orders)
+        self.step(5,coil_needed=True)
+        self.assertEqual(g.orders,[('use','Udea','mnst')])
+        self.assertEqual(dk.mana,310);self.assertNotIn('mnst',g.bags[dk.handle])
+        self.step(7,coil_needed=True)
+        effect=next(e for e in self.events if e['event']=='consumable_effect_observed')
+        self.assertTrue(effect['consumed']);self.assertEqual(effect['gains'][0]['mana_gain'],300)
+        self.assertEqual(len(g.orders),1)
+
     def test_restoration_and_combat_scrolls_avoid_existing_buffs(self):
         g=self.g;h=g.heroes[0];g.bags[h.handle][0]='sres';g.heroes[1].mana=0
         self.step();self.assertEqual(g.orders[-1],('use','Udea','sres'))
@@ -153,6 +165,7 @@ class ScrollTests(unittest.TestCase):
         self.step();self.assertFalse(self.g.orders)
     def test_budget_reserves_core_replacements_tech_portal_and_absent_heroes(self):
         g=UpgradeGame();e=Economy(lambda *a,**k:None);e.ever_heroes={h.type for h in g.my_heroes()}
+        e.upkeep_released=True
         baseline=e.optional_reserve(g,500)
         g.own=[u for u in g.own if u.type!='uobs']
         self.assertEqual(e.optional_reserve(g,500)-baseline,400)
@@ -166,7 +179,7 @@ class ScrollTests(unittest.TestCase):
         c.economy.optional_reserve=lambda *a:0;c.action=Action.RETREAT
         c.shop_goal=(700,800)
         c.restock_scrolls(1,g.heroes,[g.shop]);self.assertFalse(g.orders)
-        c.home.x=0;g.shop.type='ngme'
+        c.home.x=0;g.shop.type='ngme';c.economy.upkeep_released=True
         c.restock_scrolls(5,g.heroes,[g.shop]);self.assertFalse(g.orders)
         g.shop.type='utom';c.restock_scrolls(9,g.heroes,[g.shop])
         self.assertEqual(g.orders,[('buy','shea')]);self.assertEqual(c.shop_goal,(700,800))

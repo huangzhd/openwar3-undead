@@ -13,14 +13,14 @@ class Loot:
     @staticmethod
     def key(item): return (item.handle_lo,item.handle_hi)
 
-    def tick(self,g,army,hostiles,now,all_heroes=None):
+    def tick(self,g,army,hostiles,now,all_heroes=None,camp_combat=False):
         present=[u for u in (army if all_heroes is None else all_heroes) if u.is_hero]
         lich_present=any(u.type=='Ulic' for u in present)
         self.lich_seen=self.lich_seen or lich_present
-        heroes=[u for u in army if u.is_hero and u.hp/u.hp_max>.35]
+        heroes=[u for u in army if u.is_hero and u.hp/u.hp_max>(.7 if camp_combat else .35)]
         if not heroes: return None
         center=min(heroes,key=lambda h:sum(g.dist(h,u) for u in army))
-        if any(g.dist(e,center)<950 for e in hostiles):
+        if any(g.dist(e,center)<950 and (not camp_combat or getattr(e,'owner',None)!=12) for e in hostiles):
             self.pending=None
             return None
         visible={self.key(it):it for it in g.items_on_ground() if it.life>0}
@@ -50,7 +50,7 @@ class Loot:
                 p['issued']=now
                 p['accepted']=bool(g.pick_up(hero,item)) or p['accepted']
             return hero,p['point']
-        candidates=[it for key,it in visible.items() if key not in self.done and self.attempts.get(key,0)<3 and g.dist(it,center)<900]
+        candidates=[it for key,it in visible.items() if key not in self.done and self.attempts.get(key,0)<3 and g.dist(it,center)<(500 if camp_combat else 900)]
         for item in sorted(candidates,key=lambda it:g.dist(it,center)):
             if item.type=='stwp' and any('stwp' in (g.inventory(h) or []) for h in present):continue
             row=self.catalog.get(item.type,{})
@@ -70,7 +70,7 @@ class Loot:
             preferred='Ulic' if 'tome_int' in row.get('effects',{}) else 'Nbrn' if 'tome_agi' in row.get('effects',{}) else 'Udea'
             hero=min(eligible,key=lambda h:g.dist(h,item)+(0 if h.type==preferred else 150))
             route=g.path_distance((hero.x,hero.y),(item.x,item.y))
-            if route is None or route>1100:continue
+            if route is None or route>(650 if camp_combat else 1100):continue
             key=self.key(item)
             self.attempts[key]=self.attempts.get(key,0)+1
             accepted=bool(g.pick_up(hero,item))

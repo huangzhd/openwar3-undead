@@ -81,19 +81,19 @@ class SustainTests(unittest.TestCase):
         e=Economy(lambda *a,**kw:None);e.ever_heroes={'Udea','Ulic'}
         return g,e
 
-    def test_first_statue_is_queued_before_tier_three_then_tech_continues(self):
+    def test_tier_three_can_start_before_first_statue_then_sustain_continues(self):
         g,e=self.economy();e.tick(g,327)
-        self.assertEqual(g.commands,['uobs'])
-        e.tick(g,329);self.assertEqual(g.commands,['uobs','unp2'])
+        self.assertEqual(g.commands,['unp2'])
+        g.busy[g.own[0].handle]=N(kind='upgrade',queue=['unp2'])
+        e.tick(g,329);self.assertEqual(g.commands,['unp2','uobs'])
 
-    def test_slaughterhouse_construction_blocks_premature_tier_three(self):
+    def test_slaughterhouse_construction_releases_tier_three(self):
         g,e=self.economy();slaughter=g.my_buildings({'uslh'})[0]
         g.busy[slaughter.handle]=N(kind='construction',queue=['uslh'])
-        e.tick(g,327);self.assertFalse(g.commands)
-        g.busy.clear();e.tick(g,329);self.assertEqual(g.commands,['uobs'])
+        e.tick(g,327);self.assertEqual(g.commands,['unp2'])
 
-    def test_low_gold_is_reserved_for_first_statue(self):
-        g,e=self.economy();g.gold=100;g.can_do=lambda b,code:8 if code=='uobs' else 0
+    def test_insufficient_resources_cannot_start_either_purchase(self):
+        g,e=self.economy();g.gold=100;g.can_do=lambda b,code:8
         e.tick(g,327);self.assertFalse(g.commands)
 
     def test_missing_slaughterhouse_is_built_even_without_visible_raid(self):

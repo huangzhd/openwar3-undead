@@ -13,6 +13,8 @@ class TavernTests(unittest.TestCase):
             nearest=lambda units,u:min(units,key=lambda t:dist(u,t)),
             move=lambda u,x,y:moves.append((u.handle,(x,y))) or True,
             buy=lambda shop,code:buys.append(code) or N(reason=0))
+        g.my_heroes=lambda:[u for u in army if u.is_hero]
+        g.all_production=lambda owner:[]
         b=Controller(g,lambda e,**kw:events.append(dict(event=e,**kw)),race)
         b.home=unit('unpl',100,-5000);b.situation.fiends=4;b.situation.statues=1
         return b,army,shops,moves,buys,events,resources

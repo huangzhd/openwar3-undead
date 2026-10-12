@@ -2,13 +2,13 @@
 import json
 from bootstrap import UPSTREAM
 
-BLUE_POTIONS={'pman','pgma'}
+BLUE_POTIONS={'pman','pgma','mnst'} # Mana Stone follows DK mana-supply ownership.
 CLAWS={'rat3':3,'rat6':6,'rat9':9,'ratc':12,'ratf':15}
 # Lich gains attack from intelligence and attack speed from agility. The pinned
 # local item catalog supplies numeric bonuses; these additional item abilities
 # carry attack/orb or endurance-aura bonuses not expanded by that catalog.
 _ITEM_CATALOG=json.loads((UPSTREAM/'data/game/items.json').read_text(encoding='utf-8'))
-LICH_ITEMS=set(CLAWS)|{'bspd','ajen','ocor','odef','ofir','ofro','olig','oli2','oslo','oven','ward'}|{
+LICH_ITEMS={'pnvl','pnvu'}|set(CLAWS)|{'bspd','ajen','ocor','odef','ofir','ofro','olig','oli2','oslo','oven','ward'}|{
     code for code,row in _ITEM_CATALOG.items() if not row.get('powerup',False)
     and any(row.get('effects',{}).get(effect,0)>0
             for effect in ('attack','attack_speed','int','agi','aura_trueshot'))}

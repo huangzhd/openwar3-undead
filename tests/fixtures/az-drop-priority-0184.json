@@ -1,0 +1,229 @@
+{
+  "event": "combat_state",
+  "clock": 619.655,
+  "center": [
+    -1711.01904296875,
+    1246.2099609375
+  ],
+  "army_hp": 6941.236053466797,
+  "enemy_hp": 983.1996459960938,
+  "army_health": 0.9776388807699714,
+  "recent_losses": 0,
+  "army": [
+    {
+      "handle": [
+        7782,
+        101340
+      ],
+      "type": "ucry",
+      "x": -1844,
+      "y": 768,
+      "hp": 426,
+      "hp_max": 550.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        12696,
+        42146
+      ],
+      "type": "ucry",
+      "x": -1948,
+      "y": 854,
+      "hp": 550,
+      "hp_max": 550.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        12784,
+        54984
+      ],
+      "type": "ucry",
+      "x": -1711,
+      "y": 1246,
+      "hp": 550,
+      "hp_max": 550.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        13182,
+        60914
+      ],
+      "type": "ucry",
+      "x": -1608,
+      "y": 1192,
+      "hp": 550,
+      "hp_max": 550.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        13772,
+        125779
+      ],
+      "type": "Nbrn",
+      "x": -1728,
+      "y": 1001,
+      "hp": 550,
+      "hp_max": 550.0,
+      "mana": 222,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        14007,
+        70053
+      ],
+      "type": "Ulic",
+      "x": -1619,
+      "y": 1302,
+      "hp": 600,
+      "hp_max": 600.0,
+      "mana": 66,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        14166,
+        26358
+      ],
+      "type": "Udea",
+      "x": -1837,
+      "y": 1218,
+      "hp": 1000,
+      "hp_max": 1000.0,
+      "mana": 178,
+      "pulling": true,
+      "pull": [
+        -1632.6998171896212,
+        1766.096456181678
+      ]
+    },
+    {
+      "handle": [
+        14264,
+        86182
+      ],
+      "type": "uobs",
+      "x": -1786,
+      "y": 1488,
+      "hp": 515,
+      "hp_max": 550.0,
+      "mana": 333,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        14613,
+        83590
+      ],
+      "type": "ucry",
+      "x": -1580,
+      "y": 1553,
+      "hp": 550,
+      "hp_max": 550.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        14745,
+        95276
+      ],
+      "type": "uobs",
+      "x": -1695,
+      "y": 1574,
+      "hp": 550,
+      "hp_max": 550.0,
+      "mana": 473,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        15202,
+        108890
+      ],
+      "type": "ucry",
+      "x": -1665,
+      "y": 1392,
+      "hp": 550,
+      "hp_max": 550.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    },
+    {
+      "handle": [
+        16423,
+        129805
+      ],
+      "type": "ucry",
+      "x": -1779,
+      "y": 1332,
+      "hp": 550,
+      "hp_max": 550.0,
+      "mana": 0,
+      "pulling": false,
+      "pull": null
+    }
+  ],
+  "enemies": [
+    {
+      "handle": [
+        12735,
+        12735
+      ],
+      "type": "nftt",
+      "x": -1565,
+      "y": 656,
+      "hp": 212,
+      "target": [
+        14166,
+        26358
+      ]
+    },
+    {
+      "handle": [
+        13273,
+        13273
+      ],
+      "type": "nftt",
+      "x": -1754,
+      "y": 435,
+      "hp": 322,
+      "target": [
+        7782,
+        101340
+      ]
+    },
+    {
+      "handle": [
+        14139,
+        14139
+      ],
+      "type": "nftb",
+      "x": -1619,
+      "y": 516,
+      "hp": 450,
+      "target": [
+        7782,
+        101340
+      ]
+    }
+  ]
+}
