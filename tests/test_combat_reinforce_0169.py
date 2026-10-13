@@ -54,7 +54,7 @@ class ReinforceTests(unittest.TestCase):
         b.respond_player_contact(own,10)
         moved={o[1]:o[2] for o in orders if o[0]=='move'}
         self.assertIn(own[2].handle,moved)
-        self.assertGreater(moved[own[2].handle][0],own[2].x)
+        self.assertLess(moved[own[2].handle][0],own[2].x) # forward hero rejoins DK before advancing
         self.assertLess(moved[own[2].handle][0],foes[0].x)
 
 class DeathBookTests(unittest.TestCase):

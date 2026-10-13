@@ -4,7 +4,7 @@ from .equipment import can_receive
 RINGS={'rde0':25,'rde1':62,'rde2':150,'rde3':300,'rde4':400}
 
 def sellable(hero,code):
-    return code in RINGS or (hero.type=='Udea' and code=='woms')
+    return code in RINGS or code=='clsd' or (hero.type=='Udea' and code=='woms')
 
 class BattleShop:
     def __init__(self,log):
@@ -33,13 +33,15 @@ class BattleShop:
         refund=None
         if p['kind']=='sell':
             res=g.resources();refund=res['gold']-p['gold']-(res.get('gold_gathered',0)-p['gathered'])
-            changed=changed and (refund>0 if p['code']=='woms' else refund>=RINGS[p['code']])
+            changed=changed and (refund>=RINGS[p['code']] if p['code'] in RINGS else refund>0)
         # A neutral shop may choose a different friendly recipient.
         if p['kind']=='buy' and not changed:
             changed=any((g.inventory(h) or []).count(p['code'])>p['team_before'].get(h.handle,0) for h in g.my_heroes())
         if changed or now-p['started']>=3:
             self.log('shop_transaction_confirmed' if changed else 'shop_transaction_unconfirmed',clock=now,
-                     kind=p['kind'],code=p['code'],hero=p['hero'],refund_excluding_gathering=refund)
+                     kind=p['kind'],code=p['code'],hero=p['hero'],
+                     recipients=[h.handle for h in g.my_heroes() if (g.inventory(h) or []).count(p['code'])>p.get('team_before',{}).get(h.handle,0)] if p['kind']=='buy' else [p.get('receiver',p['hero'])],
+                     refund_excluding_gathering=refund)
             self.pending=None
 
     def transact(self,g,hero,code,kind,now,cast_until,target):
@@ -216,7 +218,7 @@ class BattleShop:
     def prepare_mana(self,b,army,dk,now):
         # Local ItemData.slk: 200 gold, first stock 440s, replenishment 120s.
         g=b.g;bag=g.inventory(dk)
-        if now<440 or bag is None or any(c in bag for c in ('pman','pgma','mnst','pres')):return False
+        if bag is None or any(c in bag for c in ('pman','pgma','mnst','pres')):return False
         if None not in bag or b.economy.revival_pending(g):return False
         heroes=g.my_heroes();foes=g.enemies()+g.creeps()
         if any(g.dist(e,h)<950 for e in foes for h in heroes):return False
@@ -226,7 +228,13 @@ class BattleShop:
                 code=next(c for c in g.inventory(donor) if c in ('pman','pgma','mnst'))
                 self.transact(g,donor,code,'give',now,b.cast_until,dk)
                 return True
-            return False
+            point=(dk.x,dk.y)
+            route=g.path_distance((donor.x,donor.y),point)
+            if route is None or route>2400 or not b.creeping.safe_route(g,(donor.x,donor.y),point):return False
+            b.go(army,point,now)
+            b.go_raw([donor],point,now)
+            return True
+        if now<440:return False
         shops=[s for s in b.economy.ready(g,'utom') if not any(g.dist(e,s)<950 for e in foes)]
         shop=g.nearest(shops,dk) if shops else None
         if shop is None or g.resources()['gold']<200:return False

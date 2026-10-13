@@ -190,7 +190,13 @@ class Formation:
                 self.last_progress=now
             self.cursors[u.handle]=index
             point=self.route[index]
-            if u is dk and brake:
+            hero_ahead=bool(dk and u is not dk and u.is_hero and not retreat and
+                distance(xy(u),xy(dk))>550 and
+                ground_distance(xy(u),target) is not None and ground_distance(xy(dk),target) is not None and
+                ground_distance(xy(u),target)+120<ground_distance(xy(dk),target))
+            if hero_ahead:
+                orders.append((u,xy(dk),False))
+            elif u is dk and brake:
                 orders.append((u,xy(u),True))
             else:
                 # Units pass the same turns independently; nobody waits for the last straggler.

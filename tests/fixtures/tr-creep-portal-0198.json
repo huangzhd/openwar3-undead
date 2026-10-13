@@ -1,0 +1,154 @@
+{
+  "source": "20261013-112744",
+  "note": "Real pre-TP combat state; ownership from nearest fair sample. Terrain is stubbed by tests, not a live terrain validation.",
+  "combat": {
+    "event": "combat_state",
+    "clock": 390.13,
+    "center": [
+      -56.83642578125,
+      1523.951171875
+    ],
+    "army_hp": 2543.9500770568848,
+    "enemy_hp": 1383.398193359375,
+    "army_health": 0.8395874841771896,
+    "recent_losses": 0,
+    "army": [
+      {
+        "handle": [
+          13484,
+          56284
+        ],
+        "type": "uske",
+        "x": 400,
+        "y": 1855,
+        "hp": 48,
+        "hp_max": 180.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          14940,
+          60259
+        ],
+        "type": "Ulic",
+        "x": -8,
+        "y": 1426,
+        "hp": 525,
+        "hp_max": 525.0,
+        "mana": 212,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          15733,
+          51236
+        ],
+        "type": "ucry",
+        "x": -145,
+        "y": 1607,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          16187,
+          25201
+        ],
+        "type": "Udea",
+        "x": 304,
+        "y": 1840,
+        "hp": 326,
+        "hp_max": 675.0,
+        "mana": 105,
+        "pulling": true,
+        "pull": [
+          261.92375520006146,
+          1201.5865308081193
+        ]
+      },
+      {
+        "handle": [
+          16486,
+          35850
+        ],
+        "type": "ucry",
+        "x": 157,
+        "y": 1412,
+        "hp": 545,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          16846,
+          45887
+        ],
+        "type": "ucry",
+        "x": -57,
+        "y": 1524,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      }
+    ],
+    "enemies": [
+      {
+        "handle": [
+          14230,
+          14230
+        ],
+        "type": "ntrg",
+        "x": 336,
+        "y": 2011,
+        "hp": 727,
+        "target": [
+          13484,
+          56284
+        ]
+      },
+      {
+        "handle": [
+          14268,
+          14268
+        ],
+        "type": "ntrt",
+        "x": 374,
+        "y": 2247,
+        "hp": 328,
+        "target": [
+          16187,
+          25201
+        ]
+      },
+      {
+        "handle": [
+          14456,
+          14456
+        ],
+        "type": "ntrt",
+        "x": 143,
+        "y": 1960,
+        "hp": 328,
+        "target": [
+          16187,
+          25201
+        ]
+      }
+    ]
+  },
+  "owners": {
+    "[14230, 14230]": 12,
+    "[14268, 14268]": 12,
+    "[14456, 14456]": 12
+  }
+}

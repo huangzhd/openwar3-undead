@@ -110,7 +110,7 @@ class Consumables:
                     minimum={'Udea':75,'Ulic':125,'Nngs':120,'Nbrn':75}.get(hero.type,100)
                     need_mp=mana and mp<minimum and missing_mp>=mana*.65
                     if code in BLUE_POTIONS:
-                        need_mp=hero.type=='Udea' and (coil_needed or preparing) and mp<75
+                        need_mp=hero.type=='Udea' and ((coil_needed and mp<75) or (preparing and mp<150 and missing_mp>=min(mana,150)*.65))
                     if not (need_hp or need_mp):continue
                     priority=1 if need_hp else 4
                 candidates.append((priority,slot,code,key,targets))

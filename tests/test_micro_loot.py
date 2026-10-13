@@ -34,7 +34,9 @@ class LocalMicroTests(unittest.TestCase):
         dk.mana=74
         self.assertIn(lich.handle,micro.plan(*args))
         dk.mana=75
-        self.assertFalse(micro.plan(*args))
+        self.assertIn(lich.handle,micro.plan(*args)) # Mana returning is not an observed heal.
+        lich.hp=450
+        self.assertNotIn(lich.handle,micro.plan(*args))
 
     def test_low_fiend_pulls_without_coil_but_summons_do_not(self):
         dk=unit('Udea',1,0);dk.mana=0
@@ -222,6 +224,7 @@ class HealingTests(unittest.TestCase):
             move=lambda u,*p:moves.append(u.handle) or True)
         bot=Controller(g,lambda *a,**k:None)
         self.assertEqual({u.type for u in bot.heal_candidates(dk)},{'ucry','Nbrn'})
+        bot.player_contact=[enemy]
         bot.heal_allies(own,10)
         bot.fight([dk,fiend],[enemy],10)
         bot.go_raw([dk],(-100,0),10)

@@ -99,7 +99,7 @@ class RecoveryTests(unittest.TestCase):
         g,b,army,dk,lich,moves=self.make();b.recovery_pending=True;g.bags[dk.handle][0]='stwp'
         lich.mana=100
         self.assertFalse(b.prepare_attack(army,500))
-        lich.mana=125;dk.mana=75
+        lich.mana=125;dk.mana=150
         self.assertTrue(b.prepare_attack(army,501));self.assertFalse(b.recovery_pending)
 
     def test_missing_fiends_statue_or_wounded_hero_hold_regroup(self):

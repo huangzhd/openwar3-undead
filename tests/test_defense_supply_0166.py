@@ -65,6 +65,7 @@ class DefenseTests(unittest.TestCase):
         g.cast=lambda h,spell,target:g.orders.append(('coil',target.type)) or True
         b=Controller(g,lambda *a,**kw:None)
         c=Consumables(lambda *a,**kw:None);c.tick(g,g.army,[],500,b.cast_until,coil_needed=True)
+        b.player_contact=[unit('hfoo',90,100)]
         c.observe(g,502);b.heal_allies(g.army,502)
         self.assertEqual(dk.mana,150);self.assertIn(('coil','Ulic'),g.orders)
 

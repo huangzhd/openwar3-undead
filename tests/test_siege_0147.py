@@ -77,13 +77,15 @@ class SiegeTests(unittest.TestCase):
             b.fight(a,f,10)
             self.assertTrue(all(cur[u.handle] is tower for u in a),mode)
 
-    def test_defenders_suspend_siege_then_driven_away_restores_focus(self):
+    def test_defenders_are_fought_then_tower_is_focused(self):
         b,a,f,cmd,cur,ids,p,ev=self.game();tower=self.enemy('hgtw',10,300);soldier=self.enemy('ogru',11,80);f.extend([tower,soldier])
-        b.fight(a,f,10);self.assertTrue(all(cur[u.handle] is soldier for u in a))
-        soldier.x=1100;cmd.clear();b.fight(a,f,12)
+        b.fight(a,f,10)
+        self.assertTrue(all(cur[u.handle] is soldier for u in a))
+        self.assertFalse(any(c[0]=='hold' for c in cmd))
+        soldier.x=2500;cmd.clear();b.fight(a,f,12)
         self.assertEqual({t for op,h,t in cmd if op=='attack'},{tower.handle})
         soldier.x=80;cmd.clear();b.fight(a,f,14)
-        self.assertEqual({t for op,h,t in cmd if op=='attack'},{soldier.handle})
+        self.assertTrue(all(cur[u.handle] is soldier for u in a))
 
     def test_same_priority_sticks_and_higher_priority_interrupts(self):
         b,a,f,cmd,cur,ids,p,ev=self.game();base=self.enemy('unpl',10,200);other=self.enemy('htow',11,300);f.extend([base,other])

@@ -17,6 +17,7 @@ class Economy:
         self.last_build=-100
         self.builder=None
         self.scout=None
+        self.scout_losses=0;self.enemy_start_known=False
         self.first_fiend=False
         self.opening_started=False
         self.opening_complete=False
@@ -136,7 +137,13 @@ class Economy:
         self.expansion.observe(g)
         self.expansion.upkeep(g,home,now)
         repair_critical=self.repairs.tick(g,self,home,now)
-        if self.scout is None and not self.expansion.retired_scout and len(workers)>=6:
+        if self.scout is not None and not any(w.handle==self.scout for w in workers):
+            self.scout_losses+=1
+            self.log('scout_lost',clock=now,handle=self.scout,losses=self.scout_losses)
+            self.scout=None
+        # At most two replacement scouts; never take a worker from the five mining slots.
+        need_scout=self.scout_losses==0 or (self.scout_losses<=2 and not self.enemy_start_known)
+        if need_scout and self.scout is None and not self.expansion.retired_scout and len(workers)>=6:
             self.scout=workers[-1].handle
             self.log('scout_assigned',handle=self.scout)
         mine=g.nearest([m for m in g.gold_mines() if m.type=='ugol' and m.owner==g.me()],home)
@@ -158,8 +165,8 @@ class Economy:
         elif self.upkeep_crossed:
             self.upkeep_released=False;self.upkeep_crossed=False
             self.log('upkeep_bank_reset',clock=now,food=res['food_used'])
+        if repair_critical:return # Preserve a critically damaged live base before paying for revival.
         if self.revive_priority(g,home,now,res):return
-        if repair_critical:return
         if self.home_tower_needed and self.defense_tower(g,home,now):return
         if self.save_for_trade:return
         if self.save_for_tp and not threat and not self.frontline_combat:
@@ -193,7 +200,7 @@ class Economy:
         if not g.my_buildings({'usep'}):
             self.build(g,'usep',home,now)
             return
-        if self.scout is None and not self.expansion.retired_scout and self.count(g,'uaco')<6 and self.train(g,home,'uaco',now):
+        if need_scout and self.scout is None and not self.expansion.retired_scout and self.count(g,'uaco')<6 and self.train(g,home,'uaco',now):
             return
         crypts=self.ready(g,'usep')
         hp=g.production(home)

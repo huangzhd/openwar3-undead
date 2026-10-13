@@ -13,7 +13,9 @@ def can_engage(target):
     # Local 1.27a Abur transforms ucry into ucrm. Terrain visibility in the
     # fair SDK does not establish detection. Pass buried fiends until they
     # surface instead of using unrestricted JASS to query hidden state.
-    return target.hp>0 and getattr(target,'alive',True) and target.type!='ucrm'
+    # Passive observation wards must not interrupt marching or creeping.
+    # Serpent/healing wards remain ordinary attack targets.
+    return target.hp>0 and getattr(target,'alive',True) and target.type not in {'ucrm','nwad'}
 
 
 def in_weapon_range(g,attacker,target):

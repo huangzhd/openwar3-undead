@@ -17,6 +17,9 @@ class Loot:
         present=[u for u in (army if all_heroes is None else all_heroes) if u.is_hero]
         lich_present=any(u.type=='Ulic' for u in present)
         self.lich_seen=self.lich_seen or lich_present
+        # A visible distant camp must not turn a cleared camp into combat.
+        camp_combat=camp_combat and any(getattr(e,'owner',None)==12 and g.dist(e,h)<950
+                                      for e in hostiles for h in army if h.is_hero)
         heroes=[u for u in army if u.is_hero and u.hp/u.hp_max>(.7 if camp_combat else .35)]
         if not heroes: return None
         center=min(heroes,key=lambda h:sum(g.dist(h,u) for u in army))
@@ -28,8 +31,9 @@ class Loot:
         if p:
             hero=g.unit(p['hero'])
             item=visible.get(p['key'])
-            if hero is None:
+            if hero is None or not any(h.handle==hero.handle for h in heroes):
                 self.pending=None
+                self.log('loot_deferred',clock=now,code=p['code'],reason='picker_unavailable_or_recovering')
                 return None
             if item is None:
                 inv=g.inventory(hero) or []
@@ -50,12 +54,15 @@ class Loot:
                 p['issued']=now
                 p['accepted']=bool(g.pick_up(hero,item)) or p['accepted']
             return hero,p['point']
-        candidates=[it for key,it in visible.items() if key not in self.done and self.attempts.get(key,0)<3 and g.dist(it,center)<(500 if camp_combat else 900)]
+        candidates=[it for key,it in visible.items() if key not in self.done and self.attempts.get(key,0)<3 and any(g.dist(it,h)<(500 if camp_combat else 900) for h in heroes)]
         for item in sorted(candidates,key=lambda it:g.dist(it,center)):
             if item.type=='stwp' and any('stwp' in (g.inventory(h) or []) for h in present):continue
             row=self.catalog.get(item.type,{})
             powerup=row.get('powerup',False)
             eligible=[h for h in heroes if g.inventory(h) is not None and (powerup or can_receive(h,g.inventory(h),item.type))]
+            eligible=[h for h in eligible if g.dist(h,item)<(500 if camp_combat else 900)
+                      and (d:=g.path_distance((h.x,h.y),(item.x,item.y))) is not None
+                      and d<=(650 if camp_combat else 1100)]
             if not eligible:continue
             if powerup and row.get('effects',{}).get('tome_int',0)>0:
                 # Consumable stat gains cannot be handed over later. Once Lich

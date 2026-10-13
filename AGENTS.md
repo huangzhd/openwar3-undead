@@ -6,3 +6,9 @@
 - 完成项在 PLAN.md 打勾；不把命令回执、单测或进程启动当作实机行为通过。
 - 阶段交付同步 PLAN.md 和 docs/STATUS.md，保留失败与未验证项。
 - 保留两小时训练预算和两小时评估上限；未经授权不创建 Git 提交。
+
+## 两机启动约定
+
+- huangzhiduo本机使用start-local.ps1及docs/START_LOCAL.md；38993上游机器使用start-upstream.ps1及docs/START_UPSTREAM.md。先检查再按当次授权开局，历史命令不构成授权。
+- 公共data/kk_map_pool.json不随机器改写。已核验的两机地图包绑定在data/machine_profiles.json，实际游戏目录/项目Python路径只写已忽略的vendor配置；原地图不改。安装目录真正迁移时通过对应入口--game-dir一次性保存，不手改公共文件名。
+- 新机器或上游实跑未验证时明确标注，不用另一台机器的单测或实机证据代替。

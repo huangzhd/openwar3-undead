@@ -118,5 +118,6 @@ class SustainTests(unittest.TestCase):
     def test_reserved_mana_remains_available_for_healing(self):
         b,f,d,own,casts=self.fight(75,hurt=True)
         self.assertFalse(casts)
+        b.micro.damage.rates[f.handle]=40 # 100 HP: still taking lethal damage
         b.heal_allies(own,12)
         self.assertEqual(casts,['deathcoil'])

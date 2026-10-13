@@ -28,6 +28,7 @@ class LichTacticsTests(unittest.TestCase):
             cooldown=lambda *a:0,cast=lambda h,order,target:casts.append(target) or True,
             unit=lambda h:next((u for u in own if u.handle==h),None))
         b=Controller(g,lambda *a,**kw:None)
+        b.player_contact=[unit('hfoo',90,100)]
         expected=[lich,dark,other_fiend,fiend,ghoul]
         for now,target in enumerate(expected,1):
             b.heal_allies([dk,*own],now*5)

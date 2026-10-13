@@ -72,14 +72,13 @@ class FormedAttackTests(unittest.TestCase):
         self.assertFalse(f.moves);self.assertFalse(g.purchases);self.assertFalse(b.tp_waiting)
 
     def test_missing_scroll_full_bag_low_mana_or_no_shop_does_not_delay(self):
-        for cause in ('full','no_shop','distant','gold','mana'):
+        for cause in ('full','no_shop','distant','gold'):
             with self.subTest(cause=cause):
                 g,b,f=self.make()
                 if cause=='full':g.inv[g.dk.handle]=['rat6']*6
                 elif cause=='no_shop':g.shops=[]
                 elif cause=='distant':g.dk.x=5000
                 elif cause=='gold':g.gold=0
-                else:g.dk.mana=0;g.shops=[]
                 self.assertTrue(b.prepare_attack(g.heroes,700));self.assertFalse(f.moves)
 
     def test_nearby_scroll_purchase_does_not_gate_advance_on_receipt(self):

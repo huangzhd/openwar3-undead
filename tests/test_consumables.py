@@ -215,6 +215,7 @@ class BluePotionTests(unittest.TestCase):
         g.abilities=lambda h:[dict(code='AUdc',level=1)]
         g.current_target=lambda h:None
         c=Controller(g,lambda *a,**k:None)
+        c.player_contact=[unit('hfoo',90,100)]
         self.assertTrue(c.coil_needed(dk))
         for u in g.army:u.hp=u.hp_max
         self.assertFalse(c.coil_needed(dk))

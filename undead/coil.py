@@ -12,7 +12,7 @@ def damage_types():
         code=row.get('unitBalanceID')
         info=data.get(code)
         kinds=set(row.get('type','').lower().split(','))
-        if info and info.get('race')!='critters' and not kinds & {'undead','mechanical'} and row.get('isbldg')=='0':
+        if info and info.get('race')!='critters' and not kinds & {'undead','mechanical','ward'} and row.get('isbldg')=='0':
             allowed.add(code)
     return frozenset(allowed)
 

@@ -23,6 +23,7 @@ class Creeping:
         self.tier=1
         self.opening_gnoll=False
         self.local_origin=None
+        self.home_only=False
         self.resupply_home=False
         self.drop_bindings={};self.drop_spawns=set()
         self.resupply_home=False
@@ -63,6 +64,21 @@ class Creeping:
         return sum(((3+2*u.level) if u.is_hero else
                     {'ucry':3,'uobs':3,'uske':.5,'uskm':.5}.get(u.type,0))*min(1,u.hp/u.hp_max) for u in army)
 
+    @staticmethod
+    def small_turtle(c):
+        # Only the public 4/1/1 camp, not the larger thorn/poison turtle camps.
+        return (c.get('kind')=='turtle' and sorted(s.get('level',0) for s in c.get('spawns',[]))==[1,1,4]
+                and not c.get('poison_units') and set(c.get('hazards',[]))<={'thorns'}
+                and c.get('difficulty',float('inf'))<=6 and c.get('hp',float('inf'))<=815)
+
+    @classmethod
+    def needs_support(cls,c):
+        return (c.get('requires_support') or c['kind'] in {'murloc','mercenary','turtle'}) and not cls.small_turtle(c)
+
+    def pre_attack_safe(self,c):
+        return not ((self.resupply_home or self.home_only and self.tier>=3) and
+                    (c.get('level_sum',c.get('difficulty',0))>15 or c.get('max_level',0)>7))
+
     def candidates(self,g,army,home,now):
         camps=self.catalog if g.map() else []
         if not camps:
@@ -76,15 +92,18 @@ class Creeping:
         supported=self.tier>=2 and any(u.type=='uobs' for u in army)
         result=[]
         for c in camps:
-            if self.resupply_home and (not self.own_side(g,c,home) or g.dist((c['x'],c['y']),home)>5000):continue
-            if self.resupply_home and (not self.own_side(g,c,home) or g.dist((c['x'],c['y']),home)>5000):continue
+            if not self.pre_attack_safe(c):continue
+            if c.get('difficulty',0)>=15 and (health/max(1,sum(u.hp_max for u in army))<.75 or
+                any(u.is_hero and u.hp/u.hp_max<.5 for u in army)):continue
+            if (self.resupply_home or self.home_only) and not self.home_half(g,c,home):continue
             if self.local_origin is not None and g.dist((c['x'],c['y']),self.local_origin)>2200:continue
             if c['id'] in self.cleared or c['id'] in self.exhausted or now<self.deferred.get(c['id'],0):continue
             if not healthy:continue
-            if (c.get('requires_support') or c['kind'] in {'murloc','mercenary','turtle'}) and not supported:continue
+            if self.needs_support(c) and not supported:continue
             opening_small=(self.opening_gnoll and not self.cleared and self.own_side(g,c,home)
-                and c['kind'] in {'ogre','gnoll'} and c['max_level']<=3 and c.get('difficulty',0)<=9
-                and not c.get('poison_units') and set(c.get('hazards',[]))<={'ensnare'} and g.dist((c['x'],c['y']),home)<3500
+                and (self.small_turtle(c) or (c['kind'] in {'ogre','gnoll'} and c['max_level']<=3 and c.get('difficulty',0)<=9
+                     and not c.get('poison_units') and set(c.get('hazards',[]))<={'ensnare'}))
+                and g.dist((c['x'],c['y']),home)<3500
                 and any(u.type=='Udea' and u.level==1 and u.hp/u.hp_max>=.8 for u in army)
                 and sum(u.type in {'uske','uskm'} and u.hp/u.hp_max>=.7 for u in army)>=2)
             if c.get('difficulty',0)>(max(strength,9) if opening_small else strength):continue
@@ -103,6 +122,12 @@ class Creeping:
             nearest=min(starts,key=lambda p:hypot(c['x']-p[0],c['y']-p[1]))
             return nearest==own
         return True
+
+    def home_half(self,g,c,home):
+        # Four-start maps: the empty allied-side spawn is still in our half.
+        if self.enemy_main is None:return self.own_side(g,c,home) if self.resupply_home else True
+        point=(c['x'],c['y'])
+        return g.dist(point,home)<=g.dist(point,self.enemy_main)
 
     def safe_route(self,g,start,end):
         """Avoid enemy start and fairly observed structures, while allowing outward escape."""
@@ -144,23 +169,13 @@ class Creeping:
 
     def choose(self,g,army,center,home,now,hostiles=()):
         visible=g.creeps()
-        if self.active and self.resupply_home:
-            eligible=self.candidates(g,army,home,now)
-            shops=[c for c in eligible if c['kind']=='shop' and self.safe_route(g,center,(c['x'],c['y']))]
-            outside=not self.own_side(g,self.active,home) or g.dist((self.active['x'],self.active['y']),home)>5000
-            engaged=any(g.dist(u,center)<700 for u in visible)
-            if outside or shops and self.active['kind']!='shop' and not engaged:
-                self.defer(now,'home_shop_resupply')
-        if self.active and self.resupply_home:
-            eligible=self.candidates(g,army,home,now)
-            shops=[c for c in eligible if c['kind']=='shop' and self.safe_route(g,center,(c['x'],c['y']))]
-            outside=not self.own_side(g,self.active,home) or g.dist((self.active['x'],self.active['y']),home)>5000
-            engaged=any(g.dist(u,center)<700 for u in visible)
-            if outside or shops and self.active['kind']!='shop' and not engaged:
-                self.defer(now,'home_shop_resupply')
+        if self.active and not self.pre_attack_safe(self.active):
+            self.defer(now,'preserve_attack_readiness')
+        if self.active and (self.resupply_home or self.home_only) and not self.home_half(g,self.active,home):
+            self.defer(now,'home_half_regroup')
         if self.active:
             health=sum(u.hp for u in army)/max(1,sum(u.hp_max for u in army))
-            support_lost=(self.active.get('requires_support') or self.active['kind'] in {'murloc','mercenary','turtle'}) and not (
+            support_lost=self.needs_support(self.active) and not (
                 self.tier>=2 and any(u.type=='uobs' for u in army))
             # Once engaged, actual remaining camp HP below owns the strength check.
             # Reapplying the full initial level sum after every hit would cause oscillation.
@@ -196,14 +211,17 @@ class Creeping:
             def score(c):
                 distance=g.path_distance(center,(c['x'],c['y']))
                 if distance is None:return float('inf')
-                own_side=self.own_side(g,c,home)
+                own_side=self.home_half(g,c,home) if self.enemy_main is not None else self.own_side(g,c,home)
                 central=c['kind'] in {'marketplace','shop'}
                 # Soft route cost, not a fixed sequence: a nearby cheap camp can win.
                 preference={'ogre':0,'gnoll':0,'expansion':100,'marketplace':200,'murloc':400,'mercenary':600}.get(c['kind'],500)
                 return distance+120*c.get('difficulty',0)+preference+(0 if own_side or central else 2000)
             def opening_score(c):
                 own_gnoll=c['kind']=='gnoll' and self.own_side(g,c,home)
-                return (int(self.resupply_home and c['kind']!='shop'),int(self.opening_gnoll and not own_gnoll),score(c))
+                entrance_turtle=self.small_turtle(c) and self.own_side(g,c,home) and g.dist((c['x'],c['y']),home)<3500
+                return (
+                        int(self.opening_gnoll and not entrance_turtle),
+                        int(self.opening_gnoll and not own_gnoll),score(c))
             for c in sorted(self.candidates(g,army,home,now),key=opening_score):
                 point=(c['x'],c['y'])
                 if g.path_distance(center,point) is None:

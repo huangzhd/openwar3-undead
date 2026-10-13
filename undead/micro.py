@@ -39,9 +39,12 @@ class Micro:
         moves={}
         dk=next((u for u in core if u.type=='Udea'),None)
         dk_has_mana=dk is not None and getattr(dk,'mana',0)>=COIL_MANA
+        # Creeping preserves Coil for emergencies; wounded units must not wait for routine healing.
+        coil_ready=coil_ready and not creeping
         eligible={u.handle for u in core if (u.type=='Udea' and (not creeping or u.hp/u.hp_max<.45 or u.handle in self.pulling or self.damage.urgent(u))) or
-                  (u.type in {'Ulic','Nbrn'} and (((u.hp/u.hp_max<.45 or u.handle in self.pulling and u.hp/u.hp_max<.7) and not
-                   (dk_has_mana and coil_ready and hypot(u.x-dk.x,u.y-dk.y)<750)) or self.damage.urgent(u))) or
+                  (u.type in {'Ulic','Nbrn'} and ((u.handle in self.pulling and u.hp/u.hp_max<.7) or
+                   (u.hp/u.hp_max<.45 and not (dk_has_mana and coil_ready and hypot(u.x-dk.x,u.y-dk.y)<750))
+                   or self.damage.urgent(u))) or
                   (u.type=='ucry' and ((u.handle in self.pulling and u.hp/u.hp_max<.7) or
                    (u.hp/u.hp_max<.45 and not (dk_has_mana and coil_ready and hypot(u.x-dk.x,u.y-dk.y)<750)))) or
                   (u.type not in {'Udea','Ulic','Nbrn','ucry'} and (not dk_has_mana or u.type in {'Nngs','uobs'} or u.is_hero and self.damage.urgent(u)) and
@@ -61,9 +64,10 @@ class Micro:
             near=attackers or [e for e in hostiles if hypot(e.x-u.x,e.y-u.y)<max(900,attack_range(e)+100)]
             exposed=any(hypot(e.x-u.x,e.y-u.y)<attack_range(e)+100 for e in near)
             if not fired and not exposed and now-self.hit.get(u.handle,-100)>3:
-                # Escaping fire is not healing. Keep a fragile fiend safely out
-                # of attack orders while this local battle is still active.
-                if u.type=='ucry' and ratio<.7 and any(hypot(e.x-anchor.x,e.y-anchor.y)<1200 for e in hostiles):
+                # Escaping fire is not healing. TH 104134's 244/525 lich
+                # reengaged after a brief damage pause and died seconds later.
+                # Keep vulnerable damage dealers out until health actually returns.
+                if u.type in {'ucry','Ulic','Nbrn','Nngs'} and ratio<.7 and any(hypot(e.x-anchor.x,e.y-anchor.y)<1200 for e in hostiles):
                     moves[u.handle]=(u.x,u.y)
                     continue
                 self.pulling.remove(u.handle)

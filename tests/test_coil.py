@@ -16,6 +16,7 @@ class CoilTests(unittest.TestCase):
         dk=unit('Udea',1,0,600);fiend=unit('ucry',2,60,200)
         own=[dk,fiend,unit('uske',3,40,1),unit('uskm',4,50,1)]
         bot,casts,_=self.game(own)
+        bot.player_contact=[unit('hfoo',90,100)]
         bot.heal_allies(own,10)
         self.assertEqual(casts,[('deathcoil','ucry')])
         fiend.hp=600;bot.cast_until.clear();bot.heal_checks.clear()
