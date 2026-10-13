@@ -133,11 +133,12 @@ class RecoveryTests(unittest.TestCase):
         for f in g.fiends:f.hp=600
         for h in g.heroes:h.mana=0
         self.observe(b,g,785);self.assertFalse(b.army_recovery.active)
-    def test_only_low_hp_treatment_switches_statues_without_retreat(self):
+    def test_low_hp_keeps_one_life_and_one_mana_statue_without_retreat(self):
         b,g,_=self.make();g.cd[(g.foes[0].handle,'AOsh')]=7
         self.observe(b,g);b.army_recovery.statues(b,780)
         self.assertFalse(b.army_recovery.active)
-        self.assertTrue(all(('cast',s.handle,'replenishlifeon') in g.orders for s in g.statues))
+        self.assertIn(('cast',g.statues[0].handle,'replenishlifeon'),g.orders)
+        self.assertIn(('cast',g.statues[1].handle,'replenishmanaon'),g.orders)
         for f in g.fiends:f.hp=600
         self.observe(b,g,790);b.army_recovery.statues(b,790)
         self.assertIn(('cast',g.statues[1].handle,'replenishmanaon'),g.orders)

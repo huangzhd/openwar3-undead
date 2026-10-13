@@ -95,20 +95,21 @@ class RecoveryTests(unittest.TestCase):
         self.assertFalse(b.prepare_recovery([u for u in army if u.type not in {'Ulic','ucry'}],500))
         self.assertTrue(b.recovery_pending)
 
-    def test_replenished_army_releases_departure_and_clears_gate(self):
+    def test_recovered_army_departs_before_lich_nova_mana_is_full(self):
         g,b,army,dk,lich,moves=self.make();b.recovery_pending=True;g.bags[dk.handle][0]='stwp'
         lich.mana=100
-        self.assertFalse(b.prepare_attack(army,500))
+        self.assertTrue(b.prepare_attack(army,500));self.assertFalse(moves)
         lich.mana=125;dk.mana=150
         self.assertTrue(b.prepare_attack(army,501));self.assertFalse(b.recovery_pending)
 
-    def test_missing_fiends_statue_or_wounded_hero_hold_regroup(self):
+    def test_missing_reinforcements_do_not_hold_but_wounded_hero_does(self):
         for missing in ('fiend','statue','health'):
             g,b,army,dk,lich,moves=self.make();b.recovery_pending=True
             if missing=='fiend':army.remove(next(u for u in army if u.type=='ucry'))
             elif missing=='statue':army.remove(next(u for u in army if u.type=='uobs'))
             else:lich.hp=lich.hp_max*.5
-            self.assertFalse(b.prepare_recovery(army,500));self.assertTrue(moves)
+            self.assertEqual(b.prepare_recovery(army,500),missing!='health')
+            self.assertEqual(bool(moves),missing=='health')
 
     def test_current_combat_is_not_cancelled_by_recovery(self):
         g,b,army,dk,lich,moves=self.make();b.recovery_pending=True;dk.mana=0

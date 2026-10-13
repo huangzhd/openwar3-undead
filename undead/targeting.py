@@ -9,6 +9,17 @@ from .nc_combo import spell_data, DISABLED_CASTERS, aoe_threat
 @lru_cache(maxsize=256)
 def unit_stats(code):return combat.stats(code)
 
+@lru_cache(maxsize=1)
+def collision_table():
+    from w3slk import read_slk
+    import w3paths
+    return {r['unitBalanceID']:float(r.get('collision') or 0)
+            for r in read_slk(w3paths.game_data('UnitBalance.slk'))
+            if r.get('unitBalanceID') and r.get('collision') not in (None,'','-')}
+
+def unit_collision(code):
+    return collision_table().get(code,0)
+
 def can_engage(target):
     # Local 1.27a Abur transforms ucry into ucrm. Terrain visibility in the
     # fair SDK does not establish detection. Pass buried fiends until they

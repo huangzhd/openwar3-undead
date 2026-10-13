@@ -118,6 +118,7 @@ class TavernTests(unittest.TestCase):
         g.units=lambda side,codes:shops if codes=={'ntav'} else [u for u in a if u.type in codes]
         g.enemies=lambda:[];g.creeps=lambda:[];g.my_units=lambda:own
         g.current_target=lambda u:None;g.inventory=lambda u:['stwp','ocor'];g.cooldown=lambda *args:1
+        g.hold=lambda u:True
         g.attack_move=lambda u,x,y:m.append((u.handle,(x,y))) or True
         b.economy.tick=lambda *args:None;b.scout=lambda *args:None;b.skills=lambda *args:None;b.items=lambda *args:None
         b.loot.tick=lambda *args:None;b.equipment.tick=lambda *args:False;b.prepare_attack=lambda *args:True

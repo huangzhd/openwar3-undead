@@ -1,0 +1,394 @@
+{
+  "source_run": "20261014-012007",
+  "source": "fair combat event snapshots; no hypothetical survival claim",
+  "finding": "Moving unrooted DK at 313/675 HP spent TP 1.17 seconds after walking trial; full moving pull-goal distance and one-second grace overly conservative",
+  "events": [
+    {
+      "event": "combat_state",
+      "clock": 402.38,
+      "center": [
+        -2347.83642578125,
+        -6219.462890625
+      ],
+      "army_hp": 2278.4022827148438,
+      "enemy_hp": 1388.2496948242188,
+      "army_health": 0.8137151009695871,
+      "recent_losses": 0,
+      "army": [
+        {
+          "handle": [
+            19586,
+            73824
+          ],
+          "type": "ucry",
+          "x": -4428,
+          "y": -3828,
+          "hp": 550,
+          "hp_max": 550.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            24828,
+            69672
+          ],
+          "type": "Ulic",
+          "x": -2681,
+          "y": -6281,
+          "hp": 446,
+          "hp_max": 475.0,
+          "mana": 225,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            25185,
+            56671
+          ],
+          "type": "ucry",
+          "x": -2259,
+          "y": -6162,
+          "hp": 380,
+          "hp_max": 550.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            25448,
+            46314
+          ],
+          "type": "ucry",
+          "x": -2348,
+          "y": -6219,
+          "hp": 491,
+          "hp_max": 550.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            27213,
+            61515
+          ],
+          "type": "ucry",
+          "x": -2370,
+          "y": -6089,
+          "hp": 550,
+          "hp_max": 550.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            28079,
+            35083
+          ],
+          "type": "Udea",
+          "x": -2787,
+          "y": -6496,
+          "hp": 411,
+          "hp_max": 675.0,
+          "mana": 124,
+          "pulling": false,
+          "pull": null
+        }
+      ],
+      "enemies": [
+        {
+          "handle": [
+            24301,
+            24301
+          ],
+          "type": "nomg",
+          "x": -2678,
+          "y": -6630,
+          "hp": 236,
+          "target": [
+            28079,
+            35083
+          ]
+        },
+        {
+          "handle": [
+            24341,
+            24341
+          ],
+          "type": "nogr",
+          "x": -2610,
+          "y": -6516,
+          "hp": 352,
+          "target": [
+            28079,
+            35083
+          ]
+        },
+        {
+          "handle": [
+            24369,
+            24369
+          ],
+          "type": "nftt",
+          "x": -2953,
+          "y": -6490,
+          "hp": 400,
+          "target": [
+            24828,
+            69672
+          ]
+        },
+        {
+          "handle": [
+            24429,
+            24429
+          ],
+          "type": "nftt",
+          "x": -2580,
+          "y": -6991,
+          "hp": 400,
+          "target": [
+            28079,
+            35083
+          ]
+        }
+      ]
+    },
+    {
+      "event": "unit_pullback",
+      "clock": 403.805,
+      "unit": "Udea",
+      "handle": [
+        28079,
+        35083
+      ],
+      "hp": 356,
+      "attackers": 3
+    },
+    {
+      "event": "teleport_deferred_escape",
+      "clock": 403.805,
+      "hero": "Udea",
+      "hp": 355.8638610839844,
+      "point": [
+        -2245.096873946507,
+        -6154.859115819838
+      ],
+      "clearance_gain": null,
+      "estimated_escape_seconds": 1.9313708498984758,
+      "evidence": "bounded_initial_retreat",
+      "threat_owners": [
+        12
+      ]
+    },
+    {
+      "event": "combat_state",
+      "clock": 404.975,
+      "center": [
+        -2347.83642578125,
+        -6219.462890625
+      ],
+      "army_hp": 2171.96923828125,
+      "enemy_hp": 1228.5841064453125,
+      "army_health": 0.7757032993861607,
+      "recent_losses": 0,
+      "army": [
+        {
+          "handle": [
+            19586,
+            73824
+          ],
+          "type": "ucry",
+          "x": -3900,
+          "y": -4015,
+          "hp": 550,
+          "hp_max": 550.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            24828,
+            69672
+          ],
+          "type": "Ulic",
+          "x": -2681,
+          "y": -6281,
+          "hp": 438,
+          "hp_max": 475.0,
+          "mana": 228,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            25185,
+            56671
+          ],
+          "type": "ucry",
+          "x": -2259,
+          "y": -6162,
+          "hp": 380,
+          "hp_max": 550.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            25448,
+            46314
+          ],
+          "type": "ucry",
+          "x": -2348,
+          "y": -6219,
+          "hp": 491,
+          "hp_max": 550.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            27213,
+            61515
+          ],
+          "type": "ucry",
+          "x": -2370,
+          "y": -6089,
+          "hp": 550,
+          "hp_max": 550.0,
+          "mana": 0,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            28079,
+            35083
+          ],
+          "type": "Udea",
+          "x": -2666,
+          "y": -6416,
+          "hp": 313,
+          "hp_max": 675.0,
+          "mana": 126,
+          "pulling": true,
+          "pull": [
+            -2121.633263066132,
+            -6079.570944959973
+          ]
+        }
+      ],
+      "enemies": [
+        {
+          "handle": [
+            24301,
+            24301
+          ],
+          "type": "nomg",
+          "x": -2678,
+          "y": -6630,
+          "hp": 75,
+          "target": [
+            28079,
+            35083
+          ]
+        },
+        {
+          "handle": [
+            24341,
+            24341
+          ],
+          "type": "nogr",
+          "x": -2610,
+          "y": -6516,
+          "hp": 353,
+          "target": [
+            28079,
+            35083
+          ]
+        },
+        {
+          "handle": [
+            24369,
+            24369
+          ],
+          "type": "nftt",
+          "x": -2953,
+          "y": -6490,
+          "hp": 400,
+          "target": [
+            24828,
+            69672
+          ]
+        },
+        {
+          "handle": [
+            24429,
+            24429
+          ],
+          "type": "nftt",
+          "x": -2579,
+          "y": -6982,
+          "hp": 400,
+          "target": [
+            28079,
+            35083
+          ]
+        }
+      ]
+    },
+    {
+      "event": "teleport_attempt",
+      "clock": 404.975,
+      "hero": "Udea",
+      "accepted": true,
+      "action": "CREEP",
+      "army_health": 0.7757032993861607,
+      "enemy_hp": 1228.5841064453125,
+      "endangered": 0,
+      "critical_heroes": [
+        "Udea"
+      ],
+      "threat_owners": [
+        12
+      ],
+      "heroes": [
+        {
+          "type": "Ulic",
+          "hp": 437.6112976074219,
+          "hp_max": 475.0,
+          "point": [
+            -2680.97021484375,
+            -6280.6806640625
+          ],
+          "pull": null,
+          "damage_rate": 4.609394325115342,
+          "buffs": []
+        },
+        {
+          "type": "Udea",
+          "hp": 313.09661865234375,
+          "hp_max": 675.0,
+          "point": [
+            -2665.9521484375,
+            -6416.19677734375
+          ],
+          "pull": [
+            -2121.633263066132,
+            -6079.570944959973
+          ],
+          "damage_rate": 45.40988247753041,
+          "buffs": []
+        }
+      ]
+    }
+  ]
+}

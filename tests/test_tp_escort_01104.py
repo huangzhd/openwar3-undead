@@ -31,10 +31,10 @@ class EscapedCreepTests(unittest.TestCase):
         self.assertFalse(orders)
         self.assertTrue(any(e['event']=='teleport_neutral_disengaged' for e in events))
 
-    def test_still_in_neutral_attack_range_keeps_emergency_portal(self):
+    def test_neutral_attack_range_cannot_override_user_portal_ban(self):
         b,g,army,dk,foes,orders,events=self.make()
         foes[0].x=dk.x-80;foes[0].y=dk.y
-        self.assertTrue(b.emergency_portal(army,424.155));self.assertEqual(orders,[dk.handle])
+        self.assertFalse(b.emergency_portal(army,424.155));self.assertFalse(orders)
 
     def test_player_pursuit_retains_wider_danger_guard(self):
         b,g,army,dk,foes,orders,events=self.make();foes[0].owner=1

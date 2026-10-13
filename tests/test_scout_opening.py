@@ -114,7 +114,7 @@ class ScoutCorpseTests(unittest.TestCase):
         b,g,dk,corpse,own,all_units,orders,events,inv,cool=self.make()
         b.home=N(x=-6000,y=0);inv[:]=['stwp'];g.use_item=lambda *a,**kw:orders.append(('portal',)) or True
         b.situation=Situation(100,local_enemy_hp=1500,army_health=.8)
-        foe=unit('hrif',20,dk.x+100,500);g.enemies=lambda:[foe];g.current_target=lambda u:None
+        foe=unit('hrif',20,dk.x+100,500);foe.owner=1;g.enemies=lambda:[foe];g.current_target=lambda u:None
         skels=[unit('uske',i,dk.x,20) for i in range(4,9)]
         for u in skels:u.hp_max=180
         self.assertFalse(b.emergency_portal([dk,*skels],100))

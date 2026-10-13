@@ -1,10 +1,13 @@
 """Four-start reconnaissance: candidates are public, occupied starts need vision."""
 from math import hypot, cos, sin, pi
+from types import SimpleNamespace
 from .structures import is_structure
 
 class StartSearch:
     def __init__(self,log):
         self.log=log;self.points=None;self.checked={};self.failures={};self.job=None;self.confirmed=None
+        self.neutral_memory={}
+        self.camps=[] # Fingerprint-verified public layout, never hidden live units.
     def update(self,g,home,now):
         mp=g.map()
         if self.points is None and mp:
@@ -56,7 +59,22 @@ class StartSearch:
 
     def safe_step(self,g,scout,point,now):
         """Bounded local detour around fairly visible neutrals; never order into a camp."""
-        foes=[u for u in self.neutrals(g) if g.dist(u,scout)<1600]
+        # Retain only observed positions, not inferred current hidden units.
+        # Losing vision during a detour must not send the scout back through the camp.
+        for u in self.neutrals(g):
+            self.neutral_memory[u.handle]=(now,SimpleNamespace(x=u.x,y=u.y,handle=u.handle))
+        self.neutral_memory={h:row for h,row in self.neutral_memory.items() if now-row[0]<60}
+        foes=[u for _,u in self.neutral_memory.values() if g.dist(u,scout)<1600]
+        # Trees can hide guards until the worker is already in acquisition range.
+        # Treat unseen public placements as route risks, not scouting evidence.
+        risks=[]
+        for camp in self.camps:
+            for i,spawn in enumerate(camp.get('spawns',[])):
+                p=(spawn['x'],spawn['y'])
+                if g.dist(scout,p)>=1600:continue
+                if hasattr(g,'visible') and g.visible(*p) is True:continue
+                risks.append(SimpleNamespace(x=p[0],y=p[1],handle=('public',camp['id'],i)))
+        foes+=risks
         if not foes:return point
         origin=(scout.x,scout.y)
         def safe(goal):
@@ -74,14 +92,23 @@ class StartSearch:
                     if hypot(a[0]+t*dx-e.x,a[1]+t*dy-e.y)<margin-1:return False
                     a=z
             return True
-        if safe(point):return point
+        def first_step(goal):
+            # Checking an SDK route then issuing its final destination lets the
+            # engine take a different route through the very camp we avoided.
+            path=g.walk_path(origin,goal) or []
+            turn=next((p for p in path if g.dist(origin,p)>32),origin)
+            length=g.dist(origin,turn)
+            scale=min(1,350/length) if length else 0
+            return (origin[0]+(turn[0]-origin[0])*scale,origin[1]+(turn[1]-origin[1])*scale)
+        if safe(point):return first_step(point)
         choices=[]
         for i in range(16):
             p=(scout.x+650*cos(i*pi/8),scout.y+650*sin(i*pi/8))
             if safe(p):choices.append(p)
-        target=min(choices,key=lambda p:g.dist(p,point)) if choices else origin
+        target=first_step(min(choices,key=lambda p:g.dist(p,point))) if choices else origin
         if now-getattr(self,'avoid_logged',-100)>=3:
             self.avoid_logged=now
             self.log('scout_neutral_detour',clock=now,origin=origin,goal=point,point=target,
-                     threats=[u.handle for u in foes],blocked=not bool(choices))
+                     threats=[u.handle for u in foes if u not in risks],public_layout_risks=[u.handle for u in risks],
+                     blocked=not bool(choices))
         return target

@@ -196,8 +196,14 @@ class ArmyRecovery:
 
     def statues(self,b,now):
         g=b.g
-        for i,u in enumerate(g.units('me',{'uobs'})):
-            mode='life' if self.active or self.heal_priority or i%2==0 else 'mana'
+        units=sorted(g.units('me',{'uobs'}),key=lambda u:u.handle)
+        live={u.handle for u in units}
+        self.statue_modes={h:s for h,s in self.statue_modes.items() if h in live}
+        for u in units:
+            if now<b.cast_until.get(u.handle,0):continue
+            previous=self.statue_modes.get(u.handle)
+            assigned={s['mode'] for s in self.statue_modes.values()}
+            mode=previous['mode'] if previous else ('life' if 'life' not in assigned else 'mana' if 'mana' not in assigned else 'life')
             state=self.statue_modes.get(u.handle)
             if state and state['mode']==mode and (state['accepted'] or state['tries']>=3 or now-state['at']<3):continue
             tries=state['tries']+1 if state and state['mode']==mode else 1
@@ -220,6 +226,9 @@ class ArmyRecovery:
             elif clearance(point,hostiles,self.threat_range)<200:
                 point=escape_point(g,anchor,hostiles,self.threat_range,home=(b.home.x,b.home.y)) or point
         for u in core:
+            if u.type=='uobs':
+                if u.handle in pulls:b.go_raw([u],pulls[u.handle],now)
+                continue # Dedicated supply positioning owns safe statues.
             if u.handle in b.shield_moves or now<b.cast_until.get(u.handle,0):continue
             if (u.handle in pulls and clearance((u.x,u.y),hostiles,self.threat_range)<200
                     and clearance(pulls[u.handle],hostiles,self.threat_range)>clearance((u.x,u.y),hostiles,self.threat_range)+80):

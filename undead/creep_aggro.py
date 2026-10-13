@@ -11,7 +11,8 @@ class CreepAggro:
 
     def step(self,g,army,foes,now,allowed,blocked=()):
         own={u.handle:u for u in army}
-        skeletons={h:u for h,u in own.items() if u.type in SKELETONS}
+        skeletons={h:u for h,u in own.items() if u.type in SKELETONS or
+                   u.type=='ucry' and u.hp>=.75*u.hp_max and u.hp>200}
         creeps={e.handle:e for e in foes if getattr(e,'owner',None)==12}
         target=lambda e:(t.handle if (t:=g.current_target(e)) else None)
         if self.active:
@@ -39,18 +40,18 @@ class CreepAggro:
             if now<self.retry_at.get(victim.handle,0):continue
             attackers=[e for e in creeps.values() if target(e)==victim.handle and g.dist(e,victim)<900]
             if not attackers:continue
-            choices=[s for s in skeletons.values() if s.handle not in blocked and s.hp>80 and
+            choices=[s for s in skeletons.values() if s.handle!=victim.handle and s.handle not in blocked and s.hp>80 and
                      g.dist(s,victim)<600 and all(g.dist(s,e)<500 for e in attackers)]
             if not choices:continue
             key=(victim.handle,tuple(sorted(e.handle for e in attackers)))
             if self.attempts.get(key,0)>=2:continue
-            sk=min(choices,key=lambda s:sum(g.dist(s,e) for e in attackers))
+            sk=min(choices,key=lambda s:(s.type not in SKELETONS,sum(g.dist(s,e) for e in attackers)))
             self.attempts[key]=self.attempts.get(key,0)+1
             enemy=min(attackers,key=lambda e:g.dist(e,sk))
             g.attack(sk,enemy)
             receipt=g.attack(victim,sk,force=True)
             self.retry_at[victim.handle]=now+8
             self.log('creep_aggro_attempt',clock=now,victim=victim.handle,unit=victim.type,
-                     skeleton=sk.handle,creeps=list(key[1]),accepted=bool(receipt),attempt=self.attempts[key])
-            if receipt:self.active=dict(victim=victim.handle,skeleton=sk.handle,creeps=list(key[1]),started=now)
+                     skeleton=sk.handle,recipient_type=sk.type,creeps=list(key[1]),accepted=bool(receipt),attempt=self.attempts[key])
+            if receipt:self.active=dict(victim=victim.handle,skeleton=sk.handle,recipient_type=sk.type,creeps=list(key[1]),started=now)
             return

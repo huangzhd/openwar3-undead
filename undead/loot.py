@@ -56,6 +56,7 @@ class Loot:
             return hero,p['point']
         candidates=[it for key,it in visible.items() if key not in self.done and self.attempts.get(key,0)<3 and any(g.dist(it,h)<(500 if camp_combat else 900) for h in heroes)]
         for item in sorted(candidates,key=lambda it:g.dist(it,center)):
+            if any(g.dist(e,item)<700 and (not camp_combat or getattr(e,'owner',None)!=12) for e in hostiles):continue
             if item.type=='stwp' and any('stwp' in (g.inventory(h) or []) for h in present):continue
             row=self.catalog.get(item.type,{})
             powerup=row.get('powerup',False)

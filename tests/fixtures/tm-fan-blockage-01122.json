@@ -1,0 +1,1402 @@
+{
+  "source_run": "20261014-021541",
+  "sample": {
+    "clock": 790.455,
+    "own": [
+      {
+        "handle": [
+          735,
+          142677
+        ],
+        "type": "ucry",
+        "owner": 0,
+        "x": -3920.00439453125,
+        "y": 552.8330078125,
+        "hp": 370.2729187011719,
+        "hp_max": 550.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": [
+          26549,
+          36577
+        ],
+        "order": 851971,
+        "buffs": [
+          "Bfro",
+          "BUau"
+        ]
+      },
+      {
+        "handle": [
+          21756,
+          166894
+        ],
+        "type": "ndr1",
+        "owner": 0,
+        "x": -4848.0,
+        "y": -752.0,
+        "hp": 215.0,
+        "hp_max": 215.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 0,
+        "buffs": [
+          "BNdm"
+        ]
+      },
+      {
+        "handle": [
+          22113,
+          45140
+        ],
+        "type": "uzig",
+        "owner": 0,
+        "x": -5152.0,
+        "y": -3680.0,
+        "hp": 550.0,
+        "hp_max": 550.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 0,
+        "buffs": []
+      },
+      {
+        "handle": [
+          22876,
+          107663
+        ],
+        "type": "uzig",
+        "owner": 0,
+        "x": -4320.0,
+        "y": -4704.0,
+        "hp": 550.0,
+        "hp_max": 550.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 0,
+        "buffs": []
+      },
+      {
+        "handle": [
+          23390,
+          30339
+        ],
+        "type": "usep",
+        "owner": 0,
+        "x": -4928.0,
+        "y": -3200.0,
+        "hp": 1300.0,
+        "hp_max": 1300.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 0,
+        "buffs": []
+      },
+      {
+        "handle": [
+          23452,
+          76602
+        ],
+        "type": "ucry",
+        "owner": 0,
+        "x": -4272.23779296875,
+        "y": 514.1064453125,
+        "hp": 512.8565063476562,
+        "hp_max": 550.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": [
+          26549,
+          36577
+        ],
+        "order": 0,
+        "buffs": [
+          "BIcb",
+          "BUau"
+        ]
+      },
+      {
+        "handle": [
+          24158,
+          96378
+        ],
+        "type": "ucry",
+        "owner": 0,
+        "x": -4020.09912109375,
+        "y": 458.0849609375,
+        "hp": 384.84979248046875,
+        "hp_max": 550.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": [
+          26549,
+          36577
+        ],
+        "order": 851971,
+        "buffs": [
+          "Bfro",
+          "BUau"
+        ]
+      },
+      {
+        "handle": [
+          24528,
+          61095
+        ],
+        "type": "ucry",
+        "owner": 0,
+        "x": -4031.45458984375,
+        "y": 366.6416015625,
+        "hp": 500.513916015625,
+        "hp_max": 550.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": [
+          26549,
+          36577
+        ],
+        "order": 0,
+        "buffs": [
+          "Bfro",
+          "BUau"
+        ]
+      },
+      {
+        "handle": [
+          24694,
+          70522
+        ],
+        "type": "Ulic",
+        "owner": 0,
+        "x": -4015.0693359375,
+        "y": 20.634765625,
+        "hp": 525.0,
+        "hp_max": 525.0,
+        "mana": 54.727073669433594,
+        "level": 2,
+        "is_hero": true,
+        "has_detail": true,
+        "target": [
+          26549,
+          36577
+        ],
+        "order": 0,
+        "buffs": [
+          "BUau"
+        ],
+        "abilities": [
+          {
+            "code": "AUfu",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 134217744
+          },
+          {
+            "code": "AIcb",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147484320
+          },
+          {
+            "code": "AIrm",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147483680
+          },
+          {
+            "code": "AIi3",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147483680
+          },
+          {
+            "code": "AIi3",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147483680
+          },
+          {
+            "code": "AUfn",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "Aatk",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 706232597
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 20
+          },
+          {
+            "code": "Ablr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          }
+        ],
+        "cooldowns": {
+          "AUfu": 0.0,
+          "AIcb": 0.0,
+          "AIrm": 0.0,
+          "AIi3": 0.0,
+          "AUfn": 0.0,
+          "AInv": 0.0,
+          "AHer": 0.0,
+          "Aatk": 0.0,
+          "Amov": 0.0,
+          "Ablr": 0.0
+        },
+        "inventory": [
+          "rin1",
+          "rin1",
+          "rwiz",
+          "ocor",
+          null,
+          null
+        ]
+      },
+      {
+        "handle": [
+          24812,
+          159007
+        ],
+        "type": "ndr1",
+        "owner": 0,
+        "x": -4818.22802734375,
+        "y": -1088.26171875,
+        "hp": 215.0,
+        "hp_max": 215.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 0,
+        "buffs": [
+          "BNdm"
+        ]
+      },
+      {
+        "handle": [
+          24827,
+          78558
+        ],
+        "type": "uzig",
+        "owner": 0,
+        "x": -4320.0,
+        "y": -3040.0,
+        "hp": 319.30743408203125,
+        "hp_max": 550.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 0,
+        "buffs": []
+      },
+      {
+        "handle": [
+          25266,
+          62330
+        ],
+        "type": "uslh",
+        "owner": 0,
+        "x": -3648.0,
+        "y": -3392.0,
+        "hp": 988.49951171875,
+        "hp_max": 1200.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 0,
+        "buffs": []
+      },
+      {
+        "handle": [
+          25457,
+          56809
+        ],
+        "type": "ucry",
+        "owner": 0,
+        "x": -4359.1044921875,
+        "y": 616.8212890625,
+        "hp": 306.8714294433594,
+        "hp_max": 550.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": [
+          26549,
+          36577
+        ],
+        "order": 851971,
+        "buffs": [
+          "BUau"
+        ]
+      },
+      {
+        "handle": [
+          25517,
+          166126
+        ],
+        "type": "uske",
+        "owner": 0,
+        "x": -4113.51123046875,
+        "y": 407.298828125,
+        "hp": 130.51393127441406,
+        "hp_max": 180.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 851986,
+        "buffs": [
+          "Bfro",
+          "BUau",
+          "Brai"
+        ]
+      },
+      {
+        "handle": [
+          25568,
+          29961
+        ],
+        "type": "uaco",
+        "owner": 0,
+        "x": -5349.55712890625,
+        "y": -4497.80322265625,
+        "hp": 220.0,
+        "hp_max": 220.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": [
+          27595,
+          27607
+        ],
+        "order": 852018,
+        "buffs": []
+      },
+      {
+        "handle": [
+          25600,
+          29348
+        ],
+        "type": "uaco",
+        "owner": 0,
+        "x": -5114.44287109375,
+        "y": -4497.80322265625,
+        "hp": 220.0,
+        "hp_max": 220.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": [
+          27595,
+          27607
+        ],
+        "order": 852018,
+        "buffs": []
+      },
+      {
+        "handle": [
+          25648,
+          47024
+        ],
+        "type": "ucry",
+        "owner": 0,
+        "x": -4020.1875,
+        "y": 572.8642578125,
+        "hp": 500.513916015625,
+        "hp_max": 550.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": [
+          26549,
+          36577
+        ],
+        "order": 851971,
+        "buffs": [
+          "Bfro",
+          "BUau"
+        ]
+      },
+      {
+        "handle": [
+          25994,
+          90082
+        ],
+        "type": "uobs",
+        "owner": 0,
+        "x": -4291.4921875,
+        "y": 761.1796875,
+        "hp": 194.2476806640625,
+        "hp_max": 550.0,
+        "mana": 325.7873229980469,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 851986,
+        "buffs": [
+          "BUau"
+        ]
+      },
+      {
+        "handle": [
+          26387,
+          120077
+        ],
+        "type": "ucry",
+        "owner": 0,
+        "x": -3913.60693359375,
+        "y": 382.33984375,
+        "hp": 500.513916015625,
+        "hp_max": 550.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 851973,
+        "buffs": [
+          "BUsp",
+          "BUsl",
+          "Bfro",
+          "BUau"
+        ]
+      },
+      {
+        "handle": [
+          26678,
+          124033
+        ],
+        "type": "uzig",
+        "owner": 0,
+        "x": -3872.0,
+        "y": -4192.0,
+        "hp": 550.0,
+        "hp_max": 550.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 0,
+        "buffs": []
+      },
+      {
+        "handle": [
+          26715,
+          35327
+        ],
+        "type": "ugho",
+        "owner": 0,
+        "x": -4843.4423828125,
+        "y": -4940.06982421875,
+        "hp": 340.0,
+        "hp_max": 340.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 852018,
+        "buffs": []
+      },
+      {
+        "handle": [
+          26742,
+          35475
+        ],
+        "type": "Udea",
+        "owner": 0,
+        "x": -4165.6201171875,
+        "y": 523.4296875,
+        "hp": 623.3226928710938,
+        "hp_max": 875.0,
+        "mana": 49.38737869262695,
+        "level": 3,
+        "is_hero": true,
+        "has_detail": true,
+        "target": null,
+        "order": 851986,
+        "buffs": [
+          "Bspa",
+          "Bfro",
+          "BUfa",
+          "BIcb",
+          "BUau"
+        ],
+        "abilities": [
+          {
+            "code": "AIs3",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147483680
+          },
+          {
+            "code": "Aste",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 8224
+          },
+          {
+            "code": "AIrd",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 135274528
+          },
+          {
+            "code": "AUau",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919248
+          },
+          {
+            "code": "AUdc",
+            "level": 2,
+            "cooldown": 5.1460113525390625,
+            "flags": 528
+          },
+          {
+            "code": "AItp",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 8224
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "Aatk",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 537395344
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2196
+          },
+          {
+            "code": "Ablr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          }
+        ],
+        "cooldowns": {
+          "AIs3": 0.0,
+          "Aste": 0.0,
+          "AIrd": 0.0,
+          "AUau": 0.0,
+          "AUdc": 5.1460113525390625,
+          "AItp": 0.0,
+          "AInv": 0.0,
+          "AHer": 0.0,
+          "Aatk": 0.0,
+          "Amov": 0.0,
+          "Ablr": 0.0
+        },
+        "inventory": [
+          "stwp",
+          "rnec",
+          "woms",
+          "rst1",
+          null,
+          null
+        ]
+      },
+      {
+        "handle": [
+          27004,
+          36849
+        ],
+        "type": "ugho",
+        "owner": 0,
+        "x": -4908.46630859375,
+        "y": -4916.94287109375,
+        "hp": 340.0,
+        "hp_max": 340.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 852018,
+        "buffs": []
+      },
+      {
+        "handle": [
+          27183,
+          28733
+        ],
+        "type": "uaod",
+        "owner": 0,
+        "x": -4192.0,
+        "y": -3872.0,
+        "hp": 900.0,
+        "hp_max": 900.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 0,
+        "buffs": []
+      },
+      {
+        "handle": [
+          27290,
+          28970
+        ],
+        "type": "uzig",
+        "owner": 0,
+        "x": -4512.0,
+        "y": -3360.0,
+        "hp": 550.0,
+        "hp_max": 550.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 0,
+        "buffs": []
+      },
+      {
+        "handle": [
+          27301,
+          57425
+        ],
+        "type": "uzig",
+        "owner": 0,
+        "x": -4896.0,
+        "y": -4320.0,
+        "hp": 550.0,
+        "hp_max": 550.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 0,
+        "buffs": []
+      },
+      {
+        "handle": [
+          27334,
+          166109
+        ],
+        "type": "uske",
+        "owner": 0,
+        "x": -4080.5791015625,
+        "y": 454.65625,
+        "hp": 130.51393127441406,
+        "hp_max": 180.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": [
+          22379,
+          75394
+        ],
+        "order": 0,
+        "buffs": [
+          "Bfro",
+          "BUau",
+          "Brai"
+        ]
+      },
+      {
+        "handle": [
+          27354,
+          31240
+        ],
+        "type": "uaco",
+        "owner": 0,
+        "x": -4853.19287109375,
+        "y": -4021.794921875,
+        "hp": 220.0,
+        "hp_max": 220.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 852202,
+        "buffs": []
+      },
+      {
+        "handle": [
+          27549,
+          27549
+        ],
+        "type": "unp2",
+        "owner": 0,
+        "x": -4672.0,
+        "y": -3840.0,
+        "hp": 1763.0718994140625,
+        "hp_max": 2000.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 0,
+        "buffs": []
+      },
+      {
+        "handle": [
+          27595,
+          27607
+        ],
+        "type": "ugol",
+        "owner": 0,
+        "x": -5248.0,
+        "y": -4352.0,
+        "hp": 950.0,
+        "hp_max": 950.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 0,
+        "buffs": []
+      },
+      {
+        "handle": [
+          27654,
+          27660
+        ],
+        "type": "ugho",
+        "owner": 0,
+        "x": -4886.2978515625,
+        "y": -3791.359375,
+        "hp": 340.0,
+        "hp_max": 340.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 852018,
+        "buffs": []
+      },
+      {
+        "handle": [
+          27676,
+          27682
+        ],
+        "type": "uaco",
+        "owner": 0,
+        "x": -5232.0,
+        "y": -4136.0,
+        "hp": 220.0,
+        "hp_max": 220.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": [
+          27595,
+          27607
+        ],
+        "order": 852018,
+        "buffs": []
+      },
+      {
+        "handle": [
+          27701,
+          27707
+        ],
+        "type": "uaco",
+        "owner": 0,
+        "x": -5422.21142578125,
+        "y": -4274.19677734375,
+        "hp": 220.0,
+        "hp_max": 220.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": [
+          27595,
+          27607
+        ],
+        "order": 852018,
+        "buffs": []
+      },
+      {
+        "handle": [
+          27729,
+          80323
+        ],
+        "type": "uobs",
+        "owner": 0,
+        "x": -3825.01513671875,
+        "y": 310.5400390625,
+        "hp": 367.2807312011719,
+        "hp_max": 550.0,
+        "mana": 458.8535461425781,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 851986,
+        "buffs": [
+          "BUau"
+        ]
+      },
+      {
+        "handle": [
+          27793,
+          33439
+        ],
+        "type": "ugrv",
+        "owner": 0,
+        "x": -4480.0,
+        "y": -4288.0,
+        "hp": 900.0,
+        "hp_max": 900.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 0,
+        "buffs": []
+      },
+      {
+        "handle": [
+          27869,
+          115450
+        ],
+        "type": "Nbrn",
+        "owner": 0,
+        "x": -4112.04052734375,
+        "y": 26.951171875,
+        "hp": 550.0,
+        "hp_max": 550.0,
+        "mana": 208.1064453125,
+        "level": 1,
+        "is_hero": true,
+        "has_detail": true,
+        "target": [
+          26549,
+          36577
+        ],
+        "order": 0,
+        "buffs": [
+          "BUfa",
+          "BUau"
+        ],
+        "abilities": [
+          {
+            "code": "ANba",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 134742160
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "Aatk",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 570966293
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 20
+          },
+          {
+            "code": "Ablr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          }
+        ],
+        "cooldowns": {
+          "ANba": 0.0,
+          "AInv": 0.0,
+          "AHer": 0.0,
+          "Aatk": 0.0,
+          "Amov": 0.0,
+          "Ablr": 0.0
+        },
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "handle": [
+          27949,
+          32381
+        ],
+        "type": "utom",
+        "owner": 0,
+        "x": -3776.0,
+        "y": -3840.0,
+        "hp": 475.0,
+        "hp_max": 475.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": null,
+        "order": 0,
+        "buffs": []
+      }
+    ],
+    "enemies": [
+      {
+        "handle": [
+          22379,
+          75394
+        ],
+        "type": "Udea",
+        "owner": 1,
+        "x": -4240.22314453125,
+        "y": 629.7255859375,
+        "hp": 825.0,
+        "hp_max": 825.0,
+        "mana": 58.277976989746094,
+        "level": 2,
+        "is_hero": true,
+        "has_detail": true,
+        "target": [
+          25457,
+          56809
+        ],
+        "buffs": [
+          "BUav",
+          "BHad",
+          "BUau"
+        ],
+        "abilities": [
+          {
+            "code": "AIh1",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 8226
+          },
+          {
+            "code": "Atrg",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 18
+          },
+          {
+            "code": "AIad",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919778
+          }
+        ],
+        "cooldowns": {
+          "AIh1": 0.0,
+          "Atrg": 0.0,
+          "AIad": 0.0
+        }
+      },
+      {
+        "handle": [
+          23788,
+          158219
+        ],
+        "type": "uabo",
+        "owner": 1,
+        "x": -4111.7001953125,
+        "y": 695.5615234375,
+        "hp": 963.2295532226562,
+        "hp_max": 1175.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": [
+          26742,
+          35475
+        ],
+        "buffs": [
+          "Bfro",
+          "BUav",
+          "BHad",
+          "BUau"
+        ]
+      },
+      {
+        "handle": [
+          24318,
+          148328
+        ],
+        "type": "Ulic",
+        "owner": 1,
+        "x": -3598.04296875,
+        "y": 920.33203125,
+        "hp": 475.0,
+        "hp_max": 475.0,
+        "mana": 59.6998291015625,
+        "level": 1,
+        "is_hero": true,
+        "has_detail": true,
+        "target": null,
+        "buffs": [
+          "BHad",
+          "BUau"
+        ],
+        "abilities": [
+          {
+            "code": "AItp",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 8226
+          },
+          {
+            "code": "AUfn",
+            "level": 1,
+            "cooldown": 6.975006103515625,
+            "flags": 1073844759
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 146
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 146
+          },
+          {
+            "code": "Aatk",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 537395346
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 18
+          },
+          {
+            "code": "Ablr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 18
+          }
+        ],
+        "cooldowns": {
+          "AItp": 0.0,
+          "AUfn": 6.975006103515625,
+          "AInv": 0.0,
+          "AHer": 0.0,
+          "Aatk": 0.0,
+          "Amov": 0.0,
+          "Ablr": 0.0
+        }
+      },
+      {
+        "handle": [
+          25195,
+          149187
+        ],
+        "type": "uabo",
+        "owner": 1,
+        "x": -3888.64306640625,
+        "y": 698.6796875,
+        "hp": 1146.0074462890625,
+        "hp_max": 1175.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": [
+          25994,
+          90082
+        ],
+        "buffs": [
+          "BUav",
+          "BHad",
+          "BUau"
+        ]
+      },
+      {
+        "handle": [
+          25421,
+          69758
+        ],
+        "type": "ucry",
+        "owner": 1,
+        "x": -4023.65478515625,
+        "y": 1102.3017578125,
+        "hp": 550.0,
+        "hp_max": 550.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": [
+          26742,
+          35475
+        ],
+        "buffs": [
+          "BHad",
+          "BUau"
+        ]
+      },
+      {
+        "handle": [
+          25786,
+          60889
+        ],
+        "type": "ucry",
+        "owner": 1,
+        "x": -3965.609375,
+        "y": 878.890625,
+        "hp": 418.5942077636719,
+        "hp_max": 550.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": [
+          26742,
+          35475
+        ],
+        "buffs": [
+          "BHad",
+          "BUau"
+        ]
+      },
+      {
+        "handle": [
+          26401,
+          56533
+        ],
+        "type": "ucry",
+        "owner": 1,
+        "x": -3788.79150390625,
+        "y": 761.83984375,
+        "hp": 550.0,
+        "hp_max": 550.0,
+        "mana": 0.0,
+        "level": 0,
+        "is_hero": false,
+        "has_detail": true,
+        "target": [
+          26742,
+          35475
+        ],
+        "buffs": [
+          "BHad",
+          "BUau"
+        ]
+      },
+      {
+        "handle": [
+          26549,
+          36577
+        ],
+        "type": "Udre",
+        "owner": 1,
+        "x": -4286.53466796875,
+        "y": 432.330078125,
+        "hp": 656.6074829101562,
+        "hp_max": 775.0,
+        "mana": 129.7001190185547,
+        "level": 3,
+        "is_hero": true,
+        "has_detail": true,
+        "target": null,
+        "buffs": [
+          "Bspa",
+          "Bspa",
+          "BIcb",
+          "BHad",
+          "BUau",
+          "BUav"
+        ],
+        "abilities": [
+          {
+            "code": "AIcb",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147484322
+          },
+          {
+            "code": "AIev",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 290
+          },
+          {
+            "code": "AIrd",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 135798818
+          },
+          {
+            "code": "AUav",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919250
+          },
+          {
+            "code": "AIx2",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147483682
+          },
+          {
+            "code": "AItp",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 8226
+          },
+          {
+            "code": "AUsl",
+            "level": 2,
+            "cooldown": 5.0839996337890625,
+            "flags": 1073844759
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 146
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 146
+          },
+          {
+            "code": "Aatk",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 672661650
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 18
+          },
+          {
+            "code": "Ablr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 18
+          }
+        ],
+        "cooldowns": {
+          "AIcb": 0.0,
+          "AIev": 0.0,
+          "AIrd": 0.0,
+          "AUav": 0.0,
+          "AIx2": 0.0,
+          "AItp": 0.0,
+          "AUsl": 5.0839996337890625,
+          "AInv": 0.0,
+          "AHer": 0.0,
+          "Aatk": 0.0,
+          "Amov": 0.0,
+          "Ablr": 0.0
+        }
+      }
+    ],
+    "creeps": [],
+    "resources": {
+      "gold": 100,
+      "lumber": 410,
+      "food_used": 53,
+      "food_cap": 70,
+      "gold_gathered": 6697,
+      "lumber_gathered": 2500
+    },
+    "ground_items": []
+  }
+}

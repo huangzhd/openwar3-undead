@@ -22,6 +22,7 @@ class Creeping:
         self.paused=False;self.combat_hp={}
         self.tier=1
         self.opening_gnoll=False
+        self.map_alias=None
         self.local_origin=None
         self.home_only=False
         self.resupply_home=False
@@ -71,13 +72,44 @@ class Creeping:
                 and not c.get('poison_units') and set(c.get('hazards',[]))<={'thorns'}
                 and c.get('difficulty',float('inf'))<=6 and c.get('hp',float('inf'))<=815)
 
+    @staticmethod
+    def central_green_gnoll(c):
+        # TM's central green 3/3/1 camps, explicitly requested for the first rod.
+        # The closer level-five home camp remains excluded from this opening.
+        return (c.get('kind')=='gnoll' and sorted(s['code'] for s in c.get('spawns',[]))==['ngna','ngnb','ngnw']
+                and c.get('max_level')==3 and c.get('difficulty',float('inf'))<=7
+                and c.get('hp',float('inf'))<=970 and not c.get('poison_units') and not c.get('hazards'))
+
     @classmethod
     def needs_support(cls,c):
-        return (c.get('requires_support') or c['kind'] in {'murloc','mercenary','turtle'}) and not cls.small_turtle(c)
+        control_chain='stun' in c.get('hazards',[]) and bool({'slow','ensnare'} & set(c.get('hazards',[])))
+        return (c.get('requires_support') or control_chain or c['kind'] in {'murloc','mercenary','turtle'}) and not cls.small_turtle(c)
+
+    def tm_green_chain(self,army,now):
+        return (self.map_alias=='TM' and now<360 and not self.resupply_home
+                and any(self.central_green_gnoll(c) and c['id'] in self.cleared for c in self.catalog)
+                and any(u.type=='Udea' and u.level<=2 and u.hp>=.7*u.hp_max for u in army)
+                # Remaining skeletons carry the next green; do not wait for a
+                # second healthy summon. Arriving fiends can replace expiring
+                # summons without recalling an otherwise ready army home.
+                # Candidate HP/strength, hero health and route checks still apply.
+                and any(u.type in {'uske','uskm','ucry'} and u.hp>=.5*u.hp_max for u in army))
 
     def pre_attack_safe(self,c):
+        if self.map_alias=='TM' and self.home_only and self.tier>=2 and c['kind'] in {'shop','mercenary'} and c.get('difficulty',99)<=18:
+            return True
         return not ((self.resupply_home or self.home_only and self.tier>=3) and
                     (c.get('level_sum',c.get('difficulty',0))>15 or c.get('max_level',0)>7))
+
+    def tm_staging_camp(self,c,home):
+        if c['kind'] not in {'shop','mercenary'}:return False
+        peers=[x for x in self.catalog if x['kind']==c['kind']]
+        return bool(peers) and c['id']==min(peers,key=lambda x:hypot(x['x']-home.x,x['y']-home.y))['id']
+
+    def tm_staging_allows(self,c,home):
+        if self.map_alias!='TM' or not self.home_only or self.tier<2:return True
+        return (hypot(c['x']-home.x,c['y']-home.y)<=5500 and
+                (self.tm_staging_camp(c,home) or c['kind']=='gnoll' and c.get('difficulty',99)<=9))
 
     def candidates(self,g,army,home,now):
         camps=self.catalog if g.map() else []
@@ -90,12 +122,15 @@ class Creeping:
         healthy=health/max(1,sum(u.hp_max for u in army))>=.55
         strength=self.strength(army)
         supported=self.tier>=2 and any(u.type=='uobs' for u in army)
+        chain=self.tm_green_chain(army,now)
         result=[]
         for c in camps:
             if not self.pre_attack_safe(c):continue
+            if not self.tm_staging_allows(c,home):continue
             if c.get('difficulty',0)>=15 and (health/max(1,sum(u.hp_max for u in army))<.75 or
                 any(u.is_hero and u.hp/u.hp_max<.5 for u in army)):continue
-            if (self.resupply_home or self.home_only) and not self.home_half(g,c,home):continue
+            staging=self.map_alias=='TM' and self.home_only and self.tier>=2 and self.tm_staging_camp(c,home)
+            if (self.resupply_home or self.home_only) and not (chain and self.central_green_gnoll(c) or staging) and not self.home_half(g,c,home):continue
             if self.local_origin is not None and g.dist((c['x'],c['y']),self.local_origin)>2200:continue
             if c['id'] in self.cleared or c['id'] in self.exhausted or now<self.deferred.get(c['id'],0):continue
             if not healthy:continue
@@ -103,11 +138,12 @@ class Creeping:
             opening_small=(self.opening_gnoll and not self.cleared and self.own_side(g,c,home)
                 and (self.small_turtle(c) or (c['kind'] in {'ogre','gnoll'} and c['max_level']<=3 and c.get('difficulty',0)<=9
                      and not c.get('poison_units') and set(c.get('hazards',[]))<={'ensnare'}))
-                and g.dist((c['x'],c['y']),home)<3500
+                and g.dist((c['x'],c['y']),home)<(5500 if self.central_green_gnoll(c) else 3500)
                 and any(u.type=='Udea' and u.level==1 and u.hp/u.hp_max>=.8 for u in army)
                 and sum(u.type in {'uske','uskm'} and u.hp/u.hp_max>=.7 for u in army)>=2)
-            if c.get('difficulty',0)>(max(strength,9) if opening_small else strength):continue
-            if not lich and (c['max_level']>5 or hypot(c['x']-home.x,c['y']-home.y)>6500):continue
+            chain_green=chain and self.central_green_gnoll(c)
+            if c.get('difficulty',0)>(max(strength,9) if opening_small else max(strength,7) if chain_green else strength):continue
+            if not lich and (c['max_level']>5 or not chain_green and hypot(c['x']-home.x,c['y']-home.y)>6500):continue
             # Lich/nova and more ranged units open higher-level camps; avoid suicidal pulls.
             if c['hp']>health*(1.6 if lich else 1.3):continue
             result.append(c)
@@ -127,6 +163,19 @@ class Creeping:
         # Four-start maps: the empty allied-side spawn is still in our half.
         if self.enemy_main is None:return self.own_side(g,c,home) if self.resupply_home else True
         point=(c['x'],c['y'])
+        starts=[tuple(p) for p in getattr(g.map(),'starts',[]) if tuple(p)!=(0,0)]
+        own=(home.x,home.y);enemy=self.enemy_main
+        if starts:
+            own=min(starts,key=lambda p:g.dist(home,p))
+            enemy=min(starts,key=lambda p:g.dist(self.enemy_main,p))
+        dx,dy=abs(enemy[0]-own[0]),abs(enemy[1]-own[1])
+        # Adjacent starts have small alignment offsets: use a horizontal or
+        # vertical midline, not a slanted nearest-base Voronoi boundary.
+        # Diagonal spawns keep the existing distance rule.
+        axis=1 if dy>0 and dy>=2*dx else 0 if dx>0 and dx>=2*dy else None
+        if axis is not None:
+            midpoint=(own[axis]+enemy[axis])/2
+            return point[axis]<=midpoint if own[axis]<enemy[axis] else point[axis]>=midpoint
         return g.dist(point,home)<=g.dist(point,self.enemy_main)
 
     def safe_route(self,g,start,end):
@@ -171,7 +220,11 @@ class Creeping:
         visible=g.creeps()
         if self.active and not self.pre_attack_safe(self.active):
             self.defer(now,'preserve_attack_readiness')
-        if self.active and (self.resupply_home or self.home_only) and not self.home_half(g,self.active,home):
+        if self.active and not self.tm_staging_allows(self.active,home):
+            self.defer(now,'tm_orb_staging_route')
+        if self.active and (self.resupply_home or self.home_only) and not (
+                self.tm_green_chain(army,now) and self.central_green_gnoll(self.active) or
+                self.map_alias=='TM' and self.home_only and self.tier>=2 and self.tm_staging_camp(self.active,home)) and not self.home_half(g,self.active,home):
             self.defer(now,'home_half_regroup')
         if self.active:
             health=sum(u.hp for u in army)/max(1,sum(u.hp_max for u in army))
@@ -217,6 +270,10 @@ class Creeping:
                 preference={'ogre':0,'gnoll':0,'expansion':100,'marketplace':200,'murloc':400,'mercenary':600}.get(c['kind'],500)
                 return distance+120*c.get('difficulty',0)+preference+(0 if own_side or central else 2000)
             def opening_score(c):
+                if self.tm_green_chain(army,now):
+                    return (int(not self.central_green_gnoll(c)),0,score(c))
+                if self.map_alias=='TM' and self.home_only and self.tier>=2:
+                    return (int(not self.tm_staging_camp(c,home)),0,score(c))
                 own_gnoll=c['kind']=='gnoll' and self.own_side(g,c,home)
                 entrance_turtle=self.small_turtle(c) and self.own_side(g,c,home) and g.dist((c['x'],c['y']),home)<3500
                 return (

@@ -1,5 +1,7 @@
 """Bounded, fair-view item trading and independent DK orb delivery."""
 from .equipment import can_receive
+from .home_layout import clear_of_buildings
+from math import cos,sin,pi
 
 RINGS={'rde0':25,'rde1':62,'rde2':150,'rde3':300,'rde4':400}
 
@@ -13,7 +15,25 @@ class BattleShop:
         self.orb=None;self.orb_retry=0;self.potion=None;self.potion_retry=0
 
     @property
-    def reserved(self):return {self.orb['hero']} if self.orb else set()
+    def reserved(self):
+        if not self.orb:return set()
+        return {self.orb['hero']}|({self.orb['receiver']} if self.orb.get('meeting') else set())
+
+    def orb_meeting(self,b,dk,lich,avoid=None):
+        """Meet on open ground reachable by both heroes, outside own buildings."""
+        g=b.g;center=((dk.x+lich.x)/2,(dk.y+lich.y)/2)
+        buildings=g.my_buildings() if hasattr(g,'my_buildings') else []
+        choices=[]
+        for radius in (0,128,256,384,512,768):
+            for k in range(8 if radius else 1):
+                p=(center[0]+radius*cos(k*pi/4),center[1]+radius*sin(k*pi/4))
+                if avoid is not None and g.dist(p,avoid)<192:continue
+                if not clear_of_buildings(p,buildings):continue
+                routes=[g.path_distance((h.x,h.y),p) for h in (dk,lich)]
+                if any(d is None for d in routes):continue
+                if not all(b.creeping.safe_route(g,(h.x,h.y),p) for h in (dk,lich)):continue
+                choices.append((max(routes)+.25*sum(routes),p))
+        return min(choices,key=lambda pair:pair[0])[1] if choices else None
 
     def orb_reserve(self,g):
         # A dispatched courier owns the orb budget until an actual team bag
@@ -84,7 +104,7 @@ class BattleShop:
 
     def end_orb(self,now,reason):
         self.log('orb_courier_end',clock=now,reason=reason)
-        self.orb=None;self.orb_retry=now+(0 if reason=='delivered' else 5 if reason in {'unsafe_or_hero_missing','player_contact','home_defense'} else 120)
+        self.orb=None;self.orb_retry=now+(0 if reason=='delivered' else 5 if reason in {'unsafe_or_hero_missing','player_contact','home_defense','delivery_stalled'} else 120)
 
     def orb_tick(self,b,army,hostiles,now,tier):
         g=b.g;heroes=g.my_heroes();dk=next((h for h in heroes if h.type=='Udea'),None)
@@ -128,13 +148,35 @@ class BattleShop:
         target=lich if 'ocor' in db else shop
         if target is None:self.end_orb(now,'shop_missing');return set()
         point=(target.x,target.y);route=g.path_distance((dk.x,dk.y),point)
+        delivering='ocor' in db
+        if delivering and (mission.get('meeting') or route is None or
+                mission['target']==target.handle and now-mission['progress_at']>6 and g.dist(dk,lich)>200):
+            meeting=mission.get('meeting')
+            if meeting is None or now-mission.get('meeting_progress_at',now)>8:
+                if mission.get('meeting_attempts',0)>=3:
+                    self.end_orb(now,'delivery_stalled');return set()
+                meeting=self.orb_meeting(b,dk,lich,meeting)
+                if meeting is None:
+                    self.end_orb(now,'delivery_stalled');return set()
+                mission.update(meeting=meeting,receiver=lich.handle,meeting_progress_at=now,
+                               meeting_best=None,meeting_attempts=mission.get('meeting_attempts',0)+1)
+                self.log('orb_meeting_planned',clock=now,point=meeting,dk=dk.handle,lich=lich.handle)
+            remaining=max(g.dist(h,meeting) for h in (dk,lich))
+            if mission['meeting_best'] is None or remaining<mission['meeting_best']-40:
+                mission.update(meeting_best=remaining,meeting_progress_at=now)
+            # Actual bag changes, not accepted give orders, complete this task.
+            if g.dist(dk,lich)<=200:
+                self.transact(g,dk,'ocor','give',now,b.cast_until,lich)
+            else:
+                b.go_raw([dk,lich],meeting,now)
+            return self.reserved
         if route is None or not b.creeping.safe_route(g,(dk.x,dk.y),point):
             self.end_orb(now,'unsafe_route');return set()
         if mission['target']!=target.handle:
             mission.update(target=target.handle,best=route,progress_at=now)
         elif mission['best'] is None or route<mission['best']-80:
             mission.update(best=route,progress_at=now)
-        if g.dist(dk,target)>280:
+        if g.dist(dk,target)>(200 if delivering else 280):
             if now-mission['progress_at']>25:
                 self.end_orb(now,'travel_timeout');return set()
             b.go_raw([dk],point,now);return self.reserved

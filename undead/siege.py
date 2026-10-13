@@ -1,15 +1,26 @@
 """Shared local siege focus, using only fair visible units/orders/production."""
 from .structures import is_structure
-from .targeting import enemy_player,unit_stats,in_weapon_range,buffs,abilities,can_engage
+from .targeting import enemy_player,unit_stats,unit_collision,in_weapon_range,buffs,abilities,can_engage
 from openwar3.orders import REPAIR,REVIVE,ORDER
 
 TOWERS={'hgtw','hctw','hatw','owtw','uzg1','uzg2','etrp'}
 ALTARS={'halt','oalt','eate','uaod'}
 HALLS={'htow','hkee','hcas','ogre','ostr','ofrt','unpl','unp1','unp2','etol','etoa','etoe'}
 WORKERS={'hpea','opeo','uaco','ewsp'}
+# Verified local 1.27a UnitAbilities.slk Aro1/Aro2 ancients, including uprooted forms.
+ANCIENTS={'eaoe','eaom','eaow','eden','etoa','etoe','etol','etrp'}
 REPAIR_ORDERS={REPAIR,ORDER('renew'),ORDER('restoration')}
 
 def building_priority(g,u):
+    if u.type.startswith('e') and is_structure(u):
+        if u.type in ANCIENTS:
+            target=g.current_target(u) if hasattr(g,'current_target') else None
+            if (target and getattr(target,'owner',None)==getattr(g,'me',lambda:0)()
+                    and g.dist(u,target)<=weapon_range(u,target)):
+                return -3
+            production=g.production(u) if hasattr(g,'production') else None
+            if production and production.kind=='construction':return -1
+        return 2 if u.type=='emow' else 5
     if u.type in TOWERS:return 0
     if u.type=='otrb':return 1
     if u.type=='emow':return 2
@@ -36,7 +47,10 @@ def weapon_range(attacker, target):
     a=unit_stats(attacker.type);t=unit_stats(target.type)
     if not a or not t:return 0
     kind='air' if t.is_air else 'ground'
-    return max((w.range for w in a.weapons if kind in w.targets),default=0)
+    base=max((w.range for w in a.weapons if kind in w.targets),default=0)
+    # Ancient weapons measure from their collision boundary. Centre-only 128
+    # misses the observed 272-distance ancient -> DK attack in AZ 032028.
+    return base+unit_collision(attacker.type)+unit_collision(target.type) if base and attacker.type in ANCIENTS else base
 
 
 def fire_clearance(g, unit, point, buildings):
@@ -90,7 +104,17 @@ def repairing(g, worker, buildings):
                               and g.dist(worker,b)<=450 for b in buildings))
 
 class SiegeFocus:
-    def __init__(self,log):self.log=log;self.target=None
+    def __init__(self,log):self.log=log;self.target=None;self.rejections={};self.retry_at={}
+
+    def record_attempt(self,target,now,accepted):
+        key=(target.handle,target.type)
+        if accepted:self.rejections.pop(key,None);return
+        self.rejections[key]=self.rejections.get(key,0)+1
+        if self.rejections[key]>=3:
+            self.retry_at[key]=now+10;self.rejections.pop(key,None)
+            self.log('siege_target_deferred',clock=now,handle=target.handle,type=target.type,
+                     until=now+10,reason='three_rejected_team_attempts')
+            self.target=None
 
     def choose(self,g,army,foes,now):
         fighters=[u for u in army if u.type!='uobs' and (s:=unit_stats(u.type)) and s.weapons]
@@ -100,7 +124,8 @@ class SiegeFocus:
         visible=[e for e in foes if can_engage(e) and enemy_player(g,e) and
                  (not hasattr(e,'visible_to') or e.visible_to(g.me())) and g.dist(e,anchor)<950]
         buildings=[e for e in visible if is_structure(e)]
-        if not buildings:self.target=None;return None
+        workers=[e for e in visible if e.type in WORKERS]
+        if not buildings and not workers:self.target=None;return None
         # Combat troops inside the siege area retain normal battle priorities.
         # Idle/harvesting workers do not block siege; attacking workers do.
         own={u.handle for u in army}
@@ -118,10 +143,13 @@ class SiegeFocus:
             if building and building.owner==e.owner and building.hp<building.hp_max and g.dist(e,building)<=450:
                 repairers.append(e)
         ranked=[]
-        for e in [*repairers,*buildings]:
+        for e in [*workers,*buildings]:
+            if now<self.retry_at.get((e.handle,e.type),0):continue
             if buffs(g,e) & {'Bvul','BHds'} or 'Avul' in abilities(g,e):continue
             if not any(attackable(g,u,e) and reachable(g,u,e) for u in fighters if g.dist(u,anchor)<700):continue
-            rank=-1 if e in repairers else building_priority(g,e)
+            production=g.production(e) if e in buildings and hasattr(g,'production') else None
+            rank=(-2 if e in workers else -1 if not e.type.startswith('e') and production and production.kind=='construction'
+                  else building_priority(g,e))
             ranked.append((rank,e))
         if not ranked:self.target=None;return None
         best=min(rank for rank,e in ranked)
@@ -129,7 +157,8 @@ class SiegeFocus:
         selected=next((e for e in peers if e.handle==self.target),None) or min(peers,key=lambda e:(g.dist(e,anchor),e.hp,e.handle))
         if selected.handle!=self.target:
             self.log('siege_target',clock=now,handle=selected.handle,type=selected.type,priority=best,
-                     reason='repair_worker' if best==-1 else 'building_priority')
+                     reason=('repair_worker' if selected in repairers else 'cleanup_worker') if best==-2
+                            else 'attacking_ancient' if best==-3 else 'construction' if best==-1 else 'building_priority')
         self.target=selected.handle
         return selected
 

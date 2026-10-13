@@ -3,6 +3,7 @@ from math import hypot
 from .expansion import Expansion
 from .building_repair import BuildingRepair
 from .hall_rebuild import HallRebuild
+from .home_layout import HomeLayout
 
 HALLS={'unpl','unp1','unp2'}
 
@@ -25,6 +26,7 @@ class Economy:
         self.opening_rod_seen=False
         self.opening_milestones=set()
         self.save_for_tp=False
+        self.allow_tp=True
         self.frontline_combat=False
         self.home_tower_needed=False
         self.home_tower_point=None
@@ -42,6 +44,8 @@ class Economy:
         self.expansion=Expansion(log)
         self.repairs=BuildingRepair(log)
         self.hall_rebuild=HallRebuild(log)
+        self.home_layout=HomeLayout(log)
+        self.slaughter_missing_since=None
         self.mass_army=False
         self.bank_item_reserve=0
         self.upkeep_released=False
@@ -103,13 +107,14 @@ class Economy:
         return bool(r)
 
     def build(self,g,code,home,now):
+        if code in self.home_layout.pending:return True
         if not g.can_afford(code) or now-self.last_build<1:
             return False
-        ws=[w for w in g.units('me',{'uaco'}) if w.handle != self.scout and w.handle not in self.expansion.reserved and w.handle not in self.repairs.reserved and not g.is_constructing(w)]
+        ws=[w for w in g.units('me',{'uaco'}) if w.handle != self.scout and w.handle not in self.home_layout.reserved and w.handle not in self.expansion.reserved and w.handle not in self.repairs.reserved and not g.is_constructing(w)]
         if not ws:
             return False
         self.last_build=now
-        spot=g.build_near(ws[0],code,home.x,home.y,min_r=256,max_r=1056,max_tries=48)
+        spot=self.home_layout.build(g,ws[0],code,home,now)
         if spot:
             self.log('purchase',clock=now,kind='build',code=code,spot=spot)
         return bool(spot)
@@ -123,6 +128,7 @@ class Economy:
         home=next((h for h in halls if h.handle==self.home_handle),halls[0])
         self.hall_rebuild.observe(g,home,now)
         self.home_handle=home.handle
+        self.home_layout.observe(g,now)
         if not self.opening_started:
             self.opening_started=True
             self.opening_complete=home.type in {"unp1","unp2"}
@@ -148,7 +154,7 @@ class Economy:
             self.log('scout_assigned',handle=self.scout)
         mine=g.nearest([m for m in g.gold_mines() if m.type=='ugol' and m.owner==g.me()],home)
         for w in g.idle_workers():
-            if mine and w.handle!=self.scout and w.handle not in self.ghoul_reserved and w.handle not in self.expansion.reserved and w.handle not in self.repairs.reserved:
+            if mine and w.handle!=self.scout and w.handle not in self.home_layout.reserved and w.handle not in self.ghoul_reserved and w.handle not in self.expansion.reserved and w.handle not in self.repairs.reserved:
                 g.gather(w,mine)
         trees=None
         for w in g.units('me',{'ugho'}):
@@ -273,8 +279,17 @@ class Economy:
         if tier==2 and not upgrading:
             # The user permits tier three once slaughterhouse construction is observed.
             if not g.my_buildings({'uslh'}):
+                if self.slaughter_missing_since is None:self.slaughter_missing_since=now
+                # Failed ground placement must not freeze the entire economy.
+                # Keep 200/135 for slaughter + 325/230 for tier three, and
+                # spend only additional 215/40 on a fiend while retrying sites.
+                if (now-self.slaughter_missing_since>=10 and res['gold']>=740 and res['lumber']>=405
+                        and crypts and self.count(g,'ucry')<6 and self.train(g,crypts[0],'ucry',now)):
+                    self.log('construction_stall_reinforcement',clock=now,blocked='uslh',gold=res['gold'],lumber=res['lumber'])
+                    return
                 self.build(g,'uslh',home,now)
                 return
+            self.slaughter_missing_since=None
             if self.train(g,home,'unp2',now):return
             # While saving for tech, a ready slaughterhouse may still provide sustain.
             if self.count(g,'uobs')<1:
@@ -299,7 +314,7 @@ class Economy:
         if self.mass_army and not self.upkeep_released and res['food_used']>=48 and not threat:
             heroes=g.my_heroes()
             bags=[g.inventory(h) for h in heroes]
-            reserve=(0 if self.frontline_combat or any(b is None or 'stwp' in b for b in bags) else 350)+self.bank_item_reserve
+            reserve=(0 if not self.allow_tp or self.frontline_combat or any(b is None or 'stwp' in b for b in bags) else 350)+self.bank_item_reserve
             # LR 0.1.77 broke 50 at 757 gold while the third hero and first
             # attack upgrade still needed funding. Only uncommitted gold counts.
             reserve+=425 if self.third_hero not in self.ever_heroes else 0
@@ -374,9 +389,9 @@ class Economy:
 
     def army_targets(self,g,now):
         if not self.mass_army:return (6 if now<900 else 10),2
-        statues=3 if self.count(g,'ucry')>=12 or self.count(g,'uobs')>=3 else 2
+        statues=2 # One sustained life source and one sustained mana source.
         workers=max(10,self.count(g,'uaco'))
-        fiends=max(0,(100-15-2*max(3,self.count(g,'ugho'))-workers-3*statues)//3)
+        fiends=max(0,(100-15-2*max(3,self.count(g,'ugho'))-workers-3*max(statues,self.count(g,'uobs')))//3)
         return fiends,statues
 
     def research_web(self,g,now):
@@ -460,7 +475,7 @@ class Economy:
         if lich and 'ocor' not in (g.inventory(lich) or []):reserve_gold+=375
         if self.third_hero not in self.ever_heroes:
             reserve_gold+=425;reserve_lumber+=135
-        if not self.frontline_combat and not any('stwp' in (g.inventory(h) or []) for h in heroes):reserve_gold+=350
+        if self.allow_tp and not self.frontline_combat and not any('stwp' in (g.inventory(h) or []) for h in heroes):reserve_gold+=350
         # A paid research queue runs alongside spiders. An idle Graveyard saves
         # for the next attack/armor level instead of losing its budget to fiends.
         if any(code in p.queue for _,p in g.all_production('me')):return False
@@ -498,7 +513,7 @@ class Economy:
         lich=next((h for h in heroes if h.type=='Ulic'),None)
         dk=next((h for h in heroes if h.type=='Udea'),None)
         if not lich or 'ocor' not in (g.inventory(lich) or []):gold+=375
-        if not self.frontline_combat and not any('stwp' in (g.inventory(h) or []) for h in heroes):gold+=350
+        if self.allow_tp and not self.frontline_combat and not any('stwp' in (g.inventory(h) or []) for h in heroes):gold+=350
         halls=g.my_buildings(HALLS)
         if not halls:return float('inf')
         home=next((h for h in halls if h.handle==self.home_handle),halls[0]);upgrading=bool(g.production(home) and g.production(home).kind=='upgrade')

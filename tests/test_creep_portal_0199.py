@@ -41,11 +41,12 @@ class CreepPortalTests(unittest.TestCase):
         self.assertFalse(orders);self.assertIn(dk.handle,b.portal_escaping)
         self.assertEqual(events[-1]['evidence'],'bounded_initial_retreat')
 
-    def test_stalled_actual_trial_falls_back_to_portal(self):
+    def test_stalled_neutral_trial_does_not_override_user_portal_ban(self):
         b,g,army,dk,foes,orders,events=self.make()
         b.emergency_portal(army,390.13)
-        self.assertTrue(b.emergency_portal(army,391.23))
-        self.assertEqual(orders,[dk.handle]);self.assertIsNotNone(b.teleport)
+        self.assertFalse(b.escape_available(dk,foes,391.23))
+        self.assertFalse(b.emergency_portal(army,391.23))
+        self.assertFalse(orders);self.assertIsNone(b.teleport)
 
     def test_real_motion_and_opening_gap_continue_escape(self):
         b,g,army,dk,foes,orders,events=self.make()
@@ -60,24 +61,26 @@ class CreepPortalTests(unittest.TestCase):
             b,g,army,dk,foes,orders,events=self.make()
             if reason=='root':g.buffs=lambda u:['BEer'] if u is dk else []
             else:foes[0].owner=1
-            self.assertTrue(b.emergency_portal(army,390.13),reason)
-            self.assertEqual(orders,[dk.handle])
+            self.assertEqual(b.emergency_portal(army,390.13),reason=='player')
+            self.assertEqual(bool(orders),reason=='player')
 
     def test_damage_budget_prevents_trial_that_cannot_survive(self):
         b,g,army,dk,foes,orders,events=self.make();b.micro.damage.rates[dk.handle]=200
-        self.assertTrue(b.emergency_portal(army,390.13));self.assertEqual(orders,[dk.handle])
+        self.assertFalse(b.escape_available(dk,foes,390.13))
+        self.assertFalse(b.emergency_portal(army,390.13));self.assertFalse(orders)
 
     def test_missing_or_unsafe_route_does_not_delay_rescue(self):
         for reason in ('missing','unsafe'):
             b,g,army,dk,foes,orders,events=self.make()
             if reason=='missing':g.path_distance=lambda *a:None
             else:b.portal_pulls[dk.handle]=(dk.x,dk.y+30)
-            self.assertTrue(b.emergency_portal(army,390.13),reason)
-            self.assertEqual(orders,[dk.handle])
+            self.assertFalse(b.escape_available(dk,foes,390.13))
+            self.assertFalse(b.emergency_portal(army,390.13),reason);self.assertFalse(orders)
 
     def test_old_sample_expiry_cannot_restart_stalled_trial(self):
         b,g,army,dk,foes,orders,events=self.make()
         b.emergency_portal(army,390.13)
-        self.assertTrue(b.emergency_portal(army,394.13));self.assertEqual(orders,[dk.handle])
+        self.assertFalse(b.escape_available(dk,foes,394.13))
+        self.assertFalse(b.emergency_portal(army,394.13));self.assertFalse(orders)
 
 if __name__=='__main__':unittest.main()

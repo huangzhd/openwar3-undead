@@ -1,0 +1,354 @@
+{
+  "source_run": "20261013-235051",
+  "source_machine": "38993/upstream",
+  "rules_version": "0.1.108",
+  "evidence": "Fair combat_state before nonlethal Coil; subsequent Nbrn burst/TP does not prove a counterfactual win.",
+  "state": {
+    "event": "combat_state",
+    "clock": 691.43,
+    "center": [
+      1451.025390625,
+      -269.70947265625
+    ],
+    "army_hp": 6756.215728759766,
+    "enemy_hp": 1500.0,
+    "army_health": 0.9863088655123745,
+    "recent_losses": 0,
+    "army": [
+      {
+        "handle": [
+          2282,
+          124823
+        ],
+        "type": "ucry",
+        "x": 1505,
+        "y": -398,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          13814,
+          92589
+        ],
+        "type": "uobs",
+        "x": 910,
+        "y": -127,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 338,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          13956,
+          59477
+        ],
+        "type": "Ulic",
+        "x": 1626,
+        "y": -412,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 405,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          14292,
+          91832
+        ],
+        "type": "ucry",
+        "x": 998,
+        "y": -133,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          14671,
+          69361
+        ],
+        "type": "ucry",
+        "x": 1673,
+        "y": -519,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          14803,
+          46948
+        ],
+        "type": "ucry",
+        "x": 1498,
+        "y": -495,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          14842,
+          114428
+        ],
+        "type": "Nbrn",
+        "x": 1600,
+        "y": -309,
+        "hp": 456,
+        "hp_max": 550.0,
+        "mana": 219,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          15001,
+          51385
+        ],
+        "type": "ucry",
+        "x": 1357,
+        "y": -372,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          15507,
+          80509
+        ],
+        "type": "ucry",
+        "x": 1451,
+        "y": -270,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          15963,
+          25012
+        ],
+        "type": "Udea",
+        "x": 2030,
+        "y": -209,
+        "hp": 800,
+        "hp_max": 800.0,
+        "mana": 300,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          16207,
+          74719
+        ],
+        "type": "uobs",
+        "x": 1288,
+        "y": -264,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 515,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          16469,
+          132277
+        ],
+        "type": "ucry",
+        "x": -173,
+        "y": 1170,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          16952,
+          33690
+        ],
+        "type": "ucry",
+        "x": 1644,
+        "y": -177,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      }
+    ],
+    "enemies": [
+      {
+        "handle": [
+          2170,
+          82577
+        ],
+        "type": "otrb",
+        "x": 2528,
+        "y": -288,
+        "hp": 600,
+        "target": null
+      },
+      {
+        "handle": [
+          15902,
+          25205
+        ],
+        "type": "Otch",
+        "x": 2046,
+        "y": 101,
+        "hp": 1025,
+        "target": null
+      },
+      {
+        "handle": [
+          16102,
+          94071
+        ],
+        "type": "owtw",
+        "x": 2112,
+        "y": -320,
+        "hp": 295,
+        "target": [
+          14842,
+          114428
+        ]
+      },
+      {
+        "handle": [
+          16850,
+          111565
+        ],
+        "type": "Ofar",
+        "x": 1959,
+        "y": 359,
+        "hp": 475,
+        "target": null
+      },
+      {
+        "handle": [
+          16964,
+          22985
+        ],
+        "type": "opeo",
+        "x": 2235,
+        "y": -203,
+        "hp": 250,
+        "target": null
+      }
+    ]
+  },
+  "timeline": [
+    {
+      "event": "coil_damage_attempt",
+      "clock": 691.43,
+      "target": "Otch",
+      "accepted": true,
+      "mana": 300.0,
+      "reason": "accepted"
+    },
+    {
+      "event": "hero_damage_risk",
+      "clock": 692.305,
+      "hero": "Nbrn",
+      "hp": 302.7488708496094,
+      "damage_per_second": 175.39069475446428,
+      "estimated_seconds": 1.7261398688991931
+    },
+    {
+      "event": "teleport_attempt",
+      "clock": 693.28,
+      "hero": "Nbrn",
+      "accepted": true,
+      "action": "ATTACK",
+      "army_health": 0.843361183779083,
+      "enemy_hp": 2192.022476196289,
+      "endangered": 0,
+      "critical_heroes": [
+        "Nbrn"
+      ],
+      "threat_owners": [
+        1
+      ],
+      "heroes": [
+        {
+          "type": "Ulic",
+          "hp": 461.14776611328125,
+          "hp_max": 550.0,
+          "point": [
+            1626.05859375,
+            -411.962890625
+          ],
+          "pull": null,
+          "damage_rate": 48.028234533360894,
+          "buffs": [
+            "Brpm",
+            "BUau"
+          ]
+        },
+        {
+          "type": "Nbrn",
+          "hp": 290.5995178222656,
+          "hp_max": 550.0,
+          "point": [
+            1827.541015625,
+            -324.20556640625
+          ],
+          "pull": [
+            1049.3988230370774,
+            -228.92412103490827
+          ],
+          "damage_rate": 89.52227618243133,
+          "buffs": [
+            "Brpm",
+            "BUau"
+          ]
+        },
+        {
+          "type": "Udea",
+          "hp": 790.6043701171875,
+          "hp_max": 800.0,
+          "point": [
+            1918.974609375,
+            -208.04638671875
+          ],
+          "pull": [
+            1123.5936492540768,
+            -404.1246728305399
+          ],
+          "damage_rate": 9.636543469551057,
+          "buffs": [
+            "Brpm",
+            "BUau"
+          ]
+        }
+      ]
+    },
+    {
+      "event": "teleport_confirmed",
+      "clock": 699.355,
+      "hero": "Nbrn"
+    }
+  ]
+}

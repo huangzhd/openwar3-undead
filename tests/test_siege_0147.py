@@ -2,7 +2,7 @@ import unittest
 from types import SimpleNamespace as N
 from test_micro_loot import unit,dist
 from undead.controller import Controller
-from undead.siege import building_priority,TOWERS,HALLS
+from undead.siege import building_priority,TOWERS,HALLS,repairing
 from undead.policy import Action
 from openwar3.orders import REPAIR,REVIVE,ORDER,ATTACK,HARVEST
 
@@ -57,13 +57,14 @@ class SiegeTests(unittest.TestCase):
         for code,order in [('hpea',REPAIR),('opeo',REPAIR),('uaco',ORDER('restoration')),('ewsp',ORDER('renew'))]:
             with self.subTest(code=code):
                 b,a,f,cmd,cur,ids,p,ev=self.game();tower=self.enemy('hgtw',10,300);worker=self.enemy(code,11,350);f.extend([tower,worker])
-                b.fight(a,f,10);self.assertTrue(all(cur[u.handle] is tower for u in a))
+                b.fight(a,f,10);self.assertTrue(all(cur[u.handle] is worker for u in a))
                 ids[worker.handle]=order;cur[worker.handle]=tower;cmd.clear();b.fight(a,f,12)
-                self.assertEqual({t for op,h,t in cmd if op=='attack'},{worker.handle})
+                self.assertFalse(cmd) # Already attacking the same worker; no duplicate order.
+                self.assertTrue(all(cur[u.handle] is worker for u in a))
                 worker.x=1300;cmd.clear();b.fight(a,f,14)
                 self.assertEqual({t for op,h,t in cmd if op=='attack'},{tower.handle})
 
-    def test_worker_standing_nearby_autocast_or_gathering_is_not_repair(self):
+    def test_nonrepairing_worker_is_identified_correctly_but_cleanup_still_targets_it(self):
         for mode in ['idle','harvest','autocast','no_target','wrong_owner','too_far','full_health']:
             b,a,f,cmd,cur,ids,p,ev=self.game();tower=self.enemy('hgtw',10,100);worker=self.enemy('hpea',11,200);f.extend([tower,worker])
             ids[worker.handle]=REPAIR;cur[worker.handle]=tower
@@ -74,8 +75,9 @@ class SiegeTests(unittest.TestCase):
             if mode=='wrong_owner':worker.owner=2
             if mode=='too_far':worker.x=700
             if mode=='full_health':tower.hp=tower.hp_max
+            self.assertFalse(repairing(b.g,worker,[tower]),mode)
             b.fight(a,f,10)
-            self.assertTrue(all(cur[u.handle] is tower for u in a),mode)
+            self.assertTrue(all(cur[u.handle] is worker for u in a),mode)
 
     def test_defenders_are_fought_then_tower_is_focused(self):
         b,a,f,cmd,cur,ids,p,ev=self.game();tower=self.enemy('hgtw',10,300);soldier=self.enemy('ogru',11,80);f.extend([tower,soldier])
@@ -108,11 +110,11 @@ class SiegeTests(unittest.TestCase):
         for code in TOWERS:
             f[:]=[self.enemy('otrb',10,50),self.enemy(code,11,300)];cur.clear();cmd.clear()
             b.siege.target=None;b.last.clear();b.fight(a,f,10)
-            self.assertTrue(all(cur[u.handle] is f[1] for u in a),code)
+            self.assertTrue(all(cur[u.handle] is f[0 if code.startswith('e') else 1] for u in a),code)
         for code in HALLS:
             f[:]=[self.enemy('hhou',10,50),self.enemy(code,11,300)];cur.clear();cmd.clear()
             b.siege.target=None;b.last.clear();b.fight(a,f,10)
-            self.assertTrue(all(cur[u.handle] is f[1] for u in a),code)
+            self.assertTrue(all(cur[u.handle] is f[0 if code.startswith('e') else 1] for u in a),code)
 
     def test_advance_attack_does_not_overwrite_focus_with_old_site_goal(self):
         b,a,f,cmd,cur,ids,p,ev=self.game();base=self.enemy('unpl',10,200);tower=self.enemy('hgtw',11,500);f.extend([base,tower])

@@ -26,4 +26,4 @@
 .\start-upstream.ps1 --game-dir '上游真实游戏目录' check
 ```
 
-通过标准：machine=upstream、八图严格指纹匹配、bot check 依赖全 true；开局前两个活动进程列表为空。本次上游分支由临时目录行为测试验证，尚未在上游机器实际执行，不能写成上游实机通过。
+通过标准：machine=upstream、八图严格指纹匹配、bot check 依赖全 true；开局前两个活动进程列表为空。2026-10-13 已在 38993 上游机器实际执行 check：八图指纹、全部依赖及无活动进程检查通过；0.1.108 完整857项离线测试通过（artifacts/01108-upstream-handoff-tests.log）。尚未在本机启动0.1.108自然对局，不能把入口/离线验证写成胜局复现。

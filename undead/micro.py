@@ -41,9 +41,9 @@ class Micro:
         dk_has_mana=dk is not None and getattr(dk,'mana',0)>=COIL_MANA
         # Creeping preserves Coil for emergencies; wounded units must not wait for routine healing.
         coil_ready=coil_ready and not creeping
-        eligible={u.handle for u in core if (u.type=='Udea' and (not creeping or u.hp/u.hp_max<.45 or u.handle in self.pulling or self.damage.urgent(u))) or
+        eligible={u.handle for u in core if (u.type=='Udea' and (not creeping or u.hp/u.hp_max<=.5 or u.handle in self.pulling or self.damage.urgent(u))) or
                   (u.type in {'Ulic','Nbrn'} and ((u.handle in self.pulling and u.hp/u.hp_max<.7) or
-                   (u.hp/u.hp_max<.45 and not (dk_has_mana and coil_ready and hypot(u.x-dk.x,u.y-dk.y)<750))
+                   (u.hp/u.hp_max<(.6 if creeping else .45) and not (dk_has_mana and coil_ready and hypot(u.x-dk.x,u.y-dk.y)<750))
                    or self.damage.urgent(u))) or
                   (u.type=='ucry' and ((u.handle in self.pulling and u.hp/u.hp_max<.7) or
                    (u.hp/u.hp_max<.45 and not (dk_has_mana and coil_ready and hypot(u.x-dk.x,u.y-dk.y)<750)))) or
@@ -52,7 +52,9 @@ class Micro:
         self.pulling &= eligible
         for u in core:
             if u.handle not in eligible:continue
-            attackers=[e for e in hostiles if targets[e.handle]==u.handle and hypot(e.x-u.x,e.y-u.y)<max(900,attack_range(e)+100)]
+            attackers=[e for e in hostiles if targets[e.handle]==u.handle and
+                       hypot(e.x-u.x,e.y-u.y)<(attack_range(e)+100 if creeping and u.type=='Udea'
+                       and getattr(e,'owner',None)==12 else max(900,attack_range(e)+100))]
             fired=now-self.hit.get(u.handle,-100)<2 or bool(attackers)
             ratio=u.hp/u.hp_max
             if fired and (u.type=='Udea' or ratio<.7 or len(attackers)>=2 or u.is_hero and self.damage.urgent(u)):
@@ -67,10 +69,17 @@ class Micro:
                 # Escaping fire is not healing. TH 104134's 244/525 lich
                 # reengaged after a brief damage pause and died seconds later.
                 # Keep vulnerable damage dealers out until health actually returns.
-                if u.type in {'ucry','Ulic','Nbrn','Nngs'} and ratio<.7 and any(hypot(e.x-anchor.x,e.y-anchor.y)<1200 for e in hostiles):
+                # A half-health creeping DK returns to deal damage after aggro
+                # is shed, rather than waiting for healing while the camp resets.
+                # Critically injured DKs and vulnerable damage dealers still wait.
+                if ((u.type in {'ucry','Ulic','Nbrn','Nngs'} and ratio<.7) or
+                        creeping and u.type=='Udea' and ratio<.35) and any(hypot(e.x-anchor.x,e.y-anchor.y)<1200 for e in hostiles):
                     moves[u.handle]=(u.x,u.y)
                     continue
                 self.pulling.remove(u.handle)
+                if creeping and u.type=='Udea':
+                    self.log('creep_dk_reengage',clock=now,handle=u.handle,hp=round(u.hp),
+                             reason='outside_weapon_range_without_recent_damage')
                 continue
             if not near: continue
             ex=sum(e.x for e in near)/len(near);ey=sum(e.y for e in near)/len(near)

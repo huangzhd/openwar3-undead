@@ -34,12 +34,15 @@ class Formation:
         self.aura_wait=False
         self.route_distance=None
         self.catching_up=set()
+        self.forward_fiends=set()
+        self.unit_progress={}
 
     def reset(self):
         self.rally=None;self.rally_retries=0;self.rally_distance=None
         self.route=[];self.objective=None;self.last_plan=-100
         self.cursors={};self.aura_wait=False;self.route_distance=None
         self.catching_up=set()
+        self.forward_fiends=set();self.unit_progress={}
 
     def cursor_at(self,u):
         index=min(self.cursors.get(u.handle,0),max(0,len(self.route)-1))
@@ -173,8 +176,20 @@ class Formation:
             # Local 1.27a AUau has Area=900. Use margin and hysteresis; only DK waits.
             brake=ahead and self.aura_gap>(550 if self.aura_wait else 750)
         self.aura_wait=brake
+        previous_forward=self.forward_fiends
+        self.forward_fiends=set()
+        if not retreat:
+            main_left=ground_distance(self.anchor,target)
+            for u in core:
+                left=ground_distance(xy(u),target)
+                if (u.type=='ucry' and distance(xy(u),self.anchor)>(400 if u.handle in previous_forward else 650)
+                        and left is not None and main_left is not None and left+200<main_left):
+                    self.forward_fiends.add(u.handle)
         orders=[]
         for u in units:
+            if u.handle in self.forward_fiends:
+                orders.append((u,self.anchor,False))
+                continue
             if u.handle in self.joiners or u.handle in self.catching_up:
                 if retreat:
                     # LR 0.1.89 sent a newly produced home-side fiend toward
@@ -190,6 +205,20 @@ class Formation:
                 self.last_progress=now
             self.cursors[u.handle]=index
             point=self.route[index]
+            # A crowded 128-grid corner can be unreachable in the engine even
+            # while its projected route is valid. Advance just this stalled unit
+            # to the next reachable shared turn, preserving everyone else's route.
+            progress=self.unit_progress.get(u.handle)
+            gap=distance(xy(u),point)
+            if progress is None or progress['point']!=point or gap<progress['gap']-48:
+                progress=dict(point=point,gap=gap,clock=now);self.unit_progress[u.handle]=progress
+            elif now-progress['clock']>=5 and index<len(self.route)-1:
+                next_point=self.route[index+1]
+                leg=ground_distance(xy(u),next_point)
+                if leg is not None and leg<=distance(xy(u),next_point)+384:
+                    index+=1;self.cursors[u.handle]=index;point=next_point
+                    self.unit_progress.pop(u.handle,None)
+                    self.log('formation_local_unstuck',clock=now,handle=u.handle,point=point)
             hero_ahead=bool(dk and u is not dk and u.is_hero and not retreat and
                 distance(xy(u),xy(dk))>550 and
                 ground_distance(xy(u),target) is not None and ground_distance(xy(dk),target) is not None and

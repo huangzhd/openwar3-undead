@@ -53,7 +53,7 @@ class GrowthExpansionTests(unittest.TestCase):
             g,e,_=self.make(n);e.tick(g,700)
             self.assertEqual(g.commands,['ucry']);self.assertLess(g.gold,3000)
     def test_fiend_and_statue_queues_run_concurrently(self):
-        g,e,_=self.make(12);e.tick(g,700);e.tick(g,703)
+        g,e,_=self.make(12);g.own.remove(g.units('me',{'uobs'})[-1]);e.tick(g,700);e.tick(g,703)
         self.assertEqual(g.commands,['uobs','ucry'])
         self.assertEqual({b.type for b,p in g.all_production('me')},{'usep','uslh'})
     def test_supply_is_early_and_pending_foundation_prevents_duplicate(self):

@@ -1,0 +1,157 @@
+{
+  "source_run": "20261014-010403",
+  "source": "read-only fair sample",
+  "clock": 182.33,
+  "own": [
+    {
+      "handle": [
+        24781,
+        39756
+      ],
+      "type": "uske",
+      "owner": 0,
+      "x": -623.349609375,
+      "y": -2547.98486328125,
+      "hp": 180.0,
+      "hp_max": 180.0,
+      "mana": 0.0,
+      "level": 0,
+      "is_hero": false,
+      "has_detail": true,
+      "target": null,
+      "order": 851986,
+      "buffs": [
+        "Brai"
+      ]
+    },
+    {
+      "handle": [
+        25858,
+        39739
+      ],
+      "type": "uske",
+      "owner": 0,
+      "x": -504.552734375,
+      "y": -2700.013671875,
+      "hp": 115.84904479980469,
+      "hp_max": 180.0,
+      "mana": 0.0,
+      "level": 0,
+      "is_hero": false,
+      "has_detail": true,
+      "target": null,
+      "order": 0,
+      "buffs": [
+        "Brai"
+      ]
+    },
+    {
+      "handle": [
+        26242,
+        36509
+      ],
+      "type": "uske",
+      "owner": 0,
+      "x": -563.0537109375,
+      "y": -2630.8583984375,
+      "hp": 104.52828216552734,
+      "hp_max": 180.0,
+      "mana": 0.0,
+      "level": 0,
+      "is_hero": false,
+      "has_detail": true,
+      "target": null,
+      "order": 0,
+      "buffs": [
+        "Brai"
+      ]
+    },
+    {
+      "handle": [
+        26656,
+        35096
+      ],
+      "type": "Udea",
+      "owner": 0,
+      "x": -493.8232421875,
+      "y": -2636.30419921875,
+      "hp": 534.6171875,
+      "hp_max": 675.0,
+      "mana": 79.02532196044922,
+      "level": 1,
+      "is_hero": true,
+      "has_detail": true,
+      "target": null,
+      "order": 0,
+      "buffs": [],
+      "abilities": [
+        {
+          "code": "AIi3",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 2147483680
+        },
+        {
+          "code": "AIrd",
+          "level": 1,
+          "cooldown": 6.6385040283203125,
+          "flags": 134226464
+        },
+        {
+          "code": "AUdc",
+          "level": 1,
+          "cooldown": 3.0900115966796875,
+          "flags": 528
+        },
+        {
+          "code": "AItp",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 8224
+        },
+        {
+          "code": "AInv",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 144
+        },
+        {
+          "code": "AHer",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 144
+        },
+        {
+          "code": "Aatk",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 537411600
+        },
+        {
+          "code": "Amov",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 528
+        }
+      ],
+      "cooldowns": {
+        "AIi3": 0.0,
+        "AIrd": 6.6385040283203125,
+        "AUdc": 3.0900115966796875,
+        "AItp": 0.0,
+        "AInv": 0.0,
+        "AHer": 0.0,
+        "Aatk": 0.0,
+        "Amov": 0.0
+      },
+      "inventory": [
+        "stwp",
+        "rnec",
+        "rin1",
+        null,
+        null,
+        null
+      ]
+    }
+  ]
+}
