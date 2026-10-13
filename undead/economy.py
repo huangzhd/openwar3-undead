@@ -1,6 +1,8 @@
 """Fixed tech-fiend economy. One purchase per decision avoids stale-budget overspend."""
 from math import hypot
 from .expansion import Expansion
+from .building_repair import BuildingRepair
+from .hall_rebuild import HallRebuild
 
 HALLS={'unpl','unp1','unp2'}
 
@@ -37,6 +39,8 @@ class Economy:
         self.web_reserving=False
         self.web_attempts=0
         self.expansion=Expansion(log)
+        self.repairs=BuildingRepair(log)
+        self.hall_rebuild=HallRebuild(log)
         self.mass_army=False
         self.bank_item_reserve=0
         self.upkeep_released=False
@@ -70,6 +74,17 @@ class Economy:
     def train(self,g,b,code,now):
         food={'ucry':3,'uobs':3,'ugho':2,'uaco':1}.get(code,0)
         res=g.resources()
+        # AZ 20261013-003657: the courier was still hiring when a spider
+        # spent 45 -> 48 food; the third hero then forced 53 before research.
+        # Warcraft charges queued unit food immediately, so food_used already
+        # includes production queues. Reserve only the not-yet-paid hero slot.
+        if (food and self.third_hero not in self.ever_heroes
+                and self.count(g,self.third_hero)==0 and res['food_used']+food+5>50):
+            if now-self.upkeep_log_at>=5:
+                self.upkeep_log_at=now
+                self.log('third_hero_food_reserved',clock=now,food=res['food_used'],
+                         blocked=code,hero=self.third_hero,reserved_food=5)
+            return False
         if (food and self.mass_army and not self.upkeep_released and not self.upkeep_threat
                 and res['food_used']+food>50 and (res['food_used']<=50 or code=='ucry')):
             if now-self.upkeep_log_at>=5:
@@ -89,7 +104,7 @@ class Economy:
     def build(self,g,code,home,now):
         if not g.can_afford(code) or now-self.last_build<1:
             return False
-        ws=[w for w in g.units('me',{'uaco'}) if w.handle != self.scout and w.handle not in self.expansion.reserved and not g.is_constructing(w)]
+        ws=[w for w in g.units('me',{'uaco'}) if w.handle != self.scout and w.handle not in self.expansion.reserved and w.handle not in self.repairs.reserved and not g.is_constructing(w)]
         if not ws:
             return False
         self.last_build=now
@@ -102,8 +117,10 @@ class Economy:
         self.upkeep_threat=threat
         halls=g.my_buildings(HALLS)
         if not halls:
+            self.hall_rebuild.tick(g,self,now,threat)
             return
         home=next((h for h in halls if h.handle==self.home_handle),halls[0])
+        self.hall_rebuild.observe(g,home,now)
         self.home_handle=home.handle
         if not self.opening_started:
             self.opening_started=True
@@ -118,12 +135,13 @@ class Economy:
         workers=g.units('me',{'uaco'})
         self.expansion.observe(g)
         self.expansion.upkeep(g,home,now)
+        repair_critical=self.repairs.tick(g,self,home,now)
         if self.scout is None and not self.expansion.retired_scout and len(workers)>=6:
             self.scout=workers[-1].handle
             self.log('scout_assigned',handle=self.scout)
         mine=g.nearest([m for m in g.gold_mines() if m.type=='ugol' and m.owner==g.me()],home)
         for w in g.idle_workers():
-            if mine and w.handle!=self.scout and w.handle not in self.ghoul_reserved and w.handle not in self.expansion.reserved:
+            if mine and w.handle!=self.scout and w.handle not in self.ghoul_reserved and w.handle not in self.expansion.reserved and w.handle not in self.repairs.reserved:
                 g.gather(w,mine)
         trees=None
         for w in g.units('me',{'ugho'}):
@@ -141,6 +159,7 @@ class Economy:
             self.upkeep_released=False;self.upkeep_crossed=False
             self.log('upkeep_bank_reset',clock=now,food=res['food_used'])
         if self.revive_priority(g,home,now,res):return
+        if repair_critical:return
         if self.home_tower_needed and self.defense_tower(g,home,now):return
         if self.save_for_trade:return
         if self.save_for_tp and not threat and not self.frontline_combat:
@@ -289,6 +308,8 @@ class Economy:
                     self.upkeep_log_at=now
                     self.log('upkeep_bank_wait',clock=now,gold=res['gold'],food=res['food_used'],target_gold=400,reserved_items=reserve)
                 return
+            if self.third_hero not in self.ever_heroes:
+                return # Courier funds/food are not a release to break upkeep.
             self.upkeep_released=True
             self.log('upkeep_burst_released',clock=now,gold=res['gold'],food=res['food_used'],reserved_items=reserve)
         if self.mass_army and self.expansion.tick(g,self,home,now,threat):return

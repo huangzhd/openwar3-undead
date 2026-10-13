@@ -1,0 +1,356 @@
+{
+  "run": "20261013-023714",
+  "cast_clock": 937.105,
+  "portal_radius": 1100,
+  "source": "Local 1.27a ItemData stwp/AItp AbilityData Area1",
+  "frame": {
+    "event": "combat_state",
+    "clock": 936.13,
+    "center": [
+      -2378.552734375,
+      -713.54052734375
+    ],
+    "army_hp": 3757.849411010742,
+    "enemy_hp": 5863.593688964844,
+    "army_health": 0.8125079807590794,
+    "recent_losses": 2,
+    "army": [
+      {
+        "handle": [
+          6207,
+          144887
+        ],
+        "type": "Nngs",
+        "x": -1937,
+        "y": -646,
+        "hp": 367,
+        "hp_max": 475.0,
+        "mana": 181,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          13700,
+          80727
+        ],
+        "type": "uobs",
+        "x": -929,
+        "y": 167,
+        "hp": 198,
+        "hp_max": 550.0,
+        "mana": 530,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          13861,
+          149354
+        ],
+        "type": "ucry",
+        "x": -2909,
+        "y": -1006,
+        "hp": 520,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          13964,
+          181638
+        ],
+        "type": "ucry",
+        "x": -2843,
+        "y": -800,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          13974,
+          21941
+        ],
+        "type": "Udea",
+        "x": -1846,
+        "y": -720,
+        "hp": 863,
+        "hp_max": 875.0,
+        "mana": 49,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          14298,
+          125501
+        ],
+        "type": "ucry",
+        "x": -2784,
+        "y": -717,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          14335,
+          105605
+        ],
+        "type": "ucry",
+        "x": -790,
+        "y": 269,
+        "hp": 529,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          14377,
+          182876
+        ],
+        "type": "ucry",
+        "x": 314,
+        "y": 1338,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          15731,
+          43743
+        ],
+        "type": "ucry",
+        "x": -2778,
+        "y": -904,
+        "hp": 372,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          16284,
+          51805
+        ],
+        "type": "Ulic",
+        "x": -2379,
+        "y": -714,
+        "hp": 352,
+        "hp_max": 525.0,
+        "mana": 73,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          16662,
+          137811
+        ],
+        "type": "ucry",
+        "x": -2704,
+        "y": -829,
+        "hp": 185,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": true,
+        "pull": [
+          -2270.1353908001865,
+          -522.109914295103
+        ]
+      }
+    ],
+    "enemies": [
+      {
+        "handle": [
+          12288,
+          59620
+        ],
+        "type": "Edem",
+        "x": -2612,
+        "y": -989,
+        "hp": 866,
+        "target": null
+      },
+      {
+        "handle": [
+          12671,
+          183914
+        ],
+        "type": "efdr",
+        "x": -3030,
+        "y": -1588,
+        "hp": 450,
+        "target": null
+      },
+      {
+        "handle": [
+          13023,
+          26735
+        ],
+        "type": "earc",
+        "x": -2987,
+        "y": -1654,
+        "hp": 245,
+        "target": [
+          15731,
+          43743
+        ]
+      },
+      {
+        "handle": [
+          13288,
+          31385
+        ],
+        "type": "earc",
+        "x": -2615,
+        "y": -1508,
+        "hp": 245,
+        "target": [
+          16284,
+          51805
+        ]
+      },
+      {
+        "handle": [
+          13757,
+          23482
+        ],
+        "type": "earc",
+        "x": -2608,
+        "y": -1694,
+        "hp": 245,
+        "target": [
+          15731,
+          43743
+        ]
+      },
+      {
+        "handle": [
+          13965,
+          131551
+        ],
+        "type": "edry",
+        "x": -2827,
+        "y": -1461,
+        "hp": 435,
+        "target": [
+          13861,
+          149354
+        ]
+      },
+      {
+        "handle": [
+          13970,
+          21617
+        ],
+        "type": "earc",
+        "x": -2704,
+        "y": -1671,
+        "hp": 245,
+        "target": [
+          15731,
+          43743
+        ]
+      },
+      {
+        "handle": [
+          14326,
+          22127
+        ],
+        "type": "Emoo",
+        "x": -2896,
+        "y": -1594,
+        "hp": 875,
+        "target": [
+          16284,
+          51805
+        ]
+      },
+      {
+        "handle": [
+          14630,
+          120197
+        ],
+        "type": "edry",
+        "x": -2644,
+        "y": -1211,
+        "hp": 391,
+        "target": [
+          16284,
+          51805
+        ]
+      },
+      {
+        "handle": [
+          15861,
+          25071
+        ],
+        "type": "earc",
+        "x": -3038,
+        "y": -1753,
+        "hp": 245,
+        "target": [
+          15731,
+          43743
+        ]
+      },
+      {
+        "handle": [
+          16365,
+          66307
+        ],
+        "type": "esen",
+        "x": -2800,
+        "y": -1194,
+        "hp": 600,
+        "target": [
+          15731,
+          43743
+        ]
+      },
+      {
+        "handle": [
+          16415,
+          114946
+        ],
+        "type": "emtg",
+        "x": -2955,
+        "y": -1257,
+        "hp": 1512,
+        "target": [
+          15731,
+          43743
+        ]
+      }
+    ]
+  },
+  "after": {
+    "clock": 943.53,
+    "Ulic": [
+      3504,
+      3008
+    ],
+    "Udea": [
+      -192,
+      1028
+    ],
+    "Nngs": [
+      -407,
+      735
+    ]
+  }
+}

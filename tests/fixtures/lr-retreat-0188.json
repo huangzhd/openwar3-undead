@@ -1,0 +1,174 @@
+{
+  "run": "20261013-011033",
+  "source": "fair combat_state events; sampled sequence, not every controller tick",
+  "frames": [
+    {
+      "clock": 822.555,
+      "army_hp": 6208.563209533691,
+      "enemy_hp": 6422.576354980469,
+      "army_health": 0.8933184474149196,
+      "recent_losses": 0
+    },
+    {
+      "clock": 824.68,
+      "army_hp": 5921.806365966797,
+      "enemy_hp": 6957.04850769043,
+      "army_health": 0.8520584699232802,
+      "recent_losses": 0
+    },
+    {
+      "clock": 826.755,
+      "army_hp": 6170.197219848633,
+      "enemy_hp": 8788.096084594727,
+      "army_health": 0.8877981611292997,
+      "recent_losses": 0
+    },
+    {
+      "clock": 828.855,
+      "army_hp": 5968.604156494141,
+      "enemy_hp": 6093.998016357422,
+      "army_health": 0.9325943994522095,
+      "recent_losses": 1
+    },
+    {
+      "clock": 831.08,
+      "army_hp": 5615.9595947265625,
+      "enemy_hp": 7719.897277832031,
+      "army_health": 0.8774936866760253,
+      "recent_losses": 1
+    },
+    {
+      "clock": 833.13,
+      "army_hp": 5287.131286621094,
+      "enemy_hp": 7957.491645812988,
+      "army_health": 0.8261142635345459,
+      "recent_losses": 1
+    },
+    {
+      "clock": 835.955,
+      "army_hp": 4892.150939941406,
+      "enemy_hp": 7575.84090423584,
+      "army_health": 0.836265117938702,
+      "recent_losses": 2
+    },
+    {
+      "clock": 838.68,
+      "army_hp": 4643.9210205078125,
+      "enemy_hp": 7738.453971862793,
+      "army_health": 0.7938326530782586,
+      "recent_losses": 2
+    },
+    {
+      "clock": 841.355,
+      "army_hp": 4493.301910400391,
+      "enemy_hp": 5448.297698974609,
+      "army_health": 0.7680857966496394,
+      "recent_losses": 2
+    },
+    {
+      "clock": 844.23,
+      "army_hp": 4633.860870361328,
+      "enemy_hp": 2932.7128295898438,
+      "army_health": 0.8743133717662883,
+      "recent_losses": 3
+    },
+    {
+      "clock": 846.68,
+      "army_hp": 4330.966278076172,
+      "enemy_hp": 7062.071594238281,
+      "army_health": 0.8171634486936173,
+      "recent_losses": 3
+    },
+    {
+      "clock": 849.455,
+      "army_hp": 4027.397979736328,
+      "enemy_hp": 5369.996567726135,
+      "army_health": 0.8478732588918586,
+      "recent_losses": 3
+    },
+    {
+      "clock": 851.88,
+      "army_hp": 3991.8287963867188,
+      "enemy_hp": 6355.079528808594,
+      "army_health": 0.840385009765625,
+      "recent_losses": 3
+    },
+    {
+      "clock": 854.28,
+      "army_hp": 3760.8038024902344,
+      "enemy_hp": 7194.286933898926,
+      "army_health": 0.7917481689453125,
+      "recent_losses": 3
+    },
+    {
+      "clock": 856.78,
+      "army_hp": 3409.9860229492188,
+      "enemy_hp": 1964.2058410644531,
+      "army_health": 0.8119014340355283,
+      "recent_losses": 2
+    },
+    {
+      "clock": 859.605,
+      "army_hp": 3303.6421813964844,
+      "enemy_hp": 4917.368515014648,
+      "army_health": 0.7865814717610677,
+      "recent_losses": 2
+    },
+    {
+      "clock": 862.005,
+      "army_hp": 3742.159149169922,
+      "enemy_hp": 2621.533981323242,
+      "army_health": 0.7878229787726151,
+      "recent_losses": 2
+    },
+    {
+      "clock": 864.23,
+      "army_hp": 3742.4847869873047,
+      "enemy_hp": 6291.456657409668,
+      "army_health": 0.7878915341025905,
+      "recent_losses": 1
+    },
+    {
+      "clock": 866.93,
+      "army_hp": 3645.244857788086,
+      "enemy_hp": 6457.241828918457,
+      "army_health": 0.7674199700606497,
+      "recent_losses": 1
+    },
+    {
+      "clock": 869.68,
+      "army_hp": 3654.701614379883,
+      "enemy_hp": 6337.3022537231445,
+      "army_health": 0.7694108661852385,
+      "recent_losses": 0
+    },
+    {
+      "clock": 872.08,
+      "army_hp": 3542.933151245117,
+      "enemy_hp": 7019.973823547363,
+      "army_health": 0.7458806634200247,
+      "recent_losses": 0
+    },
+    {
+      "clock": 875.13,
+      "army_hp": 3498.866683959961,
+      "enemy_hp": 3364.778305053711,
+      "army_health": 0.7366035124126233,
+      "recent_losses": 0
+    },
+    {
+      "clock": 877.705,
+      "army_hp": 3492.384246826172,
+      "enemy_hp": 6419.558906555176,
+      "army_health": 0.7352387888055099,
+      "recent_losses": 0
+    },
+    {
+      "clock": 880.455,
+      "army_hp": 3383.1400451660156,
+      "enemy_hp": 5795.345210075378,
+      "army_health": 0.7122400095086349,
+      "recent_losses": 0
+    }
+  ]
+}

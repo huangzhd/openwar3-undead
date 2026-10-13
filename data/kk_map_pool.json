@@ -2,8 +2,8 @@
   "TM": {
     "alias": "TM",
     "name": "Twisted Meadows v1.1",
-    "file": "1ec7b737c0a904ea8c7ad55dce822a92.w3x",
-    "map_sha256": "1ccd20bd3c023a77ef5e695cd775ae61e66c02c024daec658bb26bdd6bf509d1",
+    "file": "(4)twistedmeadows_s2_v1.1.w3x",
+    "map_sha256": "21eac3b25a31e9300c39a995d07ee4c22c73095808777e7064997467c68db344",
     "script_sha256": "2b0e4ad7d039d088e5298adc3baa646de9ec350e7c73e93a63c8de75cc68ed28",
     "starts": [
       {
@@ -2315,8 +2315,8 @@
   "TH": {
     "alias": "TH",
     "name": "Tidehunters v1.2",
-    "file": "24e4cfd98b834c7ca1588c041348998c.w3x",
-    "map_sha256": "555ad5d59f62cb60156c1db571e044768b7d5d9d2774c567841ecc26c1b5223c",
+    "file": "(2)tidehunters_s2_v1.2.w3x",
+    "map_sha256": "3020e73f76148ceb791f8f3d57c4dc53ea41218a28b7ad2a8f6ea22ac46b861c",
     "script_sha256": "04720d8b185fd9c8a54cc8b09db8ef71e69a18fbb95cd2501bf84b9ff7ca5cf8",
     "starts": [
       {
@@ -3896,8 +3896,8 @@
   "CH": {
     "alias": "CH",
     "name": "Concealed Hill",
-    "file": "5ca96d16996457783450e7a620bedefc.w3x",
-    "map_sha256": "0b4a3caea55b5c6d3d6d08067ca99162b49d836d23011fef675221684ec74219",
+    "file": "(2)ConcealedHill.w3x",
+    "map_sha256": "360ab57168d9183015210d7d8a880329b90d697bfec197d5375283c5ca651774",
     "script_sha256": "38f89babbb172700017d0cae386d38dfb07670addbcf18417b2d008cc0cda637",
     "starts": [
       {
@@ -5326,8 +5326,8 @@
   "AZ": {
     "alias": "AZ",
     "name": "Amazonia",
-    "file": "61671afebedfed5d4c88685f79ddafe3.w3x",
-    "map_sha256": "e63d4222afae0772721f879bccc4b7c1c058172cf2afa0946c59075df735d143",
+    "file": "(2)Amazonia.w3x",
+    "map_sha256": "d02e97593147bc28ed149eade6f2406a15650a5c51a5bce8a219de282ebf8f98",
     "script_sha256": "ad651f8979febb4bcaf374927f8d7b4e2db82b7990d498573ffd551bd7eaccbb",
     "starts": [
       {
@@ -6703,8 +6703,8 @@
   "NI": {
     "alias": "NI",
     "name": "Northern Isles",
-    "file": "6ec55eba78b222ef26d10663d329424a.w3x",
-    "map_sha256": "b51936ff55e9646e2a1650df34419187b5e82788af048fec89e660fae773f679",
+    "file": "(2)NorthernIsles.w3x",
+    "map_sha256": "5b294bf7123e41face45b495b58bd4caf6199cf859afe838061bb39b2b5ce0be",
     "script_sha256": "111a9e8a887c2e134c6647dbecbbdd58585608c10dbbaa03958ae3c22b6e2a7b",
     "starts": [
       {
@@ -8048,8 +8048,8 @@
   "AL": {
     "alias": "AL",
     "name": "Autumn Leaves v2.0",
-    "file": "c5af4a23ec81d3084e0cdbf5c45c68ee.w3x",
-    "map_sha256": "1a4ba8d87c93936b3d3d523ee671e82e0ee5b96679c86b2b8f07a7e62e3d1fc2",
+    "file": "(2)autumnleaves_s2_v2.0.w3x",
+    "map_sha256": "eb5a268f1bb0f93a540ac930428254d0a4f945b02099242449378f8fd1c3317d",
     "script_sha256": "648ba0d32cdaf2e76501370608ad1fb9b03ee2b7fb148f0970cfbafc97d2818c",
     "starts": [
       {
@@ -9421,8 +9421,8 @@
   "TR": {
     "alias": "TR",
     "name": "Turtle Rock S2",
-    "file": "dfcb44795da2b33cb0a88c735046819f.w3x",
-    "map_sha256": "e3f9747afaeeacdbde123bc6364ebae7b4f20ebfce9119f0884faffcdc86d0a3",
+    "file": "(4)turtlerock_s2.w3x",
+    "map_sha256": "f7e6dfd0945fde925d7b93b37f0ea3d9f6c8f4c775cd3e3681a6231555e99efe",
     "script_sha256": "125eb8c48a9ab80b5903417fc8afa138bf8fc867e9220cb1fa1d478fd373d2a3",
     "starts": [
       {
@@ -11097,8 +11097,8 @@
   "LR": {
     "alias": "LR",
     "name": "Last Refuge v1.5",
-    "file": "edc5d59332965bec70e71052c65ea20b.w3x",
-    "map_sha256": "8a2b2125ae3c7f398c45b06010b7eac9f36b1cc3f89ce9ae7a89b7b202f24de0",
+    "file": "(2)lastrefuge_s2_v1.5.w3x",
+    "map_sha256": "c70550d059b8541fb05545b078925f44c83ae4a0b12c97d144e8b0fc1ce31e5e",
     "script_sha256": "d622571d45153734550a3ff004e989d1cebf54bfe0cf54bb48cb7d0158b8d90b",
     "starts": [
       {

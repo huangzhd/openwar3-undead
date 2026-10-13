@@ -38,7 +38,7 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
     (out/'source-manifest.json').write_text(json.dumps(manifest,indent=2))
     fh=(out/'events.jsonl').open('w',encoding='utf-8')
     started=time.monotonic()
-    result={'id':run_id,'version':'0.1.87-dev','rules_version':'0.1.87','policy':'rule','requested_speed':speed,
+    result={'id':run_id,'version':'0.1.94-dev','rules_version':'0.1.94','policy':'rule','requested_speed':speed,
             'opponent':{'race':enemy_race,'difficulty':difficulty},'result':'unknown','reason':'not_started','until_epoch':until,'max_game_seconds':max_game_seconds}
     if restarted_from is not None:result['restarted_from']=restarted_from
     def log(event,**data):
@@ -62,6 +62,7 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
             catalog=session.map_catalog
             bot.creeping.catalog=catalog['camps']
             bot.critter_search.spawns=catalog['critters']
+            bot.tavern_sites=[(b['x'],b['y']) for b in catalog.get('neutral_buildings',[]) if b['code']=='ntav']
             log('map_catalog_bound',name=catalog['name'],map_sha256=catalog['map_sha256'],
                 camps=len(catalog['camps']),critters=len(catalog['critters']))
         console=DebugConsole(g,log)

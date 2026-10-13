@@ -112,6 +112,8 @@ class Controller:
         self.last={}
         self.attack_committed=False
         self.recovery_pending=False
+        self.retreat_active=False
+        self.retreat_safe_since=None
         self.attack_goal=None
         self.attack_target=None
         self.main_searched=False
@@ -137,6 +139,7 @@ class Controller:
         self.tavern_joiners=set()
         self.tavern_seen=set()
         self.tavern_trips=0
+        self.tavern_sites=[] # Public placements, bound only after map fingerprint validation.
         self.tavern_retry_at=0
         self.seen_types=set()
         self.air_types=set()
@@ -166,6 +169,30 @@ class Controller:
             return False
         self.last[key]=now
         return True
+
+    def retreat_rule(self,rule):
+        s=self.situation
+        threat=max(s.local_enemy_hp,s.base_enemy_hp if s.threatened else 0)
+        if rule==Action.RETREAT and s.attack_committed:
+            if not self.retreat_active:
+                self.log('retreat_committed',clock=s.now,enemy_hp=threat,army_hp=s.army_hp)
+            self.retreat_active=True
+            self.retreat_safe_since=None
+        if not self.retreat_active:return rule
+        # LR 0.1.88: the visible force dipped below the entry threshold for one
+        # tick, issuing attack orders only 0.95s into a retreat. Require a lower
+        # exit threshold for five continuous seconds; recovery still follows.
+        if rule==Action.RETREAT or threat>max(400,s.army_hp*.8):
+            self.retreat_safe_since=None
+        elif self.retreat_safe_since is None:
+            self.retreat_safe_since=s.now
+        elif s.now-self.retreat_safe_since>=5:
+            self.retreat_active=False
+            self.retreat_safe_since=None
+            self.log('retreat_released',clock=s.now,enemy_hp=threat,army_hp=s.army_hp,
+                     reason='sustained_lower_visible_threat')
+            return rule
+        return Action.RETREAT
 
     def active_foes(self,foes,now):
         ignored={e.handle for e in foes if e.type=='ucrm' and e.hp>0}
@@ -384,7 +411,7 @@ class Controller:
             self.economy.expansion.camps=[c for c in self.creeping.catalog if c['kind']=='expansion' and c['id'] in self.creeping.cleared]
             self.economy.expansion.safe_route=lambda start,end:self.creeping.safe_route(g,start,end)
             self.economy.tick(g,now,bool(raid))
-        rule=choose_rule(self.situation)
+        rule=self.retreat_rule(choose_rule(self.situation))
         safety=rule==Action.RETREAT or bool(raid)
         urgent=safety and self.action!=rule
         if now-self.last_decide>=5 or urgent or forced is None and rule==Action.ATTACK and self.action!=rule:
@@ -394,7 +421,9 @@ class Controller:
             if self.action==Action.ATTACK and not attack_ready(self.situation):self.action=Action.CREEP
             self.log('decision',clock=now,requested=self.requested.name,actual=self.action.name,
                 expansion=bool(expansion),fiends=len(fiends),tier=tier,heroes=[(h.type,h.level,round(h.hp)) for h in heroes],
-                safety_interrupt=urgent,base_enemy_hp=self.situation.base_enemy_hp)
+                safety_interrupt=urgent,base_enemy_hp=self.situation.base_enemy_hp,
+                local_enemy_hp=self.situation.local_enemy_hp,army_hp=self.situation.army_hp,
+                retreat_active=self.retreat_active)
         if self.action==Action.RETREAT and self.attack_committed:self.recovery_pending=True
         if self.action==Action.ATTACK and not attack_ready(self.situation):
             self.action=Action.CREEP
@@ -844,9 +873,23 @@ class Controller:
         protected={self.teleport['hero']} if self.teleport else set()
         if self.portal_handoff:protected.add(self.portal_handoff['donor'])
         active=[u for u in army if u.handle not in protected and now>=self.cast_until.get(u.handle,0)]
+        caster=self.g.unit(self.teleport['hero']) if self.teleport else None
+        waiting=set()
         for u in active:
-            if u.handle in pulls:self.go_raw([u],pulls[u.handle],now)
-        self.fight([u for u in active if u.handle not in pulls],self.battle_enemies,now)
+            if u.handle in pulls:
+                self.go_raw([u],pulls[u.handle],now)
+            elif (caster and u.hp>=u.hp_max*.65 and self.g.dist(u,caster)<=900
+                  and not any(in_weapon_range(self.g,e,u) for e in self.battle_enemies)):
+                # AZ 023714: healthy heroes kept an old retreat order and walked
+                # out while Lich channeled. AItp Area1 is 1100 in local 1.27a;
+                # hold safely inside it, without pulling distant allies back.
+                waiting.add(u.handle)
+                if self.due(('portal_hold',u.handle),now,1):
+                    accepted=bool(self.g.hold(u))
+                    if accepted:self.last.pop(('go',u.handle),None)
+                    self.log('portal_ally_hold',clock=now,unit=u.type,handle=u.handle,
+                             caster=caster.handle,distance=round(self.g.dist(u,caster)),accepted=accepted)
+        self.fight([u for u in active if u.handle not in pulls and u.handle not in waiting],self.battle_enemies,now)
 
     def rescue_coil_ready(self,dk,now):
         g=self.g
@@ -1004,6 +1047,16 @@ class Controller:
 
     def observe_events(self,events):
         for event in events:
+            if event.kind=='spell.cast' and event.spell in {'AHfs','AHbz'}:
+                caster=self.g.unit(event.handle)
+                # Fair SDK events infer casts from cooldown transitions. Their
+                # x/y may fall back to the caster, so retain current order too;
+                # this observation alone must never create a dodge destination.
+                order=self.g.current_order(caster) if caster and hasattr(self.g,'current_order') else None
+                self.log('ground_spell_observed',clock=event.clock,spell=event.spell,
+                         caster=event.handle,level=event.b,event_point=(event.x,event.y),
+                         caster_point=(caster.x,caster.y) if caster else None,current_order=order,
+                         basis='fair_cooldown_transition_target_best_effort')
             known=self.rod_seen.get(event.handle)
             if known and event.kind in {'killed','unit.died'} and 0<=event.clock-known['clock']<4:
                 point=(event.x,event.y)
@@ -1235,6 +1288,14 @@ class Controller:
         required=length/180*1.5+12+(0 if known_tavern else 10)
         return remaining,required
 
+    def tavern_destination(self,courier,taverns):
+        points=[(t.x,t.y) for t in taverns] or self.tavern_sites or [(0,0)]
+        reachable=[]
+        for point in points:
+            length=self.g.path_distance((courier.x,courier.y),point)
+            if length is not None:reachable.append((length,point))
+        return min(reachable)[1] if reachable else None
+
     def recruit_tavern(self,army,hostiles,now,tier,blocked):
         """One long-lived skeleton or healthy fiend buys independently."""
         if tier!=3 and not self.tavern_mission and not self.tavern_joiners:return set()
@@ -1261,24 +1322,25 @@ class Controller:
         affordable=res['gold']>=425+self.battle_shop.orb_reserve(g) and res['lumber']>=135 and res['food_cap']-res['food_used']>=5
         if not self.tavern_mission and not self.tavern_joiners and not unsafe and not self.battle_enemies and not third and self.third_hero not in self.economy.ever_heroes and tier==3 and self.situation.fiends>=4 and self.situation.statues>=1 and affordable and self.tavern_trips<3 and now>=self.tavern_retry_at:
             taverns=g.units('all',{'ntav'})
-            # Only fair visible shops, otherwise scout the public map centre.
-            target=(taverns[0].x,taverns[0].y) if taverns else (0,0)
+            # Static map placements guide scouting; only a fair visible shop can be bought from.
             choices=[]
             spare_skeletons=sum(u.type=='uske' and u.handle not in self.skeleton_scouts.assignments for u in army)
             for u in army:
                 if u.type not in {'uske','ucry'} or u.handle in self.skeleton_scouts.assignments or u.handle in blocked or u.hp/u.hp_max<.8 or any(g.dist(u,e)<700 for e in hostiles):continue
+                target=self.tavern_destination(u,taverns)
+                if target is None:continue
                 length=g.path_distance((u.x,u.y),target)
                 if length is None:continue
                 if u.type=='uske':
                     if self.attacking_main and spare_skeletons<=2:continue
                     remaining,required=self.tavern_lifetime_budget(u,now,length,bool(taverns))
                     if remaining<max(30,required):continue
-                    choices.append((0,-remaining,length,u.handle,u))
-                else:choices.append((1,0,length,u.handle,u))
+                    choices.append((0,-remaining,length,u.handle,u,target))
+                else:choices.append((1,0,length,u.handle,u,target))
             if choices:
-                _,_,_,_,courier=min(choices)
+                _,_,_,_,courier,target=min(choices)
                 self.tavern_trips+=1
-                self.tavern_mission=dict(courier=courier.handle,started=now,progress_at=now,best=None,target=None,buys=0,buy_at=-100,accepted_at=None)
+                self.tavern_mission=dict(courier=courier.handle,started=now,progress_at=now,best=None,target=None,scout_target=target,buys=0,buy_at=-100,accepted_at=None)
                 self.log('tavern_dispatch',clock=now,courier=courier.handle,type=courier.type,target=target,trip=self.tavern_trips,
                          lifetime_remaining=self.skeleton_expiry.get(courier.handle,now)-now if courier.type=='uske' else None,
                          lifetime_required=self.tavern_lifetime_budget(courier,now,g.path_distance((courier.x,courier.y),target),bool(taverns))[1] if courier.type=='uske' else None)
@@ -1286,8 +1348,9 @@ class Controller:
         if mission:
             courier=own[mission['courier']]
             taverns=g.units('all',{'ntav'})
-            tavern=g.nearest(taverns,courier) if taverns else None
-            target=(tavern.x,tavern.y) if tavern else (0,0)
+            visible_target=self.tavern_destination(courier,taverns) if taverns else None
+            tavern=next((t for t in taverns if (t.x,t.y)==visible_target),None)
+            target=visible_target if tavern else mission['scout_target']
             length=g.path_distance((courier.x,courier.y),target)
             if target!=mission['target']:
                 mission.update(target=target,best=None,progress_at=now)

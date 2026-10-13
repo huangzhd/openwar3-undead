@@ -24,7 +24,11 @@ class ArmyRecovery:
         Flame Strike uses its first second of full damage, not its entire duration.
         """
         g=b.g;hits={u.handle:0 for u in fiends};details=[]
-        defense=combat.stats('ucry',tech=b.economy.upgrade_levels or {})
+        # AZ 20261013-003657: the economy caches (attack, armor). Passing
+        # that tuple to the SDK crashed the first real injured-army check.
+        levels=b.economy.upgrade_levels
+        tech=dict(zip(('Rura','Rucr'),levels)) if levels is not None else {}
+        defense=combat.stats('ucry',tech=tech)
         players=[e for e in hostiles if enemy_player(g,e) and getattr(e,'has_detail',False)]
         for e in players:
             target=g.current_target(e)

@@ -101,7 +101,8 @@ class Expansion:
                 if e.count(g,'uaco')<6:return e.train(g,home,'uaco',now)
                 return False
             # The extra worker (including the former scout) is dedicated to this site.
-            spare=sorted(workers,key=lambda w:g.dist(w,home))[5:]
+            spare=[w for w in sorted(workers,key=lambda w:g.dist(w,home))[5:]
+                   if w.handle not in e.repairs.reserved]
             w=next((w for w in spare if w.hp/w.hp_max>=.8 and not g.is_constructing(w)
                     and self.safe_route and self.safe_route((w.x,w.y),self.point)
                     and not self.danger(g,(w.x,w.y),800)),None)

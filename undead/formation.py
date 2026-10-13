@@ -176,7 +176,14 @@ class Formation:
         orders=[]
         for u in units:
             if u.handle in self.joiners or u.handle in self.catching_up:
-                orders.append((u,self.anchor,False))
+                if retreat:
+                    # LR 0.1.89 sent a newly produced home-side fiend toward
+                    # the forward anchor while its main army was fleeing.
+                    turns=path(xy(u),target)
+                    point=next((p for p in turns if distance(xy(u),p)>=240),turns[-1]) if turns else xy(u)
+                    orders.append((u,point,not bool(turns)))
+                else:
+                    orders.append((u,self.anchor,False))
                 continue
             index=self.cursor_at(u)
             if index>self.cursors.get(u.handle,0):

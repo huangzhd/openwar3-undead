@@ -1,0 +1,407 @@
+{
+  "run": "20261013-012143",
+  "home": [
+    -3904,
+    -3968
+  ],
+  "source": "fair march_state order observations; path geometry is tested separately",
+  "frames": [
+    {
+      "event": "march_state",
+      "clock": 1054.28,
+      "target": [
+        -3904.0,
+        -3968.0
+      ],
+      "stage": "retreat",
+      "army": [
+        {
+          "handle": [
+            5855,
+            73333
+          ],
+          "type": "uobs",
+          "x": -528,
+          "y": -322,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            12360,
+            29712
+          ],
+          "type": "ucry",
+          "x": -149,
+          "y": -429,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            12484,
+            46230
+          ],
+          "type": "Ulic",
+          "x": -374,
+          "y": -273,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            12501,
+            107300
+          ],
+          "type": "ucry",
+          "x": -264,
+          "y": 54,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            12694,
+            119909
+          ],
+          "type": "Nbrn",
+          "x": -251,
+          "y": -77,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            12737,
+            40227
+          ],
+          "type": "ucry",
+          "x": -116,
+          "y": -11,
+          "point": [
+            -375.76513671875,
+            -181.77978515625
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            13243,
+            131824
+          ],
+          "type": "ucry",
+          "x": -347,
+          "y": -39,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            13908,
+            20566
+          ],
+          "type": "Udea",
+          "x": -729,
+          "y": -703,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            14024,
+            186703
+          ],
+          "type": "ucry",
+          "x": -376,
+          "y": -182,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            14572,
+            164574
+          ],
+          "type": "ucry",
+          "x": 52,
+          "y": 303,
+          "point": [
+            -375.76513671875,
+            -181.77978515625
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            14595,
+            37057
+          ],
+          "type": "ucry",
+          "x": -456,
+          "y": 30,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            16319,
+            166015
+          ],
+          "type": "uobs",
+          "x": -427,
+          "y": -412,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        }
+      ]
+    },
+    {
+      "event": "march_state",
+      "clock": 1059.73,
+      "target": [
+        -3904.0,
+        -3968.0
+      ],
+      "stage": "retreat",
+      "army": [
+        {
+          "handle": [
+            5855,
+            73333
+          ],
+          "type": "uobs",
+          "x": -1700,
+          "y": -1388,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            12360,
+            29712
+          ],
+          "type": "ucry",
+          "x": -1463,
+          "y": -1046,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            12484,
+            46230
+          ],
+          "type": "Ulic",
+          "x": -1620,
+          "y": -1111,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            12501,
+            107300
+          ],
+          "type": "ucry",
+          "x": -525,
+          "y": -158,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            12694,
+            119909
+          ],
+          "type": "Nbrn",
+          "x": -1216,
+          "y": -620,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            12737,
+            40227
+          ],
+          "type": "ucry",
+          "x": -122,
+          "y": 57,
+          "point": [
+            -1096.25390625,
+            -678.3701171875
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            13243,
+            131824
+          ],
+          "type": "ucry",
+          "x": -1100,
+          "y": -627,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            13908,
+            20566
+          ],
+          "type": "Udea",
+          "x": -2105,
+          "y": -1846,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            14024,
+            186703
+          ],
+          "type": "ucry",
+          "x": -1021,
+          "y": -727,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            14572,
+            164574
+          ],
+          "type": "ucry",
+          "x": -472,
+          "y": -35,
+          "point": [
+            -1096.25390625,
+            -678.3701171875
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            14595,
+            37057
+          ],
+          "type": "ucry",
+          "x": -1413,
+          "y": -860,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            16319,
+            166015
+          ],
+          "type": "uobs",
+          "x": -1168,
+          "y": -762,
+          "point": [
+            -2112.0,
+            -1856.0
+          ],
+          "hold": false,
+          "catching_up": false
+        },
+        {
+          "handle": [
+            16580,
+            211412
+          ],
+          "type": "ucry",
+          "x": -3160,
+          "y": -3204,
+          "point": [
+            -1096.25390625,
+            -678.3701171875
+          ],
+          "hold": false,
+          "catching_up": false
+        }
+      ]
+    }
+  ]
+}

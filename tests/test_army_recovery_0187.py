@@ -108,6 +108,26 @@ class RecoveryTests(unittest.TestCase):
             f.hp=10;e=unit('otau',90+i,60,1000);e.owner=1;e.has_detail=True
             g.foes.append(e);g.targets[e.handle]=f
         self.observe(b,g);self.assertTrue(b.army_recovery.active)
+    def test_live_economy_upgrade_tuple_does_not_crash_recovery(self):
+        # AZ 20261013-003657 crashed on the first group-health risk check:
+        # Economy.upgrade_levels stores (attack, armor), not an SDK tech dict.
+        b,g,_=self.make();b.economy.upgrade_levels=(1,0)
+        self.observe(b,g)
+        self.assertTrue(b.army_recovery.active)
+    def test_observed_armor_upgrade_changes_next_attack_survival(self):
+        from openwar3 import combat
+        b,g,_=self.make();g.skills={};g.foes=[]
+        base=combat.stats('ucry');armored=combat.stats('ucry',tech={'Rucr':3})
+        weapon=combat.stats('otau').weapon_vs(base)
+        raw=weapon.dmg_avg*combat.damage_multiplier(weapon.attack_type,base.armor_type)
+        hp=raw*(combat.armor_factor(base.armor)+combat.armor_factor(armored.armor))/2
+        for i,f in enumerate(g.fiends[:2]):
+            f.hp=hp;e=unit('otau',90+i,60,1000);e.owner=1;e.has_detail=True
+            g.foes.append(e);g.targets[e.handle]=f
+        b.economy.upgrade_levels=(3,0)
+        self.assertTrue(b.army_recovery.next_volley(b,g.fiends,g.foes,780))
+        b.economy.upgrade_levels=(0,3)
+        self.assertFalse(b.army_recovery.next_volley(b,g.fiends,g.foes,780))
     def test_post_battle_badly_hurt_army_recovers_without_mana_recall(self):
         b,g,_=self.make();g.foes=[];self.observe(b,g);self.assertTrue(b.army_recovery.active)
         for f in g.fiends:f.hp=600

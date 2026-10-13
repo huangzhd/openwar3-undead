@@ -106,10 +106,10 @@ class PreAttackTests(unittest.TestCase):
         self.assertEqual(b.action,Action.RETREAT);self.assertFalse(advanced)
         a[2].x=0;clock[0]+=6;b.tick()
         self.assertEqual(b.action,Action.ATTACK);self.assertTrue(advanced)
-    def test_missing_third_hero_does_not_block_growth_but_low_gold_is_reserved(self):
+    def test_missing_third_hero_reserves_food_even_with_surplus_gold(self):
         for gold in [3000,500]:
             g=GrowthGame();g.own=[u for u in g.own if u.type!='Nbrn'];g.gold=gold
             e=Economy(lambda *a,**kw:None);e.ever_heroes={'Udea','Ulic'};e.scout=(9999,0)
             e.tick(g,700)
-            if gold==3000:self.assertEqual(g.commands,['ucry']);self.assertLess(g.gold,gold)
-            else:self.assertFalse(g.commands);self.assertEqual(g.gold,gold)
+            # 2026-10-13: surplus gold cannot release the third hero's food.
+            self.assertFalse(g.commands);self.assertEqual(g.gold,gold)

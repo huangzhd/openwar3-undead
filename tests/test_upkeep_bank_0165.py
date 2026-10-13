@@ -32,6 +32,39 @@ class UpkeepTests(unittest.TestCase):
         g,e,_=self.make();g.food=47;g.gold=250;e.tick(g,700)
         self.assertEqual(g.commands,['ucry']);self.assertEqual(g.food,50)
 
+    def test_third_hero_food_is_reserved_before_orb_and_during_courier_trip(self):
+        # AZ 20261013-003657: spider at 560.425s took 45 -> 48;
+        # hiring the third hero at 578.805s then crossed straight to 53.
+        for mass in (False,True):
+            for third in ('Nbrn','Nngs'):
+                with self.subTest(mass=mass,third=third):
+                    g,e,events=self.make();g.food=45;g.gold=600
+                    g.own=[u for u in g.own if u.type!='Nbrn']
+                    e.ever_heroes.discard('Nbrn');e.third_hero=third;e.mass_army=mass
+                    crypt=g.my_buildings({'usep'})[0]
+                    self.assertFalse(e.train(g,crypt,'ucry',700))
+                    self.assertEqual(g.food,45);self.assertEqual(g.gold,600)
+
+    def test_fill_42_to_45_then_wait_for_third_and_research_at_50(self):
+        g,e,_=self.make();g.food=42;g.gold=900
+        g.own=[u for u in g.own if u.type!='Nbrn'];e.ever_heroes.discard('Nbrn')
+        crypt=g.my_buildings({'usep'})[0]
+        self.assertTrue(e.train(g,crypt,'ucry',700));self.assertEqual(g.food,45)
+        g.busy.clear()
+        self.assertFalse(e.train(g,crypt,'ucry',703))
+        g.own.append(unit('Nbrn',992,owner=0));g.food+=5;g.gold=300;g.levels['Rura']=0
+        e.tick(g,706)
+        self.assertEqual(g.food,50);self.assertEqual(g.commands,['ucry','Rura'])
+        self.assertFalse(e.upkeep_released)
+
+    def test_reserved_hero_food_cannot_be_used_by_other_unit_producers(self):
+        for code,building in [('uobs','uslh'),('ugho','usep'),('uaco','unp2')]:
+            with self.subTest(code=code):
+                g,e,_=self.make();g.food=45;g.gold=900
+                g.own=[u for u in g.own if u.type!='Nbrn'];e.ever_heroes.discard('Nbrn')
+                self.assertFalse(e.train(g,g.my_buildings({building})[0],code,700))
+                self.assertEqual(g.food,45)
+
     def test_upgrades_spend_before_growth_and_attack_stays_before_armor(self):
         g,e,_=self.make();g.levels={'Rura':2,'Rucr':0,'Ruwb':1};g.gold=900
         e.tick(g,700);self.assertEqual(g.commands,['Rura']);self.assertFalse(e.upkeep_released)
