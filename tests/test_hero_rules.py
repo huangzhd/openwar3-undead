@@ -38,7 +38,7 @@ class HeroRuleTests(unittest.TestCase):
     def armor_game(self):
         lich=unit('Ulic',1,0);dk=unit('Udea',2,100,100);enemy=unit('ogru',3,200)
         dk.mana=0;enemy.owner=1;own=[lich,dk];casts=[];buffs={};events=[]
-        g=N(dist=dist,is_building=lambda u:False,cooldown=lambda *a:0,
+        g=N(dist=dist,me=lambda:0,is_building=lambda u:False,cooldown=lambda *a:0,
             abilities=lambda h:[dict(code='AUfu',level=1)],
             current_target=lambda e:dk if e is enemy else None,
             buffs=lambda u:buffs.get(u.handle,[]),unit=lambda h:next((u for u in own if u.handle==h),None),

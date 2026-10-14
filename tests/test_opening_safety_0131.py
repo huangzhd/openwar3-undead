@@ -39,16 +39,20 @@ class OpeningTests(unittest.TestCase):
         e.tick(g,25);self.assertEqual(g.commands,['ugho','ugho'])
         g.own.append(g.opening_dk)
         g.inventory=lambda u:['rnec'] if u.type=='Udea' else []
+        # Fund tech first, then overlap supply construction with the first fiend.
         g.gold=319;e.tick(g,29);self.assertEqual(g.commands,['ugho','ugho'])
         g.gold=320;e.tick(g,33);self.assertEqual(g.commands,['ugho','ugho','unp1'])
         g.busy[home.handle]=N(kind='upgrade',queue=[])
+        e.tick(g,34);self.assertEqual(g.commands,['ugho','ugho','unp1','uzig'])
+        g.own.append(base_unit('uzig',103,owner=0))
+        g.resources=lambda:dict(gold=g.gold,lumber=500,food_cap=30,food_used=17)
         g.busy[grave.handle]=N(kind='construction',queue=[]);grave.hp=50
         e.tick(g,35);self.assertNotIn('ucry',g.commands)
         g.busy.pop(grave.handle);grave.hp=100;e.tick(g,37)
-        self.assertEqual(g.commands,['ugho','ugho','unp1','ucry'])
+        self.assertEqual(g.commands,['ugho','ugho','unp1','uzig','ucry'])
         g.busy[crypt.handle]=N(kind='queue',queue=['ucry']);e.tick(g,41)
-        self.assertEqual(g.commands,['ugho','ugho','unp1','ucry','uzig'])
-        g.own.append(base_unit('uzig',103,owner=0));e.tick(g,45)
+        self.assertEqual(g.commands,['ugho','ugho','unp1','uzig','ucry'])
+        e.tick(g,45)
         self.assertTrue(e.opening_complete)
 
     def test_ready_crypt_trains_ghoul_before_building_graveyard_or_extra_supply(self):
@@ -88,7 +92,8 @@ class EmergencyTests(unittest.TestCase):
             current_target=lambda u:dk if u is foe else None,inventory=lambda u:['stwp'] if u is dk else [],cooldown=lambda *a:0,
             use_item=lambda h,slot,**kw:orders.append(('portal',h.handle,kw)) or True,
             unit=lambda handle:next((u for u in own if u.handle==handle),None))
-        b=Controller(g,lambda *a,**kw:None)
+        # Historical TP mechanics remain covered through the explicit legacy mode.
+        b=Controller(g,lambda *a,**kw:None,first_attack_all_in=False)
         b.economy.tick=lambda *a:None;b.scout=lambda *a:None;b.skills=lambda *a:None;b.items=lambda *a:None
         b.consumables.tick=lambda *a:None;b.fight=lambda *a:None
         b.creep_aggro.step=lambda *a:None

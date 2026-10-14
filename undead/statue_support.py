@@ -1,14 +1,31 @@
 """Stable dual-statue supply; only travel to catch the army or escape danger."""
 from math import hypot
 from .retreat import escape_point
+from .targeting import enemy_player
 
 
 class StatueSupport:
     def __init__(self,log):
         self.log=log;self.moves={};self.held=set();self.last_plan={}
+        self.supply_at={};self.supply_checks={}
+
+    def observe_supply(self,g,now):
+        for handle,p in list(self.supply_checks.items()):
+            reached=[]
+            for h,(hp,mana) in p['before'].items():
+                u=g.unit(h)
+                if u and p['buff'] in g.buffs(u):
+                    reached.append(dict(handle=h,type=u.type,hp_delta=round(u.hp-hp,2),
+                                        mana_delta=round(getattr(u,'mana',0)-mana,2)))
+            if reached or now-p['started']>=3:
+                self.log('statue_supply_recipients_observed' if reached else 'statue_supply_unconfirmed',
+                         clock=now,handle=handle,mode=p['mode'],recipients=reached,
+                         basis='recipient_buff; net resource change may include other effects')
+                self.supply_checks.pop(handle,None)
 
     def tick(self,b,army,hostiles,now,protected=()):
         g=b.g
+        self.observe_supply(g,now)
         # Wounded units remain supply recipients. Excluding every pulling unit
         # can strand replacements at home or anchor them on an unsafe front.
         # The medoid and local majority keep one distant straggler from leading.
@@ -17,6 +34,7 @@ class StatueSupport:
         if not core:return
         anchor=min(core,key=lambda u:sum(g.dist(u,v) for v in core))
         local=[u for u in core if g.dist(u,anchor)<800]
+        combat=b.action.name in {'ATTACK','HARASS'} or any(enemy_player(g,e) for e in hostiles)
         statues=sorted((u for u in army if u.type=='uobs'),key=lambda u:u.handle)
         live={u.handle for u in statues};self.held &= live
         for i,u in enumerate(statues):
@@ -25,14 +43,35 @@ class StatueSupport:
             threats=[e for e in hostiles if b.army_recovery.threat_range(e.type)>0 and
                      g.dist(e,u)<b.army_recovery.threat_range(e.type)+100]
             threatened=bool(threats) or now-b.micro.hit.get(u.handle,-100)<3
-            # Public Arpl/Arpm radius is 700. A 600 margin avoids chasing every
-            # small army movement or a single injured straggler.
-            covered=g.dist(u,anchor)<=520 and sum(g.dist(u,v)<=600 for v in local)>=max(1,(len(local)+1)//2)
+            mode=b.army_recovery.statue_modes.get(u.handle,{}).get('mode')
+            # 700 is the area, not the 250 cast/acquisition range. Anchor on
+            # actual recipients; a mana statue behind full-health fiends can
+            # otherwise remain idle while the Lich is 800 units away.
+            needy=[v for v in local if (v.hp<v.hp_max-15 if mode=='life' else
+                   v.is_hero and getattr(v,'mana_max',0)-getattr(v,'mana',0)>=5)] if mode else []
+            recipient=min(needy,key=lambda v:(v.hp/v.hp_max if mode=='life' else
+                          v.mana/max(1,v.mana_max),g.dist(u,v)),default=None)
+            support_anchor=recipient or anchor
+            covered=(g.dist(u,support_anchor)<=220 if recipient else
+                     g.dist(u,anchor)<=520 and sum(g.dist(u,v)<=600 for v in local)>=max(1,(len(local)+1)//2))
             pending=self.moves.get(u.handle)
             if pending and g.dist(u,pending['origin'])>64 and g.dist(u,pending['point'])<g.dist(pending['origin'],pending['point'])-64:
                 self.log('statue_support_movement_observed',clock=now,handle=u.handle,reason=pending['reason'],point=(u.x,u.y))
                 self.moves.pop(u.handle,None)
             if covered and not threatened:
+                ability='Arpl' if mode=='life' else 'Arpm'
+                if (recipient and getattr(u,'mana',0)>=2 and g.cooldown(u,ability)==0
+                        and now-self.supply_at.get(u.handle,-100)>=2 and u.handle not in self.supply_checks):
+                    self.supply_at[u.handle]=now
+                    receipt=g.cast(u,'replenishlife' if mode=='life' else 'replenishmana')
+                    self.log('statue_supply_attempt',clock=now,handle=u.handle,mode=mode,
+                             recipient=recipient.handle,distance=round(g.dist(u,recipient)),accepted=bool(receipt))
+                    if receipt:
+                        b.cast_until[u.handle]=now+1.2
+                        self.held.add(u.handle) # Do not overwrite supply with a hold order next tick.
+                        self.supply_checks[u.handle]=dict(started=now,mode=mode,buff='Brpl' if mode=='life' else 'Brpm',
+                            before={v.handle:(v.hp,getattr(v,'mana',0)) for v in needy if g.dist(u,v)<=700})
+                        continue
                 if u.handle not in self.held and g.hold(u):
                     self.held.add(u.handle);self.moves.pop(u.handle,None)
                     b.last.pop(('go',u.handle),None)
@@ -47,15 +86,16 @@ class StatueSupport:
                 reason='threat_pullback'
             else:
                 # Two rear flank points, not the DK's central approach lane.
-                enemy=min(hostiles,key=lambda e:g.dist(e,anchor),default=None)
-                dx,dy=(anchor.x-enemy.x,anchor.y-enemy.y) if enemy else (b.home.x-anchor.x,b.home.y-anchor.y)
+                enemy=min(hostiles,key=lambda e:g.dist(e,support_anchor),default=None)
+                dx,dy=(support_anchor.x-enemy.x,support_anchor.y-enemy.y) if enemy else (b.home.x-support_anchor.x,b.home.y-support_anchor.y)
                 length=hypot(dx,dy) or 1;dx,dy=dx/length,dy/length
                 side=1 if i%2==0 else -1
-                candidates=[(anchor.x+dx*rear-dy*side*160,anchor.y+dy*rear+dx*side*160)
-                            for rear in (220,380,540)]
-                reason='army_out_of_supply_range'
+                flank=80 if recipient else 160
+                candidates=[(support_anchor.x+dx*rear-dy*side*flank,support_anchor.y+dy*rear+dx*side*flank)
+                            for rear in ((160,100,0) if recipient else (220,380,540))]
+                reason='recipient_out_of_cast_range' if recipient else 'army_out_of_supply_range'
             point=next((p for p in candidates if p is not None and g.dist(u,p)>=80 and
-                        b.army_recovery.safe_path(b,(u.x,u.y),p,hostiles) is not None),None)
+                        b.army_recovery.safe_path(b,(u.x,u.y),p,hostiles,combat=combat) is not None),None)
             if point is None:continue
             if g.move(u,*point):
                 self.moves[u.handle]=dict(origin=(u.x,u.y),point=point,reason=reason)

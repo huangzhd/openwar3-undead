@@ -1,0 +1,525 @@
+{
+  "run": "20261015-020016",
+  "source": "fair combat_state",
+  "sample": {
+    "event": "combat_state",
+    "clock": 1200.505,
+    "center": [
+      -2104.343017578125,
+      -4650.287109375
+    ],
+    "army_hp": 8453.329803466797,
+    "enemy_hp": 0,
+    "army_health": 0.8782680315290179,
+    "recent_losses": 0,
+    "army": [
+      {
+        "handle": [
+          1533,
+          95947
+        ],
+        "type": "uobs",
+        "x": -1766,
+        "y": -2200,
+        "hp": 512,
+        "hp_max": 550.0,
+        "mana": 600,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          14716,
+          306122
+        ],
+        "type": "ucry",
+        "x": -2032,
+        "y": -4977,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          15254,
+          242793
+        ],
+        "type": "ucry",
+        "x": -2581,
+        "y": -4811,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          15814,
+          253521
+        ],
+        "type": "ucry",
+        "x": -2146,
+        "y": -3594,
+        "hp": 319,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": true,
+        "pull": [
+          -2146.215087890625,
+          -3594.44189453125
+        ]
+      },
+      {
+        "handle": [
+          15903,
+          116776
+        ],
+        "type": "ucry",
+        "x": -2158,
+        "y": -5009,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          15911,
+          272066
+        ],
+        "type": "ucry",
+        "x": -2661,
+        "y": -4601,
+        "hp": 497,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          15997,
+          38475
+        ],
+        "type": "ucry",
+        "x": -2704,
+        "y": -4822,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          16042,
+          58192
+        ],
+        "type": "Ulic",
+        "x": -1996,
+        "y": -4673,
+        "hp": 767,
+        "hp_max": 775.0,
+        "mana": 37,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          16509,
+          315906
+        ],
+        "type": "ucry",
+        "x": -152,
+        "y": -662,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          16539,
+          25253
+        ],
+        "type": "Udea",
+        "x": -1459,
+        "y": -4699,
+        "hp": 1014,
+        "hp_max": 1025.0,
+        "mana": 65,
+        "pulling": true,
+        "pull": [
+          -1458.78173828125,
+          -4699.07958984375
+        ]
+      },
+      {
+        "handle": [
+          16729,
+          112738
+        ],
+        "type": "Nbrn",
+        "x": -1892,
+        "y": -4242,
+        "hp": 436,
+        "hp_max": 675.0,
+        "mana": 330,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          16891,
+          150928
+        ],
+        "type": "ucry",
+        "x": -2052,
+        "y": -5100,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          17648,
+          78859
+        ],
+        "type": "uobs",
+        "x": -1634,
+        "y": -2283,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 239,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          17788,
+          161315
+        ],
+        "type": "ucry",
+        "x": -2127,
+        "y": -4807,
+        "hp": 410,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          18443,
+          140522
+        ],
+        "type": "ucry",
+        "x": -2212,
+        "y": -4913,
+        "hp": 418,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          18622,
+          297219
+        ],
+        "type": "ucry",
+        "x": -2481,
+        "y": -4171,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          18679,
+          63655
+        ],
+        "type": "ucry",
+        "x": -2075,
+        "y": -2903,
+        "hp": 338,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": true,
+        "pull": [
+          -2075.45458984375,
+          -2902.544921875
+        ]
+      },
+      {
+        "handle": [
+          18719,
+          78278
+        ],
+        "type": "ucry",
+        "x": -2488,
+        "y": -4805,
+        "hp": 281,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          18751,
+          224494
+        ],
+        "type": "ucry",
+        "x": -2104,
+        "y": -4650,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          18787,
+          198125
+        ],
+        "type": "ucry",
+        "x": -2236,
+        "y": -5107,
+        "hp": 462,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      }
+    ],
+    "enemies": [
+      {
+        "handle": [
+          14973,
+          151470
+        ],
+        "type": "ubon",
+        "x": -1472,
+        "y": -4032,
+        "hp": 1343,
+        "target": null
+      },
+      {
+        "handle": [
+          15002,
+          81951
+        ],
+        "type": "utod",
+        "x": -1152,
+        "y": -4672,
+        "hp": 1100,
+        "target": null
+      },
+      {
+        "handle": [
+          15371,
+          27623
+        ],
+        "type": "ugrv",
+        "x": -2176,
+        "y": -4224,
+        "hp": 764,
+        "target": null
+      },
+      {
+        "handle": [
+          15866,
+          179731
+        ],
+        "type": "uaco",
+        "x": -2864,
+        "y": -5032,
+        "hp": 220,
+        "target": [
+          18035,
+          18053
+        ]
+      },
+      {
+        "handle": [
+          16158,
+          157091
+        ],
+        "type": "uaco",
+        "x": -2982,
+        "y": -5394,
+        "hp": 220,
+        "target": [
+          18035,
+          18053
+        ]
+      },
+      {
+        "handle": [
+          16224,
+          126811
+        ],
+        "type": "ubon",
+        "x": -1792,
+        "y": -4416,
+        "hp": 1500,
+        "target": null
+      },
+      {
+        "handle": [
+          16658,
+          314618
+        ],
+        "type": "uaco",
+        "x": -1528,
+        "y": -4295,
+        "hp": 220,
+        "target": [
+          15371,
+          27623
+        ]
+      },
+      {
+        "handle": [
+          16745,
+          21941
+        ],
+        "type": "uzg1",
+        "x": -2144,
+        "y": -5280,
+        "hp": 488,
+        "target": [
+          16042,
+          58192
+        ]
+      },
+      {
+        "handle": [
+          16861,
+          142452
+        ],
+        "type": "usep",
+        "x": -3072,
+        "y": -4160,
+        "hp": 1300,
+        "target": null
+      },
+      {
+        "handle": [
+          17032,
+          85649
+        ],
+        "type": "usap",
+        "x": -1792,
+        "y": -4992,
+        "hp": 883,
+        "target": null
+      },
+      {
+        "handle": [
+          17298,
+          19688
+        ],
+        "type": "uaod",
+        "x": -2656,
+        "y": -4192,
+        "hp": 882,
+        "target": null
+      },
+      {
+        "handle": [
+          17541,
+          19266
+        ],
+        "type": "uaco",
+        "x": -2746,
+        "y": -5394,
+        "hp": 220,
+        "target": [
+          18035,
+          18053
+        ]
+      },
+      {
+        "handle": [
+          17978,
+          17984
+        ],
+        "type": "unp2",
+        "x": -2304,
+        "y": -4736,
+        "hp": 1303,
+        "target": [
+          16729,
+          112738
+        ]
+      },
+      {
+        "handle": [
+          18017,
+          19001
+        ],
+        "type": "uzg1",
+        "x": -2400,
+        "y": -5280,
+        "hp": 550,
+        "target": [
+          16042,
+          58192
+        ]
+      },
+      {
+        "handle": [
+          18035,
+          18053
+        ],
+        "type": "ugol",
+        "x": -2880,
+        "y": -5248,
+        "hp": 950,
+        "target": null
+      },
+      {
+        "handle": [
+          18220,
+          18232
+        ],
+        "type": "uaco",
+        "x": -3054,
+        "y": -5170,
+        "hp": 220,
+        "target": [
+          18035,
+          18053
+        ]
+      },
+      {
+        "handle": [
+          18303,
+          18578
+        ],
+        "type": "usep",
+        "x": -2880,
+        "y": -4736,
+        "hp": 1300,
+        "target": null
+      }
+    ]
+  },
+  "roles": {
+    "1533:95947": "mana",
+    "17648:78859": "life"
+  },
+  "limitation": "Positions are real; test uses open straight routes, not reconstructed terrain."
+}

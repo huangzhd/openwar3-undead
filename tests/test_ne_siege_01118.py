@@ -4,10 +4,10 @@ import test_siege_0147 as fixture
 from undead.siege import ANCIENTS,building_priority
 
 class NightElfSiegeTests(unittest.TestCase):
-    def test_attacking_ancient_then_constructing_ancient_then_moon_well_then_others(self):
+    def test_attacking_ancient_then_producing_ancient_then_moon_well_then_others(self):
         h=fixture.SiegeTests();b,a,f,cmd,cur,ids,p,ev=h.game()
         attack=h.enemy('eaom',10,80);new=h.enemy('eaoe',11,400);moon=h.enemy('emow',12,200);other=h.enemy('eate',13,100)
-        f[:]=[other,moon,new,attack];cur[attack.handle]=a[0];p[new.handle]=N(kind='construction')
+        f[:]=[other,moon,new,attack];cur[attack.handle]=a[0];p[new.handle]=N(kind='queue',queue=['edry'],blocked=False,duration=30)
         for now,target in enumerate((attack,new,moon,other),10):
             self.assertIs(b.siege.choose(b.g,a,f,now),target);f.remove(target)
 
@@ -37,5 +37,13 @@ class NightElfSiegeTests(unittest.TestCase):
         self.assertIs(b.siege.choose(b.g,a,f,10),worker)
         cur[tree.handle]=a[0];self.assertIs(b.siege.choose(b.g,a,f,11),tree)
         self.assertEqual(ev[-1]['reason'],'attacking_ancient')
+
+    def test_unknown_blocked_or_construction_is_not_active_production(self):
+        h=fixture.SiegeTests()
+        for production in (N(kind='construction'),N(kind='queue',queue=['edry'],blocked=True,duration=30),
+                           N(kind='queue',queue=['edry'],duration=30),N(kind='queue',queue=[],blocked=False,duration=30)):
+            b,a,f,cmd,cur,ids,p,ev=h.game();tree=h.enemy('eaoe',10,80);moon=h.enemy('emow',11,200)
+            f[:]=[tree,moon];p[tree.handle]=production
+            self.assertIs(b.siege.choose(b.g,a,f,10),moon)
 
 if __name__=='__main__':unittest.main()

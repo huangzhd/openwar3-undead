@@ -112,6 +112,7 @@ class ScoutCorpseTests(unittest.TestCase):
 
     def test_dying_skeletons_do_not_trigger_five_endangered_portal(self):
         b,g,dk,corpse,own,all_units,orders,events,inv,cool=self.make()
+        b.first_attack_all_in=False # Isolated legacy transport threshold coverage.
         b.home=N(x=-6000,y=0);inv[:]=['stwp'];g.use_item=lambda *a,**kw:orders.append(('portal',)) or True
         b.situation=Situation(100,local_enemy_hp=1500,army_health=.8)
         foe=unit('hrif',20,dk.x+100,500);foe.owner=1;g.enemies=lambda:[foe];g.current_target=lambda u:None

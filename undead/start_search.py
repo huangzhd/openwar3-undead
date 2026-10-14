@@ -7,6 +7,7 @@ class StartSearch:
     def __init__(self,log):
         self.log=log;self.points=None;self.checked={};self.failures={};self.job=None;self.confirmed=None
         self.neutral_memory={}
+        self.detour=None;self.detour_history=[]
         self.camps=[] # Fingerprint-verified public layout, never hidden live units.
     def update(self,g,home,now):
         mp=g.map()
@@ -75,7 +76,9 @@ class StartSearch:
                 if hasattr(g,'visible') and g.visible(*p) is True:continue
                 risks.append(SimpleNamespace(x=p[0],y=p[1],handle=('public',camp['id'],i)))
         foes+=risks
-        if not foes:return point
+        if not foes:
+            self.detour=None
+            return point
         origin=(scout.x,scout.y)
         def safe(goal):
             path=g.walk_path(origin,goal)
@@ -100,12 +103,28 @@ class StartSearch:
             length=g.dist(origin,turn)
             scale=min(1,350/length) if length else 0
             return (origin[0]+(turn[0]-origin[0])*scale,origin[1]+(turn[1]-origin[1])*scale)
-        if safe(point):return first_step(point)
+        if safe(point):
+            self.detour=None
+            return first_step(point)
+        # Commit to the safe local waypoint, rather than selecting the opposite
+        # side on every tick after only traversing its first 350-unit segment.
+        if self.detour:
+            job=self.detour
+            if job['goal']==point and now-job['started']<12 and g.dist(origin,job['point'])>100 and safe(job['point']):
+                return first_step(job['point'])
+            self.detour=None
+        self.detour_history=[(at,p) for at,p in self.detour_history if now-at<90]
+        self.detour_history.append((now,origin))
         choices=[]
         for i in range(16):
             p=(scout.x+650*cos(i*pi/8),scout.y+650*sin(i*pi/8))
             if safe(p):choices.append(p)
-        target=first_step(min(choices,key=lambda p:g.dist(p,point))) if choices else origin
+        if choices:
+            waypoint=min(choices,key=lambda p:g.dist(p,point)+sum(
+                max(0,650-g.dist(p,visited))*2 for _,visited in self.detour_history))
+            self.detour=dict(goal=point,point=waypoint,started=now)
+            target=first_step(waypoint)
+        else:target=origin
         if now-getattr(self,'avoid_logged',-100)>=3:
             self.avoid_logged=now
             self.log('scout_neutral_detour',clock=now,origin=origin,goal=point,point=target,

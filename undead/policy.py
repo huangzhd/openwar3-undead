@@ -77,9 +77,10 @@ class Situation:
     third_hero: bool = False
     dk: bool = True
     base_enemy_hp: float = 0
+    supplies_ready: bool = True
 
 def attack_ready(s):
-    return s.tier==3 and s.dk and s.lich and s.orb and s.third_hero
+    return s.tier==3 and s.dk and s.lich and s.orb and s.third_hero and s.supplies_ready
 
 def choose_rule(s):
     threat=max(s.local_enemy_hp,s.base_enemy_hp if s.threatened else 0)

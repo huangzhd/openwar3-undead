@@ -1,0 +1,122 @@
+{
+  "run": "20261014-224514",
+  "frames": [
+    {
+      "clock": 1059.43,
+      "heroes": [
+        {
+          "handle": [
+            15938,
+            27519
+          ],
+          "type": "Udea",
+          "x": -1739,
+          "y": -2635,
+          "hp": 679,
+          "hp_max": 875.0,
+          "mana": 21,
+          "pulling": true,
+          "pull": [
+            -1738.98974609375,
+            -2634.50537109375
+          ]
+        },
+        {
+          "handle": [
+            18859,
+            66117
+          ],
+          "type": "Ulic",
+          "x": -1974,
+          "y": -2997,
+          "hp": 293,
+          "hp_max": 600.0,
+          "mana": 133,
+          "pulling": true,
+          "pull": [
+            -2057.0677964274946,
+            -2707.0435815463698
+          ]
+        },
+        {
+          "handle": [
+            19206,
+            94963
+          ],
+          "type": "Nbrn",
+          "x": -1903,
+          "y": -2799,
+          "hp": 225,
+          "hp_max": 575.0,
+          "mana": 255,
+          "pulling": true,
+          "pull": [
+            -1763.2634224987087,
+            -2511.658056267911
+          ]
+        }
+      ]
+    },
+    {
+      "clock": 1062.08,
+      "heroes": [
+        {
+          "handle": [
+            15938,
+            27519
+          ],
+          "type": "Udea",
+          "x": -2006,
+          "y": -2576,
+          "hp": 688,
+          "hp_max": 875.0,
+          "mana": 24,
+          "pulling": false,
+          "pull": null
+        },
+        {
+          "handle": [
+            18859,
+            66117
+          ],
+          "type": "Ulic",
+          "x": -2160,
+          "y": -2743,
+          "hp": 266,
+          "hp_max": 600.0,
+          "mana": 137,
+          "pulling": true,
+          "pull": [
+            -1681.9168246230827,
+            -2161.38575593713
+          ]
+        },
+        {
+          "handle": [
+            19206,
+            94963
+          ],
+          "type": "Nbrn",
+          "x": -2058,
+          "y": -2675,
+          "hp": 202,
+          "hp_max": 575.0,
+          "mana": 255,
+          "pulling": true,
+          "pull": [
+            -1681.7774787690653,
+            -2161.4189328811426
+          ]
+        }
+      ]
+    }
+  ],
+  "premature_release": {
+    "event": "retreat_released",
+    "clock": 1063.93,
+    "enemy_hp": 700.0,
+    "army_hp": 4485.357070922852,
+    "reason": "sustained_lower_visible_threat"
+  },
+  "limitation": "Sampled hero damage proves exit gate gap, not sole match-loss causality."
+}

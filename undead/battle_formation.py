@@ -1,6 +1,7 @@
 """Small, safe flank adjustments while the rest of the firing line attacks."""
 from math import hypot,atan2,cos,sin,pi,ceil
 from .retreat import clearance
+from .structures import is_structure
 
 
 class BattleFormation:
@@ -35,10 +36,17 @@ class BattleFormation:
             if dk is None:return False
             x,y=point[0]-dk.x,point[1]-dk.y
             return -500<x*dx+y*dy<160 and abs(x*dy-y*dx)<140
-        congested=[u for u in ranged if lane((u.x,u.y)) or sum(v.handle!=u.handle and g.dist(u,v)<160 for v in ranged)>=2]
+        congested=[u for u in ranged if lane((u.x,u.y)) or
+                   any(v.handle!=u.handle and g.dist(u,v)<130 for v in ranged) or
+                   sum(v.handle!=u.handle and g.dist(u,v)<210 for v in ranged)>=2]
         congested.sort(key=lambda u:(not lane((u.x,u.y)),u.handle))
         grid=g.map() if hasattr(g,'map') else None
         if not grid:return moving
+        # A battle at the enemy base must not inherit the creeping exclusion
+        # circle. Still include visible structures in the actual fire checks.
+        visible=g.enemies() if hasattr(g,'enemies') else foes
+        threats=list({e.handle:e for e in [*foes,*visible] if e.hp>0 and ground_attack_range(e.type)>0}.values())
+        towers=[e for e in threats if is_structure(e)]
         angle=atan2(anchor.y-target.y,anchor.x-target.x)
         occupied=[p['point'] for p in self.pending.values()]
         for u in congested:
@@ -48,13 +56,13 @@ class BattleFormation:
             points=[(target.x+radius*cos(angle+offset*pi/180),target.y+radius*sin(angle+offset*pi/180))
                     for offset in (-28,28,-48,48,-68,68)]
             points.sort(key=lambda p:g.dist(u,p))
-            before=clearance((u.x,u.y),foes,ground_attack_range)
+            before=clearance((u.x,u.y),threats,ground_attack_range)
             for point in points:
                 gap=g.dist(u,point)
                 if gap<90 or gap>340 or lane(point) or not grid.walkable(*point):continue
-                if any(g.dist(point,p)<130 for p in occupied):continue
-                if any(v.handle!=u.handle and g.dist(v,point)<115 for v in army):continue
-                if not b.creeping.safe_route(g,(u.x,u.y),point):continue
+                if any(g.dist(point,p)<170 for p in occupied):continue
+                if any(v.handle!=u.handle and g.dist(v,point)<160 for v in army):continue
+                if any(g.dist(point,e)<min(ground_attack_range(e.type),g.dist(u,e)) for e in towers):continue
                 route=g.path_distance((u.x,u.y),point)
                 if route is None or route>gap+128:continue
                 path=g.walk_path((u.x,u.y),point)
@@ -62,7 +70,10 @@ class BattleFormation:
                 safe=True;a=(u.x,u.y)
                 for z in path:
                     n=max(1,ceil(g.dist(a,z)/80))
-                    if any(clearance((a[0]+(z[0]-a[0])*j/n,a[1]+(z[1]-a[1])*j/n),foes,ground_attack_range)<before-40 for j in range(1,n+1)):
+                    if any(clearance((a[0]+(z[0]-a[0])*j/n,a[1]+(z[1]-a[1])*j/n),threats,ground_attack_range)<before-40 for j in range(1,n+1)):
+                        safe=False;break
+                    if any(g.dist((a[0]+(z[0]-a[0])*j/n,a[1]+(z[1]-a[1])*j/n),e)<min(ground_attack_range(e.type),g.dist(u,e))-8
+                           for e in towers for j in range(1,n+1)):
                         safe=False;break
                     a=z
                 if not safe:continue

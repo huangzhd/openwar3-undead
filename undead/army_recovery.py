@@ -4,6 +4,7 @@ from .consumables import SCROLLS
 from .retreat import clearance,escape_point
 from .nc_combo import spell_data,DISABLED_CASTERS
 from .targeting import enemy_player,in_weapon_range,buffs
+from .structures import is_structure
 from openwar3 import combat
 
 class ArmyRecovery:
@@ -78,16 +79,22 @@ class ArmyRecovery:
         from .controller import ground_attack_range
         return max(ground_attack_range(code),self.danger_ranges.get(code,0))
 
-    def safe_path(self,b,start,end,hostiles):
+    def safe_path(self,b,start,end,hostiles,combat=False):
         g=b.g
-        if not b.creeping.safe_route(g,start,end):return None
+        if not combat and not b.creeping.safe_route(g,start,end):return None
+        grid=g.map()
+        if not grid or not grid.walkable(*end):return None
         length=g.path_distance(start,end)
         if length is None:return None
         path=g.walk_path(start,end)
         if not path or g.dist(path[-1],end)>128:return None
         before=clearance(start,hostiles,self.threat_range);a=start
+        towers=[e for e in hostiles if is_structure(e) and self.threat_range(e.type)>0] if combat else []
         for z in path:
             count=max(1,ceil(g.dist(a,z)/96))
+            if any(g.dist((a[0]+(z[0]-a[0])*i/count,a[1]+(z[1]-a[1])*i/count),e)
+                   <min(self.threat_range(e.type)+100,g.dist(start,e))-8
+                   for e in towers for i in range(1,count+1)):return None
             if any(clearance((a[0]+(z[0]-a[0])*i/count,a[1]+(z[1]-a[1])*i/count),hostiles,self.threat_range)
                    <min(150,before)-32 for i in range(1,count+1)):return None
             a=z

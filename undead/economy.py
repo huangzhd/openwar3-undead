@@ -56,6 +56,7 @@ class Economy:
         self.revival_state=None
         self.revival_retry=None
         self.revival_attempts=0
+        self.tech_budget_log_at=-100
 
     def opening_observed(self,stage,now):
         if stage not in self.opening_milestones:
@@ -113,6 +114,8 @@ class Economy:
         ws=[w for w in g.units('me',{'uaco'}) if w.handle != self.scout and w.handle not in self.home_layout.reserved and w.handle not in self.expansion.reserved and w.handle not in self.repairs.reserved and not g.is_constructing(w)]
         if not ws:
             return False
+        # Prefer a released/idle worker over pulling another miner away.
+        ws.sort(key=lambda w:(bool(g.order_of(w)),hypot(w.x-home.x,w.y-home.y)))
         self.last_build=now
         spot=self.home_layout.build(g,ws[0],code,home,now)
         if spot:
@@ -240,6 +243,12 @@ class Economy:
                 self.train(g,home,'unp1',now)
                 return
             self.opening_observed('tier_two_started',now)
+            # Fund tech first, then start supply before paying for the first
+            # fiend. Its construction overlaps that fiend's production instead
+            # of either delaying tier two or waiting until food is exhausted.
+            if res['food_cap']-res['food_used']<=6 and len(g.my_buildings({'uzig'}))<2:
+                if self.build(g,'uzig',home,now):return
+                if 'uzig' not in self.home_layout.pending:return
             if not self.first_fiend:
                 if not self.ready(g,'ugrv'):return
                 self.opening_observed('graveyard_complete',now)
@@ -260,7 +269,14 @@ class Economy:
             if not self.mass_army:self.log('army_growth_started',clock=now,food_target=100)
             self.mass_army=True
         if res['food_cap']-res['food_used']<=(12 if self.mass_army else 6) and res['food_cap']<100 and not pending_zig:
-            if self.build(g,'uzig',home,now):return
+            # Queued heroes already occupy food. With room for the next statue,
+            # avoid spending tier-three funds on a tower during the tech save.
+            lich_paid=bool(lich or self.queued(g,'Ulic'))
+            tech_reserve_gold=325+(140 if not g.my_buildings({'uslh'}) else 0)
+            tech_reserve_lumber=230+(135 if not g.my_buildings({'uslh'}) else 0)
+            save_tech=(tier==2 and not upgrading and lich_paid and res['food_cap']-res['food_used']>=3
+                       and (res['gold']<tech_reserve_gold+150 or res['lumber']<tech_reserve_lumber+50))
+            if not save_tech and self.build(g,'uzig',home,now):return
         if not g.my_buildings({'utom'}):
             self.build(g,'utom',home,now)
             return
@@ -338,6 +354,18 @@ class Economy:
         if self.expansion.pending_budget(now):return
         target,_=self.army_targets(g,now)
         if fiends<target:
+            # At the end of tier two research, reserve the Lich and initial
+            # slaughterhouse before another optional fiend consumes their bank.
+            if (home.type=='unpl' and upgrading and getattr(hp,'progress',0)>=.6
+                    and 'Ulic' not in self.ever_heroes and not self.queued(g,'Ulic')):
+                gold=425+(140 if not g.my_buildings({'uslh'}) else 0)
+                lumber=100+(135 if not g.my_buildings({'uslh'}) else 0)
+                if res['gold']<gold+215 or res['lumber']<lumber+40:
+                    if now-self.tech_budget_log_at>=5:
+                        self.tech_budget_log_at=now
+                        self.log('tech_transition_budget_reserved',clock=now,gold=res['gold'],lumber=res['lumber'],
+                                 reserved_gold=gold,reserved_lumber=lumber,blocked='ucry')
+                    return
             for crypt in crypts:
                 if self.train(g,crypt,'ucry',now):return
         if self.mass_army and fiends<target and len(g.my_buildings({'usep'}))<2 and res['gold']>=900 and all(g.production(c) for c in crypts):

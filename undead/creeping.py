@@ -95,6 +95,20 @@ class Creeping:
                 # Candidate HP/strength, hero health and route checks still apply.
                 and any(u.type in {'uske','uskm','ucry'} and u.hp>=.5*u.hp_max for u in army))
 
+    def ch_home_opening(self,home):
+        """The user's CH opening, mirrored by own spawn; never a global turtle exemption."""
+        if self.map_alias!='CH' or self.tier>=3 or self.resupply_home:return []
+        turtles=[c for c in self.catalog if c['kind']=='turtle'
+                 and sorted(s.get('level',0) for s in c.get('spawns',[]))==[2,2,4]
+                 and c.get('difficulty',99)<=8 and c.get('hp',9999)<=875
+                 and not c.get('poison_units') and set(c.get('hazards',[]))<={'thorns'}]
+        ogres=[c for c in self.catalog if c['kind']=='ogre' and c.get('max_level',99)<=4
+               and c.get('difficulty',99)<=10 and not c.get('poison_units')
+               and set(c.get('hazards',[]))<={'ensnare'}]
+        if not turtles or not ogres:return []
+        route=[min(rows,key=lambda c:hypot(c['x']-home.x,c['y']-home.y)) for rows in (turtles,ogres)]
+        return route if all(hypot(c['x']-home.x,c['y']-home.y)<3500 for c in route) else []
+
     def pre_attack_safe(self,c):
         if self.map_alias=='TM' and self.home_only and self.tier>=2 and c['kind'] in {'shop','mercenary'} and c.get('difficulty',99)<=18:
             return True
@@ -123,8 +137,15 @@ class Creeping:
         strength=self.strength(army)
         supported=self.tier>=2 and any(u.type=='uobs' for u in army)
         chain=self.tm_green_chain(army,now)
+        ch_route=self.ch_home_opening(home)
+        ch_next=next((c['id'] for c in ch_route if c['id'] not in self.cleared),None)
         result=[]
         for c in camps:
+            ch_first=bool(ch_route and c['id']==ch_route[0]['id'])
+            ch_open=(c['id']==ch_next and any(u.type=='Udea' and u.level<=2 and u.hp>=u.hp_max*(.8 if ch_first else .55) for u in army)
+                     and (sum(u.type in {'uske','uskm'} and u.hp>=u.hp_max*.7 for u in army)>=2
+                          if ch_first else
+                          any(u.type in {'uske','uskm','ucry'} and u.hp>=u.hp_max*.5 for u in army)))
             if not self.pre_attack_safe(c):continue
             if not self.tm_staging_allows(c,home):continue
             if c.get('difficulty',0)>=15 and (health/max(1,sum(u.hp_max for u in army))<.75 or
@@ -134,7 +155,7 @@ class Creeping:
             if self.local_origin is not None and g.dist((c['x'],c['y']),self.local_origin)>2200:continue
             if c['id'] in self.cleared or c['id'] in self.exhausted or now<self.deferred.get(c['id'],0):continue
             if not healthy:continue
-            if self.needs_support(c) and not supported:continue
+            if self.needs_support(c) and not supported and not ch_open:continue
             opening_small=(self.opening_gnoll and not self.cleared and self.own_side(g,c,home)
                 and (self.small_turtle(c) or (c['kind'] in {'ogre','gnoll'} and c['max_level']<=3 and c.get('difficulty',0)<=9
                      and not c.get('poison_units') and set(c.get('hazards',[]))<={'ensnare'}))
@@ -142,7 +163,7 @@ class Creeping:
                 and any(u.type=='Udea' and u.level==1 and u.hp/u.hp_max>=.8 for u in army)
                 and sum(u.type in {'uske','uskm'} and u.hp/u.hp_max>=.7 for u in army)>=2)
             chain_green=chain and self.central_green_gnoll(c)
-            if c.get('difficulty',0)>(max(strength,9) if opening_small else max(strength,7) if chain_green else strength):continue
+            if c.get('difficulty',0)>(max(strength,c['difficulty']) if ch_open else max(strength,9) if opening_small else max(strength,7) if chain_green else strength):continue
             if not lich and (c['max_level']>5 or not chain_green and hypot(c['x']-home.x,c['y']-home.y)>6500):continue
             # Lich/nova and more ranged units open higher-level camps; avoid suicidal pulls.
             if c['hp']>health*(1.6 if lich else 1.3):continue
@@ -229,7 +250,8 @@ class Creeping:
         if self.active:
             health=sum(u.hp for u in army)/max(1,sum(u.hp_max for u in army))
             support_lost=self.needs_support(self.active) and not (
-                self.tier>=2 and any(u.type=='uobs' for u in army))
+                self.tier>=2 and any(u.type=='uobs' for u in army)) and not any(
+                    c['id']==self.active['id'] for c in self.ch_home_opening(home))
             # Once engaged, actual remaining camp HP below owns the strength check.
             # Reapplying the full initial level sum after every hit would cause oscillation.
             if health<.55 or support_lost:self.defer(now,'army_not_ready')
@@ -270,6 +292,8 @@ class Creeping:
                 preference={'ogre':0,'gnoll':0,'expansion':100,'marketplace':200,'murloc':400,'mercenary':600}.get(c['kind'],500)
                 return distance+120*c.get('difficulty',0)+preference+(0 if own_side or central else 2000)
             def opening_score(c):
+                ch_next=next((p['id'] for p in self.ch_home_opening(home) if p['id'] not in self.cleared),None)
+                if ch_next:return (int(c['id']!=ch_next),0,score(c))
                 if self.tm_green_chain(army,now):
                     return (int(not self.central_green_gnoll(c)),0,score(c))
                 if self.map_alias=='TM' and self.home_only and self.tier>=2:

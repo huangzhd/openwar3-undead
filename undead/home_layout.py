@@ -1,5 +1,6 @@
 """Reserve generous building envelopes and an outward lane at the home base."""
 from math import cos,sin,pi,hypot
+from time import perf_counter
 
 # Planning envelopes, not claims about exact engine collision footprints.
 ENVELOPES={'unpl':192,'unp1':192,'unp2':192,'ugol':192,
@@ -68,27 +69,48 @@ class HomeLayout:
     def build(self,g,worker,code,home,now=None):
         # Keep SDK pending-foundation tracking, failure blacklisting and receipts.
         if code in self.pending:return self.pending[code]['point']
+        started=perf_counter()
         buildings=g.my_buildings()
         points=list(self.candidates(code,home,buildings))
         grid=g.map() if hasattr(g,'map') else None
-        trees=[t for t in g.trees(home.x,home.y,limit=400) if g.visible(t.x,t.y)] if hasattr(g,'trees') and hasattr(g,'visible') else []
+        # Visibility is a synchronous engine query. Check only trees touching
+        # the candidate being tried, with a hard per-tick query budget.
+        trees=g.trees(home.x,home.y,limit=400) if hasattr(g,'trees') and hasattr(g,'visible') else []
         half=ENVELOPES.get(code,160)
-        def plausible(p):
-            if grid and hasattr(grid,'buildable') and not all(grid.buildable(p[0]+x,p[1]+y)
-                    for x in (-half,0,half) for y in (-half,0,half)):return False
-            return not any(max(abs(t.x-p[0]),abs(t.y-p[1]))<half+64 for t in trees)
-        points=[p for p in points if plausible(p)]
         if not points:return None
+        visibility={};queries=0;attempts=0
+        def finish(spot):
+            self.log('home_layout_timing',clock=now,code=code,visible_queries=queries,
+                     build_attempts=attempts,wall_ms=round((perf_counter()-started)*1000,3))
+            return spot
         key=(code,home.x,home.y);start=self.cursors.get(key,0)%len(points)
         for offset in range(min(24,len(points))):
             index=(start+offset)%len(points);point=points[index]
+            self.cursors[key]=(index+1)%len(points)
+            if grid and hasattr(grid,'buildable') and not all(grid.buildable(point[0]+x,point[1]+y)
+                    for x in (-half,0,half) for y in (-half,0,half)):continue
+            blocked=False
+            for tree in trees:
+                if max(abs(tree.x-point[0]),abs(tree.y-point[1]))>=half+64:continue
+                loc=(tree.x,tree.y)
+                if loc not in visibility:
+                    if queries>=16:
+                        # Skip this unverified candidate for this pass, and
+                        # continue scanning next tick without blocking control.
+                        return finish(None)
+                    visibility[loc]=g.visible(*loc);queries+=1
+                if visibility[loc] is None:
+                    blocked=True;break
+                if visibility[loc]:blocked=True;break
+            if blocked:continue
+            attempts+=1
             spot=g.build_near(worker,code,*point,min_r=0,max_r=0,max_tries=1)
             # An existing SDK walking order returns its earlier point. Keep it
             # intact; advance the cursor only for a newly tried location.
-            if not spot or tuple(spot)==point:self.cursors[key]=(index+1)%len(points)
+            if spot and tuple(spot)!=point:self.cursors[key]=start
             if spot:
                 if now is not None and worker is not None:
                     self.pending[code]=dict(point=tuple(spot),worker=worker.handle,started=now,progress=now,
                         gap=hypot(worker.x-spot[0],worker.y-spot[1]),before={u.handle for u in buildings if u.type==code})
-                return spot
-        return None
+                return finish(spot)
+        return finish(None)

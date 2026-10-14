@@ -19,7 +19,7 @@ class CreepEscapeTests(unittest.TestCase):
         g=N(dist=dist,path_distance=dist,walk_path=lambda a,b:[b],buffs=lambda u:[],enemies=lambda:[],
             current_target=lambda e:next((u for u in army if u.handle==e.target),None),
             inventory=lambda u:['stwp'] if u is dk else [],use_item=lambda u,*a,**kw:orders.append(u.handle) or True)
-        b=Controller(g,lambda e,**kw:events.append(dict(event=e,**kw)))
+        b=Controller(g,lambda e,**kw:events.append(dict(event=e,**kw)),first_attack_all_in=False)
         b.home=unit('unpl',999,-4672);b.home.y=-3840;b.action=Action.CREEP;b.situation=Situation(404.975)
         b.battle_enemies=enemies;b.micro.damage.rates[dk.handle]=45.40988247753041
         b.portal_pulls[dk.handle]=next(r['pull'] for r in frame['army'] if r['type']=='Udea')

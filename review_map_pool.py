@@ -2,6 +2,7 @@
 import argparse,hashlib,json
 from collections import Counter
 from pathlib import Path
+from review_opening_timing import review as review_opening_timing
 
 def review(run):
     result=json.loads((run/'result.json').read_text(encoding='utf-8'))
@@ -29,6 +30,7 @@ def review(run):
                            'Spawn sample is taken during the match; it is not a zero-second snapshot.',
                            'First observed hero levels are bounded by summary cadence.'])
     (run/'map-review.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    review_opening_timing(run)
     print(json.dumps({k:data[k] for k in ('run','result','game_seconds','valid_natural_finish','source_snapshot_verified')},ensure_ascii=False))
     return data
 

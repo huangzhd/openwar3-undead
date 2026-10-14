@@ -20,7 +20,8 @@ class PreAttackTests(unittest.TestCase):
             current_target=lambda u:None,is_building=lambda u:u.type in {'uzig','unp2'},
             attack=lambda u,t,**kw:orders.append(('attack',u.handle,t.handle)) or True,
             stop=lambda u:orders.append(('stop',u.handle,None)) or True)
-        b=Controller(g,lambda e,**kw:events.append(dict(event=e,**kw)))
+        g.inventory=lambda h:[]
+        b=Controller(g,lambda e,**kw:events.append(dict(event=e,**kw)),first_attack_all_in=False)
         b.home=unit('unp2',90,owner=0,x=-4000)
         return b,orders,events
     def test_each_missing_requirement_blocks_even_previous_commitment(self):

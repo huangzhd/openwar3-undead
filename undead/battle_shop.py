@@ -64,7 +64,7 @@ class BattleShop:
                      refund_excluding_gathering=refund)
             self.pending=None
 
-    def transact(self,g,hero,code,kind,now,cast_until,target):
+    def transact(self,g,hero,code,kind,now,cast_until,target,allow_portal_sale=False):
         if self.pending or now<self.next_at or now<cast_until.get(hero.handle,0):return False
         bag=g.inventory(hero)
         if bag is None:return False
@@ -82,7 +82,7 @@ class BattleShop:
             result=g.give_item(hero,bag.index(code),target)
             cast_until[target.handle]=now+1.2
         else:
-            if not sellable(hero,code) or code not in bag:return False
+            if not (sellable(hero,code) or code=='stwp' and allow_portal_sale) or code not in bag:return False
             result=g.sell_item(hero,bag.index(code),target)
         self.attempts[key]=self.attempts.get(key,0)+1;self.next_at=now+3;self.pending=p
         cast_until[hero.handle]=now+1.2

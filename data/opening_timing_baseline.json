@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "status": "candidate",
+  "version": "0.1.131-dev",
+  "run": "20261015-005630",
+  "absolute_tolerance_seconds": 20,
+  "relative_tolerance": 0.15,
+  "milestones": {
+    "build:uaod:1:foundation": 8.08,
+    "build:uzig:1:foundation": 13.38,
+    "build:usep:1:foundation": 39.73,
+    "build:utom:1:foundation": 62.105,
+    "build:ugrv:1:foundation": 87.33,
+    "opening:crypt_complete": 100.055,
+    "hero:Udea:observed": 124.53,
+    "item:Udea:rnec:observed": 129.355,
+    "produce:unp1:first_order": 158.43,
+    "tier:2:observed": 300.405,
+    "produce:Ulic:first_order": 299.48,
+    "hero:Ulic:observed": 354.855,
+    "build:uslh:1:foundation": 313.905,
+    "produce:unp2:first_order": 368.405,
+    "tier:3:observed": 509.98,
+    "produce:uobs:first_order": 374.455
+  },
+  "note": "Economic milestones only, CH upper-right. No recorded player contact until 579.855s, but creep retreat and one supply placement failure remain. This is a provisional comparison, NOT an accepted normal opening. Confirm across maps/spawns; investigate resource and worker differences. Do not turn these times into mandatory order times.",
+  "first_observed_player_interference": 579.855
+}

@@ -95,7 +95,7 @@ class PortalGame:
 
 class PortalTests(unittest.TestCase):
     def make(self):
-        g=PortalGame();events=[];b=Controller(g,lambda e,**kw:events.append((e,kw)))
+        g=PortalGame();events=[];b=Controller(g,lambda e,**kw:events.append((e,kw)),first_attack_all_in=False)
         b.home=g.home;b.action=Action.ATTACK
         b.economy.ready=lambda *a:g.shops
         self.moves=[];self.fights=[]

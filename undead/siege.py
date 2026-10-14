@@ -19,7 +19,8 @@ def building_priority(g,u):
                     and g.dist(u,target)<=weapon_range(u,target)):
                 return -3
             production=g.production(u) if hasattr(g,'production') else None
-            if production and production.kind=='construction':return -1
+            if (production and production.kind=='queue' and getattr(production,'queue',None)
+                    and getattr(production,'blocked',None) is False and getattr(production,'duration',0)>0):return -1
         return 2 if u.type=='emow' else 5
     if u.type in TOWERS:return 0
     if u.type=='otrb':return 1
@@ -158,7 +159,9 @@ class SiegeFocus:
         if selected.handle!=self.target:
             self.log('siege_target',clock=now,handle=selected.handle,type=selected.type,priority=best,
                      reason=('repair_worker' if selected in repairers else 'cleanup_worker') if best==-2
-                            else 'attacking_ancient' if best==-3 else 'construction' if best==-1 else 'building_priority')
+                            else 'attacking_ancient' if best==-3 else
+                            'producing_ancient' if best==-1 and selected.type in ANCIENTS else
+                            'construction' if best==-1 else 'building_priority')
         self.target=selected.handle
         return selected
 
