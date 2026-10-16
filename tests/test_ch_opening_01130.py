@@ -97,7 +97,7 @@ class OpeningCoordinationTests(unittest.TestCase):
         self.assertEqual(moves,[([fiend.handle],(-120.0,0.0))])
         self.assertEqual(attacks,[(sk.handle,e.handle)])
 
-    def test_supply_follows_tech_before_first_fiend_and_is_not_duplicated(self):
+    def test_supply_follows_first_fiend_queue_and_is_not_duplicated(self):
         g,e=opening.OpeningTests().game()
         g.own.extend([base_unit('ugho',101,owner=0),base_unit('ugho',102,owner=0),g.opening_dk])
         g.inventory=lambda u:['rnec'];g.busy.clear()
@@ -106,11 +106,14 @@ class OpeningCoordinationTests(unittest.TestCase):
         home=g.my_buildings({'unpl'})[0]
         g.busy[home.handle]=N(kind='upgrade',queue=['unp1'])
         e.tick(g,158)
-        self.assertEqual(g.commands,['unp1','uzig'])
+        self.assertEqual(g.commands,['unp1','ucry'])
+        e.tick(g,162);self.assertEqual(g.commands,['unp1','ucry','ucry']) # Receipt is not a queue.
+        g.busy[g.my_buildings({'usep'})[0].handle]=N(kind='queue',queue=['ucry'])
+        e.tick(g,166);self.assertEqual(g.commands,['unp1','ucry','ucry','uzig'])
         zig=base_unit('uzig',103,owner=0);g.own.append(zig)
         zig.hp=10;g.busy[zig.handle]=N(kind='construction',queue=[])
         e.tick(g,170)
-        self.assertEqual(g.commands,['unp1','uzig','ucry'])
+        self.assertEqual(g.commands,['unp1','ucry','ucry','uzig'])
 
     def test_visible_spawn_latches_scout_discovery_and_never_detours_home(self):
         b,g,dk,corpse,own,all_units,orders,events,inv,cool=scout_fixture.ScoutCorpseTests().make()

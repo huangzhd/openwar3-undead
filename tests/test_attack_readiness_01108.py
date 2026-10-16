@@ -15,6 +15,8 @@ class AttackReadinessTests(unittest.TestCase):
     def test_active_hard_camp_releases_to_regroup_when_dk_departs(self):
         b,g,army,_=regroup.HomeHalfTests().army();c=b.creeping;c.tier=3;c.resupply_home=True
         c.active=next(p for p in c.catalog if p['id']=='tr-2')
+        # The camp is still occupied; a visibly empty camp must instead stay cleared.
+        guard=unit('nogr',99,c.active['x']);guard.y=c.active['y'];g.creeps=lambda:[guard]
         c.cleared={p['id'] for p in c.catalog if c.pre_attack_safe(p)}
         goal,_=c.choose(g,army,(-4000,-4600),b.home,600)
         self.assertIsNone(goal);self.assertIn('tr-2',c.deferred)

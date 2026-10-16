@@ -91,14 +91,14 @@ class EconomyTests(unittest.TestCase):
         e.tick(g,103)
         self.assertEqual(g.commands,['unp1'])
 
-    def test_tier_two_reserves_lich_before_extra_fiends(self):
+    def test_tier_two_reserves_tier_three_before_extra_fiends(self):
         g=FakeGame(tier=2,gold=300)
         e=Economy(lambda *a,**k:None)
         e.tick(g,200)
         self.assertFalse(g.commands)
         g.gold=425
         e.tick(g,203)
-        self.assertEqual(g.commands,['Ulic'])
+        self.assertEqual(g.commands,['unp2'])
 
     def test_new_match_resets_hero_and_scout_state(self):
         first=Economy(lambda *a,**k:None)

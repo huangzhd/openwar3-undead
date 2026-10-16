@@ -39,19 +39,19 @@ class OpeningTests(unittest.TestCase):
         e.tick(g,25);self.assertEqual(g.commands,['ugho','ugho'])
         g.own.append(g.opening_dk)
         g.inventory=lambda u:['rnec'] if u.type=='Udea' else []
-        # Fund tech first, then overlap supply construction with the first fiend.
+        # Fund tech, then the first fiend, then the second supply building.
         g.gold=319;e.tick(g,29);self.assertEqual(g.commands,['ugho','ugho'])
         g.gold=320;e.tick(g,33);self.assertEqual(g.commands,['ugho','ugho','unp1'])
         g.busy[home.handle]=N(kind='upgrade',queue=[])
-        e.tick(g,34);self.assertEqual(g.commands,['ugho','ugho','unp1','uzig'])
-        g.own.append(base_unit('uzig',103,owner=0))
-        g.resources=lambda:dict(gold=g.gold,lumber=500,food_cap=30,food_used=17)
+        e.tick(g,34);self.assertEqual(g.commands,['ugho','ugho','unp1'])
         g.busy[grave.handle]=N(kind='construction',queue=[]);grave.hp=50
         e.tick(g,35);self.assertNotIn('ucry',g.commands)
         g.busy.pop(grave.handle);grave.hp=100;e.tick(g,37)
-        self.assertEqual(g.commands,['ugho','ugho','unp1','uzig','ucry'])
+        self.assertEqual(g.commands,['ugho','ugho','unp1','ucry'])
         g.busy[crypt.handle]=N(kind='queue',queue=['ucry']);e.tick(g,41)
-        self.assertEqual(g.commands,['ugho','ugho','unp1','uzig','ucry'])
+        self.assertEqual(g.commands,['ugho','ugho','unp1','ucry','uzig'])
+        g.own.append(base_unit('uzig',103,owner=0))
+        g.resources=lambda:dict(gold=g.gold,lumber=500,food_cap=30,food_used=20)
         e.tick(g,45)
         self.assertTrue(e.opening_complete)
 
@@ -73,7 +73,7 @@ class OpeningTests(unittest.TestCase):
         self.assertEqual(purchases,['rnec','rnec'])
 
     def test_late_game_still_recruits_lich_without_replaying_opening(self):
-        g=FakeGame(tier=2,gold=425);e=Economy(lambda *a,**k:None)
+        g=FakeGame(tier=3,gold=425);e=Economy(lambda *a,**k:None)
         e.tick(g,300);self.assertIn('Ulic',g.commands)
         self.assertTrue(e.opening_complete)
 

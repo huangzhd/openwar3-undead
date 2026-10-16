@@ -29,6 +29,7 @@ class SuppliesTests(unittest.TestCase):
 
     def test_sale_then_purchase_requires_real_dk_inventory(self):
         g,b,events=self.scene();s=b.first_attack_supply
+        g.dk.mana=50;g.bags[g.lich.handle][0]='ocor'
         self.assertEqual(s.reserve(b,3),200)
         s.tick(b,g.heroes,[],500,3);self.assertFalse(s.confirmed)
         b.battle_shop.observe(g,501)

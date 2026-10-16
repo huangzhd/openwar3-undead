@@ -107,6 +107,8 @@ class BankItemTests(unittest.TestCase):
 
     def test_nearby_needed_mana_and_one_team_heal_are_budgeted_without_travel(self):
         g,b,army,dk,lich,moves=recovery.RecoveryTests().make();g.food=48;dk.mana=0;b.situation=Situation(700,tier=3,lich=True,orb=True)
+        self.assertNotIn('pman',[j[2] for j in b.bank_supply_jobs(700)]) # No actual team orb yet.
+        g.bags[lich.handle][0]='ocor'
         jobs=b.bank_supply_jobs(700)
         self.assertEqual([(j[2],j[3]) for j in jobs],[('pman',200),('shea',250)])
         self.assertFalse(moves)

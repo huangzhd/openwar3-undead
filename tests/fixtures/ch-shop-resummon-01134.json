@@ -1,0 +1,151 @@
+{
+  "run": "20261016-143832",
+  "reason": "manual_surrender",
+  "events": [
+    {
+      "event": "creep_area_cleared",
+      "clock": 182.125,
+      "point": [
+        247.93,
+        5177.73
+      ],
+      "camp": "ch-9"
+    },
+    {
+      "event": "ch_graveyard_resummon_started",
+      "clock": 182.125,
+      "point": [
+        1536.0,
+        3840.0
+      ],
+      "next_camp": "ch-13"
+    },
+    {
+      "event": "creep_goal",
+      "clock": 189.33,
+      "point": [
+        3690.53,
+        2939.27
+      ],
+      "camp": "ch-13",
+      "kind": "ogre",
+      "level_sum": 10,
+      "poison_units": 0,
+      "difficulty": 10,
+      "army_strength": 6.19,
+      "tier": 1,
+      "statue_present": false,
+      "fiends": 0,
+      "skeletons": 4,
+      "opening_small": false
+    },
+    {
+      "event": "ch_graveyard_resummon_end",
+      "clock": 190.23,
+      "reason": "two_new_skeletons_observed"
+    },
+    {
+      "event": "rod",
+      "clock": 214.18,
+      "accepted": false,
+      "corpse": [
+        14915,
+        14915
+      ],
+      "corpse_distance": 179,
+      "cooldown": 0,
+      "attempt": 1
+    },
+    {
+      "event": "creep_paused",
+      "clock": 214.18,
+      "camp": "ch-13",
+      "reason": "loot"
+    },
+    {
+      "event": "creep_resumed",
+      "clock": 215.155,
+      "camp": "ch-13"
+    },
+    {
+      "event": "rod",
+      "clock": 217.28,
+      "accepted": true,
+      "corpse": [
+        14915,
+        14915
+      ],
+      "corpse_distance": 179,
+      "cooldown": 0,
+      "attempt": 2
+    },
+    {
+      "event": "creep_paused",
+      "clock": 237.48,
+      "camp": "ch-13",
+      "reason": "shopping"
+    },
+    {
+      "event": "buy",
+      "clock": 248.805,
+      "code": "rnec",
+      "hero": "Udea",
+      "accepted": true,
+      "reason": "accepted",
+      "inventory": [
+        "stwp",
+        null,
+        "rin1",
+        "rat6",
+        null,
+        null
+      ],
+      "attempt": 2
+    },
+    {
+      "event": "creep_resumed",
+      "clock": 249.43,
+      "camp": "ch-13"
+    },
+    {
+      "event": "rod",
+      "clock": 259.075,
+      "accepted": false,
+      "corpse": [
+        14979,
+        14979
+      ],
+      "corpse_distance": 731,
+      "cooldown": 0,
+      "attempt": 1
+    },
+    {
+      "event": "creep_area_cleared",
+      "clock": 259.985,
+      "point": [
+        3690.53,
+        2939.27
+      ],
+      "camp": "ch-13"
+    },
+    {
+      "event": "creep_goal",
+      "clock": 261.75,
+      "point": [
+        -1003.0,
+        2417.27
+      ],
+      "camp": "ch-6",
+      "kind": "shop",
+      "level_sum": 12,
+      "poison_units": 0,
+      "difficulty": 12,
+      "army_strength": 13.25,
+      "tier": 1,
+      "statue_present": false,
+      "fiends": 2,
+      "skeletons": 1,
+      "opening_small": false
+    }
+  ]
+}

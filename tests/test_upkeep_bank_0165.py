@@ -24,12 +24,15 @@ class UpkeepTests(unittest.TestCase):
     def test_48_food_cannot_accidentally_cross_50_but_47_can_fill(self):
         g,e,_=self.make();g.food=48;e.tick(g,700);self.assertFalse(g.commands)
         g,e,_=self.make();g.food=47;g.gold=250
+        fiends=g.units('me',{'ucry'});g.own=[u for u in g.own if u not in fiends[3:]]
         e.mass_army=True;crypt=g.my_buildings({'usep'})[0]
         self.assertTrue(e.train(g,crypt,'ucry',700));self.assertEqual(g.food,50)
         g.busy.clear();self.assertFalse(e.train(g,crypt,'ucry',703));self.assertEqual(g.food,50)
 
     def test_tick_can_fill_47_to_50_without_waiting_for_400(self):
-        g,e,_=self.make();g.food=47;g.gold=250;e.tick(g,700)
+        g,e,_=self.make();g.food=47;g.gold=250
+        fiends=g.units('me',{'ucry'});g.own=[u for u in g.own if u not in fiends[3:]]
+        e.tick(g,700)
         self.assertEqual(g.commands,['ucry']);self.assertEqual(g.food,50)
 
     def test_third_hero_food_is_reserved_before_orb_and_during_courier_trip(self):
@@ -47,6 +50,7 @@ class UpkeepTests(unittest.TestCase):
 
     def test_fill_42_to_45_then_wait_for_third_and_research_at_50(self):
         g,e,_=self.make();g.food=42;g.gold=900
+        fiends=g.units('me',{'ucry'});g.own=[u for u in g.own if u not in fiends[3:]]
         g.own=[u for u in g.own if u.type!='Nbrn'];e.ever_heroes.discard('Nbrn')
         crypt=g.my_buildings({'usep'})[0]
         self.assertTrue(e.train(g,crypt,'ucry',700));self.assertEqual(g.food,45)

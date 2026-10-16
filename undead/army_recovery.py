@@ -102,7 +102,7 @@ class ArmyRecovery:
 
     def observe(self,b,army,hostiles,now,raid=False):
         g=b.g
-        core=[u for u in army if u.type in {'Udea','Ulic','Nbrn','Nngs','ucry','uobs'} and u.hp>0]
+        core=[u for u in army if u.type in {'Udea','Ulic','Nbrn','Nngs','ucry','uobs','ubsp'} and u.hp>0]
         anchor=min(core,key=lambda u:sum(g.dist(u,v) for v in core)) if core else None
         fiends=[u for u in core if u.type=='ucry' and g.dist(u,anchor)<=1200]
         heroes=[u for u in army if u.is_hero and u.hp>0]
@@ -206,6 +206,11 @@ class ArmyRecovery:
         units=sorted(g.units('me',{'uobs'}),key=lambda u:u.handle)
         live={u.handle for u in units}
         self.statue_modes={h:s for h,s in self.statue_modes.items() if h in live}
+        # A third (life) statue may remain beside another life statue when
+        # the low-mana support transforms. Restore one of each supply role.
+        modes={s['mode'] for s in self.statue_modes.values()}
+        if len(units)>=2 and len(self.statue_modes)==len(units) and len(modes)==1:
+            self.statue_modes.pop(units[-1].handle,None)
         for u in units:
             if now<b.cast_until.get(u.handle,0):continue
             previous=self.statue_modes.get(u.handle)
@@ -221,7 +226,7 @@ class ArmyRecovery:
 
     def tick(self,b,army,hostiles,now,pulls):
         if not self.active or b.situation.threatened or b.teleport:return False
-        g=b.g;core=[u for u in army if u.type in {'Udea','Ulic','Nbrn','Nngs','ucry','uobs'}]
+        g=b.g;core=[u for u in army if u.type in {'Udea','Ulic','Nbrn','Nngs','ucry','uobs','ubsp'}]
         if not core:return False
         b.set_intent('整队恢复 · 雕像回血与群补');b.creeping.pause(now,'army_health_recovery')
         anchor=min(core,key=lambda u:sum(g.dist(u,v) for v in core))

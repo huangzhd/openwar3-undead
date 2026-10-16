@@ -78,9 +78,10 @@ class Situation:
     dk: bool = True
     base_enemy_hp: float = 0
     supplies_ready: bool = True
+    pre_attack_camp_pending: bool = False
 
 def attack_ready(s):
-    return s.tier==3 and s.dk and s.lich and s.orb and s.third_hero and s.supplies_ready
+    return s.tier==3 and s.dk and s.lich and s.orb and s.third_hero and s.supplies_ready and not s.pre_attack_camp_pending
 
 def choose_rule(s):
     threat=max(s.local_enemy_hp,s.base_enemy_hp if s.threatened else 0)

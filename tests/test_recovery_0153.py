@@ -99,7 +99,9 @@ class SustainTests(unittest.TestCase):
     def test_missing_slaughterhouse_is_built_even_without_visible_raid(self):
         g,e=self.economy();g.own=[u for u in g.own if u.type!='uslh'];built=[]
         e.build=lambda g,code,home,now:built.append(code) or True
-        e.tick(g,327);self.assertEqual(built,['uslh']);self.assertFalse(g.commands)
+        e.tick(g,327);self.assertEqual(g.commands,['unp2']);self.assertFalse(built)
+        g.busy[g.own[0].handle]=N(kind='upgrade',queue=['unp2'])
+        e.tick(g,331);self.assertEqual(built,['uslh'])
 
     def fight(self,mana,hurt=False):
         b,f,d,s,h,target,own,foes,commands,targets,events=focus.CombatFocusTests().make()

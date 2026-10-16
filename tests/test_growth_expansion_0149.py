@@ -7,7 +7,7 @@ from undead.economy import Economy
 
 class GrowthGame(UpgradeGame):
     def __init__(self,fiends=10):
-        super().__init__();self.cap=100;self.food=62;self.levels={'Rura':3,'Rucr':3,'Ruwb':1}
+        super().__init__();self.cap=100;self.food=62;self.levels={'Rura':3,'Rucr':3,'Ruwb':1,'Rusp':1}
         self.own += [unit('ucry',300+i,owner=0) for i in range(fiends-6)]
         self.neutral=unit('ngol',900,owner=15,x=3000);self.foes=[];self.neutrals=[]
         self.builds=[];self.moves=[];self.gathers=[];self.visible_site=True;self.route=True

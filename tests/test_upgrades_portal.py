@@ -10,7 +10,8 @@ class UpgradeGame(FakeGame):
     def __init__(self):
         super().__init__(tier=3,gold=3000)
         self.own += [unit(c,100+i,owner=0) for i,c in enumerate(['uslh','Ulic','Nbrn']+['ucry']*5+['uobs']*2)]
-        self.food=50;self.lumber=2000;self.levels={'Rura':0,'Rucr':0}
+        self.own.append(unit('ubsp',990,owner=0))
+        self.food=50;self.lumber=2000;self.levels={'Rura':0,'Rucr':0,'Rusp':1}
         self.invs={'Udea':['stwp']+[None]*5,'Ulic':['ocor']+[None]*5}
     def resources(self):return dict(gold=self.gold,lumber=self.lumber,food_used=self.food,food_cap=70)
     def inventory(self,u):return self.invs.get(u.type,[None]*6)

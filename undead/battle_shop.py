@@ -13,6 +13,7 @@ class BattleShop:
         self.log=log;self.pending=None;self.attempts={};self.next_at=0
         self.defense=None;self.defense_retry=0
         self.orb=None;self.orb_retry=0;self.potion=None;self.potion_retry=0
+        self.rod=None;self.rod_retry=0
 
     @property
     def reserved(self):
@@ -193,6 +194,65 @@ class BattleShop:
             elif not b.economy.revival_pending(g) and g.resources()['gold']>=375 and None in db:
                 self.transact(g,dk,'ocor','buy',now,b.cast_until,shop)
         return self.reserved
+
+    def end_rod(self,now,reason):
+        self.log('rod_courier_end',clock=now,reason=reason)
+        self.rod=None;self.rod_retry=now+(0 if reason=='rejoined' else 120)
+
+    def rod_tick(self,b,hostiles,now,tier):
+        """After Lich arrives, only DK restocks; confirm his bag then follow Lich."""
+        g=b.g;heroes=g.my_heroes()
+        dk=next((h for h in heroes if h.type=='Udea'),None)
+        lich=next((h for h in heroes if h.type=='Ulic'),None)
+        unsafe=b.action.name in {'RETREAT','DEFEND'} or b.teleport or b.situation.threatened
+        bag=g.inventory(dk) if dk else None
+        if self.rod and (not dk or not lich or unsafe or dk.handle in b.micro.pulling
+                         or any(g.dist(e,dk)<950 for e in hostiles)):
+            self.end_rod(now,'unsafe_or_hero_missing');return set()
+        if self.rod and tier>=3 and bag is not None and 'rnec' not in bag:
+            self.end_rod(now,'tier_three_no_restock');return set()
+        if not dk or not lich or unsafe:return set()
+        if self.rod is None:
+            if (tier!=2 or now<self.rod_retry or self.orb or self.pending or bag is None or 'rnec' in bag
+                    or not b.economy.opening_rod_allowed or b.economy.revival_pending(g)
+                    or dk.hp<.6*dk.hp_max or dk.handle in b.micro.pulling
+                    or any(g.dist(e,dk)<950 for e in hostiles) or None not in bag
+                    or any('rnec' in (g.inventory(h) or []) for h in heroes)
+                    or g.resources()['gold']<150):return set()
+            shops=b.economy.ready(g,'utom')
+            shop=min(shops,key=lambda u:g.dist(dk,u),default=None)
+            if shop is None:return set()
+            self.rod=dict(hero=dk.handle,shop=shop.handle,started=now,progress=now,best=None,
+                          returning=False,buys=0)
+            b.micro.dk_recovering=None;b.micro.dk_support=None
+            b.formation.reset();b.formation_at=-100
+            self.log('rod_courier_started',clock=now,hero=dk.handle,leader=lich.handle,shop=shop.handle)
+        m=self.rod;reserved={dk.handle}
+        if now-m['started']>120:
+            self.end_rod(now,'mission_timeout');return set()
+        if bag is None:return reserved
+        if 'rnec' in bag and not m['returning']:
+            m.update(returning=True,best=None,progress=now)
+            self.log('rod_courier_inventory_confirmed',clock=now,hero=dk.handle)
+        if m['returning'] and g.dist(dk,lich)<=550:
+            self.end_rod(now,'rejoined');b.formation.reset();b.formation_at=-100;return set()
+        target=lich if m['returning'] else g.unit(m['shop'])
+        if target is None:self.end_rod(now,'shop_missing');return set()
+        point=(target.x,target.y);route=g.path_distance((dk.x,dk.y),point)
+        if route is None or not b.creeping.safe_route(g,(dk.x,dk.y),point):
+            self.end_rod(now,'unsafe_or_unreachable');return set()
+        if m['best'] is None or route<m['best']-80:m.update(best=route,progress=now)
+        if now-m['progress']>25:
+            self.end_rod(now,'travel_or_stock_stalled');return set()
+        if now<b.cast_until.get(dk.handle,0):return reserved
+        if g.dist(dk,target)>280 or m['returning']:
+            b.go_raw([dk],point,now);return reserved
+        if self.pending:return reserved
+        if m['buys']>=3:
+            self.end_rod(now,'purchase_unconfirmed');return set()
+        if g.resources()['gold']>=150 and None in bag and not b.economy.revival_pending(g):
+            if self.transact(g,dk,'rnec','buy',now,b.cast_until,target):m['buys']+=1
+        return reserved
 
     def defend_tick(self,b,hostiles,now,tier):
         """Local defensive supply: reserve only the buyer, never the whole army."""

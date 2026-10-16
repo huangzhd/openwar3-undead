@@ -39,9 +39,10 @@ class BuildStallTests(unittest.TestCase):
         g,e=recovery.SustainTests().economy();g.own=[u for u in g.own if u.type!='uslh']
         g.own=[u for u in g.own if u.type!='ucry']
         built=[];e.build=lambda game,code,home,now:built.append((code,now)) or True
+        g.busy[g.own[0].handle]=N(kind='upgrade',queue=['unp2'])
         e.tick(g,400);self.assertFalse(g.commands)
-        g.gold=739;g.lumber=1000;e.tick(g,411);self.assertFalse(g.commands)
-        g.gold=1000;g.lumber=404;e.tick(g,414);self.assertFalse(g.commands)
+        g.gold=354;g.lumber=1000;e.tick(g,411);self.assertFalse(g.commands)
+        g.gold=1000;g.lumber=174;e.tick(g,414);self.assertFalse(g.commands)
         g.lumber=1000;e.tick(g,417);self.assertEqual(g.commands,['ucry'])
         e.tick(g,420);self.assertEqual(built[-1],('uslh',420))
         self.assertNotIn('unp2',g.commands)

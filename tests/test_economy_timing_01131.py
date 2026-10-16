@@ -46,17 +46,18 @@ class TransitionBudgetTests(unittest.TestCase):
         e=Economy(lambda *a,**kw:None);e.opening_started=True;e.opening_complete=True;e.ever_heroes={'Udea'}
         return g,e
 
-    def test_real_late_tier_two_sample_preserves_lich_and_slaughter_budget(self):
+    def test_real_late_tier_two_sample_preserves_tier_three_budget(self):
         g,e=self.game();g.busy[g.own[0].handle]=N(kind='upgrade',queue=['unp1'],progress=.97)
         e.tick(g,324.95)
         self.assertNotIn('ucry',g.commands);self.assertEqual(g.gold,459)
         g.own[0].type='unp1';g.busy.clear();e.tick(g,330.83)
-        self.assertEqual(g.commands,['Ulic'])
+        self.assertEqual(g.commands,['unp2'])
 
     def test_early_upgrade_and_late_surplus_continue_reinforcements(self):
         for progress,gold,lumber in ((.2,459,280),(.97,800,300)):
             with self.subTest(progress=progress):
                 g,e=self.game();g.gold=gold;g.lumber=lumber
+                fiends=g.units('me',{'ucry'});g.own=[u for u in g.own if u not in fiends[1:]]
                 g.busy[g.own[0].handle]=N(kind='upgrade',queue=['unp1'],progress=progress)
                 e.tick(g,240)
                 self.assertIn('ucry',g.commands)
@@ -69,11 +70,11 @@ class TransitionBudgetTests(unittest.TestCase):
         e.tick(g,400)
         self.assertEqual(g.commands,['unp2']);self.assertFalse(g.builds)
 
-    def test_tight_food_still_builds_supply_during_tech_save(self):
+    def test_paid_lich_tight_food_still_pays_tier_three_first(self):
         g,e=self.game(2);g.food=38;g.gold=340;g.lumber=250
         g.busy[g.my_buildings({'uaod'})[0].handle]=N(kind='queue',queue=['Ulic'])
         e.tick(g,400)
-        self.assertEqual(g.builds[0][1],'uzig');self.assertNotIn('unp2',g.commands)
+        self.assertEqual(g.commands,['unp2']);self.assertFalse(g.builds)
 
     def test_idle_worker_is_reused_instead_of_interrupting_a_miner(self):
         g,e=self.game();workers=g.units('me',{'uaco'});idle=workers[-1]

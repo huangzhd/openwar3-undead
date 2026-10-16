@@ -1,0 +1,131 @@
+{
+  "source": "20261016-153200/events.jsonl",
+  "frame": {
+    "event": "combat_state",
+    "clock": 400.925,
+    "center": [
+      -3834.149658203125,
+      3430.9677734375
+    ],
+    "army_hp": 2577.4039306640625,
+    "enemy_hp": 103.84500122070312,
+    "army_health": 0.7906147026576879,
+    "recent_losses": 0,
+    "army": [
+      {
+        "handle": [
+          6116,
+          63193
+        ],
+        "type": "uske",
+        "x": -4263,
+        "y": 3212,
+        "hp": 180,
+        "hp_max": 180.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          15075,
+          38883
+        ],
+        "type": "ucry",
+        "x": -3711,
+        "y": 3186,
+        "hp": 282,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          16506,
+          59509
+        ],
+        "type": "ucry",
+        "x": -2977,
+        "y": 3687,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          18184,
+          63176
+        ],
+        "type": "uske",
+        "x": -4315,
+        "y": 3275,
+        "hp": 180,
+        "hp_max": 180.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          18257,
+          25463
+        ],
+        "type": "Udea",
+        "x": -4277,
+        "y": 3360,
+        "hp": 670,
+        "hp_max": 775.0,
+        "mana": 143,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          18558,
+          35396
+        ],
+        "type": "ucry",
+        "x": -3719,
+        "y": 3268,
+        "hp": 241,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          18863,
+          55012
+        ],
+        "type": "Ulic",
+        "x": -3834,
+        "y": 3431,
+        "hp": 475,
+        "hp_max": 475.0,
+        "mana": 229,
+        "pulling": false,
+        "pull": null
+      }
+    ],
+    "enemies": [
+      {
+        "handle": [
+          16222,
+          16222
+        ],
+        "type": "nkot",
+        "x": -4185,
+        "y": 3337,
+        "hp": 104,
+        "target": [
+          18257,
+          25463
+        ]
+      }
+    ]
+  }
+}
