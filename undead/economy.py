@@ -141,6 +141,18 @@ class Economy:
             self.log('purchase',clock=now,kind='build',code=code,spot=spot)
         return bool(spot)
 
+    def assign_scout(self,g,workers,now):
+        # An accepted shop order is not a foundation. The opening builder
+        # remains at home until the actual shop has appeared in our snapshot.
+        if not self.opening_complete and not g.my_buildings({'utom'}):return
+        reserved=self.home_layout.reserved|self.expansion.reserved|self.repairs.reserved|self.ghoul_reserved
+        available=[w for w in workers if w.handle not in reserved and not g.is_constructing(w)]
+        if len(available)<6:return # Retain five free workers, in addition to builders.
+        worker=min(available,key=lambda w:(bool(g.order_of(w)),-workers.index(w)))
+        self.scout=worker.handle
+        self.log('scout_assigned',clock=now,handle=self.scout,shop_foundation=bool(g.my_buildings({'utom'})),
+                 reserved_builders=list(reserved))
+
     def tick(self,g,now,threat=False):
         self.upkeep_threat=threat
         halls=g.my_buildings(HALLS)
@@ -150,7 +162,9 @@ class Economy:
         home=next((h for h in halls if h.handle==self.home_handle),halls[0])
         self.hall_rebuild.observe(g,home,now)
         self.home_handle=home.handle
-        self.home_layout.observe(g,now)
+        if self.home_layout.observe(g,now):
+            self.last_build=now
+            return
         if not self.opening_started:
             self.opening_started=True
             self.opening_complete=home.type in {"unp1","unp2"}
@@ -172,8 +186,7 @@ class Economy:
         # At most two replacement scouts; never take a worker from the five mining slots.
         need_scout=self.scout_losses==0 or (self.scout_losses<=2 and not self.enemy_start_known)
         if need_scout and self.scout is None and not self.expansion.retired_scout and len(workers)>=6:
-            self.scout=workers[-1].handle
-            self.log('scout_assigned',handle=self.scout)
+            self.assign_scout(g,workers,now)
         mine=g.nearest([m for m in g.gold_mines() if m.type=='ugol' and m.owner==g.me()],home)
         for w in g.idle_workers():
             if mine and w.handle!=self.scout and w.handle not in self.home_layout.reserved and w.handle not in self.ghoul_reserved and w.handle not in self.expansion.reserved and w.handle not in self.repairs.reserved:
@@ -358,8 +371,9 @@ class Economy:
         target,_=self.army_targets(g,now)
         if fiends<target:
             # At the end of tier two research, reserve tier three before
-            # another optional fiend consumes its bank.
-            if (home.type=='unpl' and upgrading and getattr(hp,'progress',0)>=.6
+            # another optional fiend consumes its bank. The opening pair must
+            # use newly completed food capacity without waiting for this bank.
+            if (fiends>=2 and home.type=='unpl' and upgrading and getattr(hp,'progress',0)>=.6
                     and 'Ulic' not in self.ever_heroes and not self.queued(g,'Ulic')):
                 gold=325
                 lumber=230
@@ -435,6 +449,7 @@ class Economy:
                 or ready and g.resources()['food_used']>=47)
 
     def research_destroyer(self,g,slaughter,now):
+        if len(g.units('me',{'uobs'}))<2:return False
         level=g.tech_many(['Rusp']).get('Rusp')
         if level is None or level>=1:return False
         if any('Rusp' in p.queue for _,p in g.all_production('me')):return False

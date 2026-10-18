@@ -216,13 +216,18 @@ class ArmyRecovery:
             previous=self.statue_modes.get(u.handle)
             assigned={s['mode'] for s in self.statue_modes.values()}
             mode=previous['mode'] if previous else ('life' if 'life' not in assigned else 'mana' if 'mana' not in assigned else 'life')
+            single=not any(v.handle!=u.handle and g.dist(u,v)<=900 for v in units)
             state=self.statue_modes.get(u.handle)
-            if state and state['mode']==mode and (state['accepted'] or state['tries']>=3 or now-state['at']<3):continue
-            tries=state['tries']+1 if state and state['mode']==mode else 1
-            g.cast(u,'replenishmanaoff' if mode=='life' else 'replenishlifeoff')
-            r=g.cast(u,'replenishlifeon' if mode=='life' else 'replenishmanaon')
-            self.statue_modes[u.handle]=dict(mode=mode,tries=tries,at=now,accepted=bool(r))
-            self.log('statue_recovery_mode_attempt',clock=now,handle=u.handle,mode=mode,accepted=bool(r))
+            if state and state['mode']==mode and state.get('single')==single and (state['accepted'] or state['tries']>=3 or now-state['at']<3):continue
+            tries=state['tries']+1 if state and state['mode']==mode and state.get('single')==single else 1
+            # Retain automatic coverage during protected casts/retreat. Manual
+            # B/C casts add the other resource; a lone local car always heals.
+            auto='life' if single else mode
+            off=g.cast(u,'replenishmanaoff' if auto=='life' else 'replenishlifeoff')
+            on=g.cast(u,'replenishlifeon' if auto=='life' else 'replenishmanaon')
+            r=bool(off) and bool(on)
+            self.statue_modes[u.handle]=dict(mode=mode,single=single,tries=tries,at=now,accepted=bool(r))
+            self.log('statue_recovery_mode_attempt',clock=now,handle=u.handle,mode=mode,manual=True,auto_life=auto=='life',accepted=bool(r))
 
     def tick(self,b,army,hostiles,now,pulls):
         if not self.active or b.situation.threatened or b.teleport:return False

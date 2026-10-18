@@ -1,4 +1,4 @@
-"""Stable dual-statue supply; only travel to catch the army or escape danger."""
+"""Manual alternating statue supply; only travel to catch the army or escape danger."""
 from math import hypot
 from .retreat import escape_point
 from .targeting import enemy_player
@@ -7,7 +7,7 @@ from .targeting import enemy_player
 class StatueSupport:
     def __init__(self,log):
         self.log=log;self.moves={};self.held=set();self.last_plan={}
-        self.supply_at={};self.supply_checks={}
+        self.supply_at={};self.supply_checks={};self.last_supply_mode={};self.mana_at={}
 
     def observe_supply(self,g,now):
         for handle,p in list(self.supply_checks.items()):
@@ -43,13 +43,24 @@ class StatueSupport:
             threats=[e for e in hostiles if b.army_recovery.threat_range(e.type)>0 and
                      g.dist(e,u)<b.army_recovery.threat_range(e.type)+100]
             threatened=bool(threats) or now-b.micro.hit.get(u.handle,-100)<3
-            mode=b.army_recovery.statue_modes.get(u.handle,{}).get('mode')
-            # 700 is the area, not the 250 cast/acquisition range. Anchor on
-            # actual recipients; a mana statue behind full-health fiends can
-            # otherwise remain idle while the Lich is 800 units away.
-            needy=[v for v in local if (v.hp<v.hp_max-15 if mode=='life' else
-                   v.is_hero and getattr(v,'mana_max',0)-getattr(v,'mana',0)>=5)] if mode else []
-            recipient=min(needy,key=lambda v:(v.hp/v.hp_max if mode=='life' else
+            preferred=b.army_recovery.statue_modes.get(u.handle,{}).get('mode','life')
+            needs={'life':[v for v in local if v.hp<v.hp_max-15],
+                   'mana':[v for v in local if v.type in {'Udea','Ulic','Nbrn','Nngs'} and getattr(v,'mana_max',0)-getattr(v,'mana',0)>=5]}
+            # One nearby car must cover both resources, including after its partner morphs.
+            # Start with life; alternate when both are needed, with short urgent-life priority.
+            last=self.last_supply_mode.get(u.handle)
+            mode=('mana' if last=='life' else 'life') if last else preferred
+            nearby_cars=sum(g.dist(v,anchor)<900 for v in statues)
+            if nearby_cars<=1 and (last is None or any(v.hp<.45*v.hp_max for v in needs['life'])
+                                  and now-self.mana_at.get(u.handle,now)<6):mode='life'
+            other='mana' if mode=='life' else 'life'
+            if not needs[mode] or g.cooldown(u,'Arpl' if mode=='life' else 'Arpm')!=0:
+                if needs[other] and g.cooldown(u,'Arpl' if other=='life' else 'Arpm')==0:mode=other
+            # Do not chase a distant recipient while another needed supply is in range.
+            if not any(g.dist(u,v)<=220 for v in needs[mode]) and any(g.dist(u,v)<=220 for v in needs[other]):
+                mode=other
+            needy=needs[mode]
+            recipient=min(needy,key=lambda v:(g.dist(u,v)>220,-sum(g.dist(v,w)<=500 for w in needy),v.hp/v.hp_max if mode=='life' else
                           v.mana/max(1,v.mana_max),g.dist(u,v)),default=None)
             support_anchor=recipient or anchor
             covered=(g.dist(u,support_anchor)<=220 if recipient else
@@ -67,6 +78,9 @@ class StatueSupport:
                     self.log('statue_supply_attempt',clock=now,handle=u.handle,mode=mode,
                              recipient=recipient.handle,distance=round(g.dist(u,recipient)),accepted=bool(receipt))
                     if receipt:
+                        self.last_supply_mode[u.handle]=mode
+                        self.mana_at.setdefault(u.handle,now)
+                        if mode=='mana':self.mana_at[u.handle]=now
                         b.cast_until[u.handle]=now+1.2
                         self.held.add(u.handle) # Do not overwrite supply with a hold order next tick.
                         self.supply_checks[u.handle]=dict(started=now,mode=mode,buff='Brpl' if mode=='life' else 'Brpm',
@@ -94,6 +108,15 @@ class StatueSupport:
                 candidates=[(support_anchor.x+dx*rear-dy*side*flank,support_anchor.y+dy*rear+dx*side*flank)
                             for rear in ((160,100,0) if recipient else (220,380,540))]
                 reason='recipient_out_of_cast_range' if recipient else 'army_out_of_supply_range'
+                if recipient:
+                    recipients=[v for v in core if g.dist(v,anchor)<=1600 and
+                                (v.hp<v.hp_max-15 if mode=='life' else
+                                 v.type in {'Udea','Ulic','Nbrn','Nngs'} and getattr(v,'mana_max',0)-getattr(v,'mana',0)>=5)]
+                    candidates += [(anchor.x+dx*rear-dy*side*160,anchor.y+dy*rear+dx*side*160) for rear in (220,380,540)]
+                    candidates += [(v.x+dx*160-dy*side*80,v.y+dy*160+dx*side*80) for v in recipients]
+                    candidates.sort(key=lambda p:(-sum(g.dist(p,v)<=700 and (v.handle in b.micro.pulling or v.hp<.45*v.hp_max) for v in recipients) if mode=='life' else 0,
+                                                  -sum(g.dist(p,v)<=700 for v in recipients),
+                                                  -sum(g.dist(p,v)<=220 for v in recipients),g.dist(u,p)))
             point=next((p for p in candidates if p is not None and g.dist(u,p)>=80 and
                         b.army_recovery.safe_path(b,(u.x,u.y),p,hostiles,combat=combat) is not None),None)
             if point is None:continue

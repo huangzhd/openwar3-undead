@@ -16,7 +16,7 @@ def public_camps():
 class Creeping:
     def __init__(self,log,camps=None):
         self.log=log;self.catalog=list(public_camps() if camps is None else camps)
-        self.cleared=set();self.deferred={};self.active=None
+        self.cleared=set();self.deferred={};self.deferred_reasons={};self.active=None
         self.failures={};self.exhausted=set()
         self.progress_at=0;self.best_distance=None;self.last_hp=None
         self.paused=False;self.combat_hp={}
@@ -24,6 +24,9 @@ class Creeping:
         self.opening_gnoll=False
         self.map_alias=None
         self.ch_orb_ready=False;self.ch_center_started=None;self.ch_center_done=False
+        self.ch_route_skipped=set();self.ch_route_wait=None;self.ch_home_returned=False
+        self.ni_orb_ready=False;self.ni_route_skipped=set();self.ni_route_wait=None
+        self.ni_attack_started=False;self.ni_contested=False;self.repath=False
         self.local_origin=None
         self.home_only=False
         self.resupply_home=False
@@ -83,6 +86,8 @@ class Creeping:
 
     @classmethod
     def needs_support(cls,c):
+        # Fish camps use actual army strength/health, not a mandatory statue.
+        if c['kind']=='murloc':return False
         control_chain='stun' in c.get('hazards',[]) and bool({'slow','ensnare'} & set(c.get('hazards',[])))
         return (c.get('requires_support') or control_chain or c['kind'] in {'murloc','mercenary','turtle'}) and not cls.small_turtle(c)
 
@@ -124,6 +129,52 @@ class Creeping:
         route=[min(rows,key=lambda c:hypot(c['x']-home.x,c['y']-home.y)) for rows in (turtles,ogres)]
         return route if all(hypot(c['x']-home.x,c['y']-home.y)<3500 for c in route) else []
 
+    def ch_route_stage(self,home):
+        """Own shop -> one side camp -> home laboratory -> central mine, mirrored by spawn."""
+        if self.map_alias!='CH' or self.ch_center_done:return None,[]
+        by_id={c['id']:c for c in self.catalog}
+        north=hypot(home.x-2176,home.y-4224)<hypot(home.x+2304,home.y+4736)
+        opening,shop,side,lab=(('ch-9','ch-13'),'ch-6',('ch-0','ch-5'),'ch-14') if north else (
+            ('ch-8','ch-3'),'ch-10',('ch-15','ch-11'),'ch-2')
+        # Partial/fallback catalogs retain generic fair-visible selection.
+        if not all(k in by_id for k in (*opening,shop,*side,lab,'ch-7')):return None,[]
+        if not set(opening)<=self.cleared and 'opening' not in self.ch_route_skipped:
+            return 'opening',[next(k for k in opening if k not in self.cleared)]
+        for stage,ids in (('shop',[shop]),('side',list(side)),('laboratory',[lab]),('center',['ch-7'])):
+            if stage not in self.ch_route_skipped and not any(k in self.cleared for k in ids):
+                return stage,ids
+        return None,[]
+
+    def ch_route_allows(self,c,home):
+        stage,ids=self.ch_route_stage(home)
+        if not stage or c['id'] in ids:return True
+        # A safe unvisited side camp keeps the army working while lab support arrives.
+        north=hypot(home.x-2176,home.y-4224)<hypot(home.x+2304,home.y+4736)
+        fallback={'ch-0','ch-5'} if north else {'ch-15','ch-11'}
+        return (stage=='laboratory' or stage=='center' and not self.ch_orb_ready) and c['id'] in fallback
+
+    def ch_route_waypoint(self,g,army,center,home,now):
+        stage,ids=self.ch_route_stage(home)
+        if not stage:return None
+        if self.ch_route_wait is None or self.ch_route_wait['stage']!=stage:
+            self.ch_route_wait=dict(stage=stage,started=now)
+            self.log('ch_route_stage',clock=now,stage=stage,camps=ids)
+        # Explicit skips preserve the evidence; never mark an unsafe camp cleared.
+        if stage!='center' and now-self.ch_route_wait['started']>180:
+            self.ch_route_skipped.add(stage)
+            self.log('ch_route_stage_skipped',clock=now,stage=stage,reason='bounded_wait',camps=ids)
+            if self.active and self.active['id'] in ids:self.defer(now,'ch_route_timeout')
+            return None
+        if (stage=='laboratory' and not self.ch_home_returned and self.active is None
+                and any(c['id'] in ids for c in self.candidates(g,army,home,now))):
+            point=(home.x,home.y)
+            if g.dist(center,point)<=900:
+                self.ch_home_returned=True
+                self.log('ch_route_home_rejoined',clock=now,point=center)
+            elif g.path_distance(center,point) is not None and self.safe_route(g,center,point):
+                return point
+        return None
+
     def ch_center(self,c):
         # CH's public central 7/5/4/3/3 gold-mine camp, for either starting side.
         return self.map_alias=='CH' and c['id']=='ch-7'
@@ -138,6 +189,8 @@ class Creeping:
             self.log('ch_center_staging_end',clock=now,reason='cleared',camp=camp['id'])
             return False
         if not self.ch_orb_ready:return False
+        stage,_=self.ch_route_stage(home)
+        if stage and stage!='center':return True
         if self.ch_center_started is None:
             self.ch_center_started=now
             self.log('ch_center_staging_started',clock=now,camp=camp['id'])
@@ -149,7 +202,48 @@ class Creeping:
             return False
         return True
 
+    def ni_central(self,c):
+        return self.map_alias=='NI' and c['id'] in {'ni-7','ni-10'}
+
+    def ni_opening(self,home):
+        if self.map_alias!='NI' or self.ni_attack_started:return []
+        north=hypot(home.x-6912,home.y-3264)<hypot(home.x+2752,home.y+3328)
+        route=['ni-15','ni-11','ni-13','ni-8'] if north else ['ni-2','ni-6','ni-4','ni-9']
+        return route if set(route+['ni-7','ni-10'])<={c['id'] for c in self.catalog} else []
+
+    def ni_route_stage(self,home):
+        opening=self.ni_opening(home)
+        if not opening:return None
+        # Finish the opening, including an engaged camp, before the orb pair.
+        route=opening+(['ni-7','ni-10'] if self.ni_orb_ready else [])
+        return next((k for k in route if k not in self.cleared),None)
+
+    def ni_continuous(self,home):
+        return bool(not self.ni_contested and self.ni_route_stage(home))
+
+    def ni_route_allows(self,c,home):
+        if not self.ni_opening(home):return True
+        # No arbitrary extra camps after the mine or after the central pair.
+        return c['id']==self.ni_route_stage(home)
+
+    def ni_route_update(self,home,now):
+        stage=self.ni_route_stage(home)
+        if not stage:return
+        if self.ni_route_wait is None or self.ni_route_wait['camp']!=stage:
+            self.ni_route_wait=dict(camp=stage,started=now)
+            self.log('ni_route_stage',clock=now,camp=stage)
+        # A timer, temporary weak subgroup or summon expiry never skips a
+        # prescribed camp. Only observed clearance advances the route.
+
+    def prepare_ni_center(self,g,army,home,now,orb,attack_committed):
+        if self.map_alias!='NI':return False
+        self.ni_orb_ready=bool(self.tier==3 and orb)
+        self.ni_attack_started=attack_committed
+        if self.ni_orb_ready:self.ni_route_update(home,now)
+        return bool(not attack_committed and self.ni_orb_ready and self.ni_route_stage(home))
+
     def pre_attack_safe(self,c):
+        if self.ni_central(c):return self.ni_orb_ready
         if self.ch_center(c):return self.ch_orb_ready and not self.ch_center_done
         if self.map_alias=='TM' and self.home_only and self.tier>=2 and c['kind'] in {'shop','mercenary'} and c.get('difficulty',99)<=18:
             return True
@@ -187,7 +281,14 @@ class Creeping:
                      and (sum(u.type in {'uske','uskm'} and u.hp>=u.hp_max*.7 for u in army)>=2
                           if ch_first else
                           any(u.type in {'uske','uskm','ucry'} and u.hp>=u.hp_max*.5 for u in army)))
-            if not self.pre_attack_safe(c):continue
+            fixed=self.ni_continuous(home) and c['id']==self.ni_route_stage(home)
+            if fixed:
+                retry_reason=self.deferred_reasons.get(c['id'])
+                resumes=retry_reason in {'army_not_ready','camp_too_strong','no_movement_or_damage_progress',
+                    'player_contact','safety_retreat','orb_contact_disengage'}
+                if army and c['id'] not in self.cleared and (resumes or now>=self.deferred.get(c['id'],0)):result.append(c)
+                continue
+            if not self.pre_attack_safe(c) or not self.ch_route_allows(c,home) or not self.ni_route_allows(c,home):continue
             if not self.tm_staging_allows(c,home):continue
             if c.get('difficulty',0)>=15 and (health/max(1,sum(u.hp_max for u in army))<.75 or
                 any(u.is_hero and u.hp/u.hp_max<.5 for u in army)):continue
@@ -196,11 +297,17 @@ class Creeping:
                 dk=next((u for u in army if u.type=='Udea'),None)
                 leader=next((u for u in army if u.type=='Ulic'),None)
                 if not dk or not leader or g.dist(dk,leader)>1000:continue
-            staging=ch_staging or self.map_alias=='TM' and self.home_only and self.tier>=2 and self.tm_staging_camp(c,home)
+            ni_staging=self.ni_central(c) and self.ni_orb_ready
+            if ni_staging:
+                dk=next((u for u in army if u.type=='Udea'),None)
+                leader=next((u for u in army if u.type=='Ulic'),None)
+                if not dk or not leader or g.dist(dk,leader)>1000:continue
+            staging=ch_staging or ni_staging or self.map_alias=='TM' and self.home_only and self.tier>=2 and self.tm_staging_camp(c,home)
             if (self.resupply_home or self.home_only) and not (chain and self.central_green_gnoll(c) or staging) and not self.home_half(g,c,home):continue
             if self.local_origin is not None and g.dist((c['x'],c['y']),self.local_origin)>2200:continue
             if c['id'] in self.cleared or c['id'] in self.exhausted or now<self.deferred.get(c['id'],0):continue
             if not healthy:continue
+            if c['kind']=='murloc' and any(u.is_hero and u.hp<.5*u.hp_max for u in army):continue
             if self.needs_support(c) and not supported and not ch_open and not self.ch_midgame_support(g,c,army,home):continue
             opening_small=(self.opening_gnoll and not self.cleared and self.own_side(g,c,home)
                 and (self.small_turtle(c) or (c['kind'] in {'ogre','gnoll'} and c['max_level']<=3 and c.get('difficulty',0)<=9
@@ -268,8 +375,12 @@ class Creeping:
 
     def defer(self,now,reason):
         if self.active:
-            self.deferred[self.active['id']]=now+90
-            self.log('creep_target_deferred',clock=now,camp=self.active['id'],reason=reason)
+            # Temporary injuries/support separation can recover in seconds.
+            # Recheck actual eligibility soon; hostile/path failures retain backoff.
+            retry=5 if reason=='army_not_ready' else 90
+            self.deferred[self.active['id']]=now+retry
+            self.deferred_reasons[self.active['id']]=reason
+            self.log('creep_target_deferred',clock=now,camp=self.active['id'],reason=reason,retry_at=now+retry)
             if reason in {'no_movement_or_damage_progress','unreachable'}:
                 camp=self.active['id']
                 self.failures[camp]=self.failures.get(camp,0)+1
@@ -297,13 +408,20 @@ class Creeping:
     def choose(self,g,army,center,home,now,hostiles=()):
         visible=g.creeps()
         self.observe_clear(g,center,now,visible)
+        self.ni_route_update(home,now)
+        if self.active and not self.ni_route_allows(self.active,home):self.defer(now,'ni_route_order')
+        waypoint=self.ch_route_waypoint(g,army,center,home,now)
+        if self.active and not self.ch_route_allows(self.active,home):self.defer(now,'ch_route_order')
+        if waypoint is not None:return waypoint,[]
         if self.active and not self.pre_attack_safe(self.active):
             self.defer(now,'preserve_attack_readiness')
         if self.active and not self.tm_staging_allows(self.active,home):
             self.defer(now,'tm_orb_staging_route')
-        if self.active and (self.resupply_home or self.home_only) and not (
+        continuous=self.ni_continuous(home)
+        if self.active and not continuous and (self.resupply_home or self.home_only) and not (
                 self.tm_green_chain(army,now) and self.central_green_gnoll(self.active) or
                 self.ch_center(self.active) and self.ch_orb_ready or
+                self.ni_central(self.active) and self.ni_orb_ready or
                 self.map_alias=='TM' and self.home_only and self.tier>=2 and self.tm_staging_camp(self.active,home)) and not self.home_half(g,self.active,home):
             self.defer(now,'home_half_regroup')
         if self.active:
@@ -313,7 +431,8 @@ class Creeping:
                     c['id']==self.active['id'] for c in self.ch_home_opening(home))
             # Once engaged, actual remaining camp HP below owns the strength check.
             # Reapplying the full initial level sum after every hit would cause oscillation.
-            if health<.55 or support_lost:self.defer(now,'army_not_ready')
+            support_lost=support_lost and not self.ch_midgame_support(g,self.active,army,home)
+            if not continuous and (health<.55 or support_lost):self.defer(now,'army_not_ready')
             elif not self.safe_route(g,center,(self.active['x'],self.active['y'])):
                 self.defer(now,'enemy_main_route')
         if self.paused:
@@ -333,8 +452,11 @@ class Creeping:
                 self.progress_at=now;self.best_distance=distance
             self.last_hp=remaining
             if now-self.progress_at>25:
-                self.defer(now,'no_movement_or_damage_progress')
-            elif nearby and remaining>sum(u.hp for u in army)*1.8:
+                if continuous:
+                    self.repath=True;self.progress_at=now;self.best_distance=None
+                    self.log('ni_camp_repath',clock=now,camp=self.active['id'],reason='no_progress_keep_objective')
+                else:self.defer(now,'no_movement_or_damage_progress')
+            elif not continuous and nearby and remaining>sum(u.hp for u in army)*1.8:
                 self.defer(now,'camp_too_strong')
         if self.active is None:
             def score(c):
@@ -346,6 +468,8 @@ class Creeping:
                 preference={'ogre':0,'gnoll':0,'expansion':100,'marketplace':200,'murloc':400,'mercenary':600}.get(c['kind'],500)
                 return distance+120*c.get('difficulty',0)+preference+(0 if own_side or central else 2000)
             def opening_score(c):
+                stage,ids=self.ch_route_stage(home)
+                if stage:return (int(c['id'] not in ids),0,score(c))
                 if self.ch_orb_ready and not self.ch_center_done:
                     return (int(not self.ch_center(c)),0,score(c))
                 ch_next=next((p['id'] for p in self.ch_home_opening(home) if p['id'] not in self.cleared),None)

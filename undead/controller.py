@@ -31,6 +31,7 @@ from .creep_aggro import CreepAggro
 from .sleep_wake import SleepWake
 from .retreat import escape_point,clearance
 from .combat_progress import CombatProgress
+from .ni_rod_stop import NIRodStop
 import json
 from bootstrap import UPSTREAM
 from openwar3 import combat
@@ -95,6 +96,7 @@ class Controller:
         self.loot=Loot(json.loads((UPSTREAM/'data/game/items.json').read_text(encoding='utf-8')),log)
         self.battle_enemies=[]
         self.combat_progress=CombatProgress(log)
+        self.ni_rod_stop=NIRodStop(log)
         self.teleport=None
         self.portal_handoff=None
         self.portal_pulls={}
@@ -114,6 +116,7 @@ class Controller:
         self.hero_pressure=HeroPressure(log)
         self.siege=SiegeFocus(log)
         self.ever_rod=False
+        self.rod_acquisitions={};self.rod_bag_present=set()
         self.rod_purchase_closed=False
         self.scout_critter=None
         self.scout_critter_point=None
@@ -374,6 +377,8 @@ class Controller:
         self.combat_progress.observe(army,[e for e in hostiles if g.dist(e,center)<600],now,
                                      self.action in (Action.ATTACK,Action.HARASS))
         self.player_contact=self.detect_player_contact(army,foes,center)
+        self.creeping.ni_contested=bool(raid or self.player_contact or any(
+            enemy_player(g,e) and any(g.dist(e,u)<1200 for u in army) for e in foes))
         for enemy in self.player_contact:self.combat_progress.deferred.pop(enemy.handle,None)
         foes=[e for e in foes if self.combat_progress.allowed(e,now)]
         hostiles=[e for e in hostiles if self.combat_progress.allowed(e,now)]
@@ -420,6 +425,9 @@ class Controller:
         self.situation.supplies_ready=bool(not self.first_attack_all_in or self.first_attack_supply.done or self.first_attack_supply.ready(self) or self.attack_committed)
         self.situation.pre_attack_camp_pending=self.creeping.prepare_ch_center(g,local_army,self.home,now,
             self.situation.orb,self.attack_committed)
+        self.situation.pre_attack_camp_pending |= self.creeping.prepare_ni_center(g,local_army,self.home,now,
+            self.situation.orb,self.attack_committed)
+        self.situation.continuous_creeping=self.creeping.ni_continuous(self.home)
         if not self.attack_committed and attack_ready(self.situation):
             self.attack_committed=True
             self.log('attack_phase_started',clock=now,reason='tier_three_orb_three_heroes_confirmed')
@@ -449,8 +457,9 @@ class Controller:
         self.economy.save_for_tp=bool(not self.first_attack_all_in and not self.attack_portal_spent and not attack_ready(self.situation) and dk and tier>=2 and wants_attack and all(g.inventory(h) is not None for h in heroes) and not any('stwp' in (g.inventory(h) or []) for h in heroes))
         self.battle_shop.observe(g,now)
         self.army_recovery.observe(self,army,hostiles,now,bool(raid))
-        self.economy.save_for_trade=bool(self.army_recovery.reserve or self.battle_shop.pending or (self.battle_shop.rod and dk and 'rnec' not in (g.inventory(dk) or [])) or not raid and choose_rule(self.situation)!=Action.RETREAT and self.battle_shop.orb_reserve(g))
+        self.economy.save_for_trade=bool(self.army_recovery.reserve or self.battle_shop.pending or (self.battle_shop.rod and not self.battle_shop.rod['returning']) or not raid and choose_rule(self.situation)!=Action.RETREAT and self.battle_shop.orb_reserve(g))
         self.economy.bank_item_reserve=sum(job[3] for job in self.bank_supply_jobs(now))+self.first_attack_supply.reserve(self,tier)
+        if self.ni_rod_stop.mission and not self.ni_rod_stop.mission["returning"]:self.economy.bank_item_reserve+=150
         if self.due('economy',now,.8):
             self.economy.expansion.camps=[c for c in self.creeping.catalog if c['kind']=='expansion' and c['id'] in self.creeping.cleared]
             self.economy.expansion.safe_route=lambda start,end:self.creeping.safe_route(g,start,end)
@@ -468,6 +477,7 @@ class Controller:
                 safety_interrupt=urgent,base_enemy_hp=self.situation.base_enemy_hp,
                 local_enemy_hp=self.situation.local_enemy_hp,army_hp=self.situation.army_hp,
                 retreat_active=self.retreat_active)
+        if self.situation.continuous_creeping and forced is None:self.action=rule
         if self.action==Action.RETREAT and self.attack_committed:self.recovery_pending=True
         if self.action==Action.ATTACK and not attack_ready(self.situation):
             self.action=Action.CREEP
@@ -593,7 +603,7 @@ class Controller:
         if not healthy:return
         if not courier and self.support_dk(healthy,now):return
         self.battle_shop.sell_nearby(self,heroes,hostiles,now)
-        if self.action!=Action.ATTACK and self.equipment.tick(g,healthy,hostiles,now,self.cast_until):
+        if not (self.creeping.ni_continuous(self.home) and self.creeping.active) and self.action!=Action.ATTACK and self.equipment.tick(g,healthy,hostiles,now,self.cast_until):
             self.set_intent('战后整备 · 分配装备')
             self.creeping.pause(now,'equipment_transfer')
             return
@@ -601,14 +611,14 @@ class Controller:
             self.creeping.pause(now,'opponent_objective')
             if not self.prepare_attack(healthy,now):return
             self.battle_shop.prepare_potion(self,healthy,hostiles,now,opportunistic=True)
-        if self.collect_loot(healthy,hostiles,now,heroes):return
+        if not (self.creeping.ni_continuous(self.home) and self.creeping.active) and self.collect_loot(healthy,hostiles,now,heroes):return
         if self.shop_goal:
             self.set_intent('前往商店 · 购买'+{'ocor':'腐蚀之球','rnec':'骷髅棒'}.get(self.shop_code,'补给'))
             self.creeping.pause(now,'shopping')
             self.go(healthy,self.shop_goal,now,attack=False)
             self.fight(healthy,[e for e in foes+g.creeps() if g.dist(e,center)<650],now)
             return
-        if self.escort_tavern(healthy,hostiles,now,tier):return
+        if not (self.creeping.ni_continuous(self.home) and self.creeping.active) and self.escort_tavern(healthy,hostiles,now,tier):return
         if self.action==Action.HARASS and expansion and dk:
             target=min(expansion,key=lambda e:g.dist(e,dk))
             towers=[e for e in foes if is_structure(e) and e.type in {'hgtw','hctw','hatw'} and g.dist(e,target)<850]
@@ -837,7 +847,7 @@ class Controller:
 
     def support_dk(self,army,now):
         request=self.micro.dk_support
-        if not request:return False
+        if not request or self.creeping.ni_continuous(self.home):return False
         dk=self.g.unit(request['handle']) if self.situation and self.situation.threatened else None
         if self.situation and self.situation.threatened and dk and dk.hp/dk.hp_max>=.6 and not self.micro.damage.urgent(dk):
             return False # Healthy DK rejoins; the defensive line keeps fighting.
@@ -1340,6 +1350,7 @@ class Controller:
         scout=g.unit(self.economy.scout) if self.economy.scout else None
         if not scout:
             return
+        if scout.handle in self.economy.home_layout.reserved:return
         def move(point):
             self.go([scout],self.start_search.safe_step(g,scout,point,now),now)
         # After actual discovery the scout stays forward; its loss frees food.
@@ -1481,16 +1492,22 @@ class Controller:
             inv=g.inventory(h)
             if inv is None:
                 continue
-            self.ever_rod=self.ever_rod or 'rnec' in inv
-            code='rnec' if not self.rod_purchase_closed and self.economy.opening_rod_allowed and h.type=='Udea' and 'rnec' not in inv else None
+            present='rnec' in inv
+            if present and h.handle not in self.rod_bag_present:
+                self.rod_acquisitions[h.type]=self.rod_acquisitions.get(h.type,0)+1
+                self.log('rod_inventory_acquired',clock=now,hero=h.type,count=self.rod_acquisitions[h.type])
+            if present:self.rod_bag_present.add(h.handle)
+            else:self.rod_bag_present.discard(h.handle)
+            self.ever_rod=self.ever_rod or present
+            code='rnec' if not self.rod_purchase_closed and self.economy.opening_rod_allowed and h.type=='Udea' and self.rod_acquisitions.get('Udea',0)<2 and 'rnec' not in inv else None
             # Finish the current pull before leaving to restock; no one-camp/home loop.
             engaged=any(g.dist(h,e)<1000 for e in g.creeps()) if self.ever_rod else False
-            if code and not (tier>=2 and any(hero.type=='Ulic' for hero in heroes)) and not engaged and self.action==Action.CREEP and shops and None in inv and h.hp/h.hp_max>.5 and not self.situation.threatened and not self.battle_enemies:
+            if code and not (self.creeping.ni_continuous(self.home) and (self.creeping.active or self.creeping.cleared) and all(g.dist(h,shop)>300 for shop in shops)) and not (tier>=2 and any(hero.type=='Ulic' for hero in heroes)) and not engaged and self.action==Action.CREEP and shops and None in inv and h.hp/h.hp_max>.5 and not self.situation.threatened and not self.battle_enemies:
                 shop=g.nearest(shops,h)
                 if self.shop_item(heroes,h,shop,code,now):
                     self.shop_goal=(shop.x,shop.y)
                     self.shop_code=code
-            if h.type=='Udea' and 'rnec' in inv and not self.opening_corpse_pending(now):
+            if h.type in {'Udea','Ulic'} and 'rnec' in inv and not self.opening_corpse_pending(now) and not (h.type=='Udea' and self.ni_rod_stop.mission):
                 self.maintain_skeletons(h,inv.index('rnec'),now)
         jobs=self.bank_supply_jobs(now)
         if jobs:
@@ -1516,7 +1533,7 @@ class Controller:
 
     def maintain_skeletons(self,dk,slot,now):
         g=self.g
-        if self.battle_shop.rod:return False # Restock buyer rejoins before spending the new rod.
+        if self.battle_shop.rod and self.battle_shop.rod['hero']==dk.handle:return False # Buyer rejoins before summoning.
         if self.ch_resummon.mission:return False # The CH Graveyard stop owns its cast and confirmation.
         if now<self.rod_retry or now<self.cast_until.get(dk.handle,0) or dk.handle in self.micro.pulling:return False
         if g.cooldown(dk,'AIrd')!=0:return False
@@ -2297,8 +2314,10 @@ class Controller:
     def creep(self,army,center,now):
         g=self.g
         dk=next((u for u in army if u.type=='Udea'),None)
-        if dk and self.use_scout_corpse(army,dk,now):return
-        if dk and self.use_graveyard_corpse(army,dk,now):return
+        continuous=self.creeping.ni_continuous(self.home)
+        committed=continuous and bool(self.creeping.active or self.creeping.cleared)
+        if not committed and dk and self.use_scout_corpse(army,dk,now):return
+        if not committed and dk and self.use_graveyard_corpse(army,dk,now):return
         if self.ch_resummon.tick(self,army,now):return
         if (dk and self.economy.opening_started and dk.level==1 and now<240
                 and not self.opening_rod_finished and not self.graveyard_rod_abandoned
@@ -2310,7 +2329,7 @@ class Controller:
             return
         self.creeping.opening_gnoll=bool(dk and dk.level==1 and now<240 and not self.creeping.cleared
                                          and len(g.units('me',SKELETONS))>=2)
-        if dk and now<240 and not g.units('me',{'uske','uskm','nsce','nsca'}):
+        if not committed and dk and now<240 and not g.units('me',{'uske','uskm','nsce','nsca'}):
             critters=[u for u in g.units(15) if not is_structure(u) and u.hp_max<=100 and g.dist(u,dk)<1500]
             if critters:
                 self.set_intent('练级准备 · 获取骷髅尸体')
@@ -2322,12 +2341,15 @@ class Controller:
         self.creeping.resupply_home=bool(self.battle_shop.orb or self.first_attack_supply.active)
         self.creeping.home_only=not self.attack_committed
         self.creeping.local_origin=None
+        if self.ni_rod_stop.tick(self,army,now):return
         old_goal=self.camp_goal
         self.camp_goal,nearby=self.creeping.choose(g,self.creep_strength or army,center,self.home,now,self.battle_enemies)
+        if self.ni_rod_stop.tick(self,army,now):return
         # choose() can confirm the turtle clear and select the ogre this tick.
         # Intercept before issuing an attack, not one tick after the camp pulls.
         if self.ch_resummon.tick(self,army,now):return
-        if self.camp_goal!=old_goal:
+        if self.camp_goal!=old_goal or self.creeping.repath:
+            self.creeping.repath=False
             self.formation.reset()
             self.formation_at=-100
         if self.camp_goal:
@@ -2343,15 +2365,41 @@ class Controller:
                 self.fight(army,nearby,now)
             return
         if self.creeping.catalog:
+            if self.creeping.ni_opening(self.home) and not self.creeping.ni_route_stage(self.home):
+                # The prescribed opening is finished. Stage outside the shop
+                # while tech/orb arrives; never invent another camp or go home.
+                shop=next(c for c in self.creeping.catalog if c['id']=='ni-7')
+                length=max(1,hypot(self.home.x-shop['x'],self.home.y-shop['y']))
+                point=(shop['x']+(self.home.x-shop['x'])*1100/length,
+                       shop['y']+(self.home.y-shop['y'])*1100/length)
+                if self.creeping.ni_orb_ready:
+                    self.set_intent('指定营地已清 · 会合三英雄与首攻补给')
+                    point=center
+                else:self.set_intent('前四营已清 · 商店外侧会合，准备三本腐球')
+                if g.path_distance(center,point) is not None and self.creeping.safe_route(g,center,point):
+                    self.go(army,point,now)
+                return
             health=sum(u.hp for u in army)/max(1,sum(u.hp_max for u in army))
-            recover=health<.7 or any(u.is_hero and u.hp/u.hp_max<.5 for u in army)
-            regroup=self.battle_shop.orb or (self.creeping.home_only and self.creeping.enemy_main is not None)
+            recover=not self.creeping.ni_opening(self.home) and (health<.7 or any(u.is_hero and u.hp/u.hp_max<.5 for u in army))
+            regroup=(self.battle_shop.orb or (self.creeping.home_only and self.creeping.enemy_main is not None)) and self.creeping.map_alias not in {'CH','NI'}
             target=(self.home.x,self.home.y) if recover or regroup else center
             if regroup and not recover and self.battle_shop.orb:
                 courier=g.unit(self.battle_shop.orb['hero'])
                 if courier and self.creeping.home_half(g,dict(x=courier.x,y=courier.y),self.home):
                     target=(courier.x,courier.y)
+            if self.creeping.map_alias=='CH' and self.due('ch_route_wait',now,10):
+                stage,ids=self.creeping.ch_route_stage(self.home)
+                self.log('ch_route_wait',clock=now,stage=stage,camps=ids,reason='injured_army' if recover else 'no_safe_ready_camp',
+                         army_health=round(health,3),point=center)
+            if self.creeping.map_alias=='NI' and self.due('ni_route_wait',now,10):
+                next_camp=next((c for c in self.creeping.catalog if c['id']==self.creeping.ni_route_stage(self.home)),{})
+                self.log('ni_route_wait',clock=now,camp=self.creeping.ni_route_stage(self.home),
+                         reason='injured_army' if recover else 'no_safe_ready_camp',
+                         army_health=round(health,3),army_strength=round(self.creeping.strength(army),3),
+                         camp_difficulty=next_camp.get('difficulty'),point=center)
             self.set_intent('回家恢复 · 部队受损' if recover else '当前兵力或路径受限 · 回撤会合' if regroup else '就地接应增援 · 重新评估营地')
+            if self.creeping.ni_opening(self.home):
+                self.set_intent('指定营地路线受敌军或路径阻挡 · 保留目标')
             if regroup and self.due('creep_regroup_home',now,5):
                 self.log('creep_regroup_home',clock=now,point=target,orb_courier=bool(self.battle_shop.orb))
             self.go(army,target,now)

@@ -1,0 +1,394 @@
+{
+  "source": "20261018-005050/events.jsonl",
+  "deferred": {
+    "event": "creep_target_deferred",
+    "clock": 494.255,
+    "camp": "ni-7",
+    "reason": "army_not_ready"
+  },
+  "summary": {
+    "event": "summary",
+    "clock": 538.175,
+    "resources": {
+      "gold": 275,
+      "lumber": 100,
+      "food_used": 44,
+      "food_cap": 50,
+      "gold_gathered": 4960,
+      "lumber_gathered": 1520
+    },
+    "units": {
+      "uzig": 5,
+      "ucry": 4,
+      "ugho": 3,
+      "ugrv": 1,
+      "uobs": 2,
+      "uaco": 5,
+      "uslh": 1,
+      "Udea": 1,
+      "utom": 1,
+      "unp2": 1,
+      "ugol": 1,
+      "uaod": 1,
+      "usep": 1,
+      "Ulic": 1,
+      "Nbrn": 1
+    },
+    "situation": {
+      "now": 538.175,
+      "hero_health": 1.0,
+      "threatened": false,
+      "expansion": false,
+      "local_enemy_hp": 0,
+      "army_hp": 5100.0,
+      "fiends": 4,
+      "tier": 3,
+      "lich": true,
+      "orb": true,
+      "statues": 2,
+      "dk_level": 2,
+      "army_health": 1.0,
+      "recent_losses": 0,
+      "creep_targets_available": false,
+      "attack_committed": false,
+      "third_hero": true,
+      "dk": true,
+      "base_enemy_hp": 0,
+      "supplies_ready": true,
+      "pre_attack_camp_pending": true
+    },
+    "heroes": [
+      {
+        "type": "Udea",
+        "level": 2,
+        "hp": 725.0,
+        "mana": 270.0,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          "wlsd",
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIls",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 8224
+          },
+          {
+            "code": "AUau",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919248
+          },
+          {
+            "code": "AUdc",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "Aatk",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 537411600
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 528
+          }
+        ]
+      },
+      {
+        "type": "Ulic",
+        "level": 2,
+        "hp": 525.0,
+        "mana": 390.0,
+        "inventory": [
+          "rnec",
+          "gcel",
+          "ocor",
+          "bspd",
+          "rin1",
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIi3",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147483680
+          },
+          {
+            "code": "AIms",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147483680
+          },
+          {
+            "code": "AIcb",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147484320
+          },
+          {
+            "code": "AUfu",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 134217744
+          },
+          {
+            "code": "AIsx",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147483808
+          },
+          {
+            "code": "AIrd",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 134225952
+          },
+          {
+            "code": "AUfn",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "Aatk",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 672677904
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 528
+          }
+        ]
+      },
+      {
+        "type": "Nbrn",
+        "level": 1,
+        "hp": 550.0,
+        "mana": 225.0,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "ANba",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 134742160
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "Aatk",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 570966032
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          },
+          {
+            "code": "Ablr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          }
+        ]
+      }
+    ],
+    "own_upgrades": {
+      "Rura": 0,
+      "Rucr": 0,
+      "Ruwb": 0
+    },
+    "production": [
+      {
+        "type": "uzig",
+        "kind": "construction",
+        "queue": [
+          "uzig"
+        ],
+        "progress": 0.5284001159667969
+      },
+      {
+        "type": "uslh",
+        "kind": "queue",
+        "queue": [
+          "Rusp"
+        ],
+        "progress": 0.48666677474975584
+      }
+    ]
+  },
+  "march": {
+    "event": "march_state",
+    "clock": 534.23,
+    "target": [
+      -1328.63623046875,
+      -2826.343994140625
+    ],
+    "stage": "advance",
+    "army": [
+      {
+        "handle": [
+          13318,
+          90518
+        ],
+        "type": "ucry",
+        "x": -1221,
+        "y": -2927,
+        "point": [
+          -1328.63623046875,
+          -2826.343994140625
+        ],
+        "hold": false,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          13475,
+          53590
+        ],
+        "type": "ucry",
+        "x": -1329,
+        "y": -2826,
+        "point": [
+          -1328.63623046875,
+          -2826.343994140625
+        ],
+        "hold": true,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          14441,
+          41830
+        ],
+        "type": "ucry",
+        "x": -1318,
+        "y": -2928,
+        "point": [
+          -1328.63623046875,
+          -2826.343994140625
+        ],
+        "hold": false,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          14478,
+          71004
+        ],
+        "type": "ucry",
+        "x": -1424,
+        "y": -2822,
+        "point": [
+          -1328.63623046875,
+          -2826.343994140625
+        ],
+        "hold": true,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          14880,
+          26887
+        ],
+        "type": "Udea",
+        "x": -1232,
+        "y": -2827,
+        "point": [
+          -1328.63623046875,
+          -2826.343994140625
+        ],
+        "hold": true,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          16140,
+          67036
+        ],
+        "type": "Ulic",
+        "x": -1330,
+        "y": -2751,
+        "point": [
+          -1328.63623046875,
+          -2826.343994140625
+        ],
+        "hold": true,
+        "catching_up": false
+      },
+      {
+        "handle": [
+          16663,
+          102778
+        ],
+        "type": "Nbrn",
+        "x": -1225,
+        "y": -2730,
+        "point": [
+          -1328.63623046875,
+          -2826.343994140625
+        ],
+        "hold": false,
+        "catching_up": false
+      }
+    ]
+  }
+}

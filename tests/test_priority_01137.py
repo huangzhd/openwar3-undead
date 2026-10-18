@@ -62,13 +62,14 @@ class MidgameCampsTests(unittest.TestCase):
             army=[unit('Udea',1,home[0]),unit('Ulic',2,home[0])]+[unit('ucry',i,home[0]) for i in (3,4,5)]
             for u in army:u.y=home[1];u.hp=u.hp_max;u.level=3
             ids={x['id'] for x in c.candidates(g,army,b.home,420)}
-            self.assertIn(expected,ids);self.assertNotIn('ch-7',ids)
+            self.assertNotIn(expected,ids);self.assertNotIn('ch-7',ids) # Latest CH route excludes the side expansion.
+            camp=next(camp for camp in c.catalog if camp['id']==expected)
+            self.assertTrue(c.ch_midgame_support(g,camp,army,b.home))
 
-    def test_injured_hero_other_maps_and_known_blocked_paths_still_exclude(self):
-        for why in ('hero','map','route','cleared'):
+    def test_injured_hero_and_known_blocked_paths_still_exclude(self):
+        for why in ('hero','route','cleared'):
             b,g,army,c=self.scene();army=[u for u in army if u.type!='Udea']
             if why=='hero':next(u for u in army if u.type=='Ulic').hp=100
-            if why=='map':c.map_alias='AL'
             if why=='route':g.path_distance=lambda *a:None
             if why=='cleared':c.cleared.add('ch-5')
             g.walk_path=lambda a,z:[a,z]

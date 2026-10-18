@@ -6,14 +6,14 @@ from math import cos,sin,pi
 RINGS={'rde0':25,'rde1':62,'rde2':150,'rde3':300,'rde4':400}
 
 def sellable(hero,code):
-    return code in RINGS or code=='clsd' or (hero.type=='Udea' and code=='woms')
+    return code in RINGS or code in {'clsd','wlsd'} or (hero.type=='Udea' and code=='woms')
 
 class BattleShop:
     def __init__(self,log):
-        self.log=log;self.pending=None;self.attempts={};self.next_at=0
+        self.log=log;self.pending=None;self.attempts={};self.next_at=0;self.confirmed_buys={}
         self.defense=None;self.defense_retry=0
         self.orb=None;self.orb_retry=0;self.potion=None;self.potion_retry=0
-        self.rod=None;self.rod_retry=0
+        self.rod=None;self.rod_retry=0;self.lich_rod_bought=False;self.lich_rod_attempts=0
 
     @property
     def reserved(self):
@@ -58,6 +58,10 @@ class BattleShop:
         # A neutral shop may choose a different friendly recipient.
         if p['kind']=='buy' and not changed:
             changed=any((g.inventory(h) or []).count(p['code'])>p['team_before'].get(h.handle,0) for h in g.my_heroes())
+        if changed and p['kind']=='buy':
+            self.confirmed_buys[(p['hero'],p['code'])]=dict(clock=now,before=p['team_before'])
+        if changed and p['kind']=='buy' and p['code']=='rnec' and self.rod and p['hero']==self.rod['hero']:
+            self.rod['purchased']=True;self.lich_rod_bought=True
         if changed or now-p['started']>=3:
             self.log('shop_transaction_confirmed' if changed else 'shop_transaction_unconfirmed',clock=now,
                      kind=p['kind'],code=p['code'],hero=p['hero'],
@@ -200,58 +204,71 @@ class BattleShop:
         self.rod=None;self.rod_retry=now+(0 if reason=='rejoined' else 120)
 
     def rod_tick(self,b,hostiles,now,tier):
-        """After Lich arrives, only DK restocks; confirm his bag then follow Lich."""
+        """The new Lich buys one rod, then rejoins DK without recalling the army."""
         g=b.g;heroes=g.my_heroes()
-        dk=next((h for h in heroes if h.type=='Udea'),None)
         lich=next((h for h in heroes if h.type=='Ulic'),None)
+        dk=next((h for h in heroes if h.type=='Udea'),None)
         unsafe=b.action.name in {'RETREAT','DEFEND'} or b.teleport or b.situation.threatened
-        bag=g.inventory(dk) if dk else None
-        if self.rod and (not dk or not lich or unsafe or dk.handle in b.micro.pulling
-                         or any(g.dist(e,dk)<950 for e in hostiles)):
+        bag=g.inventory(lich) if lich else None
+        stop=getattr(b,'ni_rod_stop',None)
+        receipt=self.confirmed_buys.get((dk.handle,'rnec')) if dk else None
+        if (lich and stop and stop.mission and receipt and receipt['clock']>=stop.mission['started']
+                and bag is not None and bag.count('rnec')>receipt['before'].get(lich.handle,0)
+                and not self.lich_rod_bought and not unsafe):
+            # The shop gave DK's purchased rod to Lich. Let DK collect it;
+            # this does not fulfil Lich's own separate first purchase.
+            return {lich.handle}
+        if self.rod and (not lich or not dk or unsafe or lich.handle in b.micro.pulling
+                         or any(g.dist(e,lich)<950 for e in hostiles)):
             self.end_rod(now,'unsafe_or_hero_missing');return set()
-        if self.rod and tier>=3 and bag is not None and 'rnec' not in bag:
-            self.end_rod(now,'tier_three_no_restock');return set()
-        if not dk or not lich or unsafe:return set()
+        if not lich or not dk or unsafe:return set()
+        if bag is not None and 'rnec' in bag:self.lich_rod_bought=True
         if self.rod is None:
-            if (tier!=2 or now<self.rod_retry or self.orb or self.pending or bag is None or 'rnec' in bag
+            if (self.lich_rod_bought or self.lich_rod_attempts>=3 or tier<2 or now<self.rod_retry or self.orb or self.pending or bag is None or 'rnec' in bag
                     or not b.economy.opening_rod_allowed or b.economy.revival_pending(g)
-                    or dk.hp<.6*dk.hp_max or dk.handle in b.micro.pulling
-                    or any(g.dist(e,dk)<950 for e in hostiles) or None not in bag
-                    or any('rnec' in (g.inventory(h) or []) for h in heroes)
-                    or g.resources()['gold']<150):return set()
+                    or lich.hp<.6*lich.hp_max or lich.handle in b.micro.pulling
+                    or any(g.dist(e,lich)<950 for e in hostiles) or None not in bag):return set()
             shops=b.economy.ready(g,'utom')
-            shop=min(shops,key=lambda u:g.dist(dk,u),default=None)
+            shop=min(shops,key=lambda u:g.dist(lich,u),default=None)
             if shop is None:return set()
-            self.rod=dict(hero=dk.handle,shop=shop.handle,started=now,progress=now,best=None,
-                          returning=False,buys=0)
-            b.micro.dk_recovering=None;b.micro.dk_support=None
+            self.rod=dict(hero=lich.handle,shop=shop.handle,started=now,progress=now,best=None,
+                          returning=False,buys=0,team_before={h.handle:(g.inventory(h) or []).count('rnec') for h in heroes})
             b.formation.reset();b.formation_at=-100
-            self.log('rod_courier_started',clock=now,hero=dk.handle,leader=lich.handle,shop=shop.handle)
-        m=self.rod;reserved={dk.handle}
+            self.log('rod_courier_started',clock=now,hero=lich.handle,leader=dk.handle,shop=shop.handle)
+        m=self.rod;reserved={lich.handle}
         if now-m['started']>120:
             self.end_rod(now,'mission_timeout');return set()
         if bag is None:return reserved
         if 'rnec' in bag and not m['returning']:
             m.update(returning=True,best=None,progress=now)
-            self.log('rod_courier_inventory_confirmed',clock=now,hero=dk.handle)
-        if m['returning'] and g.dist(dk,lich)<=550:
+            self.log('rod_courier_inventory_confirmed',clock=now,hero=lich.handle)
+        if m['returning'] and g.dist(lich,dk)<=550:
             self.end_rod(now,'rejoined');b.formation.reset();b.formation_at=-100;return set()
-        target=lich if m['returning'] else g.unit(m['shop'])
+        donor=next((h for h in heroes if h.handle!=lich.handle and (g.inventory(h) or []).count('rnec')>m['team_before'].get(h.handle,0)),None)
+        target=dk if m['returning'] else donor or g.unit(m['shop'])
         if target is None:self.end_rod(now,'shop_missing');return set()
-        point=(target.x,target.y);route=g.path_distance((dk.x,dk.y),point)
-        if route is None or not b.creeping.safe_route(g,(dk.x,dk.y),point):
+        point=(target.x,target.y);route=g.path_distance((lich.x,lich.y),point)
+        if route is None or not b.creeping.safe_route(g,(lich.x,lich.y),point):
             self.end_rod(now,'unsafe_or_unreachable');return set()
         if m['best'] is None or route<m['best']-80:m.update(best=route,progress=now)
         if now-m['progress']>25:
             self.end_rod(now,'travel_or_stock_stalled');return set()
-        if now<b.cast_until.get(dk.handle,0):return reserved
-        if g.dist(dk,target)>280 or m['returning']:
-            b.go_raw([dk],point,now);return reserved
+        if now<b.cast_until.get(lich.handle,0):return reserved
+        if g.dist(lich,target)>280 or m['returning']:
+            b.go_raw([lich],point,now);return reserved
         if self.pending:return reserved
-        if m['buys']>=3:
+        if donor:
+            # A shop can choose another nearby hero; transfer the observed rod, never buy again.
+            if g.dist(donor,lich)<=350:self.transact(g,donor,'rnec','give',now,b.cast_until,lich)
+            else:b.go_raw([lich],(donor.x,donor.y),now)
+            return reserved
+        if m.get('purchased'):
+            self.end_rod(now,'purchased_rod_recipient_missing');return set()
+        if self.lich_rod_attempts>=3:
             self.end_rod(now,'purchase_unconfirmed');return set()
         if g.resources()['gold']>=150 and None in bag and not b.economy.revival_pending(g):
-            if self.transact(g,dk,'rnec','buy',now,b.cast_until,target):m['buys']+=1
+            if self.transact(g,lich,'rnec','buy',now,b.cast_until,target):
+                m['buys']+=1;self.lich_rod_attempts+=1
         return reserved
 
     def defend_tick(self,b,hostiles,now,tier):

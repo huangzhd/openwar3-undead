@@ -28,6 +28,7 @@ class StatueTests(unittest.TestCase):
 
     def test_safe_statues_hold_once_through_small_army_movements(self):
         b,g,_=self.scene();s=b.statue_support
+        for u in g.fiends+g.heroes:u.hp=u.hp_max;u.mana=u.mana_max
         s.tick(b,g.army,[],10)
         for f in g.fiends:f.x+=100
         s.tick(b,g.army,[],12);s.tick(b,g.army,[],14)
@@ -35,6 +36,7 @@ class StatueTests(unittest.TestCase):
 
     def test_out_of_range_pair_rejoins_different_rear_points_then_stops(self):
         b,g,events=self.scene();s=b.statue_support
+        for u in g.fiends+g.heroes:u.hp=u.hp_max;u.mana=u.mana_max
         for u in g.statues:u.x=-1100
         s.tick(b,g.army,[],10)
         moves=[o for o in g.orders if o[0]=='move']
@@ -46,6 +48,7 @@ class StatueTests(unittest.TestCase):
 
     def test_threatened_full_health_statue_pulls_but_safe_partner_stays(self):
         b,g,_=self.scene();s=b.statue_support
+        for u in g.fiends+g.heroes:u.hp=u.hp_max;u.mana=u.mana_max
         first,second=g.statues;first.x=300;second.x=-350
         enemy=unit('hfoo',88,400);enemy.owner=1
         s.tick(b,g.army,[enemy],10)

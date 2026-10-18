@@ -31,6 +31,7 @@ class WoundedStatueAnchorTests(unittest.TestCase):
 
     def test_lone_wounded_straggler_does_not_drag_stationed_pair(self):
         b,g,events=prior.StatueTests().scene()
+        for u in g.fiends+g.heroes:u.hp=u.hp_max;u.mana=u.mana_max
         far=unit('ucry',101,3000,100);g.army.append(far);b.micro.pulling.add(far.handle)
         b.statue_support.tick(b,g.army,[],10)
         self.assertEqual(g.orders,[('hold',u.handle) for u in g.statues])

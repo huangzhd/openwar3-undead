@@ -73,6 +73,7 @@ class FakeGame:
     def gold_mines(self): return []
     def nearest(self,units,point): return units[0] if units else None
     def order_of(self,u): return 1
+    def is_constructing(self,u): return False
     def resources(self): return dict(gold=self.gold,lumber=500,food_cap=50,food_used=20)
     def me(self): return 0
     def can_do(self,b,code): return 0 if self.gold>= {'unp1':320,'unp2':325,'Ulic':425,'ucry':215}.get(code,100) else 8

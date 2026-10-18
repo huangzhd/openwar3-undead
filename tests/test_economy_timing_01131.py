@@ -70,6 +70,43 @@ class TransitionBudgetTests(unittest.TestCase):
         e.tick(g,400)
         self.assertEqual(g.commands,['unp2']);self.assertFalse(g.builds)
 
+    def second_fiend_sample(self):
+        # CH 20261017-233458 at 248.850: second tower complete, idle crypt,
+        # 19/30 food and sufficient fiend resources, but not the T3 reserve.
+        g,e=self.game()
+        fiends=g.units('me',{'ucry'})
+        g.own=[u for u in g.own if u not in fiends[1:]]
+        g.food=19;g.cap=30;g.gold=627;g.lumber=210
+        g.busy[g.own[0].handle]=N(kind='upgrade',queue=['unp1'],progress=.6528208596)
+        return g,e
+
+    def test_second_fiend_uses_completed_tower_without_tier_three_reserve(self):
+        g,e=self.second_fiend_sample()
+        e.tick(g,248.85)
+        self.assertEqual(g.commands,['ucry'])
+        self.assertEqual((g.gold,g.lumber,g.food),(412,170,22))
+
+    def test_second_fiend_still_requires_actual_resources_and_food(self):
+        for gold,lumber,cap in ((214,210,30),(627,39,30),(627,210,20)):
+            with self.subTest(gold=gold,lumber=lumber,cap=cap):
+                g,e=self.second_fiend_sample();g.gold=gold;g.lumber=lumber;g.cap=cap
+                e.tick(g,248.85)
+                self.assertNotIn('ucry',g.commands)
+
+    def test_queued_second_fiend_does_not_allow_another_crypt_to_train_third(self):
+        g,e=self.second_fiend_sample();g.gold=900;g.lumber=400
+        crypt=g.my_buildings({'usep'})[0]
+        g.busy[crypt.handle]=N(kind='queue',queue=['ucry'])
+        g.own.append(unit('usep',951,owner=0))
+        e.tick(g,248.85)
+        self.assertNotIn('ucry',g.commands)
+
+    def test_completed_second_fiend_still_waits_for_lich_payment(self):
+        g,e=self.second_fiend_sample();g.gold=900;g.lumber=400
+        g.own.append(unit('ucry',952,owner=0));g.food=22
+        e.tick(g,248.85)
+        self.assertNotIn('ucry',g.commands)
+
     def test_paid_lich_tight_food_still_pays_tier_three_first(self):
         g,e=self.game(2);g.food=38;g.gold=340;g.lumber=250
         g.busy[g.my_buildings({'uaod'})[0].handle]=N(kind='queue',queue=['Ulic'])

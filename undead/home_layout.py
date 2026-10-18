@@ -15,7 +15,7 @@ def clear_of_buildings(point,buildings,padding=48,half=0):
 
 class HomeLayout:
     def __init__(self,log=lambda *a,**k:None):
-        self.cursors={};self.pending={};self.log=log
+        self.cursors={};self.pending={};self.log=log;self.failed_spots={}
 
     @property
     def reserved(self):
@@ -35,6 +35,23 @@ class HomeLayout:
                 self.pending.pop(code,None);continue
             gap=hypot(worker.x-p['point'][0],worker.y-p['point'][1])
             if gap<p['gap']-32:p.update(gap=gap,progress=now)
+            if code in {'ugrv','utom'} and now-p['started']>=2:
+                order=g.order_of(worker) or 0
+                # A dropped order is failure, not a reason to wait 24 seconds.
+                # Preserve real travel; a motionless build order is cancelled
+                # after three seconds without observed movement or foundation.
+                if order<0x20202020 or now-p['progress']>=3:
+                    if order>=0x20202020:g.hold(worker)
+                    self.pending.pop(code,None)
+                    self.failed_spots[(code,p['point'])]=now+45
+                    self.log('home_foundation_unconfirmed',clock=now,code=code,point=p['point'],
+                             worker=p['worker'],order=order,reason='order_lost' if order<0x20202020 else 'no_worker_progress')
+                    home=p.get('home')
+                    if home is not None and g.can_afford(code):
+                        self.build(g,worker,code,home,now)
+                        return True # Economy must not spend the same snapshot twice.
+                    continue
+                continue
             # An accepted build can still be travelling through the order queue.
             # Do not redirect that worker to mining or another building while
             # waiting for the fair snapshot's actual foundation.
@@ -87,6 +104,7 @@ class HomeLayout:
         for offset in range(min(24,len(points))):
             index=(start+offset)%len(points);point=points[index]
             self.cursors[key]=(index+1)%len(points)
+            if now is not None and now<self.failed_spots.get((code,point),-1):continue
             if grid and hasattr(grid,'buildable') and not all(grid.buildable(point[0]+x,point[1]+y)
                     for x in (-half,0,half) for y in (-half,0,half)):continue
             blocked=False
@@ -105,12 +123,15 @@ class HomeLayout:
             if blocked:continue
             attempts+=1
             spot=g.build_near(worker,code,*point,min_r=0,max_r=0,max_tries=1)
+            if spot and now is not None and now<self.failed_spots.get((code,tuple(spot)),-1):
+                return finish(None) # Wait for SDK to observe the cancellation, not another 24s hold.
             # An existing SDK walking order returns its earlier point. Keep it
             # intact; advance the cursor only for a newly tried location.
             if spot and tuple(spot)!=point:self.cursors[key]=start
             if spot:
                 if now is not None and worker is not None:
-                    self.pending[code]=dict(point=tuple(spot),worker=worker.handle,started=now,progress=now,
+                    self.pending[code]=dict(point=tuple(spot),worker=worker.handle,started=now,progress=now,home=home,
                         gap=hypot(worker.x-spot[0],worker.y-spot[1]),before={u.handle for u in buildings if u.type==code})
+                    self.log('home_build_order_pending',clock=now,code=code,point=tuple(spot),worker=worker.handle)
                 return finish(spot)
         return finish(None)

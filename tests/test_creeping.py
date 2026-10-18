@@ -15,19 +15,16 @@ class CreepTests(unittest.TestCase):
                 dict(id='murloc',kind='murloc',x=-3400,y=-800,max_level=3,hp=2100),
                 dict(id='expansion',kind='expansion',x=-4600,y=-2900,max_level=5,hp=1400),
                 dict(id='hard',kind='other',x=-6400,y=-3500,max_level=7,hp=2650)]
-    def test_murloc_waits_for_actual_tier_two_statue(self):
+    def test_murloc_uses_actual_army_without_waiting_for_statue(self):
         g=self.game();plan=Creeping(lambda *a,**k:None,self.camps())
         army=[unit('Udea',1,0)]+[unit('ucry',i+2,0) for i in range(4)]
         home=N(x=-5100,y=2900)
         goal,_=plan.choose(g,army,(-5100,2900),home,1)
         self.assertEqual(plan.active['id'],'ogre')
         goal,_=plan.choose(g,army,goal,home,3)
-        self.assertEqual(plan.active['id'],'expansion')
-        goal,_=plan.choose(g,army,goal,home,5)
-        self.assertIsNone(plan.active)
-        army.append(unit('uobs',20,0));plan.tier=2
-        plan.choose(g,army,(-3400,-800),home,6)
         self.assertEqual(plan.active['id'],'murloc')
+        goal,_=plan.choose(g,army,goal,home,5)
+        self.assertEqual(plan.active['id'],'expansion')
 
     def test_nearby_safe_expansion_can_beat_distant_ogre(self):
         g=self.game();plan=Creeping(lambda *a,**k:None,self.camps())
@@ -52,7 +49,7 @@ class CreepTests(unittest.TestCase):
         g=self.game();home=N(x=-5100,y=2900)
         camps=self.camps();plan=Creeping(lambda *a,**k:None,camps)
         army=[unit('Udea',1,0)]+[unit('ucry',i+2,0) for i in range(4)]
-        g.path_distance=lambda a,b:10000 if b[1]==4000 else dist(a,b)
+        g.path_distance=lambda a,b:10000 if b[1] in {4000,-800} else dist(a,b)
         plan.choose(g,army,(-5100,2900),home,1)
         self.assertEqual(plan.active['id'],'expansion')
     def test_lich_opens_level_seven_camps_without_reading_hidden_units(self):

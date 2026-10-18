@@ -13,24 +13,28 @@ class RodCourierTests(unittest.TestCase):
     def scene(self):
         g,b,s,events=shops.ShoppingTests().make()
         b.economy.opening_rod_allowed=True
-        g.bags[g.dk.handle]=[None]*6
+        g.bags[g.lich.handle]=[None]*6
+        def buy(shop,code):
+            bag=g.bags[g.lich.handle];bag[bag.index(None)]=code
+            g.orders.append(('buy','Ulic',code));return True
+        g.buy=buy
         return g,b,s,events
 
-    def test_dk_alone_buys_and_rejoins_moving_lich_after_inventory_confirmation(self):
+    def test_lich_alone_buys_and_rejoins_moving_dk_after_inventory_confirmation(self):
         g,b,s,events=self.scene()
-        self.assertEqual(s.rod_tick(b,[],350,2),{g.dk.handle})
-        self.assertEqual(g.orders,[('move','Udea',(0,0))])
-        g.dk.x=0;s.rod_tick(b,[],355,2)
-        self.assertIn('rnec',g.inventory(g.dk));self.assertIsNotNone(s.rod)
-        s.observe(g,357);g.lich.x=2700;s.rod_tick(b,[],359,2)
-        self.assertEqual(g.orders[-1],('move','Udea',(2700,0)))
-        g.lich.x=3000;g.dk.x=2700
+        self.assertEqual(s.rod_tick(b,[],350,2),{g.lich.handle})
+        self.assertEqual(g.orders,[('move','Ulic',(0,0))])
+        g.lich.x=0;s.rod_tick(b,[],355,2)
+        self.assertIn('rnec',g.inventory(g.lich));self.assertIsNotNone(s.rod)
+        s.observe(g,357);g.dk.x=2700;s.rod_tick(b,[],359,2)
+        self.assertEqual(g.orders[-1],('move','Ulic',(2700,0)))
+        g.dk.x=3000;g.lich.x=2700
         self.assertFalse(s.rod_tick(b,[],370,2));self.assertIsNone(s.rod)
         self.assertEqual(events[-1]['reason'],'rejoined')
-        self.assertFalse(any(o[0]=='group' or o[0]=='move' and o[1]!='Udea' for o in g.orders))
+        self.assertFalse(any(o[0]=='group' or o[0]=='move' and o[1]!='Ulic' for o in g.orders))
 
-    def test_receipt_without_dk_bag_cannot_claim_purchase_or_loop_forever(self):
-        g,b,s,events=self.scene();g.dk.x=0
+    def test_receipt_without_lich_bag_cannot_claim_purchase_or_loop_forever(self):
+        g,b,s,events=self.scene();g.lich.x=0
         g.buy=lambda shop,code:g.orders.append(('fake-buy',code)) or True
         for t in (350,354,358,362):
             s.observe(g,t);s.rod_tick(b,[],t,2)
@@ -38,13 +42,13 @@ class RodCourierTests(unittest.TestCase):
         self.assertFalse(any(e['event']=='rod_courier_inventory_confirmed' for e in events))
         s.rod_tick(b,[],370,2);self.assertEqual(len(g.orders),3)
 
-    def test_tier_three_stops_restock_but_already_bought_rod_still_rejoins(self):
+    def test_tier_three_does_not_cancel_lich_first_rod_purchase_or_rejoin(self):
         for bought in (False,True):
             g,b,s,events=self.scene();s.rod_tick(b,[],350,2)
-            if bought:g.bags[g.dk.handle][0]='rnec';g.dk.x=0
+            if bought:g.bags[g.lich.handle][0]='rnec';g.lich.x=0
             reserved=s.rod_tick(b,[],360,3)
-            self.assertEqual(bool(reserved),bought)
-            self.assertEqual(bool(s.rod),bought)
+            self.assertTrue(reserved)
+            self.assertTrue(s.rod)
             self.assertFalse(any(o[0]=='buy' for o in g.orders))
 
     def test_threat_missing_route_and_stall_release_assignment(self):
@@ -75,6 +79,8 @@ class CHCenterTests(unittest.TestCase):
         army=[dk,lich]+[unit('ucry',i,x+100,550) for i in range(120,126)]+[unit('uobs',140,x+120,550)]
         for u in army:u.y=y;u.hp=u.hp_max
         c=b.creeping;c.home_only=True
+        c.cleared=({"ch-9","ch-13","ch-6","ch-0","ch-14"} if y>0 else {"ch-8","ch-3","ch-10","ch-15","ch-2"})
+        c.ch_home_returned=True
         return b,g,army,c
 
     def test_both_spawns_central_camp_waits_for_tier_three_and_lich_orb(self):
