@@ -18,7 +18,7 @@ class SupplyOrderTests(unittest.TestCase):
         self.assertFalse(g.commands);self.assertFalse(g.builds)
         self.assertEqual(g.food,22)
 
-    def test_late_tier_two_through_slaughter_foundation_keeps_third_tower_last(self):
+    def test_actual_full_population_overrides_optional_tower_order_after_tech_paid(self):
         g,e=self.scene(25)
         e.tick(g,280);self.assertFalse(g.commands);self.assertFalse(g.builds)
         home=g.own[0];home.type='unp1';g.busy.pop(home.handle)
@@ -26,12 +26,14 @@ class SupplyOrderTests(unittest.TestCase):
         g.busy[home.handle]=N(kind='upgrade',queue=['unp2'],progress=.1)
         e.tick(g,304);self.assertEqual(g.commands,['unp2','Ulic']);self.assertFalse(g.builds)
         g.food+=5 # Engine charges hero food on accepted recruitment.
-        e.tick(g,308);self.assertEqual([b[1] for b in g.builds],['uslh'])
-        e.tick(g,312);self.assertEqual([b[1] for b in g.builds],['uslh'])
-        house=unit('uslh',999,owner=0);house.hp=10;g.own.append(house)
+        e.tick(g,308);self.assertEqual([b[1] for b in g.builds],['uzig'])
+        tower=unit('uzig',998,owner=0);tower.x,tower.y=g.builds[-1][2:];g.own.append(tower)
+        g.cap=40
+        e.tick(g,312);self.assertEqual([b[1] for b in g.builds],['uzig','uslh'])
+        house=unit('uslh',999,owner=0);house.x,house.y=g.builds[-1][2:];house.hp=10;g.own.append(house)
         g.busy[house.handle]=N(kind='construction',queue=['uslh'])
         e.tick(g,316)
-        self.assertEqual([b[1] for b in g.builds],['uslh','uzig'])
+        self.assertEqual([b[1] for b in g.builds],['uzig','uslh'])
 
     def test_paid_lich_releases_reserved_food_for_reinforcements(self):
         g,e=self.scene(25)

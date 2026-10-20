@@ -83,7 +83,7 @@ class NIRouteTests(unittest.TestCase):
             for tier,orb in ((2,True),(3,False)):
                 c.tier=tier;self.assertFalse(c.prepare_ni_center(g,a,b.home,450,orb,False))
                 self.assertFalse({'ni-7','ni-10'}&{p['id'] for p in c.candidates(g,a,b.home,450)})
-            c.cleared.update(c.ni_opening(b.home));c.tier=3
+            c.cleared.update(c.ni_opening(b.home)+c.ni_midgame(b.home));c.tier=3
             self.assertTrue(c.prepare_ni_center(g,a,b.home,500,True,False))
             self.assertEqual({p['id'] for p in c.candidates(g,a,b.home,500)},{'ni-7'})
             c.cleared.add('ni-7')
@@ -93,7 +93,7 @@ class NIRouteTests(unittest.TestCase):
             self.assertFalse(c.prepare_ni_center(g,a,b.home,600,True,False))
 
     def test_central_camp_stays_active_outside_own_half(self):
-        b,g,a,c=self.scene(True,True);c.cleared.update(c.ni_opening(b.home));c.tier=3
+        b,g,a,c=self.scene(True,True);c.cleared.update(c.ni_opening(b.home)+c.ni_midgame(b.home));c.tier=3
         c.prepare_ni_center(g,a,b.home,500,True,False)
         point,_=c.choose(g,a,(b.home.x,b.home.y),b.home,500)
         self.assertEqual(c.active['id'],'ni-7')
@@ -110,7 +110,7 @@ class NIRouteTests(unittest.TestCase):
         self.assertFalse(c.ni_route_skipped)
 
     def test_timeout_does_not_skip_or_fabricate_clear(self):
-        b,g,a,c=self.scene(False,True);c.cleared.update(c.ni_opening(b.home));c.tier=3
+        b,g,a,c=self.scene(False,True);c.cleared.update(c.ni_opening(b.home)+c.ni_midgame(b.home));c.tier=3
         c.prepare_ni_center(g,a,b.home,500,True,False)
         c.prepare_ni_center(g,a,b.home,900,True,False)
         self.assertFalse(c.ni_route_skipped);self.assertNotIn('ni-7',c.cleared)

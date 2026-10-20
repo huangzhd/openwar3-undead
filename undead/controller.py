@@ -603,6 +603,9 @@ class Controller:
         if not healthy:return
         if not courier and self.support_dk(healthy,now):return
         self.battle_shop.sell_nearby(self,heroes,hostiles,now)
+        # Fresh drops must be collected before selecting the next camp, even
+        # while a fixed NI route is active. Only the picker leaves combat.
+        if self.action==Action.CREEP and self.collect_loot(healthy,hostiles,now,heroes):return
         if not (self.creeping.ni_continuous(self.home) and self.creeping.active) and self.action!=Action.ATTACK and self.equipment.tick(g,healthy,hostiles,now,self.cast_until):
             self.set_intent('战后整备 · 分配装备')
             self.creeping.pause(now,'equipment_transfer')
@@ -611,7 +614,7 @@ class Controller:
             self.creeping.pause(now,'opponent_objective')
             if not self.prepare_attack(healthy,now):return
             self.battle_shop.prepare_potion(self,healthy,hostiles,now,opportunistic=True)
-        if not (self.creeping.ni_continuous(self.home) and self.creeping.active) and self.collect_loot(healthy,hostiles,now,heroes):return
+        if self.action!=Action.CREEP and self.collect_loot(healthy,hostiles,now,heroes):return
         if self.shop_goal:
             self.set_intent('前往商店 · 购买'+{'ocor':'腐蚀之球','rnec':'骷髅棒'}.get(self.shop_code,'补给'))
             self.creeping.pause(now,'shopping')
@@ -640,12 +643,17 @@ class Controller:
     def collect_loot(self,healthy,hostiles,now,heroes):
         g=self.g
         if self.action!=Action.DEFEND:
-            pickup=self.loot.tick(g,healthy,hostiles,now,heroes,self.action==Action.CREEP and any(g.dist(e,h)<950 for e in g.creeps() for h in healthy if h.is_hero) and not self.player_contact)
+            camp_combat=self.action==Action.CREEP and any(g.dist(e,h)<950 for e in g.creeps() for h in healthy if h.is_hero) and not self.player_contact
+            pickup=self.loot.tick(g,healthy,hostiles,now,heroes,camp_combat)
             if pickup:
                 self.set_intent('沿途收集战利品')
-                self.creeping.pause(now,'loot')
                 picker,point=pickup
                 others=[u for u in healthy if u.handle!=picker.handle]
+                if camp_combat:
+                    self.fight(others,[e for e in hostiles if getattr(e,'owner',None)==12
+                                      and any(g.dist(e,u)<950 for u in others)],now)
+                    return True
+                self.creeping.pause(now,'loot')
                 if any(g.dist(u,point)>500 for u in others):
                     self.go(others,point,now)
                 elif self.due('loot_wait',now,3):
@@ -1499,7 +1507,9 @@ class Controller:
             if present:self.rod_bag_present.add(h.handle)
             else:self.rod_bag_present.discard(h.handle)
             self.ever_rod=self.ever_rod or present
-            code='rnec' if not self.rod_purchase_closed and self.economy.opening_rod_allowed and h.type=='Udea' and self.rod_acquisitions.get('Udea',0)<2 and 'rnec' not in inv else None
+            # The NI courier owns this purchase and its inventory confirmation.
+            # Generic shopping must not buy first and leave that mission retrying.
+            code='rnec' if not self.ni_rod_stop.mission and not self.rod_purchase_closed and self.economy.opening_rod_allowed and h.type=='Udea' and self.rod_acquisitions.get('Udea',0)<2 and 'rnec' not in inv else None
             # Finish the current pull before leaving to restock; no one-camp/home loop.
             engaged=any(g.dist(h,e)<1000 for e in g.creeps()) if self.ever_rod else False
             if code and not (self.creeping.ni_continuous(self.home) and (self.creeping.active or self.creeping.cleared) and all(g.dist(h,shop)>300 for shop in shops)) and not (tier>=2 and any(hero.type=='Ulic' for hero in heroes)) and not engaged and self.action==Action.CREEP and shops and None in inv and h.hp/h.hp_max>.5 and not self.situation.threatened and not self.battle_enemies:
@@ -2366,7 +2376,7 @@ class Controller:
             return
         if self.creeping.catalog:
             if self.creeping.ni_opening(self.home) and not self.creeping.ni_route_stage(self.home):
-                # The prescribed opening is finished. Stage outside the shop
+                # All currently unlocked prescribed camps are finished. Stage outside the shop
                 # while tech/orb arrives; never invent another camp or go home.
                 shop=next(c for c in self.creeping.catalog if c['id']=='ni-7')
                 length=max(1,hypot(self.home.x-shop['x'],self.home.y-shop['y']))
@@ -2375,7 +2385,7 @@ class Controller:
                 if self.creeping.ni_orb_ready:
                     self.set_intent('指定营地已清 · 会合三英雄与首攻补给')
                     point=center
-                else:self.set_intent('前四营已清 · 商店外侧会合，准备三本腐球')
+                else:self.set_intent('当前阶段指定营地已清 · 商店外侧会合，准备科技与腐球')
                 if g.path_distance(center,point) is not None and self.creeping.safe_route(g,center,point):
                     self.go(army,point,now)
                 return

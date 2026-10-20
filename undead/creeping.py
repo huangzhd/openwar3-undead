@@ -211,11 +211,20 @@ class Creeping:
         route=['ni-15','ni-11','ni-13','ni-8'] if north else ['ni-2','ni-6','ni-4','ni-9']
         return route if set(route+['ni-7','ni-10'])<={c['id'] for c in self.catalog} else []
 
+    def ni_midgame(self,home):
+        """Own-side 5/4/4 then laboratory; the first four camps stay unchanged."""
+        opening=self.ni_opening(home)
+        if not opening:return []
+        route=['ni-17','ni-14'] if opening[0]=='ni-15' else ['ni-0','ni-3']
+        return route if set(route)<={c['id'] for c in self.catalog} else []
+
     def ni_route_stage(self,home):
         opening=self.ni_opening(home)
         if not opening:return None
-        # Finish the opening, including an engaged camp, before the orb pair.
-        route=opening+(['ni-7','ni-10'] if self.ni_orb_ready else [])
+        # Tier two continues through the home camps while tech and orb arrive.
+        # Finish engaged camps rather than abandoning them on tier/orb changes.
+        route=opening+(self.ni_midgame(home) if self.tier>=2 else [])
+        route+=['ni-7','ni-10'] if self.ni_orb_ready else []
         return next((k for k in route if k not in self.cleared),None)
 
     def ni_continuous(self,home):
@@ -223,7 +232,7 @@ class Creeping:
 
     def ni_route_allows(self,c,home):
         if not self.ni_opening(home):return True
-        # No arbitrary extra camps after the mine or after the central pair.
+        # Only the prescribed opening, tier-two home camps and central pair.
         return c['id']==self.ni_route_stage(home)
 
     def ni_route_update(self,home,now):
@@ -413,11 +422,11 @@ class Creeping:
         waypoint=self.ch_route_waypoint(g,army,center,home,now)
         if self.active and not self.ch_route_allows(self.active,home):self.defer(now,'ch_route_order')
         if waypoint is not None:return waypoint,[]
-        if self.active and not self.pre_attack_safe(self.active):
+        continuous=self.ni_continuous(home)
+        if self.active and not continuous and not self.pre_attack_safe(self.active):
             self.defer(now,'preserve_attack_readiness')
         if self.active and not self.tm_staging_allows(self.active,home):
             self.defer(now,'tm_orb_staging_route')
-        continuous=self.ni_continuous(home)
         if self.active and not continuous and (self.resupply_home or self.home_only) and not (
                 self.tm_green_chain(army,now) and self.central_green_gnoll(self.active) or
                 self.ch_center(self.active) and self.ch_orb_ready or

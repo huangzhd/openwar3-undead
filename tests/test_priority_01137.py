@@ -84,7 +84,7 @@ class BuildOrderTests(unittest.TestCase):
         g.busy[g.own[0].handle]=N(kind='upgrade',queue=['unp2'],progress=.1)
         e.tick(g,304);self.assertEqual(g.commands,['unp2','Ulic']);self.assertFalse(g.builds)
         e.tick(g,308);self.assertEqual([x[1] for x in g.builds],['uslh'])
-        h=building('uslh',990,owner=0);g.own.append(h);g.busy[h.handle]=N(kind='construction',queue=['uslh'])
+        h=building('uslh',990,owner=0);h.x,h.y=g.builds[-1][2:];g.own.append(h);g.busy[h.handle]=N(kind='construction',queue=['uslh'])
         g.food=36;e.tick(g,312);self.assertEqual([x[1] for x in g.builds],['uslh','uzig'])
 
     def test_tier_three_saving_does_not_spend_on_lich_slaughter_or_tower(self):

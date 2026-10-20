@@ -111,6 +111,7 @@ class DestroyerEconomyTests(unittest.TestCase):
         e.tick(g,504);self.assertEqual(g.commands,['Rusp'])
         self.assertEqual(g.builds[-1][1],'uzig') # Third hero exists: next supply may build.
         g.cap=60
+        tower=unit('uzig',999,owner=0);tower.x,tower.y=g.builds[-1][2:];g.own.append(tower)
         g.busy.pop(house.handle);g.levels['Rusp']=1;e.tick(g,565)
         self.assertEqual(g.commands,['Rusp','uobs']);self.assertEqual(g.food,47)
         g.busy.pop(house.handle);g.own.append(unit('ubsp',995,owner=0));g.food=49

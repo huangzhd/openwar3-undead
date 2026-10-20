@@ -44,7 +44,11 @@ class GrowthExpansionTests(unittest.TestCase):
         e.expansion.observe(g)
     def step(self,g,e,t):return e.expansion.tick(g,e,g.my_buildings({'unp2'})[0],t)
     def foundation(self,g,code,handle,complete=False):
-        b=unit(code,handle,owner=0,x=3000 if code=='ugol' else 3384);g.own.append(b)
+        b=unit(code,handle,owner=0,x=3000 if code=='ugol' else 3384)
+        if code!='ugol':
+            built=next((r for r in reversed(g.builds) if r[1]==code),None)
+            if built:b.x,b.y=built[2:]
+        g.own.append(b)
         if not complete:b.hp=10;g.busy[b.handle]=N(kind='construction',queue=[])
         return b
 

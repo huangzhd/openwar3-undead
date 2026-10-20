@@ -9,7 +9,7 @@ from undead.battle_shop import sellable
 
 class RecoveredCampTests(unittest.TestCase):
     def scene(self):
-        b,g,a,c=ni.NIRouteTests().scene(False,True);c.cleared.update(c.ni_opening(b.home));c.tier=3
+        b,g,a,c=ni.NIRouteTests().scene(False,True);c.cleared.update(c.ni_opening(b.home)+c.ni_midgame(b.home));c.tier=3
         c.prepare_ni_center(g,a,b.home,483.9,True,False)
         c.active=next(p for p in c.catalog if p['id']=='ni-7')
         return b,g,a,c

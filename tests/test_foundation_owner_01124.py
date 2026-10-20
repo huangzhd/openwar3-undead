@@ -14,13 +14,14 @@ class FoundationTests(unittest.TestCase):
         buildings=[home];workers=[worker];orders=[];events=[];order=[0]
         g=N(my_buildings=lambda:buildings,units=lambda side,codes:workers,
             build_near=lambda w,c,x,y,**kw:orders.append((c,x,y)) or (x,y),
-            order_of=lambda u:order[0],hold=lambda u:orders.append(('hold',u.handle)) or True)
+            can_afford=lambda code:False,order_of=lambda u:order[0],hold=lambda u:orders.append(('hold',u.handle)) or True)
         layout=HomeLayout(lambda event,**kw:events.append(dict(event=event,**kw)))
         return layout,g,home,worker,buildings,workers,orders,events,order
 
     def test_delayed_foundation_keeps_builder_and_never_reissues_build(self):
         l,g,h,w,bs,ws,orders,events,order=self.scene()
         point=l.build(g,w,'uaod',h,3)
+        order[0]=0x75616f64;w.x=(w.x+point[0])/2;w.y=(w.y+point[1])/2
         l.observe(g,18);self.assertEqual(l.reserved,{w.handle})
         self.assertEqual(l.build(g,w,'uaod',h,18),point);self.assertEqual(len(orders),1)
         foundation=unit('uaod',3,point[0]-32);foundation.y=point[1]-32;foundation.hp=12

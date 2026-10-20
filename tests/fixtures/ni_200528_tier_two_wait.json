@@ -1,0 +1,290 @@
+{
+  "run": "20261019-200528",
+  "version": "0.1.147-dev",
+  "mine_clear": {
+    "event": "creep_area_cleared",
+    "clock": 344.78,
+    "point": [
+      2287.57,
+      -4205.68
+    ],
+    "camp": "ni-9"
+  },
+  "summary": {
+    "event": "summary",
+    "clock": 357.5,
+    "resources": {
+      "gold": 265,
+      "lumber": 35,
+      "food_used": 27,
+      "food_cap": 30,
+      "gold_gathered": 3220,
+      "lumber_gathered": 920
+    },
+    "units": {
+      "ucry": 2,
+      "ugho": 3,
+      "uzig": 3,
+      "Udea": 1,
+      "ugrv": 1,
+      "uslh": 1,
+      "utom": 1,
+      "uaco": 5,
+      "uske": 2,
+      "usep": 1,
+      "uaod": 1,
+      "unp1": 1,
+      "ugol": 1
+    },
+    "situation": {
+      "now": 357.5,
+      "hero_health": 0.6264749145507813,
+      "threatened": false,
+      "expansion": false,
+      "local_enemy_hp": 0,
+      "army_hp": 1426.3064270019531,
+      "fiends": 2,
+      "tier": 2,
+      "lich": false,
+      "orb": false,
+      "statues": 0,
+      "dk_level": 3,
+      "army_health": 0.6311090384964394,
+      "recent_losses": 0,
+      "creep_targets_available": false,
+      "attack_committed": false,
+      "third_hero": false,
+      "dk": true,
+      "base_enemy_hp": 0,
+      "supplies_ready": false,
+      "pre_attack_camp_pending": false,
+      "continuous_creeping": false
+    },
+    "heroes": [
+      {
+        "type": "Udea",
+        "level": 3,
+        "hp": 501.179931640625,
+        "mana": 153.0059051513672,
+        "inventory": [
+          "stwp",
+          "rnec",
+          "rin1",
+          "rde1",
+          "bspd",
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIms",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147483680
+          },
+          {
+            "code": "AId2",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147483808
+          },
+          {
+            "code": "AIrd",
+            "level": 1,
+            "cooldown": 5.135379791259766,
+            "flags": 135275040
+          },
+          {
+            "code": "AUau",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919248
+          },
+          {
+            "code": "AIi3",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147483680
+          },
+          {
+            "code": "AUdc",
+            "level": 2,
+            "cooldown": 0.0,
+            "flags": 16
+          },
+          {
+            "code": "AItp",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 8224
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "Aatk",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 537395344
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2196
+          },
+          {
+            "code": "Ablr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          }
+        ]
+      }
+    ],
+    "own_upgrades": {
+      "Rura": 0,
+      "Rucr": 0,
+      "Ruwb": 0
+    },
+    "production": [
+      {
+        "type": "uzig",
+        "kind": "construction",
+        "queue": [
+          "uzig"
+        ],
+        "progress": 0.10199998855590821
+      },
+      {
+        "type": "uslh",
+        "kind": "construction",
+        "queue": [
+          "uslh"
+        ],
+        "progress": 0.43575000762939453
+      },
+      {
+        "type": "uaod",
+        "kind": "queue",
+        "queue": [
+          "Ulic"
+        ],
+        "progress": 0.9653633811257102
+      },
+      {
+        "type": "unp1",
+        "kind": "upgrade",
+        "queue": [
+          "unp2"
+        ],
+        "progress": 0.38621420179094584
+      }
+    ]
+  },
+  "rod_events": [
+    {
+      "event": "buy",
+      "clock": 241.325,
+      "code": "rnec",
+      "hero": "Udea",
+      "accepted": true,
+      "reason": "accepted",
+      "inventory": [
+        "stwp",
+        null,
+        "rin1",
+        null,
+        null,
+        null
+      ],
+      "attempt": 2
+    },
+    {
+      "event": "rod_inventory_acquired",
+      "clock": 242.0,
+      "hero": "Udea",
+      "count": 2
+    },
+    {
+      "event": "shop_transaction_attempt",
+      "clock": 242.0,
+      "kind": "buy",
+      "code": "rnec",
+      "hero": "Udea",
+      "accepted": false,
+      "reason": "rejected（原因码 88）",
+      "attempt": 1
+    },
+    {
+      "event": "shop_transaction_unconfirmed",
+      "clock": 245.43,
+      "kind": "buy",
+      "code": "rnec",
+      "hero": [
+        13988,
+        27183
+      ],
+      "recipients": [],
+      "refund_excluding_gathering": null
+    },
+    {
+      "event": "shop_transaction_attempt",
+      "clock": 245.43,
+      "kind": "buy",
+      "code": "rnec",
+      "hero": "Udea",
+      "accepted": false,
+      "reason": "rejected（原因码 88）",
+      "attempt": 2
+    },
+    {
+      "event": "shop_transaction_unconfirmed",
+      "clock": 248.625,
+      "kind": "buy",
+      "code": "rnec",
+      "hero": [
+        13988,
+        27183
+      ],
+      "recipients": [],
+      "refund_excluding_gathering": null
+    },
+    {
+      "event": "shop_transaction_attempt",
+      "clock": 248.625,
+      "kind": "buy",
+      "code": "rnec",
+      "hero": "Udea",
+      "accepted": false,
+      "reason": "rejected（原因码 88）",
+      "attempt": 3
+    },
+    {
+      "event": "shop_transaction_unconfirmed",
+      "clock": 251.75,
+      "kind": "buy",
+      "code": "rnec",
+      "hero": [
+        13988,
+        27183
+      ],
+      "recipients": [],
+      "refund_excluding_gathering": null
+    },
+    {
+      "event": "ni_dk_rod_end",
+      "clock": 251.75,
+      "reason": "three_unconfirmed_purchases",
+      "inventory_confirmed": false
+    }
+  ]
+}

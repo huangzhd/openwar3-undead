@@ -126,7 +126,8 @@ class Economy:
 
     def build(self,g,code,home,now):
         if (code=='uzig' and len(g.my_buildings({'uzig','uzg1','uzg2'}))>=4
-                and self.third_hero not in self.ever_heroes):return False
+                and self.third_hero not in self.ever_heroes
+                and g.resources()['food_cap']-g.resources()['food_used']>=5):return False
         if code in self.home_layout.pending:return True
         if not g.can_afford(code) or now-self.last_build<1:
             return False
@@ -208,6 +209,20 @@ class Economy:
             self.log('upkeep_bank_reset',clock=now,food=res['food_used'])
         if repair_critical:return # Preserve a critically damaged live base before paying for revival.
         if self.revive_priority(g,home,now,res):return
+        # Actual supply shortage outranks shopping/expansion/research reserves.
+        # Keep the opening tech order until tier three has been paid; unfinished
+        # foundations and accepted pending builds never cause duplicate towers.
+        upgrading_home=g.production(home)
+        tech_paid=home.type=='unp2' or (upgrading_home and 'unp2' in getattr(upgrading_home,'queue',[]))
+        pending_supply=('uzig' in self.home_layout.pending or any(
+            (p:=g.production(b)) is not None and p.kind=='construction'
+            for b in g.my_buildings({'uzig'})))
+        needed=5 if self.third_hero not in self.ever_heroes else 3
+        if (self.opening_complete and tech_paid and res['food_cap']<100
+                and res['food_cap']-res['food_used']<needed and not pending_supply):
+            self.log('supply_construction_priority',clock=now,food_used=res['food_used'],food_cap=res['food_cap'])
+            self.build(g,'uzig',home,now)
+            return # Keep funds for supply even while gathering or finding a site.
         if self.home_tower_needed and self.defense_tower(g,home,now):return
         if self.save_for_trade:return
         if self.save_for_tp and not threat and not self.frontline_combat:

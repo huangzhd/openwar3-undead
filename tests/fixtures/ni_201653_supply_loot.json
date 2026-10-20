@@ -1,0 +1,817 @@
+{
+  "run": "20261019-201653",
+  "version": "0.1.148-dev",
+  "supply_failures": [
+    {
+      "event": "home_foundation_unconfirmed",
+      "clock": 384.25,
+      "code": "uzig",
+      "point": [
+        -3520,
+        -2816
+      ],
+      "worker": [
+        15775,
+        20792
+      ],
+      "order": 0
+    },
+    {
+      "event": "home_foundation_unconfirmed",
+      "clock": 409.255,
+      "code": "uzig",
+      "point": [
+        -3264,
+        -2560
+      ],
+      "worker": [
+        15751,
+        15757
+      ],
+      "order": 0
+    },
+    {
+      "event": "home_foundation_unconfirmed",
+      "clock": 433.775,
+      "code": "uzig",
+      "point": [
+        -3648,
+        -2944
+      ],
+      "worker": [
+        15775,
+        20792
+      ],
+      "order": 0
+    },
+    {
+      "event": "home_foundation_unconfirmed",
+      "clock": 516.975,
+      "code": "uzig",
+      "point": [
+        -3520,
+        -2688
+      ],
+      "worker": [
+        15751,
+        15757
+      ],
+      "order": 0
+    },
+    {
+      "event": "home_foundation_unconfirmed",
+      "clock": 541.175,
+      "code": "uzig",
+      "point": [
+        -3392,
+        -2560
+      ],
+      "worker": [
+        15775,
+        20792
+      ],
+      "order": 0
+    },
+    {
+      "event": "home_foundation_unconfirmed",
+      "clock": 566.45,
+      "code": "uzig",
+      "point": [
+        -3648,
+        -2816
+      ],
+      "worker": [
+        15751,
+        15757
+      ],
+      "order": 0
+    },
+    {
+      "event": "home_foundation_unconfirmed",
+      "clock": 590.775,
+      "code": "uzig",
+      "point": [
+        -3264,
+        -2432
+      ],
+      "worker": [
+        15775,
+        20792
+      ],
+      "order": 0
+    }
+  ],
+  "summaries": [
+    {
+      "event": "summary",
+      "clock": 573.13,
+      "resources": {
+        "gold": 1551,
+        "lumber": 680,
+        "food_used": 33,
+        "food_cap": 40,
+        "gold_gathered": 5080,
+        "lumber_gathered": 1640
+      },
+      "units": {
+        "ucry": 3,
+        "uske": 2,
+        "uzig": 3,
+        "Udea": 1,
+        "ugho": 3,
+        "Ulic": 1,
+        "uslh": 1,
+        "usep": 1,
+        "utom": 1,
+        "uaco": 5,
+        "unp2": 1,
+        "ugol": 1,
+        "uaod": 1,
+        "ugrv": 1,
+        "uobs": 1
+      },
+      "situation": {
+        "now": 573.13,
+        "hero_health": 0.6846790313720703,
+        "threatened": false,
+        "expansion": false,
+        "local_enemy_hp": 0,
+        "army_hp": 2772.7288818359375,
+        "fiends": 3,
+        "tier": 3,
+        "lich": true,
+        "orb": true,
+        "statues": 1,
+        "dk_level": 3,
+        "army_health": 0.6787586002046359,
+        "recent_losses": 0,
+        "creep_targets_available": false,
+        "attack_committed": false,
+        "third_hero": false,
+        "dk": true,
+        "base_enemy_hp": 0,
+        "supplies_ready": true,
+        "pre_attack_camp_pending": false,
+        "continuous_creeping": false
+      },
+      "heroes": [
+        {
+          "type": "Udea",
+          "level": 3,
+          "hp": 547.7432250976562,
+          "mana": 300.0,
+          "inventory": [
+            "wcyc",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "abilities": [
+            {
+              "code": "AIcy",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 8224
+            },
+            {
+              "code": "AUau",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 2415919248
+            },
+            {
+              "code": "AUdc",
+              "level": 2,
+              "cooldown": 0.0,
+              "flags": 16
+            },
+            {
+              "code": "AInv",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 144
+            },
+            {
+              "code": "AHer",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 144
+            },
+            {
+              "code": "Aatk",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 537411600
+            },
+            {
+              "code": "Amov",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 528
+            }
+          ]
+        },
+        {
+          "type": "Ulic",
+          "level": 2,
+          "hp": 570.4242553710938,
+          "mana": 328.22906494140625,
+          "inventory": [
+            "rin1",
+            "cnob",
+            "ocor",
+            "prvt",
+            null,
+            null
+          ],
+          "abilities": [
+            {
+              "code": "AIi3",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 2147483680
+            },
+            {
+              "code": "AIlf",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 2147483680
+            },
+            {
+              "code": "AIcb",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 2147484320
+            },
+            {
+              "code": "AUfu",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 134217744
+            },
+            {
+              "code": "AIx2",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 2147483680
+            },
+            {
+              "code": "AUfn",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 16
+            },
+            {
+              "code": "AInv",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 144
+            },
+            {
+              "code": "AHer",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 144
+            },
+            {
+              "code": "Aatk",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 706232336
+            },
+            {
+              "code": "Amov",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 16
+            },
+            {
+              "code": "Ablr",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 16
+            }
+          ]
+        }
+      ],
+      "own_upgrades": {
+        "Rura": 0,
+        "Rucr": 0,
+        "Ruwb": 0
+      },
+      "production": []
+    },
+    {
+      "event": "summary",
+      "clock": 588.225,
+      "resources": {
+        "gold": 1671,
+        "lumber": 740,
+        "food_used": 33,
+        "food_cap": 40,
+        "gold_gathered": 5200,
+        "lumber_gathered": 1700
+      },
+      "units": {
+        "ucry": 3,
+        "uzig": 3,
+        "Udea": 1,
+        "ugho": 3,
+        "Ulic": 1,
+        "uslh": 1,
+        "usep": 1,
+        "utom": 1,
+        "uaco": 5,
+        "unp2": 1,
+        "ugol": 1,
+        "uaod": 1,
+        "ugrv": 1,
+        "uobs": 1
+      },
+      "situation": {
+        "now": 588.225,
+        "hero_health": 0.8453575897216797,
+        "threatened": false,
+        "expansion": false,
+        "local_enemy_hp": 0,
+        "army_hp": 3106.3941040039062,
+        "fiends": 3,
+        "tier": 3,
+        "lich": true,
+        "orb": true,
+        "statues": 1,
+        "dk_level": 3,
+        "army_health": 0.833931303088297,
+        "recent_losses": 0,
+        "creep_targets_available": false,
+        "attack_committed": false,
+        "third_hero": false,
+        "dk": true,
+        "base_enemy_hp": 0,
+        "supplies_ready": true,
+        "pre_attack_camp_pending": false,
+        "continuous_creeping": false
+      },
+      "heroes": [
+        {
+          "type": "Udea",
+          "level": 3,
+          "hp": 676.2860717773438,
+          "mana": 300.0,
+          "inventory": [
+            "wcyc",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "abilities": [
+            {
+              "code": "AIcy",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 8224
+            },
+            {
+              "code": "AUau",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 2415919248
+            },
+            {
+              "code": "AUdc",
+              "level": 2,
+              "cooldown": 0.0,
+              "flags": 16
+            },
+            {
+              "code": "AInv",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 144
+            },
+            {
+              "code": "AHer",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 144
+            },
+            {
+              "code": "Aatk",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 537411600
+            },
+            {
+              "code": "Amov",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 528
+            }
+          ]
+        },
+        {
+          "type": "Ulic",
+          "level": 2,
+          "hp": 692.2067260742188,
+          "mana": 349.26068115234375,
+          "inventory": [
+            "rin1",
+            "cnob",
+            "ocor",
+            "prvt",
+            null,
+            null
+          ],
+          "abilities": [
+            {
+              "code": "AIi3",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 2147483680
+            },
+            {
+              "code": "AIlf",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 2147483680
+            },
+            {
+              "code": "AIcb",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 2147484320
+            },
+            {
+              "code": "AUfu",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 134217744
+            },
+            {
+              "code": "AIx2",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 2147483680
+            },
+            {
+              "code": "AUfn",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 16
+            },
+            {
+              "code": "AInv",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 144
+            },
+            {
+              "code": "AHer",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 144
+            },
+            {
+              "code": "Aatk",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 706232336
+            },
+            {
+              "code": "Amov",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 16
+            },
+            {
+              "code": "Ablr",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 16
+            }
+          ]
+        }
+      ],
+      "own_upgrades": {
+        "Rura": 0,
+        "Rucr": 0,
+        "Ruwb": 0
+      },
+      "production": []
+    },
+    {
+      "event": "summary",
+      "clock": 603.725,
+      "resources": {
+        "gold": 1151,
+        "lumber": 635,
+        "food_used": 40,
+        "food_cap": 40,
+        "gold_gathered": 5320,
+        "lumber_gathered": 1720
+      },
+      "units": {
+        "ucry": 3,
+        "uzig": 4,
+        "Udea": 1,
+        "ugho": 3,
+        "Ulic": 1,
+        "uslh": 1,
+        "usep": 1,
+        "utom": 1,
+        "uaco": 5,
+        "unp2": 1,
+        "ugol": 1,
+        "uaod": 1,
+        "ugrv": 1,
+        "uobs": 1
+      },
+      "situation": {
+        "now": 603.725,
+        "hero_health": 1.0,
+        "threatened": false,
+        "expansion": false,
+        "local_enemy_hp": 0,
+        "army_hp": 3586.051971435547,
+        "fiends": 3,
+        "tier": 3,
+        "lich": true,
+        "orb": true,
+        "statues": 1,
+        "dk_level": 3,
+        "army_health": 0.9626985158216234,
+        "recent_losses": 0,
+        "creep_targets_available": false,
+        "attack_committed": false,
+        "third_hero": false,
+        "dk": true,
+        "base_enemy_hp": 0,
+        "supplies_ready": true,
+        "pre_attack_camp_pending": false,
+        "continuous_creeping": false
+      },
+      "heroes": [
+        {
+          "type": "Udea",
+          "level": 3,
+          "hp": 800.0,
+          "mana": 300.0,
+          "inventory": [
+            "wcyc",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "abilities": [
+            {
+              "code": "AIcy",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 8224
+            },
+            {
+              "code": "AUau",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 2415919248
+            },
+            {
+              "code": "AUdc",
+              "level": 2,
+              "cooldown": 0.0,
+              "flags": 16
+            },
+            {
+              "code": "AInv",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 144
+            },
+            {
+              "code": "AHer",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 144
+            },
+            {
+              "code": "Aatk",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 537411600
+            },
+            {
+              "code": "Amov",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 528
+            }
+          ]
+        },
+        {
+          "type": "Ulic",
+          "level": 2,
+          "hp": 725.0,
+          "mana": 370.8681945800781,
+          "inventory": [
+            "rin1",
+            "cnob",
+            "ocor",
+            "prvt",
+            null,
+            null
+          ],
+          "abilities": [
+            {
+              "code": "AIi3",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 2147483680
+            },
+            {
+              "code": "AIlf",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 2147483680
+            },
+            {
+              "code": "AIcb",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 2147484320
+            },
+            {
+              "code": "AUfu",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 134217744
+            },
+            {
+              "code": "AIx2",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 2147483680
+            },
+            {
+              "code": "AUfn",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 16
+            },
+            {
+              "code": "AInv",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 144
+            },
+            {
+              "code": "AHer",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 144
+            },
+            {
+              "code": "Aatk",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 706232336
+            },
+            {
+              "code": "Amov",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 16
+            },
+            {
+              "code": "Ablr",
+              "level": 1,
+              "cooldown": 0.0,
+              "flags": 16
+            }
+          ]
+        }
+      ],
+      "own_upgrades": {
+        "Rura": 0,
+        "Rucr": 0,
+        "Ruwb": 0
+      },
+      "production": [
+        {
+          "type": "uslh",
+          "kind": "queue",
+          "queue": [
+            "uobs"
+          ],
+          "progress": 0.10700000354221889
+        },
+        {
+          "type": "usep",
+          "kind": "queue",
+          "queue": [
+            "ucry"
+          ],
+          "progress": 0.06916666825612386
+        },
+        {
+          "type": "unp2",
+          "kind": "queue",
+          "queue": [
+            "uaco"
+          ],
+          "progress": 0.18833333651224773
+        },
+        {
+          "type": "uzig",
+          "kind": "construction",
+          "queue": [
+            "uzig"
+          ],
+          "progress": 0.10289999008178712
+        }
+      ]
+    }
+  ],
+  "loot_events": [
+    {
+      "event": "loot_attempt",
+      "clock": 177.355,
+      "code": "rin1",
+      "hero": "Udea",
+      "powerup": false,
+      "accepted": true
+    },
+    {
+      "event": "loot_confirmed",
+      "clock": 178.205,
+      "code": "rin1",
+      "hero": "Udea",
+      "attribute_change": true
+    },
+    {
+      "event": "loot_attempt",
+      "clock": 228.18,
+      "code": "rej3",
+      "hero": "Udea",
+      "powerup": false,
+      "accepted": true
+    },
+    {
+      "event": "loot_unconfirmed",
+      "clock": 230.88,
+      "code": "rej3",
+      "hero": "Udea",
+      "attribute_change": false
+    },
+    {
+      "event": "loot_attempt",
+      "clock": 287.93,
+      "code": "cnob",
+      "hero": "Udea",
+      "powerup": false,
+      "accepted": true
+    },
+    {
+      "event": "loot_confirmed",
+      "clock": 289.075,
+      "code": "cnob",
+      "hero": "Udea",
+      "attribute_change": true
+    },
+    {
+      "event": "loot_attempt",
+      "clock": 485.95,
+      "code": "prvt",
+      "hero": "Ulic",
+      "powerup": false,
+      "accepted": true
+    },
+    {
+      "event": "loot_confirmed",
+      "clock": 487.15,
+      "code": "prvt",
+      "hero": "Ulic",
+      "attribute_change": true
+    },
+    {
+      "event": "loot_attempt",
+      "clock": 563.725,
+      "code": "wcyc",
+      "hero": "Udea",
+      "powerup": false,
+      "accepted": true
+    },
+    {
+      "event": "loot_confirmed",
+      "clock": 565.45,
+      "code": "wcyc",
+      "hero": "Udea",
+      "attribute_change": false
+    }
+  ]
+}

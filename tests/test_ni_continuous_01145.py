@@ -9,12 +9,13 @@ from undead.policy import Action, Situation, choose_rule
 
 class NIContinuousTests(unittest.TestCase):
     def test_complete_mirrored_route_with_weak_subgroups_and_observed_clears(self):
-        for north,route in ((False,['ni-2','ni-6','ni-4','ni-9','ni-7','ni-10']),
-                            (True,['ni-15','ni-11','ni-13','ni-8','ni-7','ni-10'])):
+        for north,route in ((False,['ni-2','ni-6','ni-4','ni-9','ni-0','ni-3','ni-7','ni-10']),
+                            (True,['ni-15','ni-11','ni-13','ni-8','ni-17','ni-14','ni-7','ni-10'])):
             b,g,a,c=ni.NIRouteTests().scene(north)
             center=(b.home.x,b.home.y);now=150
             for index,expected in enumerate(route):
-                if index==4:
+                if index==4:c.tier=2
+                if index==6:
                     c.tier=3;c.prepare_ni_center(g,a,b.home,now,True,False)
                 point,_=c.choose(g,a,center,b.home,now)
                 self.assertEqual(c.active['id'],expected)
@@ -43,7 +44,7 @@ class NIContinuousTests(unittest.TestCase):
         self.assertTrue(moves)
         self.assertNotEqual(moves[-1],(b.home.x,b.home.y))
         self.assertIsNone(c.active)
-        c.tier=3;c.prepare_ni_center(g,a,b.home,500,True,False)
+        c.cleared.update(c.ni_midgame(b.home));c.tier=3;c.prepare_ni_center(g,a,b.home,500,True,False)
         point,_=c.choose(g,a,(b.home.x,b.home.y),b.home,500)
         g.visible=lambda *p:False
         self.assertFalse(c.observe_clear(g,point,800,[]))
@@ -122,7 +123,10 @@ class NIContinuousTests(unittest.TestCase):
         b.first_attack_supply.tick=lambda *a:set();b.battle_shop.sell_nearby=lambda *a:False
         b.escort_tavern=lambda *a:False;b.stop_hero_chases=lambda *a:None
         b.creep=lambda army,center,now:orders.append(('creep',[u.handle for u in army]))
+        loot_checks=[]
+        b.collect_loot=lambda army,hostiles,now,heroes:loot_checks.append(now) or False
         b.tick()
+        self.assertEqual(len(loot_checks),1) # An active NI camp must not bypass visible-drop checks.
         self.assertEqual(b.action,Action.CREEP)
         self.assertTrue(b.situation.continuous_creeping)
         self.assertIn(('creep',[u.handle for u in allies]),orders)

@@ -35,7 +35,7 @@ class HomeLayout:
                 self.pending.pop(code,None);continue
             gap=hypot(worker.x-p['point'][0],worker.y-p['point'][1])
             if gap<p['gap']-32:p.update(gap=gap,progress=now)
-            if code in {'ugrv','utom'} and now-p['started']>=2:
+            if now-p['started']>=2:
                 order=g.order_of(worker) or 0
                 # A dropped order is failure, not a reason to wait 24 seconds.
                 # Preserve real travel; a motionless build order is cancelled
@@ -52,15 +52,7 @@ class HomeLayout:
                         return True # Economy must not spend the same snapshot twice.
                     continue
                 continue
-            # An accepted build can still be travelling through the order queue.
-            # Do not redirect that worker to mining or another building while
-            # waiting for the fair snapshot's actual foundation.
-            if now-p['started']<24:continue
-            order=g.order_of(worker) or 0
-            if order>=0x20202020 and now-p['progress']<16:continue
-            if order>=0x20202020:g.hold(worker)
-            self.pending.pop(code,None)
-            self.log('home_foundation_unconfirmed',clock=now,code=code,point=p['point'],worker=p['worker'],order=order)
+            # The initial snapshot grace also applies to towers and production.
 
     def candidates(self,code,home,buildings):
         half=ENVELOPES.get(code,160)
@@ -76,7 +68,21 @@ class HomeLayout:
         # Densify the search, keeping exactly the same spacing and exit lane.
         points.update((round(home.x/32)*32+x,round(home.y/32)*32+y)
                       for x in range(-1024,1025,128) for y in range(-1024,1025,128))
-        for point in sorted(points,key=lambda p:(hypot(p[0]-home.x,p[1]-home.y),p)):
+        preferred=[]
+        crypt=min((b for b in buildings if b.type=='usep'),
+                  key=lambda b:hypot(b.x-home.x,b.y-home.y),default=None)
+        if code=='utom' and crypt is not None:
+            # Put the shop to the right of the actual crypt, preserving the
+            # old shop slot beside the hall for the graveyard. Wider offsets
+            # are considered when the closer point crosses the outward lane.
+            preferred=[(round((crypt.x+dx)/32)*32,round(crypt.y/32)*32)
+                       for dx in (512,640,768,896)]
+        elif code=='ugrv':
+            preferred=[(round((home.x+512)/32)*32,round(home.y/32)*32)]
+        ordered=preferred+sorted(points-set(preferred),key=lambda p:(hypot(p[0]-home.x,p[1]-home.y),p))
+        for point in ordered:
+            if code=='utom' and crypt is not None and point==(round((home.x+512)/32)*32,round(home.y/32)*32):
+                continue # Keep the previous shop position available for the graveyard.
             dx,dy=point[0]-home.x,point[1]-home.y
             along=dx*direction[0]+dy*direction[1]
             across=abs(dx*direction[1]-dy*direction[0])
