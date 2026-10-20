@@ -23,6 +23,7 @@ from .attack_search import AttackSearch
 from .debug_console import camp_name,region
 from .scouting import SkeletonScouts,SKELETONS,CritterSearch
 from .coil import can_damage, ready as coil_ready, level as coil_level
+from .hero_spell_telemetry import ready as hero_spell_ready, level as hero_spell_level
 from .nc_combo import NCCombo,spell_data,DISABLED_CASTERS,aoe_threat
 from .targeting import in_weapon_range,priority,enemy_player,HeroPressure,webbed_air,can_engage,unit_collision
 from .structures import is_structure
@@ -388,8 +389,8 @@ class Controller:
         center=(anchor.x,anchor.y)
         self.clear_attack_sites(foes,center,now)
         visible_creeps=g.creeps()
-        self.creeping.observe_clear(g,center,now,visible_creeps)
         self.creeping.observe_drop_carriers(g,visible_creeps,now)
+        self.creeping.observe_clear(g,center,now,visible_creeps)
         hostiles=foes+visible_creeps
         self.combat_progress.observe(army,[e for e in hostiles if g.dist(e,center)<600],now,
                                      self.action in (Action.ATTACK,Action.HARASS))
@@ -1395,7 +1396,17 @@ class Controller:
             return
         if scout.handle in self.economy.home_layout.reserved:return
         def move(point):
-            self.go([scout],self.start_search.safe_step(g,scout,point,now),now)
+            th_search=bool(now<150 and self.scout_corpse is None and self.creeping.th_route(self.home)
+                           and not self.critter_search.reported)
+            target=self.start_search.safe_step(g,scout,point,now,
+                        **({'public_layout':False,'step_limit':None} if th_search else {}))
+            # In TH's short opening task, follow actual terrain turns toward
+            # the selected region, without 350-unit stop points or speculative
+            # detours around unseen camps. Visible/remembered threats remain.
+            self.go([scout],target,now)
+            if th_search and self.due('scout_travel_trace',now,2):
+                self.log('scout_travel_trace',clock=now,origin=(scout.x,scout.y),
+                         goal=point,point=target,ground_distance=g.path_distance(scout,point))
         # After actual discovery the scout stays forward; its loss frees food.
         # Preserve it before discovery, including on neutral-creep routes.
         confirmed=getattr(self,'scout_discovered_start',None) is not None or self.start_search.confirmed is not None or bool(self.enemy_main and hasattr(g,'enemies') and any(
@@ -1417,13 +1428,27 @@ class Controller:
             return
         # Enemy start is public map geometry. Mine locations enter this list only after observation.
         if now<150 and self.scout_corpse is None:
+            route=self.creeping.th_route(self.home)
+            if route and self.critter_search.camp_focus is None:
+                camp=next(c for c in self.creeping.catalog if c['id']==route[0])
+                self.critter_search.focus_camp(camp,now)
             target=self.critter_search.target(g,scout,self.home,now,safe_route=lambda a,b:self.creeping.safe_route(g,a,b))
             if target is not None:
                 if target.handle!=self.scout_critter:
                     self.scout_critter=target.handle
                     self.log('scout_critter_target',clock=now,handle=target.handle,point=(target.x,target.y))
                 self.scout_critter_point=(target.x,target.y);self.scout_critter_seen=now
-                self.fight([scout],[target],now)
+                if self.critter_search.camp_focus:
+                    distance=g.dist(scout,target)
+                    # Once visible, issue an actual attack at any safe reachable
+                    # distance. Never replace its pursuit with point movement.
+                    current=g.current_target(scout) if hasattr(g,'current_target') else None
+                    if (not current or current.handle!=target.handle) and self.due('scout_critter_attack',now,1.2):
+                        receipt=g.attack(scout,target,force=True)
+                        self.log('scout_critter_attack_attempt',clock=now,handle=target.handle,
+                                 scout=scout.handle,point=(target.x,target.y),distance=distance,hp=target.hp,
+                                 accepted=bool(receipt),reason=getattr(receipt,'reason',None))
+                else:self.fight([scout],[target],now)
                 return
             if self.scout_critter_point and self.scout_critter not in self.critter_search.hunt_failed and now-self.scout_critter_seen<6:
                 move(self.scout_critter_point)
@@ -1501,7 +1526,7 @@ class Controller:
                              spent_points=idx,ability=seq[idx],accepted=bool(r))
             if h.type in {'Ulic','Nngs'} and now>=self.cast_until.get(h.handle,0):
                 code,order=('AUfu','frostarmoroff') if h.type=='Ulic' else ('ANfa','coldarrows')
-                level=next((a['level'] for a in g.abilities(h) if a['code']==code),0)
+                level=hero_spell_level(g,h,code)
                 key=(h.handle,code,level)
                 state=self.autocast_states.setdefault(key,dict(failures=0,at=-100))
                 if level>0 and state['failures']<3 and now-state['at']>=20:
@@ -1510,7 +1535,7 @@ class Controller:
                     self.log('hero_autocast_order',clock=now,hero=h.type,ability=code,level=level,
                              order=order,accepted=bool(r),consecutive_failures=state['failures'])
             if h.type=='Nbrn':
-                level=next((a['level'] for a in g.abilities(h) if a['code']=='ANba'),0)
+                level=hero_spell_level(g,h,'ANba')
                 key=(h.handle,level)
                 attempts=self.black_arrow_attempts.get(key,0)
                 if level>0 and key not in self.black_arrow_enabled and attempts<3 and self.due(('black_arrow',h.handle),now,5):
@@ -1542,9 +1567,10 @@ class Controller:
             if present:self.rod_bag_present.add(h.handle)
             else:self.rod_bag_present.discard(h.handle)
             self.ever_rod=self.ever_rod or present
-            # The NI courier owns this purchase and its inventory confirmation.
+            # The route courier owns this purchase and its inventory confirmation.
             # Generic shopping must not buy first and leave that mission retrying.
-            code='rnec' if not self.ni_rod_stop.mission and not self.rod_purchase_closed and self.economy.opening_rod_allowed and h.type=='Udea' and self.rod_acquisitions.get('Udea',0)<2 and 'rnec' not in inv else None
+            th_rebuy=self.creeping.map_alias=='TH' and self.rod_acquisitions.get('Udea',0)>=1 and not self.ni_rod_stop.done
+            code='rnec' if not th_rebuy and not self.ni_rod_stop.mission and not self.rod_purchase_closed and self.economy.opening_rod_allowed and h.type=='Udea' and self.rod_acquisitions.get('Udea',0)<2 and 'rnec' not in inv else None
             # Finish the current pull before leaving to restock; no one-camp/home loop.
             engaged=any(g.dist(h,e)<1000 for e in g.creeps()) if self.ever_rod else False
             if code and not ((self.creeping.route_continuous(self.home) or self.creeping.th_route(self.home)) and (self.creeping.active or self.creeping.cleared) and all(g.dist(h,shop)>300 for shop in shops)) and not (tier>=2 and any(hero.type=='Ulic' for hero in heroes)) and not engaged and self.action==Action.CREEP and shops and None in inv and h.hp/h.hp_max>.5 and not self.situation.threatened and not self.battle_enemies:
@@ -1929,8 +1955,8 @@ class Controller:
         lich=next((u for u in army if u.type=='Ulic'),None)
         if (not lich or self.action==Action.RETREAT or self.teleport or lich.mana<40 or
             lich.handle in self.micro.pulling or lich.handle in self.shield_moves or
-            now<self.cast_until.get(lich.handle,0) or g.cooldown(lich,'AUfu')!=0):return
-        if not any(a['code']=='AUfu' and a['level']>0 for a in g.abilities(lich)):return
+            now<self.cast_until.get(lich.handle,0) or not hero_spell_ready(g,lich,'AUfu',now)):return
+        if hero_spell_level(g,lich,'AUfu')<=0:return
         candidates=[]
         for hero in army:
             if not hero.is_hero or g.dist(lich,hero)>800 or 'BUfa' in g.buffs(hero):continue
@@ -2166,6 +2192,14 @@ class Controller:
             limit=650
             active_index=next((i for i,c in enumerate(self.creeping.catalog)
                                if c is self.creeping.active),None)
+            if self.action==Action.CREEP and not players and active_index is not None:
+                engaged=[u for u in combat if any(
+                    self.creeping.drop_camps.get(e.handle)==active_index and g.dist(u,e)<650
+                    for e in foes)]
+                if engaged:
+                    # Newly produced reinforcements must not move the fight's
+                    # center away from units already finishing the current camp.
+                    anchor=min(engaged,key=lambda u:sum(g.dist(u,v) for v in engaged))
             # A front unit can engage the last creep before the medoid reaches
             # 650. Keep the visible, bound current-camp target in the fight;
             # otherwise creep() stops marching while fight() drops the target.
@@ -2201,7 +2235,7 @@ class Controller:
                     self.coil_spend=(dk.handle,dk.mana,now)
                     protected.add(dk.handle)
         if (not single_finishing and lich and now>=self.cast_until.get(lich.handle,0) and lich.mana>=125
-                and g.cooldown(lich,'AUfn')==0 and g.dist(lich,target)<750
+                and hero_spell_ready(g,lich,'AUfn',now) and g.dist(lich,target)<750
                 and (player_fight or poison_priority or self.creep_mana.allow(self,lich,army,foes,now,125,
                     rescue=any(self.coil_rescue_needed(u) for u in army if u.type not in SKELETONS and u.type!='uobs')))
                 and self.due('nova',now,1)):
@@ -2222,7 +2256,7 @@ class Controller:
                         self.log('frost_arrow_effect_observed',clock=now,target=arrow_target.type,
                                  handle=arrow_target.handle,buffs=sorted(buffs))
             if (not single_finishing and naga.mana>=float(spell_data()[0]['ANfl']['Cost1']) and now>=self.cast_until.get(naga.handle,0) and
-                g.cooldown(naga,'ANfl')==0 and any(a['code']=='ANfl' and a['level']>0 for a in g.abilities(naga)) and
+                hero_spell_ready(g,naga,'ANfl',now) and hero_spell_level(g,naga,'ANfl')>0 and
                 not is_structure(target) and
                 g.dist(naga,target)<=float(spell_data()[0]['ANfl']['Rng1']) and self.due('forked_lightning',now,1)):
                 r=g.cast(naga,'forkedlightning',target=target)
@@ -2434,6 +2468,11 @@ class Controller:
             self.formation_at=-100
         if self.camp_goal:
             self.set_intent(('DK采购腐球 · 己方营地练级：' if self.battle_shop.orb else '练级：')+camp_name(self.creeping.active,self.camp_goal))
+            if nearby and any(g.dist(u,e)<650 for u in army for e in nearby):
+                # Combat can bypass entry waypoints. Discard them before any
+                # fallback movement or a newly summoned skeleton can reuse them.
+                self.formation.reset()
+                self.formation_at=-100
             if nearby and self.skeleton_opening(army,nearby,now):return
             if nearby and any(g.dist(u,e)<650 for u in army for e in nearby):
                 front=min(army,key=lambda u:min(g.dist(u,e) for e in nearby))

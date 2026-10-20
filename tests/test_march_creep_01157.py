@@ -116,10 +116,12 @@ class LastCreepTests(unittest.TestCase):
 
     def test_out_of_combat_range_keeps_creep_march_moving(self):
         b,own,e,orders,targets=self.scene()
-        e.x+=300
+        # Keep this outside every core fighter's engagement radius; a creep
+        # within 650 of DK now correctly stays in combat despite rear fiends.
+        e.x+=500
         b.home=unit('unpl',50,-3904);b.home.y=2880
         b.creeping.choose=lambda *args:((e.x,e.y),[e])
-        b.creeping.cleared={'th-8','th-2'}
+        b.creeping.cleared={'th-8','th-1','th-2'}
         b.ni_rod_stop.tick=lambda *args:False
         b.ch_resummon.tick=lambda *args:False
         moves=[];b.go=lambda army,p,now,attack=False:moves.append(p)

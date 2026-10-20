@@ -11,7 +11,7 @@ from undead.policy import Action
 
 
 class THContinuousTests(unittest.TestCase):
-    def test_real_first_camp_army_immediately_departs_for_433(self):
+    def test_real_first_camp_army_immediately_departs_for_home_fish(self):
         b,g,a,c=th.THRouteTests().scene()
         frame=json.loads((Path(__file__).parent/'fixtures/th_191002_first_camp_army.json').read_text())['frame']
         army=[]
@@ -23,7 +23,7 @@ class THContinuousTests(unittest.TestCase):
         g.creeps=lambda:[];g.visible=lambda *args:True
         moves=[];b.go=lambda army,point,now,attack=False:moves.append(point)
         b.creep(army,tuple(frame['center']),183.975)
-        self.assertIn('th-8',c.cleared);self.assertEqual(c.active['id'],'th-2')
+        self.assertIn('th-8',c.cleared);self.assertEqual(c.active['id'],'th-1')
         self.assertEqual(moves,[(c.active['x'],c.active['y'])])
 
     def test_both_routes_continue_without_statue_tech_or_strength_wait(self):
@@ -38,7 +38,7 @@ class THContinuousTests(unittest.TestCase):
             self.assertIsNone(c.th_route_stage(b.home))
 
     def test_stall_retries_remain_bounded_and_player_contact_restores_safety(self):
-        b,g,a,c=th.THRouteTests().scene();c.cleared.add('th-8')
+        b,g,a,c=th.THRouteTests().scene();c.cleared.update({'th-8','th-1'})
         c.th_contested=True
         self.assertIsNone(c.choose(g,a,(b.home.x,b.home.y),b.home,200)[0])
         c.th_contested=False;g.path_distance=lambda *args:None
@@ -52,7 +52,7 @@ class THContinuousTests(unittest.TestCase):
         b.creeping=Creeping(b.log,reference.catalog);b.creeping.map_alias='TH'
         home=g.my_buildings()[0];home.x=-3904;home.y=2880
         camp=next(p for p in b.creeping.catalog if p['id']=='th-2')
-        b.creeping.cleared={'th-8'};b.creeping.active=camp
+        b.creeping.cleared={'th-8','th-1'};b.creeping.active=camp
         for u in [dk,*allies]:u.x=camp['x'];u.y=camp['y']
         foe=unit('nsgn',999,dk.x+100,5000);foe.y=dk.y;foe.owner=12
         g.enemies=lambda:[];g.creeps=lambda:[foe];g.visible=lambda *p:True

@@ -88,7 +88,8 @@ class CoilTelemetry:
     def attempted(self, hero, now, accepted):
         s = self.state
         if s is None or s['handle'] != hero.handle:return
-        s['failures'] += 1
+        # Count only missing-row recovery, not ordinary rejected spell orders.
+        if s['missing']:s['failures'] += 1
         s['pending'] = dict(clock=now, mana=hero.mana, accepted=accepted)
         # Three seconds for order/cast observation, then the full six-second CD.
         s['next_at'] = now+9

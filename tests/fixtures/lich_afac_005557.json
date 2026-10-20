@@ -1,0 +1,187 @@
+{
+  "run": "20261021-005557",
+  "nova_attempts": [
+    {
+      "event": "nova_attempt",
+      "clock": 379.555,
+      "target": "nlsn",
+      "accepted": true,
+      "context": "creep",
+      "mana": 300.0
+    }
+  ],
+  "pickup": [
+    {
+      "event": "loot_attempt",
+      "clock": 460.255,
+      "code": "afac",
+      "hero": "Ulic",
+      "powerup": false,
+      "accepted": true
+    },
+    {
+      "event": "loot_confirmed",
+      "clock": 461.205,
+      "code": "afac",
+      "hero": "Ulic",
+      "attribute_change": false
+    }
+  ],
+  "samples": [
+    {
+      "clock": 451.54,
+      "hero": {
+        "type": "Ulic",
+        "level": 1,
+        "hp": 387.09075927734375,
+        "mana": 267.4427490234375,
+        "inventory": [
+          "rnec",
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIrd",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 135274528
+          },
+          {
+            "code": "AUfn",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "Aatk",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 537395605
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 20
+          },
+          {
+            "code": "Ablr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          }
+        ]
+      }
+    },
+    {
+      "clock": 466.88,
+      "hero": {
+        "type": "Ulic",
+        "level": 1,
+        "hp": 457.6745910644531,
+        "mana": 292.5162353515625,
+        "inventory": [
+          "rnec",
+          "afac",
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIar",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919776
+          }
+        ]
+      }
+    },
+    {
+      "clock": 481.905,
+      "hero": {
+        "type": "Ulic",
+        "level": 2,
+        "hp": 525.0,
+        "mana": 356.985595703125,
+        "inventory": [
+          "rnec",
+          "afac",
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AUfu",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 135266320
+          },
+          {
+            "code": "AIar",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919776
+          }
+        ]
+      }
+    },
+    {
+      "clock": 559.355,
+      "hero": {
+        "type": "Ulic",
+        "level": 2,
+        "hp": 525.0,
+        "mana": 360.0,
+        "inventory": [
+          "rnec",
+          "afac",
+          "ocor",
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIcb",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147484320
+          },
+          {
+            "code": "AUfu",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 134217744
+          },
+          {
+            "code": "AIar",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919776
+          }
+        ]
+      }
+    }
+  ],
+  "limitation": "Skill enumeration changes after pickup; underlying native cause and post-sale restoration not independently verified for afac."
+}

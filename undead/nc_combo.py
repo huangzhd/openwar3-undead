@@ -6,6 +6,7 @@ import w3paths
 from w3slk import read_slk
 from openwar3 import combat
 from .coil import can_damage, ready as coil_ready, level as coil_level
+from .hero_spell_telemetry import ready as hero_spell_ready, level as hero_spell_level
 
 BLOCKED_BUFFS = {'BHds','Bvul','Bams','Bam2','BNms','BNss','Bcmg'}
 BLOCKED_ABILITIES = {'Avul','Amim','ACmi','ACm2','ACm3','AImx','ANss','ANse'}
@@ -81,8 +82,8 @@ class NCCombo:
             u=next((u for u in army if u.type==kind),None)
             if (not u or u.hp<=0 or u.handle in blocked or not getattr(u,'has_detail',False) or
                 now<cast_until.get(u.handle,0) or g.dist(u,anchor)>=700 or
-                (not coil_ready(g,u,now) if code=='AUdc' else g.cooldown(u,code)!=0) or DISABLED_CASTERS & set(g.buffs(u))):continue
-            level=coil_level(g,u) if code=='AUdc' else next((a['level'] for a in g.abilities(u) if a['code']==code),0)
+                not hero_spell_ready(g,u,code,now) or DISABLED_CASTERS & set(g.buffs(u))):continue
+            level=hero_spell_level(g,u,code)
             if level not in (1,2,3):continue
             row=rows[code];cost=float(row['Cost'+str(level)]);reach=float(row['Rng'+str(level)])
             # Preserve the established NC safety margin; F has its own 600 range.

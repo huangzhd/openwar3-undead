@@ -58,7 +58,7 @@ class StartSearch:
         return [u for u in (g.creeps() if hasattr(g,'creeps') else [])
                 if u.hp>0 and (not hasattr(u,'visible_to') or u.visible_to(g.me()))]
 
-    def safe_step(self,g,scout,point,now):
+    def safe_step(self,g,scout,point,now,public_layout=True,step_limit=350):
         """Bounded local detour around fairly visible neutrals; never order into a camp."""
         # Retain only observed positions, not inferred current hidden units.
         # Losing vision during a detour must not send the scout back through the camp.
@@ -69,7 +69,7 @@ class StartSearch:
         # Trees can hide guards until the worker is already in acquisition range.
         # Treat unseen public placements as route risks, not scouting evidence.
         risks=[]
-        for camp in self.camps:
+        for camp in self.camps if public_layout else []:
             for i,spawn in enumerate(camp.get('spawns',[])):
                 p=(spawn['x'],spawn['y'])
                 if g.dist(scout,p)>=1600:continue
@@ -101,7 +101,7 @@ class StartSearch:
             path=g.walk_path(origin,goal) or []
             turn=next((p for p in path if g.dist(origin,p)>32),origin)
             length=g.dist(origin,turn)
-            scale=min(1,350/length) if length else 0
+            scale=min(1,step_limit/length) if length and step_limit is not None else 1 if length else 0
             return (origin[0]+(turn[0]-origin[0])*scale,origin[1]+(turn[1]-origin[1])*scale)
         if safe(point):
             self.detour=None

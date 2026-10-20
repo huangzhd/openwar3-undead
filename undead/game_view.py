@@ -1,6 +1,7 @@
-"""Owned hero inventory access and bounded recovery of missing Coil telemetry."""
+"""Owned hero inventory access and bounded missing-spell recovery."""
 from openwar3 import Game as SDKGame
 from .coil import CoilTelemetry
+from .hero_spell_telemetry import HeroSpellTelemetry,HERO_CODES,ORDERS,TOGGLES
 
 
 class Game(SDKGame):
@@ -13,6 +14,24 @@ class Game(SDKGame):
         telemetry = self._coil()
         telemetry.log = log
         telemetry.observe(self, next((h for h in heroes if h.type == 'Udea'), None), now)
+        spells=self._hero_spells();spells.log=log;spells.prune(heroes,now)
+        for h in heroes:
+            for code in HERO_CODES.get(h.type,()):spells.observe(self,h,code,now)
+
+    def _hero_spells(self):
+        if not hasattr(self,'_hero_spell_telemetry'):
+            self._hero_spell_telemetry=HeroSpellTelemetry()
+        return self._hero_spell_telemetry
+
+    def hero_spell_ready(self,hero,code,now=None):
+        if code=='AUdc':return self.coil_ready(hero,now)
+        return self._hero_spells().can_attempt(self,self._fresh(hero),code,
+                                               self.clock() if now is None else now)
+
+    def hero_spell_level(self,hero,code):
+        if code=='AUdc':return self.coil_level(hero)
+        s=self._hero_spells().observe(self,self._fresh(hero),code,self.clock())
+        return s['level'] if s else 0
 
     def coil_ready(self, hero, now=None):
         return self._coil().can_attempt(self, self._fresh(hero), self.clock() if now is None else now)
@@ -22,12 +41,28 @@ class Game(SDKGame):
         return s['level'] if s else 0
 
     def cast(self, u, spell, target=None, x=None, y=None):
-        if spell != 'deathcoil':return super().cast(u, spell, target=target, x=x, y=y)
+        if spell != 'deathcoil':
+            toggle=spell in TOGGLES and target is None and x is None and y is None
+            code=(TOGGLES if toggle else ORDERS).get(spell)
+            if code is None:return super().cast(u, spell, target=target, x=x, y=y)
+            current=self._fresh(u);now=self.clock();telemetry=self._hero_spells()
+            if not telemetry.can_attempt(self,current,code,now,toggle):return False
+            result=super().cast(current,spell,target=target,x=x,y=y)
+            telemetry.attempted(current,code,now,bool(result),toggle)
+            if not result:
+                telemetry.log('hero_spell_order_rejected',clock=now,hero=current.handle,
+                              ability=code,spell=spell,target=getattr(target,'type',None),
+                              reason=getattr(result,'reason',None))
+            return result
         current = self._fresh(u)
         now = self.clock()
         if not self._coil().can_attempt(self, current, now):return False
         result = super().cast(current, spell, target=target, x=x, y=y)
         self._coil().attempted(current, now, bool(result))
+        if not result:
+            self._coil().log('hero_spell_order_rejected',clock=now,hero=current.handle,
+                             ability='AUdc',spell=spell,target=getattr(target,'type',None),
+                             reason=getattr(result,'reason',None))
         return result
 
     def inventory(self, hero):

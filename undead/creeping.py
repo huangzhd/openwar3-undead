@@ -256,8 +256,8 @@ class Creeping:
         """User's mirrored TH route; only observed clearance advances it."""
         if self.map_alias!='TH' or self.th_attack_started:return []
         north=hypot(home.x+3904,home.y-2880)<hypot(home.x-2880,home.y+3904)
-        route=['th-8','th-2','th-10','th-1','th-4','th-6'] if north else [
-            'th-14','th-19','th-20','th-12','th-11','th-16']
+        route=['th-8','th-1','th-2','th-10','th-9','th-6'] if north else [
+            'th-14','th-12','th-19','th-20','th-9','th-16']
         return route if set(route)<={c['id'] for c in self.catalog} else []
 
     def th_route_stage(self,home):
@@ -455,12 +455,22 @@ class Creeping:
             self.log('creep_paused',clock=now,camp=self.active['id'],reason=reason)
         self.paused=True
 
+    def camp_units(self,g,visible,camp=None):
+        camp=self.active if camp is None else camp
+        if camp is None:return []
+        index=next((i for i,c in enumerate(self.catalog) if c is camp),None)
+        point=(camp['x'],camp['y'])
+        # A visible camp member remains part of its camp after following a unit
+        # past the static radius. Never turn that movement into a clear event.
+        return [u for u in visible if u.hp>0 and (g.dist(u,point)<700 or
+                (index is not None and self.drop_camps.get(u.handle)==index))]
+
     def observe_clear(self,g,center,now,visible):
         # Observe before shopping/retreat can bypass choose() and leave a stale goal.
         if self.active is None:return False
         point=(self.active['x'],self.active['y'])
         if g.dist(center,point)>=450 or not g.visible(*point):return False
-        if any(g.dist(u,point)<700 for u in visible):return False
+        if self.camp_units(g,visible):return False
         self.cleared.add(self.active['id'])
         self.log('creep_area_cleared',clock=now,point=point,camp=self.active['id'])
         self.active=None
@@ -507,7 +517,7 @@ class Creeping:
         self.combat_hp=combat
         if self.active:
             point=(self.active['x'],self.active['y'])
-            nearby=[u for u in visible if g.dist(u,point)<700]
+            nearby=self.camp_units(g,visible)
             remaining=sum(u.hp for u in nearby)
             distance=g.path_distance(center,point)
             if damage or (distance is not None and (self.best_distance is None or distance<self.best_distance-80)) or (self.last_hp is not None and remaining<self.last_hp-10):
@@ -564,5 +574,5 @@ class Creeping:
                 break
         if self.active:
             point=(self.active['x'],self.active['y'])
-            return point,[u for u in visible if g.dist(u,point)<700]
+            return point,self.camp_units(g,visible)
         return None,[]

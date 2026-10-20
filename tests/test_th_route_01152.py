@@ -39,8 +39,8 @@ class THRouteTests(unittest.TestCase):
         self.assertFalse(c.cleared)
 
     def test_mirrored_sequence_advances_only_on_visible_clear_without_revisits(self):
-        for north,route in ((True,['th-8','th-2','th-10','th-1','th-4','th-6']),
-                            (False,['th-14','th-19','th-20','th-12','th-11','th-16'])):
+        for north,route in ((True,['th-8','th-1','th-2','th-10','th-9','th-6']),
+                            (False,['th-14','th-12','th-19','th-20','th-9','th-16'])):
             b,g,a,c=self.scene(north,True);c.tier=3
             center=(b.home.x,b.home.y)
             for i,k in enumerate(route):
@@ -62,18 +62,18 @@ class THRouteTests(unittest.TestCase):
         for north,expected in ((True,'th-1'),(False,'th-12')):
             b,g,a,c=self.scene(north,True);c.tier=1
             a=[u for u in a if u.type not in {'Ulic','uobs'}]
-            c.cleared.update(c.th_route(b.home)[:3])
+            c.cleared.update(c.th_route(b.home)[:1])
             c.choose(g,a,(b.home.x,b.home.y),b.home,300)
             self.assertEqual(c.active['id'],expected)
             c.active=None;a[0].hp=.4*a[0].hp_max;c.th_contested=True
             self.assertFalse(c.candidates(g,a,b.home,301))
 
-    def test_contested_gnoll_and_laboratory_keep_safety_checks(self):
-        b,g,a,c=self.scene(True,True);c.tier=2;c.th_contested=True
+    def test_contested_shop_and_laboratory_keep_safety_checks(self):
+        b,g,a,c=self.scene(True,True);c.tier=2;c.th_contested=True;c.home_only=False
         c.cleared.update(c.th_route(b.home)[:4])
-        self.assertFalse(c.candidates(g,a[:2],b.home,400))
-        self.assertEqual(c.candidates(g,a,b.home,400)[0]['id'],'th-4')
-        c.cleared.add('th-4')
+        self.assertFalse(c.candidates(g,a[:1],b.home,400))
+        self.assertEqual(c.candidates(g,a,b.home,400)[0]['id'],'th-9')
+        c.cleared.add('th-9')
         self.assertFalse(c.candidates(g,[u for u in a if u.type!='uobs'],b.home,450))
         self.assertEqual(c.candidates(g,a,b.home,450)[0]['id'],'th-6')
         for u in a:u.hp*=.6
@@ -100,9 +100,10 @@ class THRouteTests(unittest.TestCase):
         self.assertTrue(c.prepare_th_route(b.home,1000,False))
         self.assertEqual(c.th_route_stage(b.home),'th-8')
 
-    def test_controller_clear_moves_to_next_camp_same_call_without_home_order(self):
+    def test_controller_clear_moves_to_next_camp_after_required_rod_rebuy(self):
         for north in (True,False):
             b,g,a,c=self.scene(north,True);c.tier=3
+            b.ni_rod_stop.done=True # The explicit second-camp purchase is covered separately.
             route=c.th_route(b.home);g.creeps=lambda:[];g.visible=lambda *p:True
             moves=[];b.go=lambda army,point,now,attack=False:moves.append(point)
             for i,k in enumerate(route[:-1]):
@@ -119,7 +120,7 @@ class THRouteTests(unittest.TestCase):
         for u in a:u.x=center[0];u.y=center[1]
         b.go=lambda army,point,now,attack=False:moves.append(point)
         b.creep(a,center,245)
-        self.assertEqual(c.active['id'],'th-2')
+        self.assertEqual(c.active['id'],'th-1')
         self.assertEqual(moves,[(c.active['x'],c.active['y'])])
         self.assertNotIn((b.home.x,b.home.y),moves)
 

@@ -1,0 +1,577 @@
+{
+  "source_run": "20261021-012301",
+  "source_version": "0.1.164-dev",
+  "events": [
+    {
+      "event": "hero_spell_telemetry_missing",
+      "clock": 354.475,
+      "hero": [
+        19987,
+        60596
+      ],
+      "ability": "AUfn",
+      "remembered_level": 0,
+      "slots": 5
+    },
+    {
+      "event": "hero_spell_attempt_observed",
+      "clock": 407.55,
+      "hero": [
+        19987,
+        60596
+      ],
+      "ability": "AUfn",
+      "mana_spent": false,
+      "unconfirmed_attempts": 2
+    },
+    {
+      "event": "hero_spell_attempt_observed",
+      "clock": 425.13,
+      "hero": [
+        19987,
+        60596
+      ],
+      "ability": "AUfn",
+      "mana_spent": false,
+      "unconfirmed_attempts": 12
+    },
+    {
+      "event": "hero_spell_telemetry_missing",
+      "clock": 426.205,
+      "hero": [
+        19987,
+        60596
+      ],
+      "ability": "AUfn",
+      "remembered_level": 1,
+      "slots": 1
+    },
+    {
+      "event": "loot_confirmed",
+      "clock": 426.205,
+      "code": "afac",
+      "hero": "Ulic",
+      "attribute_change": false
+    }
+  ],
+  "samples": [
+    {
+      "clock": 356.075,
+      "hero": {
+        "type": "Ulic",
+        "level": 1,
+        "hp": 475.0,
+        "mana": 300.0,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AUfn",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "Aatk",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 537395344
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2196
+          },
+          {
+            "code": "Ablr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          }
+        ]
+      }
+    },
+    {
+      "clock": 371.255,
+      "hero": {
+        "type": "Ulic",
+        "level": 1,
+        "hp": 475.0,
+        "mana": 300.0,
+        "inventory": [
+          "rnec",
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIrd",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 135274528
+          },
+          {
+            "code": "AUfn",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "Aatk",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 537395344
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2196
+          },
+          {
+            "code": "Ablr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          }
+        ]
+      }
+    },
+    {
+      "clock": 386.655,
+      "hero": {
+        "type": "Ulic",
+        "level": 1,
+        "hp": 475.0,
+        "mana": 315.0,
+        "inventory": [
+          "rnec",
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIrd",
+            "level": 1,
+            "cooldown": 15.599777221679688,
+            "flags": 135275040
+          },
+          {
+            "code": "AUfn",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "Aatk",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 537395344
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2196
+          },
+          {
+            "code": "Ablr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          }
+        ]
+      }
+    },
+    {
+      "clock": 401.705,
+      "hero": {
+        "type": "Ulic",
+        "level": 1,
+        "hp": 475.0,
+        "mana": 315.0,
+        "inventory": [
+          "rnec",
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIrd",
+            "level": 1,
+            "cooldown": 0.33316802978515625,
+            "flags": 135275040
+          },
+          {
+            "code": "AUfn",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "Aatk",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 537395344
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2196
+          },
+          {
+            "code": "Ablr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          }
+        ]
+      }
+    },
+    {
+      "clock": 417.305,
+      "hero": {
+        "type": "Ulic",
+        "level": 1,
+        "hp": 420.5664367675781,
+        "mana": 315.0,
+        "inventory": [
+          "rnec",
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIrd",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 135274528
+          },
+          {
+            "code": "AUfn",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "Aatk",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 537395605
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 20
+          },
+          {
+            "code": "Ablr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          }
+        ]
+      }
+    },
+    {
+      "clock": 432.78,
+      "hero": {
+        "type": "Ulic",
+        "level": 1,
+        "hp": 328.24041748046875,
+        "mana": 315.0,
+        "inventory": [
+          "rnec",
+          "afac",
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIar",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919776
+          }
+        ]
+      }
+    },
+    {
+      "clock": 448.1,
+      "hero": {
+        "type": "Ulic",
+        "level": 1,
+        "hp": 284.7595520019531,
+        "mana": 315.0,
+        "inventory": [
+          "rnec",
+          "afac",
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIar",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919776
+          }
+        ]
+      }
+    },
+    {
+      "clock": 463.18,
+      "hero": {
+        "type": "Ulic",
+        "level": 1,
+        "hp": 342.064453125,
+        "mana": 315.0,
+        "inventory": [
+          "rnec",
+          "afac",
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIar",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919776
+          }
+        ]
+      }
+    },
+    {
+      "clock": 478.305,
+      "hero": {
+        "type": "Ulic",
+        "level": 1,
+        "hp": 451.52392578125,
+        "mana": 315.0,
+        "inventory": [
+          "rnec",
+          "afac",
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIar",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919776
+          }
+        ]
+      }
+    },
+    {
+      "clock": 493.655,
+      "hero": {
+        "type": "Ulic",
+        "level": 1,
+        "hp": 475.0,
+        "mana": 315.0,
+        "inventory": [
+          "rnec",
+          "afac",
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIar",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919776
+          }
+        ]
+      }
+    },
+    {
+      "clock": 508.95,
+      "hero": {
+        "type": "Ulic",
+        "level": 1,
+        "hp": 475.0,
+        "mana": 315.0,
+        "inventory": [
+          "rnec",
+          "afac",
+          "ocor",
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIcb",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147484320
+          },
+          {
+            "code": "AIar",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919776
+          }
+        ]
+      }
+    },
+    {
+      "clock": 524.505,
+      "hero": {
+        "type": "Ulic",
+        "level": 1,
+        "hp": 475.0,
+        "mana": 315.0,
+        "inventory": [
+          "rnec",
+          "afac",
+          "ocor",
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIcb",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147484320
+          },
+          {
+            "code": "AIar",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919776
+          }
+        ]
+      }
+    },
+    {
+      "clock": 539.58,
+      "hero": {
+        "type": "Ulic",
+        "level": 1,
+        "hp": 395.2235107421875,
+        "mana": 315.0,
+        "inventory": [
+          "rnec",
+          "afac",
+          "ocor",
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIcb",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147484320
+          },
+          {
+            "code": "AIar",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919776
+          }
+        ]
+      }
+    }
+  ],
+  "limitations": "Actual event extracts; rejected normal cast count is reported by telemetry, target/reason were not logged."
+}

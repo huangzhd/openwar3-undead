@@ -1,0 +1,672 @@
+{
+  "run": "20261021-003711",
+  "version": "0.1.161-dev",
+  "events": [
+    {
+      "event": "scout_assigned",
+      "clock": 64.65,
+      "handle": [
+        21306,
+        21312
+      ],
+      "shop_foundation": true,
+      "reserved_builders": []
+    },
+    {
+      "event": "scout_critter_camp_focus",
+      "clock": 64.65,
+      "camp": "th-8",
+      "point": [
+        -589.85,
+        2491.05
+      ],
+      "radius": 1500
+    },
+    {
+      "event": "scout_spawn_region",
+      "clock": 64.65,
+      "code": "ncrb",
+      "center": [
+        -791.1,
+        1528.5
+      ],
+      "radius": 450,
+      "source": "fingerprint_verified_static_map",
+      "evidence": "initial_placement_only"
+    },
+    {
+      "event": "scout_search_plan",
+      "clock": 64.65,
+      "candidates": 9,
+      "regions": 1,
+      "max_general_visits": 2,
+      "deadline": 150
+    },
+    {
+      "event": "scout_search_started",
+      "clock": 64.65,
+      "point": [
+        -791.1,
+        1528.5
+      ],
+      "ground_distance": 3580.2320318050747,
+      "radius": 3394,
+      "search_kind": "spawn_region"
+    },
+    {
+      "event": "scout_search_checked",
+      "clock": 86.555,
+      "point": [
+        -1109,
+        1847
+      ],
+      "evidence": "visible_point"
+    },
+    {
+      "event": "scout_search_checked",
+      "clock": 89.305,
+      "point": [
+        -1241,
+        1528
+      ],
+      "evidence": "visible_point"
+    },
+    {
+      "event": "scout_search_finished",
+      "clock": 89.305,
+      "point": [
+        -791.1,
+        1528.5
+      ],
+      "reason": "no_progress_or_budget",
+      "scout": [
+        -1743.03466796875,
+        1983.9970703125
+      ],
+      "ground_distance": 1108.0773439350246
+    },
+    {
+      "event": "scout_search_started",
+      "clock": 89.305,
+      "point": [
+        -791,
+        1978
+      ],
+      "ground_distance": 896.0,
+      "radius": 3241,
+      "search_kind": "spawn_region"
+    },
+    {
+      "event": "scout_neutral_detour",
+      "clock": 89.305,
+      "origin": [
+        -1743.03466796875,
+        1983.9970703125
+      ],
+      "goal": [
+        -791,
+        1978
+      ],
+      "point": [
+        -1488.5893829676854,
+        1743.6689676263452
+      ],
+      "threats": [],
+      "public_layout_risks": [
+        [
+          "public",
+          "th-4",
+          0
+        ],
+        [
+          "public",
+          "th-4",
+          2
+        ],
+        [
+          "public",
+          "th-6",
+          0
+        ],
+        [
+          "public",
+          "th-6",
+          1
+        ],
+        [
+          "public",
+          "th-6",
+          2
+        ],
+        [
+          "public",
+          "th-6",
+          3
+        ],
+        [
+          "public",
+          "th-6",
+          4
+        ],
+        [
+          "public",
+          "th-8",
+          0
+        ],
+        [
+          "public",
+          "th-8",
+          1
+        ]
+      ],
+      "blocked": false
+    },
+    {
+      "event": "scout_search_checked",
+      "clock": 92.65,
+      "point": [
+        -1109,
+        1210
+      ],
+      "evidence": "visible_point"
+    },
+    {
+      "event": "scout_search_checked",
+      "clock": 92.65,
+      "point": [
+        -791,
+        1978
+      ],
+      "evidence": "visible_point"
+    },
+    {
+      "event": "scout_search_finished",
+      "clock": 92.65,
+      "point": [
+        -791,
+        1978
+      ],
+      "reason": "visible_point",
+      "scout": [
+        -1377.787109375,
+        1746.5419921875
+      ],
+      "ground_distance": 618.0386719675123
+    },
+    {
+      "event": "scout_search_started",
+      "clock": 92.65,
+      "point": [
+        -791,
+        1078
+      ],
+      "ground_distance": 852.0773439350246,
+      "radius": 3597,
+      "search_kind": "spawn_region"
+    },
+    {
+      "event": "scout_critter_target",
+      "clock": 93.825,
+      "handle": [
+        20547,
+        20547
+      ],
+      "point": [
+        -543.97509765625,
+        1717.4921875
+      ]
+    },
+    {
+      "event": "scout_critter_attack_attempt",
+      "clock": 93.825,
+      "handle": [
+        20547,
+        20547
+      ],
+      "scout": [
+        21306,
+        21312
+      ],
+      "point": [
+        -543.97509765625,
+        1717.4921875
+      ],
+      "distance": 787.3961171379609,
+      "hp": 15.0,
+      "accepted": true,
+      "reason": "accepted"
+    },
+    {
+      "event": "scout_critter_abandoned",
+      "clock": 100.58,
+      "handle": [
+        20547,
+        20547
+      ],
+      "reason": "neutral_guard",
+      "point": [
+        -318.208984375,
+        1872.1083984375
+      ],
+      "hp": 2.939208984375,
+      "distance": 181.01933598375618
+    },
+    {
+      "event": "scout_search_checked",
+      "clock": 100.58,
+      "point": [
+        -473,
+        1210
+      ],
+      "evidence": "visible_point"
+    },
+    {
+      "event": "scout_search_checked",
+      "clock": 100.58,
+      "point": [
+        -473,
+        1847
+      ],
+      "evidence": "visible_point"
+    },
+    {
+      "event": "scout_search_checked",
+      "clock": 100.58,
+      "point": [
+        -341,
+        1528
+      ],
+      "evidence": "visible_point"
+    },
+    {
+      "event": "scout_search_started",
+      "clock": 100.58,
+      "point": [
+        -791,
+        1078
+      ],
+      "ground_distance": 799.0580079512686,
+      "radius": 3597,
+      "search_kind": "spawn_region"
+    },
+    {
+      "event": "scout_search_checked",
+      "clock": 103.53,
+      "point": [
+        -791,
+        1078
+      ],
+      "evidence": "visible_point"
+    },
+    {
+      "event": "scout_search_finished",
+      "clock": 103.53,
+      "point": [
+        -791,
+        1078
+      ],
+      "reason": "visible_point",
+      "scout": [
+        -780.3203125,
+        1511.9814453125
+      ],
+      "ground_distance": 384.0
+    },
+    {
+      "event": "scout_search_exhausted",
+      "clock": 103.53,
+      "visible_points": 8,
+      "failed_points": 1
+    },
+    {
+      "event": "scout_neutral_detour",
+      "clock": 104.68,
+      "origin": [
+        -677.0576171875,
+        1402.3251953125
+      ],
+      "goal": [
+        2880.0,
+        -3904.0
+      ],
+      "point": [
+        -457.2160403845892,
+        1129.9840836367014
+      ],
+      "threats": [
+        [
+          19615,
+          19615
+        ],
+        [
+          20040,
+          20040
+        ]
+      ],
+      "public_layout_risks": [
+        [
+          "public",
+          "th-8",
+          0
+        ],
+        [
+          "public",
+          "th-8",
+          1
+        ],
+        [
+          "public",
+          "th-9",
+          0
+        ],
+        [
+          "public",
+          "th-9",
+          2
+        ]
+      ],
+      "blocked": false
+    },
+    {
+      "event": "scout_neutral_detour",
+      "clock": 108.25,
+      "origin": [
+        -228.47509765625,
+        945.2607421875
+      ],
+      "goal": [
+        2880.0,
+        -3904.0
+      ],
+      "point": [
+        121.52490234375,
+        945.2607421875
+      ],
+      "threats": [
+        [
+          19615,
+          19615
+        ]
+      ],
+      "public_layout_risks": [
+        [
+          "public",
+          "th-8",
+          1
+        ],
+        [
+          "public",
+          "th-9",
+          0
+        ],
+        [
+          "public",
+          "th-9",
+          1
+        ],
+        [
+          "public",
+          "th-9",
+          2
+        ]
+      ],
+      "blocked": false
+    },
+    {
+      "event": "scout_neutral_detour",
+      "clock": 111.755,
+      "origin": [
+        406.927734375,
+        945.2685546875
+      ],
+      "goal": [
+        2880.0,
+        -3904.0
+      ],
+      "point": [
+        448.0,
+        832.0
+      ],
+      "threats": [],
+      "public_layout_risks": [
+        [
+          "public",
+          "th-9",
+          0
+        ],
+        [
+          "public",
+          "th-9",
+          1
+        ],
+        [
+          "public",
+          "th-9",
+          2
+        ]
+      ],
+      "blocked": false
+    },
+    {
+      "event": "scout_neutral_detour",
+      "clock": 115.325,
+      "origin": [
+        831.4453125,
+        515.4970703125
+      ],
+      "goal": [
+        2880.0,
+        -3904.0
+      ],
+      "point": [
+        832.0,
+        192.0
+      ],
+      "threats": [],
+      "public_layout_risks": [
+        [
+          "public",
+          "th-9",
+          0
+        ],
+        [
+          "public",
+          "th-9",
+          1
+        ],
+        [
+          "public",
+          "th-9",
+          2
+        ]
+      ],
+      "blocked": false
+    },
+    {
+      "event": "scout_neutral_detour",
+      "clock": 123.155,
+      "origin": [
+        959.759765625,
+        -1016.65673828125
+      ],
+      "goal": [
+        2880.0,
+        -3904.0
+      ],
+      "point": [
+        960.0,
+        -1344.0
+      ],
+      "threats": [],
+      "public_layout_risks": [
+        [
+          "public",
+          "th-9",
+          0
+        ],
+        [
+          "public",
+          "th-9",
+          1
+        ],
+        [
+          "public",
+          "th-9",
+          2
+        ],
+        [
+          "public",
+          "th-11",
+          1
+        ],
+        [
+          "public",
+          "th-11",
+          2
+        ],
+        [
+          "public",
+          "th-11",
+          3
+        ],
+        [
+          "public",
+          "th-14",
+          0
+        ],
+        [
+          "public",
+          "th-14",
+          1
+        ]
+      ],
+      "blocked": false
+    },
+    {
+      "event": "scout_neutral_detour",
+      "clock": 126.255,
+      "origin": [
+        1178.68359375,
+        -1581.8681640625
+      ],
+      "goal": [
+        2880.0,
+        -3904.0
+      ],
+      "point": [
+        1426.1709671652916,
+        -1829.3555374777916
+      ],
+      "threats": [],
+      "public_layout_risks": [
+        [
+          "public",
+          "th-11",
+          0
+        ],
+        [
+          "public",
+          "th-11",
+          1
+        ],
+        [
+          "public",
+          "th-11",
+          2
+        ],
+        [
+          "public",
+          "th-11",
+          3
+        ],
+        [
+          "public",
+          "th-14",
+          0
+        ]
+      ],
+      "blocked": false
+    },
+    {
+      "event": "scout_neutral_detour",
+      "clock": 129.355,
+      "origin": [
+        1497.736328125,
+        -2094.41357421875
+      ],
+      "goal": [
+        2880.0,
+        -3904.0
+      ],
+      "point": [
+        1730.7348449946296,
+        -2355.587254241361
+      ],
+      "threats": [],
+      "public_layout_risks": [
+        [
+          "public",
+          "th-11",
+          0
+        ],
+        [
+          "public",
+          "th-11",
+          1
+        ],
+        [
+          "public",
+          "th-11",
+          2
+        ],
+        [
+          "public",
+          "th-11",
+          3
+        ],
+        [
+          "public",
+          "th-16",
+          0
+        ],
+        [
+          "public",
+          "th-16",
+          1
+        ],
+        [
+          "public",
+          "th-16",
+          2
+        ],
+        [
+          "public",
+          "th-16",
+          3
+        ]
+      ],
+      "blocked": false
+    },
+    {
+      "event": "scout_discovery_complete",
+      "clock": 136.1,
+      "point": [
+        2880.0,
+        -3904.0
+      ],
+      "handle": [
+        21306,
+        21312
+      ]
+    },
+    {
+      "event": "scout_lost",
+      "clock": 149.03,
+      "handle": [
+        21306,
+        21312
+      ],
+      "losses": 1
+    }
+  ]
+}
