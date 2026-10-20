@@ -18,29 +18,24 @@ class SupplyOrderTests(unittest.TestCase):
         self.assertFalse(g.commands);self.assertFalse(g.builds)
         self.assertEqual(g.food,22)
 
-    def test_actual_full_population_overrides_optional_tower_order_after_tech_paid(self):
+    def test_full_population_after_paid_lich_still_builds_house_before_supply(self):
         g,e=self.scene(25)
-        e.tick(g,280);self.assertFalse(g.commands);self.assertFalse(g.builds)
         home=g.own[0];home.type='unp1';g.busy.pop(home.handle)
-        e.tick(g,300);self.assertEqual(g.commands,['unp2']);self.assertFalse(g.builds)
+        e.tick(g,300);self.assertEqual(g.commands,['unp2'])
         g.busy[home.handle]=N(kind='upgrade',queue=['unp2'],progress=.1)
-        e.tick(g,304);self.assertEqual(g.commands,['unp2','Ulic']);self.assertFalse(g.builds)
-        g.food+=5 # Engine charges hero food on accepted recruitment.
-        e.tick(g,308);self.assertEqual([b[1] for b in g.builds],['uzig'])
-        tower=unit('uzig',998,owner=0);tower.x,tower.y=g.builds[-1][2:];g.own.append(tower)
-        g.cap=40
-        e.tick(g,312);self.assertEqual([b[1] for b in g.builds],['uzig','uslh'])
+        e.tick(g,304);self.assertEqual(g.commands,['unp2','Ulic'])
+        g.food+=5
+        e.tick(g,308);self.assertEqual([b[1] for b in g.builds],['uslh'])
         house=unit('uslh',999,owner=0);house.x,house.y=g.builds[-1][2:];house.hp=10;g.own.append(house)
         g.busy[house.handle]=N(kind='construction',queue=['uslh'])
-        e.tick(g,316)
-        self.assertEqual([b[1] for b in g.builds],['uzig','uslh'])
+        e.tick(g,312);self.assertEqual([b[1] for b in g.builds],['uslh','uzig'])
 
-    def test_paid_lich_releases_reserved_food_for_reinforcements(self):
+    def test_paid_lich_alone_does_not_release_third_fiend(self):
         g,e=self.scene(25)
         fiends=g.units('me',{'ucry'});g.own=[u for u in g.own if u not in fiends[2:]]
         g.busy[g.my_buildings({'uaod'})[0].handle]=N(kind='queue',queue=['Ulic'])
         crypt=g.my_buildings({'usep'})[0]
-        self.assertTrue(e.train(g,crypt,'ucry',300));self.assertEqual(g.food,28)
+        self.assertFalse(e.train(g,crypt,'ucry',300));self.assertEqual(g.food,25)
 
 
 if __name__=='__main__':unittest.main()

@@ -1,0 +1,197 @@
+{
+  "source": "20261020-184054/events.jsonl and spawn-audit.json; actual owned observations",
+  "map_alias": "NI",
+  "home": {
+    "type": "unpl",
+    "x": -2752.0,
+    "y": -3328.0
+  },
+  "events": [
+    {
+      "event": "home_build_order_pending",
+      "clock": 3.955,
+      "code": "uaod",
+      "point": [
+        -3264,
+        -3328
+      ],
+      "worker": [
+        15776,
+        15782
+      ]
+    },
+    {
+      "event": "home_foundation_observed",
+      "clock": 7.33,
+      "code": "uaod",
+      "point": [
+        -3296.0,
+        -3360.0
+      ],
+      "handle": [
+        15536,
+        16701
+      ]
+    },
+    {
+      "event": "home_build_order_pending",
+      "clock": 7.33,
+      "code": "uzig",
+      "point": [
+        -2752,
+        -3840
+      ],
+      "worker": [
+        15776,
+        15782
+      ]
+    },
+    {
+      "event": "home_foundation_observed",
+      "clock": 10.605,
+      "code": "uzig",
+      "point": [
+        -2784.0,
+        -3872.0
+      ],
+      "handle": [
+        15655,
+        17078
+      ]
+    },
+    {
+      "event": "home_build_order_pending",
+      "clock": 34.1,
+      "code": "usep",
+      "point": [
+        -2752,
+        -2816
+      ],
+      "worker": [
+        15801,
+        15807
+      ]
+    },
+    {
+      "event": "home_foundation_observed",
+      "clock": 38.78,
+      "code": "usep",
+      "point": [
+        -2752.0,
+        -2816.0
+      ],
+      "handle": [
+        14778,
+        18409
+      ]
+    },
+    {
+      "event": "home_build_order_pending",
+      "clock": 57.5,
+      "code": "utom",
+      "point": [
+        -1984,
+        -2816
+      ],
+      "worker": [
+        12479,
+        18150
+      ]
+    },
+    {
+      "event": "home_foundation_unconfirmed",
+      "clock": 65.28,
+      "code": "utom",
+      "point": [
+        -1984,
+        -2816
+      ],
+      "worker": [
+        12479,
+        18150
+      ],
+      "order": 0,
+      "reason": "order_lost"
+    },
+    {
+      "event": "home_build_order_pending",
+      "clock": 65.28,
+      "code": "utom",
+      "point": [
+        -1856,
+        -2816
+      ],
+      "worker": [
+        12479,
+        18150
+      ]
+    },
+    {
+      "event": "home_foundation_unconfirmed",
+      "clock": 67.88,
+      "code": "utom",
+      "point": [
+        -1856,
+        -2816
+      ],
+      "worker": [
+        12479,
+        18150
+      ],
+      "order": 0,
+      "reason": "order_lost"
+    },
+    {
+      "event": "home_build_order_pending",
+      "clock": 67.88,
+      "code": "utom",
+      "point": [
+        -2272,
+        -3520
+      ],
+      "worker": [
+        12479,
+        18150
+      ]
+    },
+    {
+      "event": "home_foundation_observed",
+      "clock": 71.655,
+      "code": "utom",
+      "point": [
+        -2240.0,
+        -3520.0
+      ],
+      "handle": [
+        14941,
+        19875
+      ]
+    },
+    {
+      "event": "home_build_order_pending",
+      "clock": 80.15,
+      "code": "ugrv",
+      "point": [
+        -2112,
+        -3072
+      ],
+      "worker": [
+        15105,
+        19419
+      ]
+    },
+    {
+      "event": "home_foundation_observed",
+      "clock": 86.225,
+      "code": "ugrv",
+      "point": [
+        -2112.0,
+        -3072.0
+      ],
+      "handle": [
+        16023,
+        20716
+      ]
+    }
+  ]
+}

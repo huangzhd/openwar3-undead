@@ -1,0 +1,86 @@
+{
+  "source": "20261020-203239/events.jsonl combat_state; sampled positions, not a complete engine snapshot",
+  "frame": {
+    "event": "combat_state",
+    "clock": 327.675,
+    "center": [
+      238.029296875,
+      4741.970703125
+    ],
+    "army_hp": 1798.3565979003906,
+    "enemy_hp": 268.9127197265625,
+    "army_health": 0.8751126997082193,
+    "recent_losses": 0,
+    "army": [
+      {
+        "handle": [
+          19964,
+          29251
+        ],
+        "type": "Udea",
+        "x": 238,
+        "y": 4742,
+        "hp": 552,
+        "hp_max": 775.0,
+        "mana": 134,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          21963,
+          47349
+        ],
+        "type": "ucry",
+        "x": -228,
+        "y": 4642,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          21969,
+          37458
+        ],
+        "type": "ucry",
+        "x": -188,
+        "y": 4512,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          22249,
+          51976
+        ],
+        "type": "uske",
+        "x": 420,
+        "y": 4791,
+        "hp": 147,
+        "hp_max": 180.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      }
+    ],
+    "enemies": [
+      {
+        "handle": [
+          19817,
+          19817
+        ],
+        "type": "nmbg",
+        "x": 486,
+        "y": 4920,
+        "hp": 269,
+        "target": null
+      }
+    ]
+  }
+}

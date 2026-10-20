@@ -215,11 +215,14 @@ class RouteRejoinTests(unittest.TestCase):
         self.assertTrue(all(point[0]>=u.x for u,point,_ in orders))
         self.assertEqual(f.route,[(0,0),(1000,0),(3000,0)])
 
-    def test_changed_destination_drops_old_catchup_direction(self):
+    def test_changed_destination_recomputes_dk_lead_without_turning_main_back(self):
         bot,orders=march.MarchRecoveryTests().controller();d=unit('Udea',1,0);a=unit('ucry',2,1000);z=unit('ucry',3,1050)
         f=bot.formation;f.catching_up={d.handle};f.route=[(6000,0)];f.objective=(6000,0)
         bot.go([d,a,z],(-6000,0),2,True)
-        self.assertNotIn(d.handle,f.catching_up)
-        self.assertFalse(any(u is d and point[0]>0 for u,point,_ in orders))
+        # Changing direction makes DK the forward outlier. He now returns
+        # to the moving main body; the fiends follow the new destination.
+        self.assertIn(d.handle,f.catching_up)
+        self.assertTrue(all(point==(-6000,0) and attack for u,point,attack in orders if u is not d))
+        self.assertTrue(any(u is d and point==(1000,0) and not attack for u,point,attack in orders))
 
 if __name__=='__main__':unittest.main()

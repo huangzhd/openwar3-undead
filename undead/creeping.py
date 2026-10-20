@@ -27,6 +27,7 @@ class Creeping:
         self.ch_route_skipped=set();self.ch_route_wait=None;self.ch_home_returned=False
         self.ni_orb_ready=False;self.ni_route_skipped=set();self.ni_route_wait=None
         self.ni_attack_started=False;self.ni_contested=False;self.repath=False
+        self.th_attack_started=False;self.th_route_wait=None;self.th_contested=False
         self.local_origin=None
         self.home_only=False
         self.resupply_home=False
@@ -61,7 +62,7 @@ class Creeping:
                if getattr(e,'owner',None)==12 and e.handle in self.drop_camps}
         handles={e.handle for e in foes}
         return [*foes,*[e for e in (g.creeps() if hasattr(g,'creeps') else [])
-                       if e.hp>0 and e.handle not in handles and self.carries_drop(e)
+                       if e.hp>0 and e.handle not in handles and (self.carries_drop(e) or self.th_priority(e))
                        and self.drop_camps.get(e.handle) in camps and g.dist(e,anchor)<900]]
 
     @staticmethod
@@ -251,7 +252,52 @@ class Creeping:
         if self.ni_orb_ready:self.ni_route_update(home,now)
         return bool(not attack_committed and self.ni_orb_ready and self.ni_route_stage(home))
 
+    def th_route(self,home):
+        """User's mirrored TH route; only observed clearance advances it."""
+        if self.map_alias!='TH' or self.th_attack_started:return []
+        north=hypot(home.x+3904,home.y-2880)<hypot(home.x-2880,home.y+3904)
+        route=['th-8','th-2','th-10','th-1','th-4','th-6'] if north else [
+            'th-14','th-19','th-20','th-12','th-11','th-16']
+        return route if set(route)<={c['id'] for c in self.catalog} else []
+
+    def th_route_stage(self,home):
+        return next((k for k in self.th_route(home) if k not in self.cleared),None)
+
+    def th_continuous(self,home):
+        # Preserve first-summon preparation; thereafter the user commits this route.
+        return bool(not self.th_contested and self.th_route_stage(home)
+                    and (self.active or self.cleared))
+
+    def route_continuous(self,home):
+        return self.ni_continuous(home) or self.th_continuous(home)
+
+    def th_priority(self,u):
+        # Sea Giant whirlwind and Gnoll Assassin poison outrank treasure drops.
+        return self.map_alias=='TH' and getattr(u,'owner',None)==12 and u.type in {'nsgn','ngns'}
+
+    def th_poison_gnoll(self,u):
+        return self.map_alias=='TH' and getattr(u,'owner',None)==12 and u.type=='ngns'
+
+    def th_route_allows(self,c,home):
+        return not self.th_route(home) or c['id']==self.th_route_stage(home)
+
+    def th_opening_turtle(self,c,home):
+        route=self.th_route(home)
+        return bool(route and c['id']==route[0] and c['kind']=='turtle'
+                    and sorted(s.get('level',0) for s in c.get('spawns',[]))==[2,4]
+                    and not c.get('poison_units') and set(c.get('hazards',[]))<={'thorns'})
+
+    def prepare_th_route(self,home,now,attack_committed):
+        if self.map_alias!='TH':return False
+        self.th_attack_started=attack_committed
+        stage=self.th_route_stage(home)
+        if stage and stage!=self.th_route_wait:
+            self.th_route_wait=stage
+            self.log('th_route_stage',clock=now,camp=stage)
+        return bool(stage)
+
     def pre_attack_safe(self,c):
+        if self.map_alias=='TH' and not self.th_attack_started and c['id'] in {'th-6','th-16'}:return True
         if self.ni_central(c):return self.ni_orb_ready
         if self.ch_center(c):return self.ch_orb_ready and not self.ch_center_done
         if self.map_alias=='TM' and self.home_only and self.tier>=2 and c['kind'] in {'shop','mercenary'} and c.get('difficulty',99)<=18:
@@ -290,14 +336,20 @@ class Creeping:
                      and (sum(u.type in {'uske','uskm'} and u.hp>=u.hp_max*.7 for u in army)>=2
                           if ch_first else
                           any(u.type in {'uske','uskm','ucry'} and u.hp>=u.hp_max*.5 for u in army)))
-            fixed=self.ni_continuous(home) and c['id']==self.ni_route_stage(home)
+            th_open=(self.th_opening_turtle(c,home)
+                     and any(u.type=='Udea' and u.hp>=.8*u.hp_max for u in army)
+                     and sum(u.type in {'uske','uskm'} and u.hp>=.7*u.hp_max for u in army)>=2)
+            fixed=self.route_continuous(home) and c['id']==(self.th_route_stage(home) if self.map_alias=='TH' else self.ni_route_stage(home))
             if fixed:
                 retry_reason=self.deferred_reasons.get(c['id'])
                 resumes=retry_reason in {'army_not_ready','camp_too_strong','no_movement_or_damage_progress',
                     'player_contact','safety_retreat','orb_contact_disengage'}
+                if self.map_alias=='TH':
+                    resumes=retry_reason=='army_not_ready'
+                    if c['id'] in self.exhausted:continue
                 if army and c['id'] not in self.cleared and (resumes or now>=self.deferred.get(c['id'],0)):result.append(c)
                 continue
-            if not self.pre_attack_safe(c) or not self.ch_route_allows(c,home) or not self.ni_route_allows(c,home):continue
+            if not self.pre_attack_safe(c) or not self.ch_route_allows(c,home) or not self.ni_route_allows(c,home) or not self.th_route_allows(c,home):continue
             if not self.tm_staging_allows(c,home):continue
             if c.get('difficulty',0)>=15 and (health/max(1,sum(u.hp_max for u in army))<.75 or
                 any(u.is_hero and u.hp/u.hp_max<.5 for u in army)):continue
@@ -317,7 +369,7 @@ class Creeping:
             if c['id'] in self.cleared or c['id'] in self.exhausted or now<self.deferred.get(c['id'],0):continue
             if not healthy:continue
             if c['kind']=='murloc' and any(u.is_hero and u.hp<.5*u.hp_max for u in army):continue
-            if self.needs_support(c) and not supported and not ch_open and not self.ch_midgame_support(g,c,army,home):continue
+            if self.needs_support(c) and not supported and not ch_open and not th_open and not self.ch_midgame_support(g,c,army,home):continue
             opening_small=(self.opening_gnoll and not self.cleared and self.own_side(g,c,home)
                 and (self.small_turtle(c) or (c['kind'] in {'ogre','gnoll'} and c['max_level']<=3 and c.get('difficulty',0)<=9
                      and not c.get('poison_units') and set(c.get('hazards',[]))<={'ensnare'}))
@@ -325,7 +377,7 @@ class Creeping:
                 and any(u.type=='Udea' and u.level==1 and u.hp/u.hp_max>=.8 for u in army)
                 and sum(u.type in {'uske','uskm'} and u.hp/u.hp_max>=.7 for u in army)>=2)
             chain_green=chain and self.central_green_gnoll(c)
-            if c.get('difficulty',0)>(max(strength,c['difficulty']) if ch_open else max(strength,9) if opening_small else max(strength,7) if chain_green else strength):continue
+            if c.get('difficulty',0)>(max(strength,c['difficulty']) if ch_open or th_open else max(strength,9) if opening_small else max(strength,7) if chain_green else strength):continue
             if not lich and (c['max_level']>5 or not chain_green and hypot(c['x']-home.x,c['y']-home.y)>6500):continue
             # Lich/nova and more ranged units open higher-level camps; avoid suicidal pulls.
             if c['hp']>health*(1.6 if lich else 1.3):continue
@@ -418,11 +470,12 @@ class Creeping:
         visible=g.creeps()
         self.observe_clear(g,center,now,visible)
         self.ni_route_update(home,now)
+        if self.active and not self.th_route_allows(self.active,home):self.defer(now,'th_route_order')
         if self.active and not self.ni_route_allows(self.active,home):self.defer(now,'ni_route_order')
         waypoint=self.ch_route_waypoint(g,army,center,home,now)
         if self.active and not self.ch_route_allows(self.active,home):self.defer(now,'ch_route_order')
         if waypoint is not None:return waypoint,[]
-        continuous=self.ni_continuous(home)
+        continuous=self.route_continuous(home)
         if self.active and not continuous and not self.pre_attack_safe(self.active):
             self.defer(now,'preserve_attack_readiness')
         if self.active and not self.tm_staging_allows(self.active,home):
@@ -440,7 +493,7 @@ class Creeping:
                     c['id']==self.active['id'] for c in self.ch_home_opening(home))
             # Once engaged, actual remaining camp HP below owns the strength check.
             # Reapplying the full initial level sum after every hit would cause oscillation.
-            support_lost=support_lost and not self.ch_midgame_support(g,self.active,army,home)
+            support_lost=support_lost and not self.ch_midgame_support(g,self.active,army,home) and not self.th_opening_turtle(self.active,home)
             if not continuous and (health<.55 or support_lost):self.defer(now,'army_not_ready')
             elif not self.safe_route(g,center,(self.active['x'],self.active['y'])):
                 self.defer(now,'enemy_main_route')
@@ -461,7 +514,7 @@ class Creeping:
                 self.progress_at=now;self.best_distance=distance
             self.last_hp=remaining
             if now-self.progress_at>25:
-                if continuous:
+                if continuous and self.map_alias!='TH':
                     self.repath=True;self.progress_at=now;self.best_distance=None
                     self.log('ni_camp_repath',clock=now,camp=self.active['id'],reason='no_progress_keep_objective')
                 else:self.defer(now,'no_movement_or_damage_progress')

@@ -1,0 +1,173 @@
+{
+  "source": "artifacts/aura-probe-20261020-210543/report.json; isolated live-engine fixture, not a normal match",
+  "cases": [
+    {
+      "item": "sbch",
+      "receiver": "Nngs",
+      "baseline": {
+        "type": "Udea",
+        "handle": [
+          20984,
+          22181
+        ],
+        "hp": 800.0,
+        "mana": 300.0,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AUau",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919248
+          },
+          {
+            "code": "AUdc",
+            "level": 2,
+            "cooldown": 0.0,
+            "flags": 16
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          },
+          {
+            "code": "Ablr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          }
+        ]
+      },
+      "holding": {
+        "type": "Udea",
+        "handle": [
+          20984,
+          22181
+        ],
+        "hp": 800.0,
+        "mana": 300.0,
+        "inventory": [
+          "sbch",
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIav",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919776
+          }
+        ]
+      }
+    },
+    {
+      "item": "lhst",
+      "receiver": "Nngs",
+      "baseline": {
+        "type": "Udea",
+        "handle": [
+          21694,
+          26738
+        ],
+        "hp": 800.0,
+        "mana": 300.0,
+        "inventory": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AUau",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919248
+          },
+          {
+            "code": "AUdc",
+            "level": 2,
+            "cooldown": 0.0,
+            "flags": 16
+          },
+          {
+            "code": "AInv",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "AHer",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          },
+          {
+            "code": "Amov",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 16
+          },
+          {
+            "code": "Ablr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 144
+          }
+        ]
+      },
+      "holding": {
+        "type": "Udea",
+        "handle": [
+          21694,
+          26738
+        ],
+        "hp": 800.0,
+        "mana": 300.0,
+        "inventory": [
+          "lhst",
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "abilities": [
+          {
+            "code": "AIad",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919776
+          }
+        ]
+      }
+    }
+  ]
+}

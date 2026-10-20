@@ -48,12 +48,13 @@ class TavernLifetimeTests(unittest.TestCase):
         self.assertIsNone(b.tavern_mission);self.assertFalse(buys)
         self.assertIn('lifetime_insufficient',[r.get('reason') for r in ev])
 
-    def test_skeleton_disappearance_can_fall_back_to_fiend_after_cooldown(self):
+    def test_skeleton_disappearance_requests_group_instead_of_another_solo_trip(self):
         b,a,s,m,buys,ev,res=self.game();sk=unit('uske',70,-3000);a.append(sk);b.skeleton_expiry[sk.handle]=75
         b.recruit_tavern(a,[],10,3,set());a.remove(sk)
         b.recruit_tavern(a,[],13,3,set());self.assertIsNone(b.tavern_mission)
         b.recruit_tavern(a,[],44,3,set())
-        self.assertEqual(next(u.type for u in a if u.handle==b.tavern_mission['courier']),'ucry')
+        self.assertIsNone(b.tavern_mission)
+        self.assertTrue(b.tavern_group_requested)
 
     def test_main_assault_keeps_two_skeletons_and_active_scout_is_not_reassigned(self):
         b,a,s,m,buys,ev,res=self.game();b.attacking_main=True

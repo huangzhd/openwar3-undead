@@ -82,9 +82,14 @@ class Economy:
     def train(self,g,b,code,now):
         food={'ucry':3,'uobs':3,'ugho':2,'uaco':1}.get(code,0)
         res=g.resources()
+        if code=='ucry' and self.count(g,'ucry')==2 and self.third_hero not in self.ever_heroes:
+            tech_paid=any(h.type=='unp2' or (g.production(h) and 'unp2' in g.production(h).queue)
+                          for h in g.my_buildings(HALLS))
+            if (not tech_paid or ('Ulic' not in self.ever_heroes and not self.queued(g,'Ulic'))
+                    or not g.my_buildings({'uslh'}) or len(g.my_buildings({'uzig','uzg1','uzg2'}))<3):
+                return False # Third fiend follows real house and third-tower foundations.
         if (code=='ucry' and self.count(g,'ucry')>=2
-                and 'Ulic' not in self.ever_heroes and not self.queued(g,'Ulic')):
-            return False # Third fiend follows the paid tier-three and Lich orders.
+                and 'Ulic' not in self.ever_heroes and not self.queued(g,'Ulic')):return False
         if (code=='ucry' and not self.upkeep_released and not self.upkeep_threat
                 and res['food_used']<=50 and self.count(g,'ucry')>=4):return False
         # Leave two food for a statue's transformation before releasing upkeep.
@@ -93,7 +98,7 @@ class Economy:
         if food and morph_food and res['food_used']+food+morph_food>50:return False
         # Keep Lich's five food free while optional supply waits for his
         # recruitment and the slaughterhouse foundation (including tier-two research).
-        if (code in {'ucry','ugho','uobs'} and self.opening_complete
+        if (code in {'ucry','ugho','uobs','uaco'} and (code!='uaco' or self.count(g,'uaco')>=5) and self.opening_complete
                 and 'Ulic' not in self.ever_heroes and not self.queued(g,'Ulic')
                 and res['food_used']+food+5>res['food_cap']):
             return False
@@ -128,6 +133,11 @@ class Economy:
         if (code=='uzig' and len(g.my_buildings({'uzig','uzg1','uzg2'}))>=4
                 and self.third_hero not in self.ever_heroes
                 and g.resources()['food_cap']-g.resources()['food_used']>=5):return False
+        # The third tower cannot preempt the paid Lich and actual slaughterhouse.
+        if (code=='uzig' and len(g.my_buildings({'uzig','uzg1','uzg2'}))==2
+                and not self.revival_pending(g)
+                and (('Ulic' not in self.ever_heroes and not self.queued(g,'Ulic'))
+                     or not g.my_buildings({'uslh'}))):return False
         if code in self.home_layout.pending:return True
         if not g.can_afford(code) or now-self.last_build<1:
             return False
@@ -218,7 +228,8 @@ class Economy:
             (p:=g.production(b)) is not None and p.kind=='construction'
             for b in g.my_buildings({'uzig'})))
         needed=5 if self.third_hero not in self.ever_heroes else 3
-        if (self.opening_complete and tech_paid and res['food_cap']<100
+        if (self.opening_complete and tech_paid and g.my_buildings({'uslh'})
+                and ('Ulic' in self.ever_heroes or self.queued(g,'Ulic')) and res['food_cap']<100
                 and res['food_cap']-res['food_used']<needed and not pending_supply):
             self.log('supply_construction_priority',clock=now,food_used=res['food_used'],food_cap=res['food_cap'])
             self.build(g,'uzig',home,now)
@@ -325,11 +336,16 @@ class Economy:
             if self.slaughter_missing_since is None:self.slaughter_missing_since=now
             # Tier three is already paid. Preserve the house budget if placement stalls.
             if (now-self.slaughter_missing_since>=10 and res['gold']>=355 and res['lumber']>=175
-                    and crypts and fiends<6 and self.train(g,crypts[0],'ucry',now)):
+                    and crypts and fiends<2 and self.train(g,crypts[0],'ucry',now)):
                 self.log('construction_stall_reinforcement',clock=now,blocked='uslh',gold=res['gold'],lumber=res['lumber'])
                 return
             self.build(g,'uslh',home,now)
             return
+        if (tier>=2 and fiends<3 and self.third_hero not in self.ever_heroes and g.my_buildings({'uslh'})
+                and ('Ulic' in self.ever_heroes or self.queued(g,'Ulic'))
+                and len(g.my_buildings({'uzig','uzg1','uzg2'}))<3):
+            if not pending_zig:self.build(g,'uzig',home,now)
+            return # Observe a real third foundation before training the third fiend.
         slaughter=self.ready(g,'uslh')
         if tier==3 and self.research_destroyer(g,slaughter,now):return
         supply_unlocked=(bool(g.my_buildings({'uslh'}))

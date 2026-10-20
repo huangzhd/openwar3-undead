@@ -7,6 +7,10 @@ ENVELOPES={'unpl':192,'unp1':192,'unp2':192,'ugol':192,
            'uzig':96,'uzg1':96,'uzg2':96,'uaod':128,'utom':128,
            'usep':160,'ugrv':160,'uslh':160,'ubon':160}
 
+# NI southwest, observed in 20261020-184054. Preserve successful command
+# coordinates: the engine snapped the shop's center to (-2240, -3520).
+NI_SW_OPENING={'utom':(-2272,-3520),'ugrv':(-2112,-3072)}
+
 
 def clear_of_buildings(point,buildings,padding=48,half=0):
     return all(max(abs(point[0]-b.x),abs(point[1]-b.y))>=
@@ -16,6 +20,7 @@ def clear_of_buildings(point,buildings,padding=48,half=0):
 class HomeLayout:
     def __init__(self,log=lambda *a,**k:None):
         self.cursors={};self.pending={};self.log=log;self.failed_spots={}
+        self.map_alias=None
 
     @property
     def reserved(self):
@@ -79,6 +84,11 @@ class HomeLayout:
                        for dx in (512,640,768,896)]
         elif code=='ugrv':
             preferred=[(round((home.x+512)/32)*32,round(home.y/32)*32)]
+        # A measured slot precedes the old speculative crypt-side choices.
+        # Do not mirror unverified terrain or apply NI coordinates on other maps.
+        if (self.map_alias=='NI' and (home.x,home.y)==(-2752,-3328)
+                and code in NI_SW_OPENING and not any(b.type==code for b in buildings)):
+            preferred=[NI_SW_OPENING[code]]
         ordered=preferred+sorted(points-set(preferred),key=lambda p:(hypot(p[0]-home.x,p[1]-home.y),p))
         for point in ordered:
             if code=='utom' and crypt is not None and point==(round((home.x+512)/32)*32,round(home.y/32)*32):

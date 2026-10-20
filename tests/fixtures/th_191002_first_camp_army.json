@@ -1,0 +1,90 @@
+{
+  "source": "artifacts/20261020-191002/events.jsonl",
+  "note": "Last combat sample 2.595s before actual first clear. HP/positions are rounded by logger; not an exact clear-time snapshot.",
+  "frame": {
+    "event": "combat_state",
+    "clock": 181.38,
+    "center": [
+      -560.67236328125,
+      2381.75
+    ],
+    "army_hp": 1027.681007385254,
+    "enemy_hp": 65.50585174560547,
+    "army_health": 0.845827989617493,
+    "recent_losses": 0,
+    "army": [
+      {
+        "handle": [
+          18950,
+          35680
+        ],
+        "type": "uske",
+        "x": -624,
+        "y": 2544,
+        "hp": 171,
+        "hp_max": 180.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          19052,
+          31165
+        ],
+        "type": "uske",
+        "x": -561,
+        "y": 2382,
+        "hp": 35,
+        "hp_max": 180.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          19382,
+          35697
+        ],
+        "type": "uske",
+        "x": -550,
+        "y": 2322,
+        "hp": 176,
+        "hp_max": 180.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          19942,
+          29116
+        ],
+        "type": "Udea",
+        "x": -677,
+        "y": 2448,
+        "hp": 646,
+        "hp_max": 675.0,
+        "mana": 139,
+        "pulling": false,
+        "pull": null
+      }
+    ],
+    "enemies": [
+      {
+        "handle": [
+          19615,
+          19615
+        ],
+        "type": "ntrs",
+        "x": -515,
+        "y": 2469,
+        "hp": 66,
+        "target": [
+          19052,
+          31165
+        ]
+      }
+    ]
+  }
+}

@@ -49,16 +49,16 @@ class TavernEscortTests(unittest.TestCase):
         b.g.current_target=lambda u:None
         return b,a,shops,m,buys,ev,res
 
-    def recall_three(self,b,a):
-        for now in (10,50,90):
+    def recall_once(self,b,a):
+        for now in (10,):
             b.recruit_tavern(a,[],now,3,set())
             self.assertIsNotNone(b.tavern_mission)
             h=b.tavern_mission['courier']
             b.recruit_tavern(a,[],now+1,3,{h})
         self.assertIsNone(b.tavern_mission)
 
-    def test_three_unsafe_recalls_switch_to_group_march_and_actual_hero_unlocks_attack(self):
-        b,a,shops,m,buys,ev,res=self.make();self.recall_three(b,a);m.clear()
+    def test_first_unsafe_recall_switches_to_group_march_and_actual_hero_unlocks_attack(self):
+        b,a,shops,m,buys,ev,res=self.make();self.recall_once(b,a);m.clear()
         self.assertTrue(b.escort_tavern(a,[],100,3))
         self.assertEqual({h for h,p in m},{u.handle for u in a})
         self.assertTrue(all(p==(0,0) for h,p in m))
@@ -107,5 +107,5 @@ class TavernEscortTests(unittest.TestCase):
         b,a,shops,m,buys,ev,res=self.make();b.tavern_unsafe_returns=3
         self.assertTrue(b.escort_tavern(a,[],100,3))
         self.assertFalse(b.escort_tavern(a,[],131,3))
-        self.assertFalse(b.escort_tavern(a,[],200,3))
+        self.assertTrue(b.escort_tavern(a,[],200,3))
         self.assertTrue(any(e.get('reason')=='no_progress_or_time_limit' for e in ev))

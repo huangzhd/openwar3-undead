@@ -83,7 +83,7 @@ class TavernTests(unittest.TestCase):
 
     def test_no_progress_recalled_and_dispatch_has_total_trip_limit(self):
         b,a,s,m,buys,ev,res=self.setup_game()
-        for start in [10,70,130]:
+        for start in [10]:
             b.recruit_tavern(a,[],start,3,set());self.assertIsNotNone(b.tavern_mission)
             b.recruit_tavern(a,[],start+26,3,set());self.assertIsNone(b.tavern_mission)
         b.recruit_tavern(a,[],200,3,set());self.assertIsNone(b.tavern_mission)

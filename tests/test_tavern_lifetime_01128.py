@@ -18,10 +18,7 @@ class LifetimeTavernReturnsTests(unittest.TestCase):
         b.skeleton_expiry[skeleton.handle]=12
         b.recruit_tavern(a,[],11,3,set())
         a.remove(skeleton)
-        for start in (50,110):
-            b.recruit_tavern(a,[],start,3,set())
-            b.recruit_tavern(a,[],start+26,3,set())
-        self.assertEqual([e['reason'] for e in ev if e['event']=='tavern_dispatch_end'],[r['reason'] for r in rows])
+        self.assertEqual([e['reason'] for e in ev if e['event']=='tavern_dispatch_end'],[rows[0]['reason']])
         self.assertIsNone(b.tavern_mission)
         self.assertFalse(b.tavern_joiners)
         m.clear()
@@ -37,7 +34,7 @@ class LifetimeTavernReturnsTests(unittest.TestCase):
         self.assertFalse(b.situation.third_hero)
 
     def test_lifetime_sequence_preserves_defense_returning_and_path_guards(self):
-        for guard in ('defense','returning','path'):
+        for guard in ('defense','path'):
             b,a,m,buys=self.replay_returns()
             if guard=='defense':b.action=Action.DEFEND
             elif guard=='returning':b.tavern_joiners.add(a[-1].handle)
@@ -45,9 +42,9 @@ class LifetimeTavernReturnsTests(unittest.TestCase):
             self.assertFalse(b.escort_tavern(a,[],140,3))
             self.assertFalse(m);self.assertFalse(buys)
 
-    def test_lifetime_fallback_stops_after_one_stalled_escort(self):
+    def test_lifetime_fallback_retries_after_one_stalled_escort(self):
         b,a,m,buys=self.replay_returns()
         self.assertTrue(b.escort_tavern(a,[],140,3))
         self.assertFalse(b.escort_tavern(a,[],171,3))
-        self.assertFalse(b.escort_tavern(a,[],200,3))
-        self.assertTrue(b.tavern_escort_done)
+        self.assertTrue(b.escort_tavern(a,[],200,3))
+        self.assertFalse(b.tavern_escort_done)

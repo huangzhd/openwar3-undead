@@ -1,4 +1,4 @@
-"""Shared obstacle turns, free open-ground movement, and a DK-only aura brake."""
+"""Shared terrain turns and individual correction without stopping the main body."""
 from math import hypot, ceil
 
 
@@ -71,49 +71,19 @@ class Formation:
         heroes=[u for u in core if u.is_hero]
         hero_spread=max((distance(xy(a),xy(b)) for a in heroes for b in heroes),default=0)
         self.metrics=dict(clock=now,stage=self.stage,ground_spread=round(spread),hero_spread=round(hero_spread),members=len(core))
-        # Separation alone is fine in open terrain. Only regroup when terrain divides the route.
+        # Keep the main body moving. Terrain separation corrects only the outlier.
         # The 128-cell grid can project adjacent units into disconnected pockets.
         # Missing coarse paths alone are not evidence that nearby units split around woods.
-        divided=any((d is None and distance(xy(u),self.anchor)>700) or
+        divided={u.handle for u,d in zip(core,distances) if
+                    (d is None and distance(xy(u),self.anchor)>900) or
                     (d is not None and d>max(800,distance(xy(u),self.anchor)*1.5+256))
-                    for u,d in zip(core,distances))
-        if not retreat and divided and self.rally is None:
-            self.rally=self.anchor
-            self.route=[]
-            self.last_progress=now
-        if retreat:
-            self.rally=None
-        if self.rally is not None:
-            self.stage='regroup'
-            ds=[ground_distance(xy(u),self.rally) for u in core]
-            furthest=max((d if d is not None else 100000 for d in ds),default=0)
-            if self.rally_distance is None or furthest<self.rally_distance-80:
-                self.last_progress=now;self.rally_distance=furthest
-            if not divided or all(d is not None and d<460 for d in ds):
-                self.rally=None
-                self.rally_retries=0
-                self.route=[]
-                self.last_plan=-100
-                self.last_progress=now
-            else:
-                # Re-evaluate a stalled rendezvous; never send the leading hero onward alone.
-                if now-self.last_progress>12 and self.rally_retries<2:
-                    self.rally_retries+=1
-                    self.log('formation_retry',clock=now,reason='rendezvous_stalled')
-                    turns=path(self.anchor,target)
-                    alternate=subdivide(self.anchor,turns) if turns else []
-                    self.rally=alternate[min(1,len(alternate)-1)] if alternate else self.anchor
-                    self.rally_distance=None
-                    self.last_progress=now
-                if self.rally_retries>=2 and now-self.last_progress>12:
-                    self.stage='blocked'
-                self.report(now,spread,hero_spread,len(core))
-                return [(u,self.rally,distance(xy(u),self.rally)<180) for u in units]
+                    }
+        self.rally=None
         # A trailing veteran can keep acquiring roadside enemies on attack-move.
         # Let that unit catch the moving main body without stopping everyone.
         changed=self.objective is None or distance(self.objective,target)>192
         previous=set() if changed else self.catching_up
-        self.catching_up=set()
+        self.catching_up=set() if retreat else divided
         main_left=ground_distance(self.anchor,target)
         if not retreat:
             for u,d in zip(core,distances):
@@ -173,16 +143,17 @@ class Formation:
             dk_left=ground_distance(xy(dk),target)
             main_left=ground_distance(xy(main),target)
             ahead=dk_left is not None and main_left is not None and dk_left+200<main_left
-            # Local 1.27a AUau has Area=900. Use margin and hysteresis; only DK waits.
-            brake=ahead and self.aura_gap>(550 if self.aura_wait else 750)
+            # Local 1.27a AUau has Area=900. Use margin and hysteresis; only DK returns to the moving main body.
+            brake=ahead and self.aura_gap>(550 if self.aura_wait else 900)
         self.aura_wait=brake
+        if brake:self.catching_up.add(dk.handle)
         previous_forward=self.forward_fiends
         self.forward_fiends=set()
         if not retreat:
             main_left=ground_distance(self.anchor,target)
             for u in core:
                 left=ground_distance(xy(u),target)
-                if (u.type=='ucry' and distance(xy(u),self.anchor)>(400 if u.handle in previous_forward else 650)
+                if (u.type=='ucry' and distance(xy(u),self.anchor)>(550 if u.handle in previous_forward else 900)
                         and left is not None and main_left is not None and left+200<main_left):
                     self.forward_fiends.add(u.handle)
         orders=[]
@@ -219,14 +190,13 @@ class Formation:
                     index+=1;self.cursors[u.handle]=index;point=next_point
                     self.unit_progress.pop(u.handle,None)
                     self.log('formation_local_unstuck',clock=now,handle=u.handle,point=point)
-            hero_ahead=bool(dk and u is not dk and u.is_hero and not retreat and
-                distance(xy(u),xy(dk))>550 and
-                ground_distance(xy(u),target) is not None and ground_distance(xy(dk),target) is not None and
-                ground_distance(xy(u),target)+120<ground_distance(xy(dk),target))
+            hero_ahead=bool(u.is_hero and not retreat and
+                distance(xy(u),self.anchor)>900 and
+                ground_distance(xy(u),target) is not None and remaining is not None and
+                ground_distance(xy(u),target)+200<remaining)
             if hero_ahead:
-                orders.append((u,xy(dk),False))
-            elif u is dk and brake:
-                orders.append((u,xy(u),True))
+                self.catching_up.add(u.handle)
+                orders.append((u,self.anchor,False))
             else:
                 # Units pass the same turns independently; nobody waits for the last straggler.
                 orders.append((u,point,index==len(self.route)-1 and distance(xy(u),point)<100 and not retreat))
@@ -236,7 +206,7 @@ class Formation:
     def report(self,now,spread,hero_spread,members):
         self.metrics=dict(clock=now,stage=self.stage,ground_spread=round(spread),hero_spread=round(hero_spread),members=members,
                           rally=self.rally,next_waypoint=self.route[min(self.cursors.values(),default=0)] if self.route else None,
-                          dk_aura_gap=round(getattr(self,'aura_gap',0)),dk_waiting=self.aura_wait)
+                          dk_aura_gap=round(getattr(self,'aura_gap',0)),dk_waiting=False,dk_returning=self.aura_wait)
         self.metrics['catching_up']=sorted(self.catching_up)
         if now-self.last_report>=5:
             self.last_report=now

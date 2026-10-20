@@ -191,14 +191,15 @@ class MovementTests(unittest.TestCase):
         recruit.x=0
         f.plan([*army,recruit],(2000,0),5,distance,lambda a,b:[b])
         self.assertNotIn(recruit.handle,f.joiners)
-    def test_stalled_rally_moves_to_a_new_shared_point(self):
+    def test_stalled_outlier_does_not_stop_or_redirect_main_body(self):
         f=Formation(lambda *a,**kw:None)
         army=[unit('Udea',1,0),unit('Ulic',2,50),unit('ucry',3,-1500)]
         detour=lambda a,b:distance(a,b)*3
         f.plan(army,(2000,0),1,detour,lambda a,b:[b])
-        first=f.rally
         orders=f.plan(army,(2000,0),15,detour,lambda a,b:[b])
-        self.assertNotEqual(f.rally,first)
-        self.assertEqual({point for _,point,_ in orders},{f.rally})
+        self.assertIsNone(f.rally)
+        self.assertTrue(all(point==(2000,0) and not hold for u,point,hold in orders if u.is_hero))
+        self.assertEqual(orders[-1][1],f.anchor)
+        self.assertFalse(orders[-1][2])
 
 if __name__=='__main__':unittest.main()

@@ -7,18 +7,18 @@ from undead.formation import Formation, distance
 def u(code,x,y,i): return N(type=code,x=x,y=y,handle=(i,0),is_hero=code[0].isupper())
 
 class FormationTests(unittest.TestCase):
-    def test_opposite_sides_of_woods_regroup_despite_short_straight_distance(self):
+    def test_opposite_sides_of_woods_correct_only_separated_unit(self):
         grid=Grid(20,20,100,0,0,bytearray(400))
         for row in range(16): grid.blocked[row*20+5]=1
         army=[u('Udea',650,250,1),u('Ulic',450,250,2),u('ucry',450,350,3)]
         f=Formation(lambda *a,**k:None)
         orders=f.plan(army,(1800,300),0,grid.distance,grid.path)
         self.assertLess(distance((650,250),(450,250)),800)
-        self.assertEqual(f.stage,'regroup')
-        self.assertTrue(all(point==f.rally for _,point,_ in orders))
-        self.assertTrue(orders[1][2])  # Lich waits with main force; it does not run to the objective.
-        self.assertFalse(orders[0][2])  # DK has to come around the woods.
-        self.assertFalse(f.route)
+        self.assertEqual(f.stage,'advance')
+        self.assertEqual(orders[0][1],f.anchor)  # Only DK comes around the woods.
+        self.assertFalse(any(hold for _,_,hold in orders))
+        self.assertTrue(all(point==f.route[0] for _,point,_ in orders[1:]))
+        self.assertIsNone(f.rally)
 
     def test_nearby_coarse_grid_disconnection_keeps_army_on_shared_exit(self):
         army=[u('Udea',0,0,1),u('Ulic',-220,150,2),u('ucry',0,-30,3)]
@@ -32,15 +32,16 @@ class FormationTests(unittest.TestCase):
         self.assertTrue(all(point[1]>=500 and not hold for _,point,hold in orders))
         self.assertIsNone(f.rally)
 
-    def test_distant_disconnected_unit_still_triggers_shared_regroup(self):
-        army=[u('Udea',0,0,1),u('Ulic',-900,0,2),u('ucry',0,-30,3)]
+    def test_distant_disconnected_unit_does_not_stop_main_body(self):
+        army=[u('Udea',0,0,1),u('Ulic',-1100,0,2),u('ucry',0,-30,3)]
         def coarse(a,b):
-            return None if a==(-900,0) else distance(a,b)
+            return None if a==(-1100,0) else distance(a,b)
         f=Formation(lambda *a,**k:None)
         orders=f.plan(army,(0,3000),0,coarse,lambda a,b:[b])
-        self.assertEqual(f.stage,'regroup')
-        self.assertTrue(all(point==f.rally for _,point,_ in orders))
-        self.assertFalse(orders[1][2])
+        self.assertEqual(f.stage,'advance')
+        self.assertEqual(orders[1][1],f.anchor)
+        self.assertTrue(all(point==(0,3000) for obj,point,_ in orders if obj is not army[1]))
+        self.assertFalse(any(hold for _,_,hold in orders))
 
     def test_open_ground_does_not_wait_for_spread_or_intermediate_waypoints(self):
         army=[u('Udea',500,0,1),u('Ulic',0,30,2),u('ucry',-500,-30,3)]
@@ -50,15 +51,17 @@ class FormationTests(unittest.TestCase):
         self.assertEqual({p for _,p,_ in orders},{(4000,0)})
         self.assertFalse(any(hold for _,_,hold in orders))
 
-    def test_only_leading_dk_waits_for_aura_then_resumes(self):
-        army=[u('Udea',800,0,1),u('Ulic',0,30,2),u('ucry',0,-30,3)]
+    def test_only_leading_dk_returns_to_moving_main_body_then_resumes(self):
+        army=[u('Udea',1000,0,1),u('Ulic',0,30,2),u('ucry',0,-30,3)]
         f=Formation(lambda *a,**k:None)
         orders=f.plan(army,(4000,0),0,distance,lambda a,b:[b])
-        self.assertTrue(orders[0][2])
+        self.assertFalse(orders[0][2])
+        self.assertEqual(orders[0][1],f.anchor)
         self.assertTrue(all(not hold and p==(4000,0) for _,p,hold in orders[1:]))
-        army[1].x=army[2].x=400
+        army[1].x=army[2].x=500
         orders=f.plan(army,(4000,0),2,distance,lambda a,b:[b])
         self.assertFalse(any(hold for _,_,hold in orders))
+        self.assertTrue(all(point==(4000,0) for _,point,_ in orders))
         army[0].x=-500
         orders=f.plan(army,(4000,0),4,distance,lambda a,b:[b])
         self.assertFalse(orders[0][2]) # A trailing DK catches up instead of braking.
@@ -84,7 +87,7 @@ class FormationTests(unittest.TestCase):
                 if not hold:obj.x+=min(400 if obj.type=='Udea' else 270,point[0]-obj.x)
             max_gap=max(max_gap,abs(army[0].x-army[2].x))
         self.assertGreater(army[2].x,7900)
-        self.assertLessEqual(max_gap,950) # 900 aura plus one discrete simulation-step margin.
+        self.assertLessEqual(max_gap,1200) # Severe-gap correction plus one simulation-step margin.
 
     def test_shared_route_follows_terrain_turns(self):
         grid=Grid(20,20,100,0,0,bytearray(400))

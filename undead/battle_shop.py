@@ -4,9 +4,10 @@ from .home_layout import clear_of_buildings
 from math import cos,sin,pi
 
 RINGS={'rde0':25,'rde1':62,'rde2':150,'rde3':300,'rde4':400}
+UNWANTED_AURAS={'sbch','lhst'} # Vampiric / Devotion: user explicitly wants both sold.
 
 def sellable(hero,code):
-    return code in RINGS or code in {'clsd','wlsd'} or (hero.type=='Udea' and code=='woms')
+    return code in RINGS or code in {'clsd','wlsd'}|UNWANTED_AURAS or (hero.type=='Udea' and code=='woms')
 
 class BattleShop:
     def __init__(self,log):
@@ -14,6 +15,8 @@ class BattleShop:
         self.defense=None;self.defense_retry=0
         self.orb=None;self.orb_retry=0;self.potion=None;self.potion_retry=0
         self.rod=None;self.rod_retry=0;self.lich_rod_bought=False;self.lich_rod_attempts=0
+        self.bone_chime=None;self.bone_chime_trips={};self.bone_chime_sales={}
+        self.bone_chime_retry=0
 
     @property
     def reserved(self):
@@ -101,11 +104,92 @@ class BattleShop:
         shops=b.economy.ready(g,'utom')+[u for u in g.units('all',{'ngme'}) if u.alive and u.visible_to(g.me())]
         for hero in heroes:
             if any(g.dist(e,hero)<950 for e in hostiles):continue
-            ring=next((c for c in g.inventory(hero) or [] if sellable(hero,c)),None)
+            bag=g.inventory(hero) or []
+            ring=next((c for c in bag if c in UNWANTED_AURAS),None) or next((c for c in bag if sellable(hero,c)),None)
             if ring:
                 shop=next((s for s in shops if g.dist(hero,s)<300),None)
                 if shop and self.transact(g,hero,ring,'sell',now,b.cast_until,shop):return True
         return False
+
+    def bone_chime_tick(self,b,army,hostiles,now):
+        """Sell either unwanted aura with its actual holder, then rejoin."""
+        g=b.g
+        m=self.bone_chime
+        def safe(h):
+            return (h.hp>0 and h.hp>=.6*h.hp_max and h.handle not in b.micro.pulling
+                    and not any(g.dist(e,h)<950 for e in hostiles)
+                    and now>=b.cast_until.get(h.handle,0))
+        heroes=g.my_heroes()
+        hero=next((h for h in heroes if h.handle==m['hero']),None) if m else next(
+            (h for h in heroes if safe(h) and any(c in UNWANTED_AURAS
+                and self.bone_chime_trips.get((h.handle,c),0)<3
+                and self.bone_chime_sales.get((h.handle,c),0)<3 for c in g.inventory(h) or [])),None)
+        def end(reason):
+            self.log('bone_chime_courier_end',clock=now,reason=reason)
+            self.bone_chime=None;self.bone_chime_retry=now+5
+            if hero and g.inventory(hero) is not None:
+                for code in UNWANTED_AURAS:
+                    if code not in g.inventory(hero):
+                        self.bone_chime_trips.pop((hero.handle,code),None)
+                        self.bone_chime_sales.pop((hero.handle,code),None)
+            b.formation.reset();b.formation_at=-100
+            return set()
+        unsafe=(b.action.name in {'RETREAT','DEFEND'} or b.teleport or b.situation.threatened
+                or hero and (hero.hp<.6*hero.hp_max or hero.handle in b.micro.pulling
+                             or any(g.dist(e,hero)<950 for e in hostiles)))
+        if not hero or unsafe:
+            return end('safety_or_hero_missing') if m else set()
+        bag=g.inventory(hero)
+        if m is None:
+            if bag is None or now<self.bone_chime_retry or self.pending:return set()
+            code=next((c for c in bag if c in UNWANTED_AURAS
+                       and self.bone_chime_trips.get((hero.handle,c),0)<3
+                       and self.bone_chime_sales.get((hero.handle,c),0)<3),None)
+            if code is None:return set()
+            shops=b.economy.ready(g,'utom')+[u for u in g.units('all',{'ngme'}) if u.alive and u.visible_to(g.me())]
+            choices=[]
+            for shop in shops:
+                point=(shop.x,shop.y);distance=g.path_distance((hero.x,hero.y),point)
+                if (distance is not None and not any(g.dist(e,shop)<950 for e in hostiles)
+                        and b.creeping.safe_route(g,(hero.x,hero.y),point)):
+                    choices.append((distance,shop))
+            if not choices:return set()
+            shop=min(choices,key=lambda x:x[0])[1]
+            # Aura sale takes priority over optional supply travel. Replanning
+            # later reads actual inventory, so a purchased orb/rod is not rebought.
+            if self.orb:self.end_orb(now,'aura_sale_priority');self.orb_retry=now
+            if self.rod:self.end_rod(now,'aura_sale_priority');self.rod_retry=now
+            if getattr(b,'first_attack_supply',None):b.first_attack_supply.active=None
+            key=(hero.handle,code)
+            self.bone_chime_trips[key]=self.bone_chime_trips.get(key,0)+1
+            m=self.bone_chime=dict(hero=hero.handle,code=code,shop=shop.handle,started=now,progress=now,best=None,returning=False)
+            b.formation.reset();b.formation_at=-100
+            self.log('bone_chime_courier_started',clock=now,hero=hero.handle,code=code,shop=shop.handle)
+        if now-m['started']>120:return end('mission_timeout')
+        reserved={hero.handle}
+        if bag is None:return reserved
+        if m['code'] not in bag and not m['returning']:
+            self.log('bone_chime_removed',clock=now,hero=hero.handle,code=m['code'])
+            code=next((c for c in bag if c in UNWANTED_AURAS),None)
+            m.update(returning=code is None,best=None,progress=now)
+            if code is not None:m['code']=code # Sell both in one visit.
+        main=[u for u in army if u.handle!=hero.handle and u.type not in {'uske','uskm','nsce','nsca'}]
+        if m['returning'] and not main:return end('no_main_body')
+        target=min(main,key=lambda u:sum(g.dist(u,v) for v in main)) if m['returning'] else g.unit(m['shop'])
+        if target is None:return end('shop_missing')
+        if m['returning'] and g.dist(hero,target)<550:return end('rejoined')
+        point=(target.x,target.y);distance=g.path_distance((hero.x,hero.y),point)
+        if distance is None or not b.creeping.safe_route(g,(hero.x,hero.y),point):return end('unsafe_or_unreachable')
+        if m['best'] is None or distance<m['best']-80:m.update(best=distance,progress=now)
+        if now-m['progress']>25:return end('travel_or_sale_stalled')
+        if self.pending:return reserved
+        if m['returning'] or g.dist(hero,target)>280:
+            b.go_raw([hero],point,now);return reserved
+        key=(hero.handle,m['code'])
+        if self.bone_chime_sales.get(key,0)>=3:return end('sale_attempt_limit')
+        if self.transact(g,hero,m['code'],'sell',now,b.cast_until,target):
+            self.bone_chime_sales[key]=self.bone_chime_sales.get(key,0)+1
+        return reserved
 
     def end_orb(self,now,reason):
         self.log('orb_courier_end',clock=now,reason=reason)

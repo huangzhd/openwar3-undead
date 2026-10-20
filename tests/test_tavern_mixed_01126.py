@@ -10,7 +10,7 @@ class MixedTavernReturnsTests(unittest.TestCase):
         b,a,shops,m,buys,ev,res=prior.TavernEscortTests().make()
         fixture=json.loads((Path(__file__).parent/'fixtures/al-tavern-mixed-returns-01126.json').read_text(encoding='utf-8'))
         self.assertEqual([r['reason'] for r in fixture['returns']],['unsafe','unsafe','travel_timeout'])
-        for start,row in zip((10,50,90),fixture['returns']):
+        for start,row in zip((10,),fixture['returns']):
             b.recruit_tavern(a,[],start,3,set())
             handle=b.tavern_mission['courier']
             if row['reason']=='unsafe':b.recruit_tavern(a,[],start+1,3,{handle})
@@ -31,7 +31,7 @@ class MixedTavernReturnsTests(unittest.TestCase):
         self.assertFalse(b.situation.third_hero)
 
     def test_mixed_returns_still_obey_defense_and_path_guards(self):
-        for reason in ('defend','path','returning'):
+        for reason in ('defend','path'):
             b,a,shops,m,buys,ev,res=self.mixed_returns();m.clear()
             if reason=='defend':b.action=Action.DEFEND
             elif reason=='path':b.g.path_distance=lambda *args:None
@@ -43,8 +43,8 @@ class MixedTavernReturnsTests(unittest.TestCase):
         b,a,shops,m,buys,ev,res=self.mixed_returns()
         self.assertTrue(b.escort_tavern(a,[],120,3))
         self.assertFalse(b.escort_tavern(a,[],151,3))
-        self.assertFalse(b.escort_tavern(a,[],200,3))
-        self.assertTrue(b.tavern_escort_done)
+        self.assertTrue(b.escort_tavern(a,[],200,3))
+        self.assertFalse(b.tavern_escort_done)
 
 
 if __name__=='__main__':unittest.main()

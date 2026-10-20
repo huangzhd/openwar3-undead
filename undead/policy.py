@@ -85,7 +85,7 @@ def attack_ready(s):
     return s.tier==3 and s.dk and s.lich and s.orb and s.third_hero and s.supplies_ready and not s.pre_attack_camp_pending
 
 def choose_rule(s):
-    # Set only for the prescribed NI route with no actual player interference.
+    # Set only for a committed NI/TH route with no actual player interference.
     if s.continuous_creeping and not s.threatened:return Action.CREEP
     threat=max(s.local_enemy_hp,s.base_enemy_hp if s.threatened else 0)
     if threat > s.army_hp * 1.4 and threat > 600:

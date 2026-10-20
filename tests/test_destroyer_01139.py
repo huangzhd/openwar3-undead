@@ -140,7 +140,10 @@ class DestroyerEconomyTests(unittest.TestCase):
         g.busy[g.own[0].handle]=N(kind='upgrade',queue=['unp2'])
         self.assertFalse(e.train(g,crypt,'ucry',302))
         e.tick(g,304);self.assertEqual(g.commands,['unp2','Ulic'])
-        self.assertTrue(e.train(g,crypt,'ucry',308));self.assertEqual(g.commands[-1],'ucry')
+        self.assertFalse(e.train(g,crypt,'ucry',308)) # 0.1.154: house and third tower must follow first.
+        g.own.append(unit('uslh',995,owner=0))
+        for i in range(3-len(g.my_buildings({'uzig'}))):g.own.append(unit('uzig',996+i,owner=0))
+        self.assertTrue(e.train(g,crypt,'ucry',312));self.assertEqual(g.commands[-1],'ucry')
 
     def test_fifth_tower_waits_for_observed_third_hero_not_hire_queue(self):
         g,e=self.scene();g.own=[u for u in g.own if u.type!='Nbrn'];e.ever_heroes.discard('Nbrn')
