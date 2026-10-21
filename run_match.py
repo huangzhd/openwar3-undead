@@ -38,7 +38,7 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
     (out/'source-manifest.json').write_text(json.dumps(manifest,indent=2))
     fh=(out/'events.jsonl').open('w',encoding='utf-8')
     started=time.monotonic()
-    result={'id':run_id,'version':'0.1.165-dev','rules_version':'0.1.165','policy':'rule','requested_speed':speed,
+    result={'id':run_id,'version':'0.1.174-dev','rules_version':'0.1.174','policy':'rule','requested_speed':speed,
             'opponent':{'race':enemy_race,'difficulty':difficulty},'result':'unknown','reason':'not_started','until_epoch':until,'max_game_seconds':max_game_seconds}
     if restarted_from is not None:result['restarted_from']=restarted_from
     def log(event,**data):

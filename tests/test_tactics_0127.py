@@ -83,17 +83,17 @@ class SkeletonScoutTests(unittest.TestCase):
         fresh=SkeletonScouts(lambda *a,**kw:None)
         self.assertTrue(self.plan(fresh,g,10))
 
-    def test_main_building_keeps_priority_over_scouted_expansion_then_switches(self):
+    def test_scouted_expansion_overrides_main_assault_and_survives_main_destruction(self):
         main=unit('etol',20,10000);main.owner=1;main.building=True;main.at=0
         expansion=unit('etol',21,7000);expansion.owner=1;expansion.building=True;expansion.at=0
         g=N(me=lambda:0,dist=dist,is_building=lambda u:True,visible=lambda *p:False,
             units=lambda *a:[])
         b=Controller(g,lambda *a,**kw:None);b.home=N(x=0,y=0);b.enemy_main=(10000,0)
         b.attacking_main=True;b.memory.units={main.handle:main,expansion.handle:expansion}
-        moves=[];b.go=lambda army,p,now,attack=False:moves.append(p);b.fight=lambda *a:None
+        moves=[];b.go=lambda army,p,now,**kw:moves.append(p);b.fight=lambda *a:None
         b.advance_attack([],[],(7800,0),1)
-        self.assertEqual(moves[-1],(10000,0))
-        # Only after observed destruction removes the main memory can expansion win.
+        self.assertEqual(moves[-1],(7000,0))
+        # Destroying the main does not invalidate the still-observed expansion.
         del b.memory.units[main.handle];g.visible=lambda *p:True
         b.advance_attack([],[expansion],(10000,0),2)
         self.assertEqual(moves[-1],(7000,0))

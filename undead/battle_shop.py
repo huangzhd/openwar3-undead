@@ -7,7 +7,7 @@ RINGS={'rde0':25,'rde1':62,'rde2':150,'rde3':300,'rde4':400}
 UNWANTED_AURAS={'sbch','lhst'} # Vampiric / Devotion: user explicitly wants both sold.
 
 def sellable(hero,code):
-    return code in RINGS or code in {'clsd','wlsd'}|UNWANTED_AURAS or (hero.type=='Udea' and code=='woms')
+    return code in RINGS or code in {'clsd','wlsd','brac'}|UNWANTED_AURAS or (hero.type=='Udea' and code=='woms')
 
 class BattleShop:
     def __init__(self,log):
@@ -44,6 +44,10 @@ class BattleShop:
         # confirms it. LR 0.1.74 spent this money on a fiend before buying.
         if not self.orb:return 0
         return 0 if any('ocor' in (g.inventory(h) or []) for h in g.my_heroes()) else 375
+
+    def orb_purchased(self,g):
+        # An order or reserved gold is not ownership. DK may still be delivering.
+        return any('ocor' in (g.inventory(h) or []) for h in g.my_heroes())
 
     def observe(self,g,now):
         p=self.pending
@@ -200,7 +204,13 @@ class BattleShop:
         lich=next((h for h in heroes if h.type=='Ulic'),None)
         unsafe=b.action.name in {'RETREAT','DEFEND'} or b.teleport or b.situation.threatened
         players=[e for e in hostiles if 0<=getattr(e,'owner',12)<12 and e.owner!=g.me()]
-        if self.orb and (not dk or not lich or unsafe or dk.handle in b.micro.pulling or any(g.dist(e,dk)<950 for e in players)):
+        # Low health alone never blocks a trip home. A pullback only owns DK
+        # while he is still under fire, or while delivering towards the front.
+        db=g.inventory(dk) if dk else None
+        target_of=getattr(g,'current_target',lambda u:None)
+        under_fire=dk and any((t:=target_of(e)) is not None and t.handle==dk.handle and g.dist(e,dk)<900 for e in hostiles)
+        pulling=dk and dk.handle in b.micro.pulling and (under_fire or db is None or 'ocor' in db)
+        if self.orb and (not dk or not lich or unsafe or pulling or any(g.dist(e,dk)<950 for e in players)):
             self.end_orb(now,'unsafe_or_hero_missing');return set()
         if not dk or not lich or tier!=3 or unsafe or now<self.orb_retry:return set()
         db=g.inventory(dk);lb=g.inventory(lich)
@@ -212,10 +222,11 @@ class BattleShop:
             if self.orb:self.end_orb(now,'team_item_pending_transfer')
             return set()
         if not self.orb:
-            if dk.handle in b.micro.pulling or any(g.dist(e,h)<950 for e in players for h in heroes):return set()
-            if dk.hp/dk.hp_max<.6 or not can_receive(lich,lb,'ocor'):return set()
-            if 'ocor' not in db and (None not in db and not any(sellable(dk,c) for c in db)):return set()
-            if 'ocor' not in db and g.resources()['gold']+sum(RINGS.get(c,0) for c in db)<375:return set()
+            if pulling or any(g.dist(e,h)<950 for e in players for h in heroes):return set()
+            if not can_receive(lich,lb,'ocor'):return set()
+            portal_sale=getattr(b,'first_attack_all_in',False) and 'stwp' in db
+            if 'ocor' not in db and (None not in db and not portal_sale and not any(sellable(dk,c) for c in db)):return set()
+            if 'ocor' not in db and g.resources()['gold']+sum(RINGS.get(c,0) for c in db)+(175 if portal_sale else 0)<375:return set()
             # Collect nearby rings before DK departs; transactions are observed before continuing.
             for h in heroes:
                 ring=next((c for c in g.inventory(h) or [] if c in RINGS),None)
@@ -261,6 +272,9 @@ class BattleShop:
             return self.reserved
         if route is None or not b.creeping.safe_route(g,(dk.x,dk.y),point):
             self.end_orb(now,'unsafe_route');return set()
+        if not delivering:
+            b.micro.pulling.discard(dk.handle)
+            b.micro.dk_recovering=None;b.micro.dk_support=None
         if mission['target']!=target.handle:
             mission.update(target=target.handle,best=route,progress_at=now)
         elif mission['best'] is None or route<mission['best']-80:
@@ -278,7 +292,9 @@ class BattleShop:
             self.transact(g,dk,'ocor','give',now,b.cast_until,lich)
         else:
             ring=next((c for c in db if sellable(dk,c)),None)
-            if ring:self.transact(g,dk,ring,'sell',now,b.cast_until,shop)
+            if getattr(b,'first_attack_all_in',False) and 'stwp' in db:
+                self.transact(g,dk,'stwp','sell',now,b.cast_until,shop,allow_portal_sale=True)
+            elif ring:self.transact(g,dk,ring,'sell',now,b.cast_until,shop)
             elif not b.economy.revival_pending(g) and g.resources()['gold']>=375 and None in db:
                 self.transact(g,dk,'ocor','buy',now,b.cast_until,shop)
         return self.reserved

@@ -1,0 +1,710 @@
+{
+  "source_run": "20261021-194054",
+  "clock": 1536.3,
+  "enemies": [
+    {
+      "unit": {
+        "index": 0,
+        "addr": 263420564,
+        "handle_lo": 3510,
+        "handle_hi": 65137,
+        "type": "Ucrl",
+        "owner": 1,
+        "flags": 271,
+        "x": 2328.044921875,
+        "y": 3336.1103515625,
+        "hp": 400.0,
+        "hp_max": 750.0,
+        "mana": 71.4999008178711,
+        "mana_max": 225.0,
+        "order": 0,
+        "order_target": null,
+        "order_x": 0.0,
+        "order_y": 0.0,
+        "task_target": null,
+        "task_x": null,
+        "task_y": null,
+        "level": 2,
+        "xp": 420,
+        "skill_points": 0,
+        "first_seen": 1668,
+        "visible_mask": 3,
+        "abilities": [
+          {
+            "code": "AIrd",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 135274528
+          },
+          {
+            "code": "AIcd",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2415919778
+          }
+        ],
+        "buffs": [],
+        "items": [
+          "stwp",
+          "gcel",
+          "ward",
+          "rnec",
+          null,
+          null
+        ],
+        "item_addrs": [
+          263656180,
+          263653700,
+          263657420,
+          263658164,
+          0,
+          0
+        ],
+        "has_detail": true
+      },
+      "abilities": [
+        {
+          "code": "AIrd",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 135274528
+        },
+        {
+          "code": "AIcd",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 2415919778
+        }
+      ],
+      "buffs": []
+    },
+    {
+      "unit": {
+        "index": 48,
+        "addr": 263407236,
+        "handle_lo": 17124,
+        "handle_hi": 122379,
+        "type": "utod",
+        "owner": 1,
+        "flags": 269,
+        "x": 960.0,
+        "y": 4864.0,
+        "hp": 1100.0,
+        "hp_max": 1100.0,
+        "mana": 0.0,
+        "mana_max": 0.0,
+        "order": 0,
+        "order_target": null,
+        "order_x": 0.0,
+        "order_y": 0.0,
+        "task_target": null,
+        "task_x": null,
+        "task_y": null,
+        "level": 0,
+        "xp": 0,
+        "skill_points": 0,
+        "first_seen": 2841,
+        "visible_mask": 3,
+        "abilities": [
+          {
+            "code": "Aalr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 18
+          },
+          {
+            "code": "Afiu",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 18
+          },
+          {
+            "code": "ARal",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 146
+          },
+          {
+            "code": "Abgs",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 658
+          },
+          {
+            "code": "Aque",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 18
+          }
+        ],
+        "buffs": [
+          "Bprv"
+        ],
+        "items": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "item_addrs": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "has_detail": true
+      },
+      "abilities": [
+        {
+          "code": "Aalr",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 18
+        },
+        {
+          "code": "Afiu",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 18
+        },
+        {
+          "code": "ARal",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 146
+        },
+        {
+          "code": "Abgs",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 658
+        },
+        {
+          "code": "Aque",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 18
+        }
+      ],
+      "buffs": [
+        "Bprv"
+      ]
+    },
+    {
+      "unit": {
+        "index": 110,
+        "addr": 263473876,
+        "handle_lo": 19069,
+        "handle_hi": 19087,
+        "type": "ugol",
+        "owner": 1,
+        "flags": 269,
+        "x": 2816.0,
+        "y": 5120.0,
+        "hp": 950.0,
+        "hp_max": 950.0,
+        "mana": 0.0,
+        "mana_max": 0.0,
+        "order": 0,
+        "order_target": null,
+        "order_x": 0.0,
+        "order_y": 0.0,
+        "task_target": null,
+        "task_x": null,
+        "task_y": null,
+        "level": 0,
+        "xp": 0,
+        "skill_points": 0,
+        "first_seen": 34,
+        "visible_mask": 3,
+        "abilities": [
+          {
+            "code": "Aalr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 18
+          },
+          {
+            "code": "Afiu",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 18
+          },
+          {
+            "code": "Abgm",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 18
+          },
+          {
+            "code": "Abgl",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 658
+          }
+        ],
+        "buffs": [
+          "Bprv"
+        ],
+        "items": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "item_addrs": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "has_detail": true
+      },
+      "abilities": [
+        {
+          "code": "Aalr",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 18
+        },
+        {
+          "code": "Afiu",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 18
+        },
+        {
+          "code": "Abgm",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 18
+        },
+        {
+          "code": "Abgl",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 658
+        }
+      ],
+      "buffs": [
+        "Bprv"
+      ]
+    },
+    {
+      "unit": {
+        "index": 114,
+        "addr": 263477796,
+        "handle_lo": 19346,
+        "handle_hi": 19620,
+        "type": "usep",
+        "owner": 1,
+        "flags": 269,
+        "x": 2688.0,
+        "y": 4608.0,
+        "hp": 874.1126098632812,
+        "hp_max": 1300.0,
+        "mana": 0.0,
+        "mana_max": 0.0,
+        "order": 0,
+        "order_target": null,
+        "order_x": 0.0,
+        "order_y": 0.0,
+        "task_target": null,
+        "task_x": null,
+        "task_y": null,
+        "level": 0,
+        "xp": 0,
+        "skill_points": 0,
+        "first_seen": 43,
+        "visible_mask": 3,
+        "abilities": [
+          {
+            "code": "Xfus",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 2147483666
+          },
+          {
+            "code": "Aalr",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 18
+          },
+          {
+            "code": "Afiu",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 18
+          },
+          {
+            "code": "ARal",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 146
+          },
+          {
+            "code": "Abgs",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 658
+          },
+          {
+            "code": "Aque",
+            "level": 1,
+            "cooldown": 0.0,
+            "flags": 530
+          }
+        ],
+        "buffs": [
+          "Bspa",
+          "Bprv"
+        ],
+        "items": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "item_addrs": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "has_detail": true
+      },
+      "abilities": [
+        {
+          "code": "Xfus",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 2147483666
+        },
+        {
+          "code": "Aalr",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 18
+        },
+        {
+          "code": "Afiu",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 18
+        },
+        {
+          "code": "ARal",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 146
+        },
+        {
+          "code": "Abgs",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 658
+        },
+        {
+          "code": "Aque",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 530
+        }
+      ],
+      "buffs": [
+        "Bspa",
+        "Bprv"
+      ]
+    }
+  ],
+  "owned": [
+    {
+      "type": "ucry",
+      "handle": [
+        3558,
+        268867
+      ],
+      "point": [
+        2191.93359375,
+        3655.109375
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        3572,
+        47044
+      ],
+      "point": [
+        2121.9404296875,
+        3568.29296875
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        6450,
+        272758
+      ],
+      "point": [
+        1870.337890625,
+        3488.63671875
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        15988,
+        198205
+      ],
+      "point": [
+        2737.080078125,
+        3586.037109375
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        16206,
+        259854
+      ],
+      "point": [
+        2319.98828125,
+        3770.185546875
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        16413,
+        66182
+      ],
+      "point": [
+        2117.2861328125,
+        3762.908203125
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        16657,
+        265240
+      ],
+      "point": [
+        1916.6220703125,
+        4879.71875
+      ],
+      "target": null
+    },
+    {
+      "type": "Nbrn",
+      "handle": [
+        16679,
+        100643
+      ],
+      "point": [
+        1944.1708984375,
+        3641.234375
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        16896,
+        180941
+      ],
+      "point": [
+        1469.5302734375,
+        4443.3564453125
+      ],
+      "target": null
+    },
+    {
+      "type": "Ulic",
+      "handle": [
+        17167,
+        59212
+      ],
+      "point": [
+        1823.1611328125,
+        4152.32421875
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        17361,
+        73592
+      ],
+      "point": [
+        1701.5068359375,
+        4315.271484375
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        17732,
+        131321
+      ],
+      "point": [
+        2097.1875,
+        3673.650390625
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        17877,
+        112733
+      ],
+      "point": [
+        2153.111328125,
+        3865.7958984375
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        17906,
+        228955
+      ],
+      "point": [
+        2032.630859375,
+        3559.724609375
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        18027,
+        123290
+      ],
+      "point": [
+        2331.8125,
+        3569.7861328125
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        18190,
+        221431
+      ],
+      "point": [
+        1860.3095703125,
+        3185.8818359375
+      ],
+      "target": null
+    },
+    {
+      "type": "Udea",
+      "handle": [
+        18600,
+        25799
+      ],
+      "point": [
+        1557.927734375,
+        4852.6728515625
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        18848,
+        270900
+      ],
+      "point": [
+        2223.91015625,
+        3552.556640625
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        19053,
+        267099
+      ],
+      "point": [
+        1920.486328125,
+        4701.861328125
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        19255,
+        214532
+      ],
+      "point": [
+        2012.380859375,
+        4412.767578125
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        19259,
+        254901
+      ],
+      "point": [
+        2223.814453125,
+        3771.7421875
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        19496,
+        189164
+      ],
+      "point": [
+        1738.19140625,
+        4566.69921875
+      ],
+      "target": null
+    },
+    {
+      "type": "ucry",
+      "handle": [
+        19693,
+        262536
+      ],
+      "point": [
+        2292.775390625,
+        3669.4970703125
+      ],
+      "target": null
+    }
+  ]
+}

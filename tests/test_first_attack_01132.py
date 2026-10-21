@@ -42,6 +42,7 @@ class SuppliesTests(unittest.TestCase):
 
     def test_rejected_or_effectless_sale_cannot_report_ready(self):
         g,b,events=self.scene();g.sell_item=lambda *a:True;s=b.first_attack_supply
+        g.bags[g.lich.handle][0]='ocor' # Without an orb the combined courier owns this sale.
         for now in (500,504,508,512,592):
             b.battle_shop.observe(g,now);s.tick(b,g.heroes,[],now,3)
         self.assertFalse(s.confirmed);self.assertTrue(s.done)

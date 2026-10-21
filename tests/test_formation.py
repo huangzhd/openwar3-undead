@@ -7,7 +7,7 @@ from undead.formation import Formation, distance
 def u(code,x,y,i): return N(type=code,x=x,y=y,handle=(i,0),is_hero=code[0].isupper())
 
 class FormationTests(unittest.TestCase):
-    def test_opposite_sides_of_woods_correct_only_separated_unit(self):
+    def test_nearby_units_across_woods_continue_shared_exit_without_regroup(self):
         grid=Grid(20,20,100,0,0,bytearray(400))
         for row in range(16): grid.blocked[row*20+5]=1
         army=[u('Udea',650,250,1),u('Ulic',450,250,2),u('ucry',450,350,3)]
@@ -15,7 +15,7 @@ class FormationTests(unittest.TestCase):
         orders=f.plan(army,(1800,300),0,grid.distance,grid.path)
         self.assertLess(distance((650,250),(450,250)),800)
         self.assertEqual(f.stage,'advance')
-        self.assertEqual(orders[0][1],f.anchor)  # Only DK comes around the woods.
+        self.assertEqual(orders[0][1],f.route[0])
         self.assertFalse(any(hold for _,_,hold in orders))
         self.assertTrue(all(point==f.route[0] for _,point,_ in orders[1:]))
         self.assertIsNone(f.rally)

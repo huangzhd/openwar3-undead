@@ -30,7 +30,9 @@ class OrbDefenseTests(unittest.TestCase):
                 g,b,s,events=shopping.ShoppingTests().make();s.orb_tick(b,g.heroes,[],500,3)
                 foe=unit('hfoo',90,2000);foe.owner=1
                 hostiles=[foe] if danger=='enemy' else []
-                if danger=='pull':b.micro.pulling.add(g.dk.handle)
+                if danger=='pull':
+                    b.micro.pulling.add(g.dk.handle);foe.owner=12;hostiles=[foe]
+                    g.current_target=lambda u:g.dk if u is foe else None
                 if danger=='defense':b.action=Action.DEFEND
                 self.assertFalse(s.orb_tick(b,g.heroes,hostiles,501,3));self.assertIsNone(s.orb)
                 b.micro.pulling.clear();b.action=Action.CREEP
@@ -96,10 +98,14 @@ class OrbDefenseTests(unittest.TestCase):
     def test_dk_waits_for_slower_skeletons_before_aggro_with_bounded_wait(self):
         b,dk,sk,e,attacks,holds,targets,events=tanking.SkeletonOpeningTests().setup_fight()
         dk.x=-300;sk.x=-600;e.x=500
+        moves=[];b.go_raw=lambda us,p,t:moves.extend((u.handle,p) for u in us)
         self.assertTrue(b.skeleton_opening([dk,sk],[e],190))
-        self.assertEqual(attacks,[(sk.handle,e.handle)]);self.assertEqual(holds,[dk.handle])
+        self.assertFalse(attacks);self.assertIn(sk.handle,[h for h,p in moves])
+        sk.x=-300
+        self.assertTrue(b.skeleton_opening([dk,sk],[e],191))
+        self.assertEqual(attacks,[(sk.handle,e.handle)]);self.assertIn(dk.handle,holds)
         self.assertTrue(b.skeleton_opening([dk,sk],[e],192))
-        targets[e.handle]=sk
+        targets[e.handle]=sk;e.hp-=12
         self.assertFalse(b.skeleton_opening([dk,sk],[e],193))
         targets.clear();self.assertFalse(b.skeleton_opening([dk,sk],[e],197))
 

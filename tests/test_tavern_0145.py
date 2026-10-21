@@ -14,6 +14,7 @@ class TavernTests(unittest.TestCase):
             move=lambda u,x,y:moves.append((u.handle,(x,y))) or True,
             buy=lambda shop,code:buys.append(code) or N(reason=0))
         g.my_heroes=lambda:[u for u in army if u.is_hero]
+        g.inventory=lambda u:['ocor'] if u.type=='Ulic' else []
         g.all_production=lambda owner:[]
         b=Controller(g,lambda e,**kw:events.append(dict(event=e,**kw)),race,first_attack_all_in=False)
         b.home=unit('unpl',100,-5000);b.situation.fiends=4;b.situation.statues=1

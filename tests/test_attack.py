@@ -46,7 +46,7 @@ class AttackTests(unittest.TestCase):
         self.assertEqual(moves[-1],(5000,0))
         self.assertFalse(b.memory.units)
         self.assertIn('enemy_site_empty',[event for event,_ in seen])
-        self.assertEqual([row['reason'] for event,row in seen if event=='attack_goal'],['known_structure','enemy_main'])
+        self.assertEqual([row['reason'] for event,row in seen if event=='attack_goal'],['known_expansion','enemy_main'])
 
     def test_neutral_sites_are_not_removed_as_destroyed_enemy_structures(self):
         g=N(me=lambda:0,dist=dist,is_building=lambda u:True,visible=lambda *p:True)

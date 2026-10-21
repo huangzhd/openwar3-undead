@@ -56,6 +56,7 @@ class Formation:
         core=[u for u in units if u.type not in {'uske','uskm','nsce','nsca'}] or units
         veterans=[u for u in core if u.handle in self.known and u.handle not in self.joiners] or core
         leader=min(veterans,key=lambda u:sum(distance(xy(u),xy(v)) for v in veterans))
+        previous_joiners=set(self.joiners)
         for u in core:
             route_distance=ground_distance(xy(u),xy(leader))
             if self.known and u.handle not in self.known and not u.is_hero and (route_distance is None or route_distance>700):
@@ -74,9 +75,8 @@ class Formation:
         # Keep the main body moving. Terrain separation corrects only the outlier.
         # The 128-cell grid can project adjacent units into disconnected pockets.
         # Missing coarse paths alone are not evidence that nearby units split around woods.
-        divided={u.handle for u,d in zip(core,distances) if
-                    (d is None and distance(xy(u),self.anchor)>900) or
-                    (d is not None and d>max(800,distance(xy(u),self.anchor)*1.5+256))
+        divided={u.handle for u,d in zip(core,distances) if distance(xy(u),self.anchor)>900 and
+                    (d is None or d>max(800,distance(xy(u),self.anchor)*1.5+256))
                     }
         self.rally=None
         # A trailing veteran can keep acquiring roadside enemies on attack-move.
@@ -87,7 +87,7 @@ class Formation:
         main_left=ground_distance(self.anchor,target)
         if not retreat:
             for u,d in zip(core,distances):
-                gap=d if d is not None else distance(xy(u),self.anchor)
+                gap=distance(xy(u),self.anchor)
                 left=ground_distance(xy(u),target)
                 behind=left is not None and main_left is not None and left>main_left+200
                 if self.route and self.objective is not None and distance(self.objective,target)<=192:
@@ -96,7 +96,7 @@ class Formation:
                     behind=behind and self.cursor_at(u)<=self.cursor_at(anchor)
                 if gap>(550 if u.handle in previous else 900) and (behind or u.handle in previous):
                     self.catching_up.add(u.handle)
-        if self.route and not changed and previous-self.catching_up:
+        if self.route and not changed and (previous-self.catching_up or previous_joiners-self.joiners):
             for u in core:
                 if u.handle in self.catching_up:continue
                 # Rejoin this unit on the existing route; rebuilding everyone's route

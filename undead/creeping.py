@@ -28,6 +28,7 @@ class Creeping:
         self.ni_orb_ready=False;self.ni_route_skipped=set();self.ni_route_wait=None
         self.ni_attack_started=False;self.ni_contested=False;self.repath=False
         self.th_attack_started=False;self.th_route_wait=None;self.th_contested=False
+        self.al_attack_started=False;self.al_route_wait=None;self.al_contested=False
         self.local_origin=None
         self.home_only=False
         self.resupply_home=False
@@ -269,7 +270,32 @@ class Creeping:
                     and (self.active or self.cleared))
 
     def route_continuous(self,home):
-        return self.ni_continuous(home) or self.th_continuous(home)
+        return self.ni_continuous(home) or self.th_continuous(home) or self.al_continuous(home)
+
+    def al_route(self,home):
+        if self.map_alias!='AL' or self.al_attack_started:return []
+        north=hypot(home.x-2176,home.y-4672)<hypot(home.x+2176,home.y+4672)
+        route=['al-16','al-9','al-7','al-4','al-13','al-11','al-8'] if north else [
+            'al-3','al-10','al-12','al-15','al-6','al-8','al-11']
+        return route if set(route)<={c['id'] for c in self.catalog} else []
+
+    def al_route_stage(self,home):
+        return next((k for k in self.al_route(home) if k not in self.cleared),None)
+
+    def al_continuous(self,home):
+        return bool(not self.al_contested and self.al_route_stage(home) and (self.active or self.cleared))
+
+    def al_route_allows(self,c,home):
+        return not self.al_route(home) or c['id']==self.al_route_stage(home)
+
+    def prepare_al_route(self,home,now,attack_committed):
+        if self.map_alias!='AL':return False
+        self.al_attack_started=attack_committed
+        stage=self.al_route_stage(home)
+        if stage and stage!=self.al_route_wait:
+            self.al_route_wait=stage
+            self.log('al_route_stage',clock=now,camp=stage)
+        return bool(stage)
 
     def th_priority(self,u):
         # Sea Giant whirlwind and Gnoll Assassin poison outrank treasure drops.
@@ -339,17 +365,22 @@ class Creeping:
             th_open=(self.th_opening_turtle(c,home)
                      and any(u.type=='Udea' and u.hp>=.8*u.hp_max for u in army)
                      and sum(u.type in {'uske','uskm'} and u.hp>=.7*u.hp_max for u in army)>=2)
-            fixed=self.route_continuous(home) and c['id']==(self.th_route_stage(home) if self.map_alias=='TH' else self.ni_route_stage(home))
+            al_route=self.al_route(home)
+            al_open=bool(al_route and c['id']==al_route[0] and not self.al_contested
+                         and any(u.type=='Udea' and u.hp>=.8*u.hp_max for u in army)
+                         and sum(u.type in {'uske','uskm'} and u.hp>=.7*u.hp_max for u in army)>=2)
+            fixed=(self.route_continuous(home) and c['id']==(self.al_route_stage(home) if self.map_alias=='AL' else
+                   self.th_route_stage(home) if self.map_alias=='TH' else self.ni_route_stage(home))) or al_open
             if fixed:
                 retry_reason=self.deferred_reasons.get(c['id'])
                 resumes=retry_reason in {'army_not_ready','camp_too_strong','no_movement_or_damage_progress',
                     'player_contact','safety_retreat','orb_contact_disengage'}
-                if self.map_alias=='TH':
+                if self.map_alias in {'TH','AL'}:
                     resumes=retry_reason=='army_not_ready'
                     if c['id'] in self.exhausted:continue
                 if army and c['id'] not in self.cleared and (resumes or now>=self.deferred.get(c['id'],0)):result.append(c)
                 continue
-            if not self.pre_attack_safe(c) or not self.ch_route_allows(c,home) or not self.ni_route_allows(c,home) or not self.th_route_allows(c,home):continue
+            if not self.pre_attack_safe(c) or not self.ch_route_allows(c,home) or not self.ni_route_allows(c,home) or not self.th_route_allows(c,home) or not self.al_route_allows(c,home):continue
             if not self.tm_staging_allows(c,home):continue
             if c.get('difficulty',0)>=15 and (health/max(1,sum(u.hp_max for u in army))<.75 or
                 any(u.is_hero and u.hp/u.hp_max<.5 for u in army)):continue
@@ -437,8 +468,9 @@ class Creeping:
     def defer(self,now,reason):
         if self.active:
             # Temporary injuries/support separation can recover in seconds.
-            # Recheck actual eligibility soon; hostile/path failures retain backoff.
-            retry=5 if reason=='army_not_ready' else 90
+            # Temporary contact/readiness changes re-evaluate immediately;
+            # actual path failures retain their bounded retry protection.
+            retry=0 if reason in {'orb_contact_disengage','player_contact','creep_contest_timeout','preserve_attack_readiness'} else 5 if reason=='army_not_ready' else 90
             self.deferred[self.active['id']]=now+retry
             self.deferred_reasons[self.active['id']]=reason
             self.log('creep_target_deferred',clock=now,camp=self.active['id'],reason=reason,retry_at=now+retry)
@@ -480,6 +512,7 @@ class Creeping:
         visible=g.creeps()
         self.observe_clear(g,center,now,visible)
         self.ni_route_update(home,now)
+        if self.active and not self.al_route_allows(self.active,home):self.defer(now,'al_route_order')
         if self.active and not self.th_route_allows(self.active,home):self.defer(now,'th_route_order')
         if self.active and not self.ni_route_allows(self.active,home):self.defer(now,'ni_route_order')
         waypoint=self.ch_route_waypoint(g,army,center,home,now)
@@ -524,7 +557,7 @@ class Creeping:
                 self.progress_at=now;self.best_distance=distance
             self.last_hp=remaining
             if now-self.progress_at>25:
-                if continuous and self.map_alias!='TH':
+                if continuous and self.map_alias not in {'TH','AL'}:
                     self.repath=True;self.progress_at=now;self.best_distance=None
                     self.log('ni_camp_repath',clock=now,camp=self.active['id'],reason='no_progress_keep_objective')
                 else:self.defer(now,'no_movement_or_damage_progress')

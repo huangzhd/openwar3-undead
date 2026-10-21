@@ -12,6 +12,7 @@ from test_baseline import unit as building
 class ManaPriorityTests(unittest.TestCase):
     def test_two_coils_skip_potion_and_release_orb_budget_after_portal_sale(self):
         g,b,events=supplies.SuppliesTests().scene();g.dk.mana=150;s=b.first_attack_supply
+        g.bags[g.lich.handle][0]='ocor' # Orb purchase now includes the first TP sale trip.
         self.assertEqual(s.reserve(b,3),0)
         s.tick(b,g.heroes,[],500,3);b.battle_shop.observe(g,502)
         s.tick(b,g.heroes,[],504,3)

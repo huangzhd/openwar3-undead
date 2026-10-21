@@ -66,7 +66,7 @@ class EfficientMarchTests(unittest.TestCase):
 
     def test_forest_split_preserves_main_route_over_multiple_ticks(self):
         b,orders=march.MarchRecoveryTests().controller()
-        dk=unit('Udea',1,200);main=[unit('Ulic',2,0),unit('ucry',3,30)]
+        dk=unit('Udea',1,2000);main=[unit('Ulic',2,0),unit('ucry',3,30)]
         b.g.path_distance=lambda a,z:2000 if (a[0] if isinstance(a,tuple) else a.x)==dk.x else dist(a,z)
         for now in (0,2,4,8,16,32):
             orders.clear();b.go([dk,*main],(6000,0),now,attack=True)

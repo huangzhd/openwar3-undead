@@ -1,0 +1,465 @@
+{
+  "source_run": "20261021-183918",
+  "version": "0.1.166",
+  "scope": "Recorded fair combat frame; owner and path are not recorded here. Tests set enemy owner and use explicit synthetic paths.",
+  "frame": {
+    "event": "combat_state",
+    "clock": 365.955,
+    "center": [
+      1235.810546875,
+      550.4892578125
+    ],
+    "army_hp": 2081.4556427001953,
+    "enemy_hp": 0,
+    "army_health": 0.9010630487879633,
+    "recent_losses": 0,
+    "army": [
+      {
+        "handle": [
+          16466,
+          35801
+        ],
+        "type": "ucry",
+        "x": 1327,
+        "y": 513,
+        "hp": 531,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          16772,
+          59478
+        ],
+        "type": "Ulic",
+        "x": -1013,
+        "y": -3123,
+        "hp": 475,
+        "hp_max": 475.0,
+        "mana": 300,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          17507,
+          25750
+        ],
+        "type": "Udea",
+        "x": 1704,
+        "y": 988,
+        "hp": 713,
+        "hp_max": 850.0,
+        "mana": 146,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          18244,
+          48035
+        ],
+        "type": "ucry",
+        "x": 1236,
+        "y": 550,
+        "hp": 550,
+        "hp_max": 550.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          19533,
+          54116
+        ],
+        "type": "uske",
+        "x": 1508,
+        "y": 1008,
+        "hp": 108,
+        "hp_max": 180.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      },
+      {
+        "handle": [
+          19709,
+          54082
+        ],
+        "type": "uske",
+        "x": 1216,
+        "y": 948,
+        "hp": 180,
+        "hp_max": 180.0,
+        "mana": 0,
+        "pulling": false,
+        "pull": null
+      }
+    ],
+    "enemies": [
+      {
+        "handle": [
+          15989,
+          52741
+        ],
+        "type": "ugol",
+        "x": 2368,
+        "y": 896,
+        "hp": 599,
+        "target": null
+      }
+    ]
+  },
+  "retreats": [
+    {
+      "event": "pre_attack_base_retreat",
+      "clock": 365.955,
+      "tier": 2,
+      "orb": false,
+      "third_hero": false,
+      "dk": true,
+      "center": [
+        1235.810546875,
+        550.4892578125
+      ],
+      "destination": [
+        -2176.0,
+        -4672.0
+      ]
+    },
+    {
+      "event": "pre_attack_base_retreat",
+      "clock": 369.155,
+      "tier": 2,
+      "orb": false,
+      "third_hero": false,
+      "dk": true,
+      "center": [
+        1176.5078125,
+        173.978515625
+      ],
+      "destination": [
+        -2176.0,
+        -4672.0
+      ]
+    },
+    {
+      "event": "pre_attack_base_retreat",
+      "clock": 372.405,
+      "tier": 2,
+      "orb": false,
+      "third_hero": false,
+      "dk": true,
+      "center": [
+        837.685546875,
+        -313.15771484375
+      ],
+      "destination": [
+        -2176.0,
+        -4672.0
+      ]
+    },
+    {
+      "event": "pre_attack_base_retreat",
+      "clock": 375.78,
+      "tier": 2,
+      "orb": false,
+      "third_hero": false,
+      "dk": true,
+      "center": [
+        493.630859375,
+        -896.38134765625
+      ],
+      "destination": [
+        -2176.0,
+        -4672.0
+      ]
+    },
+    {
+      "event": "pre_attack_base_retreat",
+      "clock": 378.98,
+      "tier": 2,
+      "orb": false,
+      "third_hero": false,
+      "dk": true,
+      "center": [
+        194.666015625,
+        -1689.33349609375
+      ],
+      "destination": [
+        -2176.0,
+        -4672.0
+      ]
+    }
+  ],
+  "route_events": [
+    {
+      "event": "creep_goal",
+      "clock": 148.305,
+      "point": [
+        -3719.87,
+        -3740.57
+      ],
+      "camp": "al-3",
+      "kind": "neutral",
+      "level_sum": 7,
+      "poison_units": 0,
+      "difficulty": 7,
+      "army_strength": 6.0,
+      "tier": 1,
+      "statue_present": false,
+      "fiends": 0,
+      "skeletons": 2,
+      "opening_small": false
+    },
+    {
+      "event": "creep_area_cleared",
+      "clock": 190.23,
+      "point": [
+        -3719.87,
+        -3740.57
+      ],
+      "camp": "al-3"
+    },
+    {
+      "event": "creep_goal",
+      "clock": 190.23,
+      "point": [
+        61.77,
+        -3685.57
+      ],
+      "camp": "al-10",
+      "kind": "neutral",
+      "level_sum": 9,
+      "poison_units": 0,
+      "difficulty": 9,
+      "army_strength": 5.45,
+      "tier": 1,
+      "statue_present": false,
+      "fiends": 0,
+      "skeletons": 2,
+      "opening_small": false
+    },
+    {
+      "event": "creep_area_cleared",
+      "clock": 236.505,
+      "point": [
+        61.77,
+        -3685.57
+      ],
+      "camp": "al-10"
+    },
+    {
+      "event": "creep_goal",
+      "clock": 249.155,
+      "point": [
+        2176.33,
+        -3049.73
+      ],
+      "camp": "al-12",
+      "kind": "shop",
+      "level_sum": 12,
+      "poison_units": 0,
+      "difficulty": 12,
+      "army_strength": 10.02,
+      "tier": 1,
+      "statue_present": false,
+      "fiends": 1,
+      "skeletons": 4,
+      "opening_small": false
+    },
+    {
+      "event": "creep_area_cleared",
+      "clock": 315.78,
+      "point": [
+        2176.33,
+        -3049.73
+      ],
+      "camp": "al-12"
+    },
+    {
+      "event": "creep_goal",
+      "clock": 315.78,
+      "point": [
+        3637.03,
+        -1926.83
+      ],
+      "camp": "al-15",
+      "kind": "neutral",
+      "level_sum": 7,
+      "poison_units": 0,
+      "difficulty": 7,
+      "army_strength": 11.07,
+      "tier": 2,
+      "statue_present": false,
+      "fiends": 2,
+      "skeletons": 1,
+      "opening_small": false
+    },
+    {
+      "event": "creep_area_cleared",
+      "clock": 343.455,
+      "point": [
+        3637.03,
+        -1926.83
+      ],
+      "camp": "al-15"
+    },
+    {
+      "event": "creep_goal",
+      "clock": 343.455,
+      "point": [
+        2274.23,
+        1005.33
+      ],
+      "camp": "al-13",
+      "kind": "expansion",
+      "level_sum": 11,
+      "poison_units": 0,
+      "difficulty": 11,
+      "army_strength": 13.65,
+      "tier": 2,
+      "statue_present": false,
+      "fiends": 2,
+      "skeletons": 2,
+      "opening_small": false
+    },
+    {
+      "event": "creep_target_deferred",
+      "clock": 365.955,
+      "camp": "al-13",
+      "reason": "pre_attack_enemy_base",
+      "retry_at": 455.955
+    },
+    {
+      "event": "al_route_wait",
+      "clock": 381.555,
+      "camp": "al-13",
+      "exhausted": false,
+      "point": [
+        203.853515625,
+        -2041.65283203125
+      ]
+    },
+    {
+      "event": "al_route_wait",
+      "clock": 392.48,
+      "camp": "al-13",
+      "exhausted": false,
+      "point": [
+        -57.1845703125,
+        -2237.30029296875
+      ]
+    },
+    {
+      "event": "al_route_wait",
+      "clock": 403.055,
+      "camp": "al-13",
+      "exhausted": false,
+      "point": [
+        -57.1845703125,
+        -2237.30029296875
+      ]
+    },
+    {
+      "event": "al_route_wait",
+      "clock": 414.03,
+      "camp": "al-13",
+      "exhausted": false,
+      "point": [
+        -57.1845703125,
+        -2237.30029296875
+      ]
+    },
+    {
+      "event": "al_route_wait",
+      "clock": 424.83,
+      "camp": "al-13",
+      "exhausted": false,
+      "point": [
+        -57.1845703125,
+        -2237.30029296875
+      ]
+    },
+    {
+      "event": "al_route_wait",
+      "clock": 435.055,
+      "camp": "al-13",
+      "exhausted": false,
+      "point": [
+        -57.1845703125,
+        -2237.30029296875
+      ]
+    },
+    {
+      "event": "al_route_wait",
+      "clock": 445.225,
+      "camp": "al-13",
+      "exhausted": false,
+      "point": [
+        -55.88525390625,
+        -2327.54736328125
+      ]
+    },
+    {
+      "event": "al_route_wait",
+      "clock": 455.525,
+      "camp": "al-13",
+      "exhausted": false,
+      "point": [
+        -55.88525390625,
+        -2327.54736328125
+      ]
+    },
+    {
+      "event": "creep_target_deferred",
+      "clock": 456.48,
+      "camp": "al-13",
+      "reason": "enemy_main_route",
+      "retry_at": 546.48
+    },
+    {
+      "event": "al_route_wait",
+      "clock": 465.725,
+      "camp": "al-13",
+      "exhausted": false,
+      "point": [
+        -55.88525390625,
+        -2327.54736328125
+      ]
+    },
+    {
+      "event": "al_route_wait",
+      "clock": 475.93,
+      "camp": "al-13",
+      "exhausted": false,
+      "point": [
+        -55.88525390625,
+        -2327.54736328125
+      ]
+    },
+    {
+      "event": "al_route_wait",
+      "clock": 486.15,
+      "camp": "al-13",
+      "exhausted": false,
+      "point": [
+        -55.88525390625,
+        -2327.54736328125
+      ]
+    },
+    {
+      "event": "al_route_wait",
+      "clock": 496.825,
+      "camp": "al-13",
+      "exhausted": false,
+      "point": [
+        -55.88525390625,
+        -2327.54736328125
+      ]
+    }
+  ]
+}

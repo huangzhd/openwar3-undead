@@ -1,0 +1,188 @@
+{
+  "run": "20261021-185036",
+  "version": "0.1.167",
+  "home": [
+    -2176,
+    -4672
+  ],
+  "events": [
+    {
+      "event": "home_build_order_pending",
+      "clock": 57.905,
+      "code": "utom",
+      "point": [
+        -1152,
+        -4672
+      ],
+      "worker": [
+        18099,
+        21299
+      ]
+    },
+    {
+      "event": "home_layout_timing",
+      "clock": 57.905,
+      "code": "utom",
+      "visible_queries": 0,
+      "build_attempts": 1,
+      "wall_ms": 24.079
+    },
+    {
+      "event": "home_foundation_unconfirmed",
+      "clock": 64.855,
+      "code": "utom",
+      "point": [
+        -1152,
+        -4672
+      ],
+      "worker": [
+        18099,
+        21299
+      ],
+      "order": 0,
+      "reason": "order_lost"
+    },
+    {
+      "event": "home_build_order_pending",
+      "clock": 64.855,
+      "code": "utom",
+      "point": [
+        -1024,
+        -4672
+      ],
+      "worker": [
+        18099,
+        21299
+      ]
+    },
+    {
+      "event": "home_layout_timing",
+      "clock": 64.855,
+      "code": "utom",
+      "visible_queries": 0,
+      "build_attempts": 1,
+      "wall_ms": 15.267
+    },
+    {
+      "event": "home_foundation_unconfirmed",
+      "clock": 67.18,
+      "code": "utom",
+      "point": [
+        -1024,
+        -4672
+      ],
+      "worker": [
+        18099,
+        21299
+      ],
+      "order": 0,
+      "reason": "order_lost"
+    },
+    {
+      "event": "home_build_order_pending",
+      "clock": 67.18,
+      "code": "utom",
+      "point": [
+        -896,
+        -4672
+      ],
+      "worker": [
+        18099,
+        21299
+      ]
+    },
+    {
+      "event": "home_layout_timing",
+      "clock": 67.18,
+      "code": "utom",
+      "visible_queries": 0,
+      "build_attempts": 1,
+      "wall_ms": 8.367
+    },
+    {
+      "event": "home_foundation_unconfirmed",
+      "clock": 69.53,
+      "code": "utom",
+      "point": [
+        -896,
+        -4672
+      ],
+      "worker": [
+        18099,
+        21299
+      ],
+      "order": 0,
+      "reason": "order_lost"
+    },
+    {
+      "event": "home_build_order_pending",
+      "clock": 69.53,
+      "code": "utom",
+      "point": [
+        -768,
+        -4672
+      ],
+      "worker": [
+        18099,
+        21299
+      ]
+    },
+    {
+      "event": "home_layout_timing",
+      "clock": 69.53,
+      "code": "utom",
+      "visible_queries": 0,
+      "build_attempts": 1,
+      "wall_ms": 25.263
+    },
+    {
+      "event": "home_foundation_unconfirmed",
+      "clock": 71.875,
+      "code": "utom",
+      "point": [
+        -768,
+        -4672
+      ],
+      "worker": [
+        18099,
+        21299
+      ],
+      "order": 0,
+      "reason": "order_lost"
+    },
+    {
+      "event": "home_build_order_pending",
+      "clock": 71.875,
+      "code": "utom",
+      "point": [
+        -2368,
+        -4192
+      ],
+      "worker": [
+        18099,
+        21299
+      ]
+    },
+    {
+      "event": "home_layout_timing",
+      "clock": 71.875,
+      "code": "utom",
+      "visible_queries": 0,
+      "build_attempts": 1,
+      "wall_ms": 16.034
+    },
+    {
+      "event": "home_foundation_observed",
+      "clock": 80.1,
+      "code": "utom",
+      "point": [
+        -2368.0,
+        -4160.0
+      ],
+      "handle": [
+        18094,
+        23124
+      ]
+    }
+  ]
+}

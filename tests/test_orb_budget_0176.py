@@ -34,12 +34,15 @@ class OrbBudgetTests(unittest.TestCase):
         g.invs['Ulic'][0]='ocor';e.save_for_trade=bool(s.orb_reserve(g));e.tick(g,505)
         self.assertEqual(g.commands,['Rura'])
 
-    def test_tavern_dispatch_preserves_active_orb_budget(self):
+    def test_tavern_waits_for_actual_orb_purchase_even_when_both_are_affordable(self):
         b,a,shops,moves,buys,events,res=tavern.TavernTests().setup_game()
         b.g.inventory=lambda h:[None]*6;b.battle_shop.orb=dict(hero=a[0].handle)
         res['gold']=799;b.recruit_tavern(a,[],500,3,set())
         self.assertFalse(moves);self.assertFalse(buys)
         res['gold']=800;b.recruit_tavern(a,[],503,3,set())
+        self.assertIsNone(b.tavern_mission);self.assertFalse(moves);self.assertFalse(buys)
+        b.g.inventory=lambda h:['ocor'] if h.type=='Udea' else []
+        res['gold']=425;b.recruit_tavern(a,[],504,3,set())
         courier=next(u for u in a if u.handle==b.tavern_mission['courier']);courier.x=0
         b.recruit_tavern(a,[],506,3,set())
         self.assertEqual(buys,['Nbrn'])

@@ -40,6 +40,11 @@ class AttackSupplies:
         # TP is normally on DK; a previous transfer must not evade the sale.
         holder=next((h for h in heroes if 'stwp' in bags[h.handle]),None)
         potion=next(((h,c) for h in heroes for c in bags[h.handle] if c in BLUE_POTIONS),None)
+        # The orb courier owns DK's first tier-three shop trip, including TP
+        # sale. Do not send him home and release him before the orb is bought.
+        if (holder is dk and any(h.type=='Ulic' for h in heroes)
+                and not any('ocor' in bag for bag in bags.values())):
+            self.active=None;return set()
         if not holder and potion and potion[0].handle==dk.handle:
             self.finish(now,'portal_absent_and_dk_mana_item_observed',True);return set()
         if not holder and dk.mana>=2*COIL_MANA:

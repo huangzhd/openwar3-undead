@@ -1,0 +1,200 @@
+{
+  "run": "20261021-192008",
+  "note": "Real fair event and rounded combat frame; test target=None follows the recorded frame.",
+  "corpse": {
+    "event": "scout_corpse_observed",
+    "clock": 80.755,
+    "handle": [
+      18244,
+      18244
+    ],
+    "point": [
+      -392.68017578125,
+      -2930.16748046875
+    ],
+    "source": "fair_killed_event",
+    "killer": [
+      19131,
+      22350
+    ]
+  },
+  "frame": {
+    "event": "combat_state",
+    "clock": 132.13,
+    "center": [
+      -706.123046875,
+      -3204.0927734375
+    ],
+    "army_hp": 675.0,
+    "enemy_hp": 1150.0,
+    "army_health": 1.0,
+    "recent_losses": 0,
+    "army": [
+      {
+        "handle": [
+          17949,
+          25954
+        ],
+        "type": "Udea",
+        "x": -706,
+        "y": -3204,
+        "hp": 675,
+        "hp_max": 675.0,
+        "mana": 255,
+        "pulling": false,
+        "pull": null
+      }
+    ],
+    "enemies": [
+      {
+        "handle": [
+          16985,
+          16985
+        ],
+        "type": "nftb",
+        "x": 82,
+        "y": -3694,
+        "hp": 450,
+        "target": null
+      },
+      {
+        "handle": [
+          17021,
+          17021
+        ],
+        "type": "nwwf",
+        "x": -10,
+        "y": -3860,
+        "hp": 300,
+        "target": null
+      },
+      {
+        "handle": [
+          17049,
+          17049
+        ],
+        "type": "nftt",
+        "x": 114,
+        "y": -3503,
+        "hp": 400,
+        "target": null
+      }
+    ]
+  },
+  "decisions": [
+    {
+      "event": "decision",
+      "clock": 126.8,
+      "requested": "CREEP",
+      "actual": "CREEP",
+      "expansion": false,
+      "fiends": 0,
+      "tier": 1,
+      "heroes": [
+        [
+          "Udea",
+          1,
+          675
+        ]
+      ],
+      "safety_interrupt": false,
+      "base_enemy_hp": 0,
+      "local_enemy_hp": 0,
+      "army_hp": 675.0,
+      "retreat_active": false
+    },
+    {
+      "event": "decision",
+      "clock": 131.375,
+      "requested": "RETREAT",
+      "actual": "RETREAT",
+      "expansion": false,
+      "fiends": 0,
+      "tier": 1,
+      "heroes": [
+        [
+          "Udea",
+          1,
+          675
+        ]
+      ],
+      "safety_interrupt": true,
+      "base_enemy_hp": 0,
+      "local_enemy_hp": 1150.0,
+      "army_hp": 675.0,
+      "retreat_active": false
+    },
+    {
+      "event": "decision",
+      "clock": 136.88,
+      "requested": "CREEP",
+      "actual": "CREEP",
+      "expansion": false,
+      "fiends": 0,
+      "tier": 1,
+      "heroes": [
+        [
+          "Udea",
+          1,
+          675
+        ]
+      ],
+      "safety_interrupt": false,
+      "base_enemy_hp": 0,
+      "local_enemy_hp": 0,
+      "army_hp": 675.0,
+      "retreat_active": false
+    },
+    {
+      "event": "decision",
+      "clock": 142.205,
+      "requested": "RETREAT",
+      "actual": "RETREAT",
+      "expansion": false,
+      "fiends": 0,
+      "tier": 1,
+      "heroes": [
+        [
+          "Udea",
+          1,
+          675
+        ]
+      ],
+      "safety_interrupt": true,
+      "base_enemy_hp": 0,
+      "local_enemy_hp": 1150.0,
+      "army_hp": 675.0,
+      "retreat_active": false
+    },
+    {
+      "event": "decision",
+      "clock": 147.63,
+      "requested": "CREEP",
+      "actual": "CREEP",
+      "expansion": false,
+      "fiends": 0,
+      "tier": 1,
+      "heroes": [
+        [
+          "Udea",
+          1,
+          675
+        ]
+      ],
+      "safety_interrupt": false,
+      "base_enemy_hp": 0,
+      "local_enemy_hp": 0,
+      "army_hp": 675.0,
+      "retreat_active": false
+    }
+  ],
+  "abandoned": {
+    "event": "opening_corpse_abandoned",
+    "clock": 150.055,
+    "reason": "opening_timeout",
+    "point": [
+      -392.68017578125,
+      -2930.16748046875
+    ]
+  }
+}

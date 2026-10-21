@@ -39,12 +39,14 @@ class SkeletonOpeningTests(unittest.TestCase):
             hold=lambda u:holds.append(u.handle) or True)
         return Controller(g,lambda e,**k:events.append(e)),dk,skeleton,enemy,attacks,holds,targets,events
 
-    def test_skeleton_starts_then_main_army_fights_when_creep_targets_it(self):
+    def test_skeleton_starts_then_main_army_fights_after_first_damage(self):
         b,dk,sk,e,attacks,holds,targets,events=self.setup_fight()
         self.assertTrue(b.skeleton_opening([dk,sk],[e],1))
         self.assertEqual(attacks,[(sk.handle,e.handle)])
         self.assertEqual(holds,[dk.handle])
         targets[e.handle]=sk
+        self.assertTrue(b.skeleton_opening([dk,sk],[e],1.5))
+        e.hp-=12
         self.assertFalse(b.skeleton_opening([dk,sk],[e],1.5))
         self.assertIn('skeleton_tank_observed',events)
 

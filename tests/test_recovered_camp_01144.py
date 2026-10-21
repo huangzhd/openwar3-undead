@@ -35,8 +35,8 @@ class RecoveredCampTests(unittest.TestCase):
         for u in a:u.hp=u.hp_max
         self.assertEqual({p['id'] for p in c.candidates(g,a,b.home,507)},{'ni-7'})
 
-    def test_hostile_or_path_failure_keeps_long_backoff(self):
-        for reason in ('player_contact','enemy_main_route','unreachable','no_movement_or_damage_progress'):
+    def test_unsafe_route_or_path_failure_keeps_long_backoff(self):
+        for reason in ('enemy_main_route','unreachable','no_movement_or_damage_progress'):
             b,g,a,c=self.scene();c.ni_contested=True;c.defer(500,reason)
             self.assertEqual(c.deferred['ni-7'],590)
             self.assertFalse(c.candidates(g,a,b.home,506))

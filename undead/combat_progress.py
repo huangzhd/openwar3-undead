@@ -7,12 +7,60 @@ from .structures import is_structure
 class CombatProgress:
     def __init__(self,log):
         self.log=log;self.sample=None;self.deferred={};self.previous_hp={}
+        self.failed={};self.quarantined={};self.rejections={}
+
+    @staticmethod
+    def state(target):return (target.type,target.x,target.y,target.hp)
+
+    def changed(self,target,old):
+        return (target.type!=old[0] or hypot(target.x-old[1],target.y-old[2])>80
+                or abs(target.hp-old[3])>2)
+
+    def release(self,target,now,reason):
+        key=target.handle
+        if key in self.quarantined:
+            self.log('combat_target_released',clock=now,target=key,reason=reason)
+        self.quarantined.pop(key,None);self.failed.pop(key,None)
+        self.rejections.pop(key,None);self.deferred.pop(key,None)
+
+    def quarantine(self,target,now,reason):
+        if target.handle not in self.quarantined:
+            self.quarantined[target.handle]=self.state(target)
+            self.log('combat_target_quarantined',clock=now,target=target.handle,type=target.type,
+                     reason=reason,release='observed_target_change_or_attack')
+        self.deferred.pop(target.handle,None)
+
+    def attack_result(self,unit,target,now,accepted,enabled=True):
+        if not enabled:return
+        if accepted:self.rejections.pop(target.handle,None);return
+        row=self.rejections.get(target.handle)
+        if row is None or self.changed(target,row['state']) or now-row['last']>5:
+            row=dict(state=self.state(target),at=now,last=now,actors=set(),rounds=set())
+            self.rejections[target.handle]=row
+        row['last']=now;row['actors'].add(unit.handle);row['rounds'].add(now)
+        if len(row['actors'])>=2 and len(row['rounds'])>=3 and now-row['at']>=2:
+            self.quarantine(target,now,'repeated_rejected_attacks')
 
     def allowed(self,target,now):
+        old=self.quarantined.get(target.handle)
+        if old is not None and not self.changed(target,old):return False
         entry=self.deferred.get(target.handle)
         return entry is None or entry[0]!=target.type or now>=entry[1]
 
-    def observe(self,army,foes,now,enabled):
+    def observe(self,army,foes,now,enabled,visible=None,current_target=None):
+        visible=foes if visible is None else visible
+        present={e.handle:e for e in visible if e.hp>0}
+        own_handles={u.handle for u in army}
+        for key in set(self.failed)|set(self.quarantined)|set(self.rejections):
+            target=present.get(key)
+            if target is None:
+                self.failed.pop(key,None);self.quarantined.pop(key,None);self.rejections.pop(key,None)
+                continue
+            old=self.quarantined.get(key) or self.failed.get(key,{}).get('state') or self.rejections[key]['state']
+            attacking=current_target(target) if current_target else None
+            if self.changed(target,old) or attacking is not None and attacking.handle in own_handles:
+                self.release(target,now,'observed_target_change_or_attack')
+        foes=[e for e in foes if e.handle not in self.quarantined]
         own={u.handle:(u.x,u.y,u.hp) for u in army if u.hp>0}
         enemies={e.handle:(e.type,e.hp) for e in foes if e.hp>0}
         # Never bypass live incoming damage, a newly arrived threat, or a
@@ -44,4 +92,8 @@ class CombatProgress:
             self.deferred={h:(v[0],now+10) for h,v in enemies.items()}
             self.log('combat_stall_bypassed',clock=now,since=old['at'],targets=list(enemies),
                      until=now+10,reason='no_motion_or_observed_damage')
+            for target in foes:
+                entry=self.failed.setdefault(target.handle,dict(state=self.state(target),count=0))
+                entry['count']+=1
+                if entry['count']>=2:self.quarantine(target,now,'two_ineffective_engagements')
             self.sample=None
