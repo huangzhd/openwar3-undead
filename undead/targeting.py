@@ -45,6 +45,16 @@ def priority(target):
 def enemy_player(g,target):
     return 0<=getattr(target,'owner',15)<12 and getattr(target,'owner',15)!=getattr(g,'me',lambda:0)()
 
+def tc_pressure_target(g,army,foes):
+    """Drive off a visible TC with supporting ranged fire, without chasing."""
+    shooters=[u for u in army if u.type in {'ucry','Ulic','Nbrn','Nngs'} and u.hp>0]
+    targets=[e for e in foes if e.type=='Otch' and enemy_player(g,e) and can_engage(e)
+             and getattr(e,'has_detail',False) and not buffs(g,e)&{'Bvul','BHds'}
+             and 'Avul' not in abilities(g,e)
+             and sum(in_weapon_range(g,u,e) for u in shooters)>=2]
+    return min(targets,key=lambda e:e.hp) if targets else None
+
+
 def abilities(g,u):
     return {a['code']:a for a in g.abilities(u)} if getattr(u,'has_detail',False) and hasattr(g,'abilities') else {}
 
@@ -59,11 +69,47 @@ class HeroPressure:
     def __init__(self,log):
         self.log=log;self.target=None;self.preferred=None;self.history={};self.rises={}
         self.events=[];self.downgraded={};self.last_sample=-100;self.tech={}
+        self.chiefs=set();self.dead_chiefs={}
 
     def observe_events(self,events):
         # The runner already filtered this stream through OpenWar3AI fair=True.
+        for e in events:
+            if e.kind in {'killed','unit.died'} and e.handle in self.chiefs:
+                self.dead_chiefs[e.handle]=e.clock
+                self.log('tc_death_observed',clock=e.clock,target=e.handle,source='fair_event')
         self.events.extend(e for e in events if e.kind=='spell.cast')
         self.events=self.events[-128:]
+
+    def orc_focus(self,g,army,foes,now):
+        """TC, then confirmed-dead TC's Farseer, then headhunters; no chase."""
+        visible=list(getattr(g,'enemies',lambda:foes)())
+        known={e.handle for e in visible}
+        for handle in self.chiefs-known:
+            corpse=getattr(g,'unit',lambda h:None)(handle)
+            if (corpse is not None and not can_engage(corpse) and
+                    getattr(corpse,'visible_to',lambda p:False)(g.me())):visible.append(corpse)
+        for e in visible:
+            if e.type!='Otch' or not enemy_player(g,e) or not getattr(e,'has_detail',False):continue
+            self.chiefs.add(e.handle)
+            if not can_engage(e):
+                if e.handle not in self.dead_chiefs:
+                    self.dead_chiefs[e.handle]=now
+                    self.log('tc_death_observed',clock=now,target=e.handle,source='visible_snapshot')
+            elif e.handle in self.dead_chiefs and now>self.dead_chiefs[e.handle]+1:
+                self.dead_chiefs.pop(e.handle) # Observed revival, never guessed from absence.
+        chief=tc_pressure_target(g,army,foes)
+        if chief:return chief
+        if not self.chiefs:return None
+        shooters=[u for u in army if u.type in {'ucry','Ulic','Nbrn','Nngs'} and u.hp>0]
+        reachable=[e for e in foes if enemy_player(g,e) and can_engage(e)
+                   and getattr(e,'has_detail',False) and not buffs(g,e)&{'Bvul','BHds'}
+                   and 'Avul' not in abilities(g,e)
+                   and sum(in_weapon_range(g,u,e) for u in shooters)>=2]
+        if self.chiefs.issubset(self.dead_chiefs):
+            seers=[e for e in reachable if e.type=='Ofar']
+            if seers:return min(seers,key=lambda e:(e.handle!=self.target,e.hp))
+        heads=[e for e in reachable if e.type in {'ohun','otbk'}]
+        return min(heads,key=lambda e:(e.handle!=self.preferred,self.rank(g,shooters,e))) if heads else None
 
     def estimate(self,g,army,target):
         if buffs(g,target) & {'Bvul','BHds'} or abilities(g,target).keys() & {'Avul'}:return inf
@@ -149,6 +195,33 @@ class HeroPressure:
             for key in list(self.history):
                 if key not in visible_keys:self.history.pop(key);self.rises.pop(key,None)
             for hero in heroes:self.sample(g,fighters,hero,now)
+        chief=self.orc_focus(g,fighters,foes,now)
+        if chief:
+            if self.target!=chief.handle:
+                self.log('hero_pressure_started',clock=now,target=chief.handle,reason='tc_before_ranged' if chief.type=='Otch' else 'farseer_after_tc' if chief.type=='Ofar' else 'headhunters_after_hero')
+            self.target=chief.handle if chief.is_hero else None;self.preferred=None if chief.is_hero else chief.handle
+            return chief
+        # Training evidence: remove exposed ranged damage dealers together,
+        # rather than spending the entire fight chasing a healthy hero.
+        # Require observed fire on our army and actual firing-range support.
+        own={u.handle for u in fighters}
+        ranged=[]
+        for e in reachable:
+            stats=unit_stats(e.type)
+            victim=g.current_target(e)
+            if (not e.is_hero and not is_structure(e) and stats and
+                    any(w.range>=400 for w in stats.weapons) and victim and victim.handle in own
+                    and sum(in_weapon_range(g,u,e) for u in fighters)>=2
+                    and self.estimate(g,fighters,e)<=6):
+                ranged.append(e)
+        finishers=[e for e in heroes if self.estimate(g,fighters,e)<=2.5
+                   and not self.support(g,e,visible,now,2.5)]
+        if ranged and not finishers:
+            target=next((e for e in ranged if e.handle==self.preferred),None) or min(ranged,key=lambda e:self.rank(g,fighters,e))
+            if self.preferred!=target.handle:
+                self.log('ranged_threat_focus',clock=now,target=target.handle,type=target.type)
+            self.target=None;self.preferred=target.handle
+            return target
         dangerous=[e for e in heroes if aoe_threat(g,e) and e.handle not in self.downgraded
                    and self.estimate(g,fighters,e)<inf]
         if dangerous:

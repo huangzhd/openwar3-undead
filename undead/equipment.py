@@ -3,6 +3,9 @@ import json
 from bootstrap import UPSTREAM
 
 BLUE_POTIONS={'pman','pgma','mnst'} # Mana Stone follows DK mana-supply ownership.
+HEALTH_POTIONS={'phea','pghe'}
+HEALING_SCROLLS={'shea','sres'}
+HEALTH_HEROES=('Ulic','Nbrn')
 CLAWS={'rat3':3,'rat6':6,'rat9':9,'ratc':12,'ratf':15}
 # Lich gains attack from intelligence and attack speed from agility. The pinned
 # local item catalog supplies numeric bonuses; these additional item abilities
@@ -21,6 +24,25 @@ def can_receive(hero,bag,code):
     return bag.count(None)>=(2 if reserve else 1)
 
 
+def supply_receiver(hero,bag,code):
+    """Ownership only; capacity and safe delivery are checked separately."""
+    if bag is None:return False
+    if code in HEALTH_POTIONS:
+        return hero.type in HEALTH_HEROES and not any(c in HEALTH_POTIONS for c in bag)
+    return True
+
+
+def can_release(hero,bag,code):
+    if code in HEALTH_POTIONS and hero.type in HEALTH_HEROES:
+        return sum(c in HEALTH_POTIONS for c in bag)>1
+    if code in HEALING_SCROLLS:return sum(c in HEALING_SCROLLS for c in bag)>1
+    return True
+
+
+def scroll_priority(hero,bag):
+    count=sum(c in HEALING_SCROLLS for c in bag)
+    return count, 0 if hero.type=='Ulic' else 1 if hero.type=='Udea' else 2
+
 
 class Equipment:
     def __init__(self,log):
@@ -28,7 +50,7 @@ class Equipment:
         self.pending=None
         self.attempts={}
 
-    def tick(self,g,army,hostiles,now,cast_until):
+    def tick(self,g,army,hostiles,now,cast_until,potions_only=False):
         heroes=[u for u in army if u.is_hero]
         bags={u.handle:g.inventory(u) for u in heroes}
         p=self.pending
@@ -52,15 +74,42 @@ class Equipment:
                 for slot,code in enumerate(bags[donor.handle] or []):
                     if code in BLUE_POTIONS and g.dist(donor,dk)<350 and can_receive(dk,bags[dk.handle],code):
                         return self.transfer(g,donor,slot,dk,bags,now,cast_until)
+        # One blood potion per ranged hero; never take their only bottle.
+        # Shared by training preparation and ordinary safe inventory management.
+        receivers=sorted(heroes,key=lambda u:HEALTH_HEROES.index(u.type) if u.type in HEALTH_HEROES else 2)
+        for receiver in receivers:
+            for donor in heroes:
+                if donor.handle==receiver.handle:continue
+                for slot,code in enumerate(bags[donor.handle] or []):
+                    if code not in HEALTH_POTIONS:continue
+                    if (can_release(donor,bags[donor.handle],code)
+                        and supply_receiver(receiver,bags[receiver.handle],code)
+                        and can_receive(receiver,bags[receiver.handle],code)
+                        and g.dist(donor,receiver)<350
+                        and all(now>=cast_until.get(u.handle,0) for u in (donor,receiver))):
+                        return self.transfer(g,donor,slot,receiver,bags,now,cast_until)
+        # Give Lich the first scroll, then balance extras across living heroes.
+        known=[h for h in heroes if bags[h.handle] is not None]
+        for receiver in sorted(known,key=lambda h:scroll_priority(h,bags[h.handle])):
+            count=scroll_priority(receiver,bags[receiver.handle])[0]
+            for donor in sorted(known,key=lambda h:-scroll_priority(h,bags[h.handle])[0]):
+                if donor.handle==receiver.handle:continue
+                donor_count=scroll_priority(donor,bags[donor.handle])[0]
+                if not (donor_count>count+1 or receiver.type=='Ulic' and count==0 and donor_count>0):continue
+                code=next(c for c in bags[donor.handle] if c in HEALING_SCROLLS)
+                if (can_receive(receiver,bags[receiver.handle],code) and g.dist(donor,receiver)<350
+                    and all(now>=cast_until.get(u.handle,0) for u in (donor,receiver))):
+                    return self.transfer(g,donor,bags[donor.handle].index(code),receiver,bags,now,cast_until)
+        if potions_only:return False
         lich=next((u for u in heroes if u.type=='Ulic' and bags[u.handle] is not None),None)
         if not lich:return False
         bag=bags[lich.handle]
         incoming=[(u,i,c) for u in heroes if u is not lich
                   for i,c in enumerate(bags[u.handle] or []) if c in LICH_ITEMS]
-        if 'ocor' not in bag and None not in bag:
+        if not potions_only and 'ocor' not in bag and None not in bag:
             # Reserve the orb even if a legacy/full inventory already exists.
             # Otherwise keep every equipped item; overflow remains with teammates.
-            slot=next((i for i in reversed(range(len(bag))) if bag[i] not in {'ocor','stwp','rnec'}),None)
+            slot=next((i for i in reversed(range(len(bag))) if bag[i] not in {'ocor','stwp','rnec'}|HEALTH_POTIONS|HEALING_SCROLLS),None)
             if slot is not None:
                 receiver=next((u for u in heroes if u is not lich and can_receive(u,bags[u.handle],bag[slot]) and g.dist(u,lich)<350),None)
                 if receiver:return self.transfer(g,lich,slot,receiver,bags,now,cast_until)
@@ -77,10 +126,11 @@ class Equipment:
         attempts=self.attempts.get(key,0)
         if attempts>=3:return False
         self.attempts[key]=attempts+1
+        from_count=bags[donor.handle].count(code);to_count=bags[receiver.handle].count(code)
         receipt=g.give_item(donor,slot,receiver)
         self.log('equipment_transfer_attempt',clock=now,code=code,from_hero=donor.type,to_hero=receiver.type,accepted=bool(receipt),attempt=attempts+1)
         self.pending=dict(donor=donor.handle,receiver=receiver.handle,code=code,started=now,
-                          from_count=bags[donor.handle].count(code),to_count=bags[receiver.handle].count(code))
+                          from_count=from_count,to_count=to_count)
         if receipt:
             cast_until[donor.handle]=now+2
             cast_until[receiver.handle]=now+2

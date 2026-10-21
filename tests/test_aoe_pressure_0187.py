@@ -21,7 +21,7 @@ class AOEPressureTests(unittest.TestCase):
     def test_wounded_ally_or_no_support_keeps_heal_and_no_nonlethal_combo(self):
         b,d,l,h,f,own,foes,orders,*_=self.make();l.hp=250
         b.combat_spells(own,foes,10)
-        self.assertEqual(orders,[('Udea','deathcoil',l.handle)])
+        self.assertEqual(orders,[('Udea','deathcoil',l.handle),('Ulic','frostnova',h.handle)])
         b,d,l,h,f,own,foes,orders,*_=self.make();own[:]=[d,l]
         b.combat_spells(own,foes,10);self.assertFalse(orders)
     def test_immunity_cooldown_and_rejected_nova_do_not_waste_coil(self):

@@ -6,6 +6,8 @@ from .army_recovery import ArmyRecovery
 from .home_defense import HomeDefense
 from .formation import Formation
 from .battle_formation import BattleFormation
+from .battle_spells import silence_key_hero,nova_cluster,nova_tc,wait_for_opening_nc
+from .battle_tactics import BattleTacticsMixin
 from .statue_support import StatueSupport
 from .destroyer import Destroyer
 from .creep_mana import CreepMana
@@ -13,19 +15,20 @@ from .ch_resummon import CHResummon
 from .attack_supplies import AttackSupplies
 from .illusion_front import IllusionFront,RealArmyView
 from .micro import Micro,COIL_MANA
+from .fiend_burrow import FiendBurrow
 from .hazards import LightningShield
 from .loot import Loot
-from .equipment import Equipment,can_receive
+from .equipment import Equipment,can_receive,supply_receiver,can_release
 from .consumables import Consumables,ScrollSupply,ITEMS
 from .creeping import Creeping
 from .start_search import StartSearch
 from .attack_search import AttackSearch
 from .debug_console import camp_name,region
 from .scouting import SkeletonScouts,SKELETONS,CritterSearch
-from .coil import can_damage, ready as coil_ready, level as coil_level
+from .coil import can_damage, ready as coil_ready, level as coil_level, heal_eligible
 from .hero_spell_telemetry import ready as hero_spell_ready, level as hero_spell_level
-from .nc_combo import NCCombo,spell_data,DISABLED_CASTERS,aoe_threat
-from .targeting import in_weapon_range,priority,enemy_player,HeroPressure,webbed_air,can_engage,unit_collision
+from .nc_combo import NCCombo,spell_data,DISABLED_CASTERS,aoe_threat,target_legal
+from .targeting import in_weapon_range,priority,enemy_player,HeroPressure,webbed_air,can_engage,unit_collision,tc_pressure_target
 from .structures import is_structure
 from .siege import SiegeFocus,ANCIENTS,WORKERS,attackable as siege_attackable,reachable as siege_reachable
 from .creep_aggro import CreepAggro
@@ -64,8 +67,10 @@ def rod_skeleton_lifetime():
         return float(row['Dur1']) if row.get('UnitID1')=='uske' else 0
     except (OSError,ValueError,KeyError,StopIteration):return 0
 
-class Controller:
+class Controller(BattleTacticsMixin):
     def __init__(self,g,log,enemy_race=3,first_attack_all_in=True):
+        self.init_battle_tactics()
+        self.fiend_burrow=FiendBurrow(log)
         self.illusion_front=IllusionFront(log)
         self.g,self.log=(RealArmyView(g,self.illusion_front.handles) if g is not None else None),log
         self.enemy_race=enemy_race
@@ -263,8 +268,11 @@ class Controller:
         # Creeping uses explicit creep targets; attack-move must not acquire a player base.
         if self.action==Action.CREEP and not attack_ready(self.situation):attack=False
         units=[u for u in units if u.handle not in self.shield_moves and u.handle not in self.creep_aggro.protected and (u.handle not in self.shopping or self.action in (Action.RETREAT,Action.DEFEND) or self.battle_enemies)]
-        combat={'Udea','Ulic','Nbrn','Nngs','ucry','uobs','ubsp','uske','uskm','nsce','nsca'}
+        combat={'Udea','Ulic','Nbrn','Nngs','ucry','uobs','ubsp'} | SKELETONS
         battle=[e for e in self.battle_enemies if can_engage(e) and self.combat_progress.allowed(e,now)]
+        handled=self.attack_skeletons(units,battle,now) if battle else set()
+        units=[u for u in units if u.handle not in handled]
+        if not units:return
         if attack and len(units)>=2 and self.action not in (Action.RETREAT,Action.DEFEND):
             anchor=min(units,key=lambda u:sum(self.g.dist(u,v) for v in units))
             local=[u for u in units if self.g.dist(u,anchor)<700]
@@ -325,7 +333,9 @@ class Controller:
         self.go_raw(units,point,now,attack)
 
     def go_raw(self,units,point,now,attack=False):
+        handled=self.attack_skeletons(units,self.battle_enemies,now) if getattr(self,'battle_enemies',()) else set()
         for u in units:
+            if u.handle in handled:continue
             if now<self.cast_until.get(u.handle,0):continue
             key=('go',u.handle)
             dest=(round(point[0]/128),round(point[1]/128),attack)
@@ -335,6 +345,9 @@ class Controller:
             r=self.g.attack_move(u,*point) if attack else self.g.move(u,*point)
             if r:
                 self.last[key]=(dest,now)
+                if not attack and u.handle in getattr(self,'battle_dk_support',()):
+                    held=self.g.hold(u,queue='after')
+                    self.log('battle_dk_move_hold_attempt',clock=now,handle=u.handle,point=point,accepted=bool(held))
 
     def tick(self,forced=None):
         g=self.g
@@ -367,10 +380,14 @@ class Controller:
         heroes=g.my_heroes()
         if hasattr(g,'observe_coil'):g.observe_coil(heroes,now,self.log)
         fiends=g.units('me',{'ucry'})
-        army=g.units('me',{'Udea','Ulic','Nbrn','Nngs','ucry','uobs','ubsp','uske','uskm','nsce','nsca'})
+        army=g.units('me',{'Udea','Ulic','Nbrn','Nngs','ucry','uobs','ubsp'} | SKELETONS)
         army=[u for u in army if u.handle not in self.skeleton_scouts.assignments]
         self.observe_rod_skeletons(now)
         foes=self.active_foes(g.enemies(),now)
+        burrowing=self.fiend_burrow.tick(self,g.units('me',{'ucry','ucrm'}),heroes,foes,now,
+                                        (self.teleport['hero'],) if self.teleport else ())
+        self.micro.previous-=burrowing
+        army=[u for u in army if u.handle not in burrowing]
         self.observe_air(foes,now)
         local_defended=self.home_defense.tick(g,self.home,foes,now,airborne)
         self.economy.ghoul_reserved=self.home_defense.reserved
@@ -378,6 +395,8 @@ class Controller:
         self.economy.home_tower_point=(min(self.home_defense.raiders,key=lambda e:g.dist(e,self.home)).x,
                                        min(self.home_defense.raiders,key=lambda e:g.dist(e,self.home)).y) if self.home_defense.raiders else None
         raid=[] if local_defended else self.home_defense.raiders
+        if not raid and not self.teleport and not any(g.dist(e,h)<950 for e in foes for h in heroes):
+            self.equipment.tick(g,heroes,foes,now,self.cast_until,True)
         tier=(3 if self.home.type=='unp2' else 2 if self.home.type=='unp1' else 1) if halls else 0
         self.creeping.enemy_main=self.enemy_main
         self.economy.enemy_start_known=self.enemy_main is not None
@@ -424,6 +443,7 @@ class Controller:
         pulls=self.micro.plan(army,hostiles,now,target_of,g.path_distance,mp.walkable if mp else lambda *p:False,
                               (self.home.x,self.home.y),lambda e:ground_attack_range(e.type),
                               coil_ready=self.rescue_coil_ready(dk,now),
+                              aggressive_battle=bool(self.player_contact),
                               creeping=not self.attack_committed and not any(g.dist(e,center)<1200 for e in foes))
         if dk and dk.handle in self.micro.pulling and self.micro.damage.urgent(dk) and not self.player_contact:
             nearby=[e for e in hostiles if g.dist(e,dk)<1200]
@@ -608,8 +628,14 @@ class Controller:
                     self.go_raw([u],self.shield_moves.get(u.handle,pulls.get(u.handle)),now)
             self.heal_allies(fighters,now)
             return
-        self.destroyer.tick(self,fighters,foes,now,set(pulls)|set(self.shield_moves)|self.shopping)
-        self.combat_spells(fighters,foes,now,set(pulls)|set(self.shield_moves)|self.shopping)
+        if self.player_contact and self.action!=Action.RETREAT:
+            self.battle_actions(fighters,foes,now,pulls,set(self.shield_moves)|self.shopping)
+        else:
+            self.prebattle_since=None
+            self.opening_nc_deadline=None;self.opening_nc_waiting=False
+            self.destroyer.tick(self,fighters,foes,now,
+                                (set(pulls)-{u.handle for u in fighters if u.type=='ubsp'})|set(self.shield_moves)|self.shopping)
+            self.combat_spells(fighters,foes,now,set(pulls)|set(self.shield_moves)|self.shopping)
         for u in fighters:
             if u.handle in self.shield_moves:self.go_raw([u],self.shield_moves[u.handle],now)
         pulls.update(self.shield_moves)
@@ -643,7 +669,7 @@ class Controller:
                 if u.handle not in self.pull_checks:
                     self.pull_checks[u.handle]={'origin':(u.x,u.y),'target':pulls[u.handle],'started':now}
                 self.go_raw([u],pulls[u.handle],now)
-        healthy=[u for u in fighters if u.type!='uobs' and u.handle not in self.defense_shopping and u.handle not in pulls and u.handle not in tavern_reserved and now>=self.cast_until.get(u.handle,0)]
+        healthy=[u for u in fighters if u.type!='uobs' and not (self.player_contact and u.type=='ubsp') and u.handle not in self.defense_shopping and u.handle not in pulls and u.handle not in tavern_reserved and now>=self.cast_until.get(u.handle,0)]
         if not healthy:
             self.set_intent('部队脱险 · 恢复阵形')
             self.creeping.pause(now,'all_units_pulling_back')
@@ -942,32 +968,7 @@ class Controller:
             if not self.contact_active or current is not None and not enemy_player(self.g,current):
                 self.g.hold(u);self.last.pop(('go',u.handle),None)
         self.contact_active=True
-        fighters=[u for u in army if u.type!='uobs']
-        ranged=[u for u in fighters if u.type in {'ucry','Ulic','Nbrn','Nngs'}] or fighters
-        engaged=[u for u in ranged if any(in_weapon_range(self.g,u,e) for e in self.player_contact)]
-        if ranged:
-            front=min(engaged,key=lambda u:sum(self.g.dist(u,v) for v in engaged)) if engaged else min(ranged,key=lambda u:min(self.g.dist(u,e) for e in self.player_contact))
-            point=(front.x,front.y)
-            if not engaged:
-                # Close on ordinary enemy units, while retaining the no-hero-chase rule.
-                targets=[e for e in self.player_contact if not e.is_hero]
-                if targets:
-                    target=min(targets,key=lambda e:self.g.dist(front,e))
-                    distance=self.g.dist(front,target)
-                    step=min(300,max(0,distance-max(100,ground_attack_range(front.type)-50)))
-                    if distance>0:point=(front.x+(target.x-front.x)*step/distance,front.y+(target.y-front.y)*step/distance)
-            reinforcements=[]
-            for u in army:
-                if u.handle in self.battle_formation.pending:continue
-                if now<self.cast_until.get(u.handle,0) or any(in_weapon_range(self.g,u,e) for e in self.player_contact):continue
-                # DK and statues support the firing line without charging through it.
-                margin=400 if u.type in {'Udea','uobs'} else 100 if engaged else 40
-                if self.g.dist(u,point)>margin:reinforcements.append(u)
-            if reinforcements:
-                self.go(reinforcements,point,now,attack=False)
-                if self.due('combat_reinforce',now,2):
-                    self.log('combat_reinforce',clock=now,point=point,units=[dict(type=u.type,handle=u.handle) for u in reinforcements])
-        self.fight(army,self.player_contact,now)
+        self.engage_battle(army,self.player_contact,now)
         return True
 
     def pre_attack_retreat(self,army,foes,now):
@@ -1212,7 +1213,7 @@ class Controller:
         if None not in inv:
             # Preserve collected items: make room by giving one to another hero, never silently discard it.
             choice=next(((i,h) for i,code in enumerate(inv) if code not in {'stwp','rnec'}
-                         for h in heroes if h.handle!=dk.handle and can_receive(h,g.inventory(h),code) and g.dist(h,dk)<400),None)
+                         for h in heroes if h.handle!=dk.handle and can_receive(h,g.inventory(h),code) and supply_receiver(h,g.inventory(h),code) and g.dist(h,dk)<400),None)
             if choice and self.due('tp_make_room',now,3):
                 slot,receiver=choice
                 r=g.give_item(dk,slot,receiver)
@@ -1995,7 +1996,7 @@ class Controller:
         wants=[]
         if dk and dk.mana<75 and self.first_attack_supply.core_ready(self) and not any(c in {'pman','pgma','mnst','pres'} for bag in bags.values() for c in bag):wants.append((dk,'pman',200))
         if not any(c in {'shea','sres'} for bag in bags.values() for c in bag):
-            receiver=next((h for h in heroes if can_receive(h,bags[h.handle],'shea') and any(g.dist(h,s)<=280 for s in shops)),None)
+            receiver=next((h for h in heroes if h.type=='Ulic' and can_receive(h,bags[h.handle],'shea') and any(g.dist(h,s)<=280 for s in shops)),None)
             if receiver:wants.append((receiver,'shea',250))
         for hero,code,cost in wants:
             if not can_receive(hero,bags[hero.handle],code) or hero.hp/hero.hp_max<.6:continue
@@ -2036,9 +2037,9 @@ class Controller:
         blockers=[h for h in heroes if g.dist(h,shop)<900 and (g.inventory(h) is not None and None not in g.inventory(h))]
         for donor in blockers:
             bag=g.inventory(donor)
-            slot=next((i for i,c in enumerate(bag) if c not in {'stwp','rnec','ocor'}),None)
+            slot=next((i for i,c in enumerate(bag) if c not in {'stwp','rnec','ocor'} and can_release(donor,bag,c)),None)
             receiver=next((h for h in heroes if h.handle!=donor.handle and slot is not None and
-                           can_receive(h,g.inventory(h),bag[slot]) and
+                           can_receive(h,g.inventory(h),bag[slot]) and supply_receiver(h,g.inventory(h),bag[slot]) and
                            (g.inventory(h) or []).count(None)>=(2 if h.handle==hero.handle else 1)),None)
             signature=(donor.handle,tuple(bag))
             attempts=self.shop_room_attempts.get(signature,0)
@@ -2186,10 +2187,13 @@ class Controller:
         return bool(target and any(e.handle==target.handle for e in self.battle_enemies)
                     and not is_structure(target) and can_damage(target.type) and g.dist(dk,target)<750)
 
+    def coil_candidate(self,u):
+        return heal_eligible(u) and u.handle not in self.fiend_burrow.pending
+
     def heal_candidates(self,dk):
         # UnitBalance.slk marks Nbrn undead and uobs Mechanical; coil cannot heal statues.
         return [u for u in self.g.units('me',{'Ulic','Nbrn','ucry','ugho'})
-                if (u.hp_max-u.hp>=100 or u.hp/u.hp_max<.45) and self.g.dist(dk,u)<750]
+                if self.coil_candidate(u) and self.g.dist(dk,u)<750]
 
     def reserve_coil_for_hero(self,dk,now):
         # TR 235051: Nbrn was missing 94 HP under tower fire; pressure Coil
@@ -2215,22 +2219,43 @@ class Controller:
         return False
 
     def combat_spells(self,army,foes,now,blocked=()):
+        self.opening_nc_waiting=False
         self.nc_combo.observe(self.g,now)
         dk=next((u for u in army if u.type=='Udea'),None)
+        priority_target=self.hero_pressure.orc_focus(self.g,army,foes,now)
+        chief=priority_target if priority_target and priority_target.type=='Otch' else None
         critical=[u for u in self.heal_candidates(dk) if u.is_hero and u.hp/u.hp_max<=.25] if dk else []
         if critical:
             self.heal_allies(army,now,critical)
             return
         if self.action!=Action.RETREAT and not self.teleport and not self.army_recovery.active:
             excluded=set(blocked)|set(self.micro.pulling)|set(self.shield_moves)|self.creep_aggro.protected
-            target=self.nc_combo.try_cast(self.g,army,foes,now,self.cast_until,excluded)
+            if chief:
+                silence_key_hero(self,army,foes,now,excluded,tc_only=True)
+                # Latest battle priority: heal Lich before spending Coil on TC.
+                hurt=[u for u in self.heal_candidates(dk) if u.type=='Ulic'] if dk else []
+                if hurt:self.heal_allies(army,now,hurt)
+                nc_blocked=excluded|({dk.handle} if dk and (hurt or self.reserve_coil_for_hero(dk,now)) else set())
+                self.opening_nc_waiting=wait_for_opening_nc(self,army,chief,now,nc_blocked)
+                if self.opening_nc_waiting:return
+                target=self.nc_combo.try_cast(self.g,army,[chief],now,self.cast_until,nc_blocked,pressure=True)
+            else:
+                # A withdrawn/invulnerable TC releases the army to ranged units.
+                targets=[priority_target] if priority_target else ([e for e in foes if e.type=='Otch'] if any(e.type=='Otch' for e in foes) else foes)
+                target=self.nc_combo.try_cast(self.g,army,targets,now,self.cast_until,excluded)
             # Pressure NC requires supporting attacks; real healing remains first.
-            if target is None and not (dk and self.heal_candidates(dk)) and not self.reserve_coil_for_hero(dk,now):
+            if target is None and not priority_target and not any(e.type=='Otch' for e in foes) and not (dk and self.heal_candidates(dk)) and not self.reserve_coil_for_hero(dk,now):
                 dangerous=[e for e in foes if aoe_threat(self.g,e) and
                            sum(u.handle not in excluded and u.type!='uobs' and in_weapon_range(self.g,u,e)
                                for u in army)>=2]
                 self.nc_combo.try_cast(self.g,army,dangerous,now,self.cast_until,excluded,pressure=True)
         self.heal_allies(army,now)
+
+        if self.action!=Action.RETREAT and not self.teleport and not self.army_recovery.active:
+            silence_key_hero(self,army,foes,now,excluded)
+            if chief:nova_tc(self,army,chief,now,excluded)
+            elif priority_target and priority_target.type=='Ofar':nova_tc(self,army,priority_target,now,excluded)
+            else:nova_cluster(self,army,foes,now,excluded)
 
     def heal_allies(self,army,now,candidates=None):
         g=self.g
@@ -2242,9 +2267,11 @@ class Controller:
             elif now-check['started']>3 or victim is None:
                 self.heal_checks.remove(check)
         dk=next((u for u in army if u.type=='Udea'),None)
-        if not dk or dk.mana<COIL_MANA or now<self.cast_until.get(dk.handle,0) or not coil_ready(g,dk,now):
+        if (not dk or dk.mana<COIL_MANA or now<self.cast_until.get(dk.handle,0)
+                or set(getattr(g,'buffs',lambda u:[])(dk))&DISABLED_CASTERS or not coil_ready(g,dk,now)):
             return
         hurt=self.heal_candidates(dk) if candidates is None else candidates
+        hurt=[u for u in hurt if self.coil_candidate(u)] # Explicit rescue lists obey the same HP gate.
         if not self.player_contact:
             hurt=[u for u in hurt if self.coil_rescue_needed(u)]
         if hurt and self.due('coil',now,1):
@@ -2260,7 +2287,7 @@ class Controller:
         g=self.g
         if not self.hero_attack_targets and not any(e.is_hero and enemy_player(g,e) for e in self.battle_enemies):return
         for u in army:
-            if u.type=='uobs' or now<self.cast_until.get(u.handle,0):continue
+            if u.type in SKELETONS or u.type=='uobs' or now<self.cast_until.get(u.handle,0):continue
             current=g.current_target(u)
             remembered=self.hero_attack_targets.get(u.handle)
             hero=current if current and current.is_hero and enemy_player(g,current) else None
@@ -2322,9 +2349,12 @@ class Controller:
 
     def fight(self,army,foes,now):
         g=self.g
+        self.battle_focus_handles=set()
         foes=[e for e in foes if can_engage(e) and self.combat_progress.allowed(e,now)]
         if self.action==Action.DEFEND:foes=[e for e in foes if enemy_player(g,e)]
         army=[u for u in army if u.handle not in self.shield_moves and u.handle not in self.creep_aggro.protected and (u.handle not in self.shopping or self.action in (Action.RETREAT,Action.DEFEND) or self.battle_enemies)]
+        handled=self.attack_skeletons(army,foes,now) if any(enemy_player(g,e) for e in foes) else set()
+        army=[u for u in army if u.handle not in handled]
         self.stop_hero_chases(army,now)
         if self.action==Action.CREEP and not attack_ready(self.situation):
             foes=[e for e in foes if not (enemy_player(self.g,e) and is_structure(e))]
@@ -2364,14 +2394,19 @@ class Controller:
             army=[u for u in army if g.dist(u,anchor)<700]
             if not foes: return False
         player_fight=any(enemy_player(g,e) for e in foes)
+        if player_fight:army=[u for u in army if u.type!='ubsp']
+        if not army:return False
         pressure=self.hero_pressure.choose(g,army,foes,now) if player_fight else None
-        target=self.nc_combo.focus(foes,now) or pressure or min(foes,key=lambda u:(not self.creeping.th_priority(u) if not player_fight else False,not self.creeping.carries_drop(u) if not player_fight else False,u.hp+(400 if is_structure(u) else 0)))
+        orc_focus=self.hero_pressure.orc_focus(g,army,foes,now) if player_fight else None
+        target=orc_focus or self.nc_combo.focus(foes,now) or pressure or min(foes,key=lambda u:(not self.creeping.th_priority(u) if not player_fight else False,not self.creeping.carries_drop(u) if not player_fight else False,u.hp+(400 if is_structure(u) else 0)))
         poison_priority=not player_fight and self.creeping.th_poison_gnoll(target)
-        single_finishing=bool(self.nc_combo.pending) or self.nc_combo.single_attempt_at==now or (player_fight and pressure is None)
+        single_finishing=bool(self.nc_combo.pending) or self.nc_combo.single_attempt_at==now or (player_fight and pressure is None) or self.opening_nc_waiting
         protected=set()
         dk=next((u for u in army if u.type=='Udea'),None)
         lich=next((u for u in army if u.type=='Ulic'),None)
+        tc_spell_safe=target.type not in {'Otch','Ofar'} or (hasattr(g,'abilities') and target_legal(g,target))
         if (not single_finishing and dk and dk.mana>=COIL_MANA and now>=self.cast_until.get(dk.handle,0)
+                and tc_spell_safe and not set(getattr(g,'buffs',lambda u:[])(dk))&DISABLED_CASTERS
                 and coil_ready(g,dk,now) and not (player_fight and self.reserve_coil_for_hero(dk,now))
                 and self.due('coil',now,1)):
             wounded=self.heal_candidates(dk)
@@ -2387,6 +2422,7 @@ class Controller:
                     self.coil_spend=(dk.handle,dk.mana,now)
                     protected.add(dk.handle)
         if (not single_finishing and lich and now>=self.cast_until.get(lich.handle,0) and lich.mana>=125
+                and tc_spell_safe and not set(getattr(g,'buffs',lambda u:[])(lich))&DISABLED_CASTERS
                 and hero_spell_ready(g,lich,'AUfn',now) and g.dist(lich,target)<750
                 and (player_fight or poison_priority or self.creep_mana.allow(self,lich,army,foes,now,125,
                     rescue=any(self.coil_rescue_needed(u) for u in army if u.type not in SKELETONS and u.type!='uobs')))
@@ -2416,8 +2452,13 @@ class Controller:
                 if r:self.cast_until[naga.handle]=now+.8;protected.add(naga.handle)
         if player_fight:
             protected.update(self.battle_formation.step(self,army,foes,target,now,protected))
+            self.battle_focus_handles=self.focus_ranged([u for u in army if u.handle not in protected],foes,now)
+            protected.update(self.battle_focus_handles)
+            self.focus_ghouls([u for u in army if u.type=='ugho' and u.handle not in protected],foes,now)
+            protected.update(u.handle for u in army if u.type=='ugho')
         for u in army:
-            if u.handle in protected or u.type=='uobs' or now<self.cast_until.get(u.handle,0):
+            if (u.handle in protected or u.type=='uobs' or now<self.cast_until.get(u.handle,0)
+                    or player_fight and u.handle in self.battle_dk_support):
                 continue
             selected=target
             if player_fight:
@@ -2431,7 +2472,7 @@ class Controller:
                             self.hero_attack_targets.pop(u.handle,None)
                             self.last.pop(('go',u.handle),None)
                     continue
-                selected=self.nc_combo.focus(local,now) or next((e for e in local if pressure and e.handle==pressure.handle),None) or min([e for e in local if webbed_air(g,e)] or local,key=lambda e:self.hero_pressure.rank(g,army,e))
+                selected=next((e for e in local if orc_focus and e.handle==orc_focus.handle),None) or self.nc_combo.focus(local,now) or next((e for e in local if pressure and e.handle==pressure.handle),None) or min([e for e in local if webbed_air(g,e)] or local,key=lambda e:self.hero_pressure.rank(g,army,e))
             current=g.current_target(u)
             if (not current or current.handle!=selected.handle) and self.due(('attack',u.handle),now,1.2):
                 receipt=g.attack(u,selected,force=getattr(selected,'owner',0)>=13)

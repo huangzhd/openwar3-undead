@@ -31,7 +31,7 @@ class CoilReserveTests(unittest.TestCase):
         b.combat_spells(own,foes,691.43);b.fight(own,foes,691.43)
         self.assertFalse(any(s=='deathcoil' for _,s,_ in orders))
         self.assertTrue(any(s=='frostnova' for _,s,_ in orders))
-        r.hp=303
+        r.hp=r.hp_max*.5
         b.combat_spells(own,foes,692.305)
         self.assertIn(('Udea','deathcoil',r.handle),orders)
 
@@ -63,6 +63,6 @@ class CoilReserveTests(unittest.TestCase):
         b,d,l,h,r,t,own,foes,orders,events=self.scene();r.hp=r.hp_max;d.mana=133.3127
         b.combat_spells(own,foes,662.78);b.fight(own,foes,662.78)
         self.assertFalse(any(spell=='deathcoil' for _,spell,_ in orders))
-        r.hp=303
+        r.hp=r.hp_max*.5
         b.combat_spells(own,foes,667.775)
         self.assertIn(('Udea','deathcoil',r.handle),orders)

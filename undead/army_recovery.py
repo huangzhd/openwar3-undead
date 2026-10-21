@@ -1,5 +1,6 @@
 """Group health recovery, safe scroll shopping and observed production refunds."""
 from math import ceil,hypot
+from .equipment import can_receive
 from .consumables import SCROLLS
 from .retreat import clearance,escape_point
 from .nc_combo import spell_data,DISABLED_CASTERS
@@ -148,7 +149,7 @@ class ArmyRecovery:
         if raid or b.teleport or now<440 or not heroes:return
         bags=[g.inventory(h) for h in heroes]
         if any(bag is None for bag in bags) or any(c in SCROLLS for bag in bags for c in bag):return
-        buyers=[h for h,bag in zip(heroes,bags) if None in bag and h.hp>=.6*h.hp_max]
+        buyers=[h for h,bag in zip(heroes,bags) if h.type=='Ulic' and can_receive(h,bag,'shea') and h.hp>=.6*h.hp_max]
         if not buyers or b.economy.revival_pending(g):return
         shops=[u for u in g.units('all',{'ngme'}) if u.alive and u.visible_to(g.me())]
         if b.situation.tier==3:shops+=b.economy.ready(g,'utom')
@@ -262,7 +263,7 @@ class ArmyRecovery:
             heroes=[h for h in core if h.is_hero]
             bags=[g.inventory(h) for h in heroes]
             if any(bag is None for bag in bags) or any(c in SCROLLS for bag in bags for c in bag):return True
-            buyer=next((h for h,bag in zip(heroes,bags) if None in bag and h.hp>=.6*h.hp_max
+            buyer=next((h for h,bag in zip(heroes,bags) if h.type=='Ulic' and can_receive(h,bag,'shea') and h.hp>=.6*h.hp_max
                         and g.dist(h,shop)<=280 and now>=b.cast_until.get(h.handle,0)),None)
             if buyer:
                 if g.resources()['gold']<250:self.fund_scroll(b,now)

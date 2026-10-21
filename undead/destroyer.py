@@ -1,7 +1,8 @@
-"""Visible dispel priorities: own hero debuffs, enemy summons, enemy buffs."""
+"""Visible dispel priorities: ally hex, enemy summons, other hero debuffs, enemy buffs."""
 from functools import lru_cache
+from math import hypot,cos,sin,pi
 from .nc_combo import spell_data,DISABLED_CASTERS
-from .targeting import enemy_player,buffs
+from .targeting import enemy_player,buffs,unit_stats
 
 # 1.27a public AbilityData/buffs.json identifiers; no blanket B* classification.
 # Auras, stun, poison, Purge slow, invulnerability and transformation buffs are
@@ -25,18 +26,57 @@ def summon_types():
     return frozenset(codes)
 
 
+def dispel_plan(caster,targets,protected,reach,area,protection_radii=None):
+    """Choose a reachable ground point; never move the caster into the pack.
+
+    Unit centres, pair midpoints and their cast-range projections cover spread
+    buff groups without requiring a unit itself to be within cast range. Keep
+    a small coverage margin for movement between the snapshot and spell impact.
+    """
+    radius=max(0,area-8)
+    distance=lambda p,u:hypot(p[0]-u.x,p[1]-u.y)
+    local=[t for t in targets if distance((caster.x,caster.y),t['unit'])<=reach+radius]
+    points=[((t['unit'].x,t['unit'].y),0) for t in local]
+    points += [(((a['unit'].x+b['unit'].x)/2,(a['unit'].y+b['unit'].y)/2),1)
+               for i,a in enumerate(local) for b in local[i+1:]
+               if hypot(a['unit'].x-b['unit'].x,a['unit'].y-b['unit'].y)<=2*radius]
+    # A target may be near a protected hero while a blast on its far edge is
+    # safe. Test offsets instead of rejecting the target centre up front.
+    if protected:
+        points += [((t['unit'].x+radius*cos(i*pi/8),t['unit'].y+radius*sin(i*pi/8)),2)
+                   for t in local for i in range(16)]
+    best=None
+    for point,shifted in points:
+        length=distance(point,caster)
+        if length>reach:
+            scale=max(0,reach-8)/length
+            point=(caster.x+(point[0]-caster.x)*scale,caster.y+(point[1]-caster.y)*scale)
+            shifted=1
+        if any(distance(point,h)<=(protection_radii or {}).get(h.handle,area+8) for h in protected):continue
+        hit=[t for t in local if distance(point,t['unit'])<=radius]
+        if not hit:continue
+        selected=min(hit,key=lambda t:(t['priority'],t['unit'].hp,t['unit'].handle))
+        counts=tuple(-sum(t['priority']==rank for t in hit) for rank in range(4))
+        score=(selected['priority'],*counts,shifted,selected['unit'].hp,selected['unit'].handle)
+        if best is None or score<best[0]:best=(score,point,selected,hit)
+    return best[1:] if best else None
+
+
 class Destroyer:
     def __init__(self,log):
         self.log=log;self.morph=None;self.morph_attempts={};self.next_morph=0
-        self.dispel={};self.attempts={};self.next_cast={}
+        self.dispel={};self.attempts={};self.next_cast={};self.deferred={}
 
     def targets(self,b,army,enemies):
         g=b.g;targets=[]
         heroes=g.my_heroes() if hasattr(g,'my_heroes') else [u for u in army if u.is_hero]
-        for u in heroes:
+        allies={u.handle:u for u in [*army,*heroes]}
+        for u in allies.values():
             effects=buffs(g,u)&HERO_DEBUFFS
-            if effects and u.hp>0 and u.alive and u.owner==g.me():
-                targets.append(dict(unit=u,priority=0,reason='hero_debuff',effects=sorted(effects)))
+            hexed='BOhx' in effects
+            if effects and (hexed or u.is_hero) and u.hp>0 and u.alive and u.owner==g.me():
+                targets.append(dict(unit=u,priority=0 if hexed else 2,
+                                    reason='ally_hex' if hexed else 'hero_debuff',effects=sorted(effects)))
         for u in enemies:
             effects=buffs(g,u)&ENEMY_BUFFS
             summon=u.type in summon_types() and u.type!='ninf'
@@ -46,7 +86,7 @@ class Destroyer:
             if summon:
                 targets.append(dict(unit=u,priority=1,reason='enemy_summon',effects=sorted(effects)))
             elif effects:
-                targets.append(dict(unit=u,priority=2,reason='enemy_buff',effects=sorted(effects)))
+                targets.append(dict(unit=u,priority=3,reason='enemy_buff',effects=sorted(effects)))
         return targets
 
     def observe(self,b,now):
@@ -84,17 +124,42 @@ class Destroyer:
                 if confirmed:self.attempts.pop(p['key'],None)
                 self.dispel.pop(handle,None)
 
+    def defer(self,unit,now,reason,**details):
+        previous=self.deferred.get(unit.handle)
+        if previous and previous[0]==reason and now-previous[1]<5:return
+        self.deferred[unit.handle]=(reason,now)
+        self.log('destroyer_dispel_deferred',clock=now,handle=unit.handle,reason=reason,**details)
+
     def tick(self,b,army,enemies,now,blocked=()):
         g=b.g;self.observe(b,now)
         if b.teleport:return
         targets=self.targets(b,army,enemies)
-        # During retreat only an existing, unblocked destroyer may free a hero.
+        if not targets:return
+        row=spell_data()[0]['Advm'];reach=float(row['Rng1']);area=float(row['Area1'])
+        heroes=g.my_heroes() if hasattr(g,'my_heroes') else [u for u in army if u.is_hero]
+        # Devour Magic affects an area, including units other than the chosen
+        # target. Preserve friendly hero buffs and hostile hero debuffs (most
+        # notably Dark Ranger silence) wherever the blast would reach them.
+        protected=[u for u in heroes if getattr(u,'alive',True) and u.hp>0 and u.owner==g.me()
+                   and buffs(g,u)&ENEMY_BUFFS and 'BOhx' not in buffs(g,u)]
+        pending=getattr(b,'silence_protected_until',{})
+        b.silence_protected_until={h:t for h,t in pending.items() if t>now}
+        protected.extend(u for u in enemies if getattr(u,'alive',True) and u.hp>0 and u.is_hero
+                         and enemy_player(g,u) and u.visible_to(g.me())
+                         and (buffs(g,u)&HERO_DEBUFFS or pending.get(u.handle,0)>now))
+        # A moving TC can enter the blast between snapshot and cast impact.
+        # Keep a movement/collision margin, even when the spell is aimed at DK.
+        radii={u.handle:area+32+.75*(522 if 'Bspe' in buffs(g,u) else
+                    (stats.speed if (stats:=unit_stats(u.type)) else 320)) for u in protected}
+        # Retreat never morphs a statue; an existing destroyer may dispel first.
         retreat=b.action.name=='RETREAT'
-        if retreat:targets=[t for t in targets if t['priority']==0]
         if not targets:return
         available=[u for u in army if u.handle not in blocked and now>=b.cast_until.get(u.handle,0)
                    and not buffs(g,u)&(DISABLED_CASTERS|{'BOhx'})]
         destroyers=g.units('me',{'ubsp'})
+        for u in army:
+            if u.type=='ubsp' and u not in available:
+                self.defer(u,now,'caster_blocked' if u.handle in blocked else 'caster_busy_or_controlled')
         if not retreat and not destroyers and not self.morph and now>=self.next_morph:
             level=g.tech_many(['Rusp']).get('Rusp');res=g.resources()
             hero_food=5 if b.economy.third_hero not in b.economy.ever_heroes else 0
@@ -113,27 +178,36 @@ class Destroyer:
                              accepted=bool(receipt),attempt=n,trigger_priority=priority(u))
                     if receipt:
                         self.morph=dict(handle=u.handle,started=now);b.cast_until[u.handle]=now+2.5
-        row=spell_data()[0]['Advm'];reach=float(row['Rng1']);area=float(row['Area1'])
+        # A damaged Destroyer gains life from a useful dispel; give it the
+        # first cast, but never issue a duplicate cast into the same area.
+        available.sort(key=lambda u:(u.type!='ubsp',u.hp/max(1,u.hp_max)))
         for u in available:
             if u.type!='ubsp' or u.handle in self.dispel or now<self.next_cast.get(u.handle,0):continue
-            if g.cooldown(u,'Advm')!=0:continue
-            reachable=[t for t in targets if g.dist(u,t['unit'])<=reach
+            if g.cooldown(u,'Advm')!=0:
+                self.defer(u,now,'cooldown_not_ready',cooldown=g.cooldown(u,'Advm'))
+                continue
+            covered={handle for pending in self.dispel.values() for handle,_ in pending['targets']}
+            reachable=[t for t in targets if t['unit'].handle not in covered
                        and self.attempts.get((u.handle,t['unit'].handle),0)<3]
-            if not reachable:continue
-            def score(t):
-                e=t['unit']
-                counts=tuple(-sum(v['priority']==rank and g.dist(e,v['unit'])<=area for v in targets) for rank in range(3))
-                return (t['priority'],*counts,e.hp,e.handle)
-            selected=min(reachable,key=score);target=selected['unit']
+            plan=dispel_plan(u,reachable,protected,reach,area,radii)
+            if plan is None:
+                self.defer(u,now,'no_safe_reachable_point' if reachable else 'pending_or_attempt_limit',
+                           targets=[t['unit'].handle for t in reachable],protected=[h.handle for h in protected])
+                continue
+            self.deferred.pop(u.handle,None)
+            point,selected,hit=plan;target=selected['unit']
             key=(u.handle,target.handle)
             self.attempts[key]=self.attempts.get(key,0)+1;self.next_cast[u.handle]=now+2
-            receipt=g.cast(u,'devourmagic',x=target.x,y=target.y)
+            receipt=g.cast(u,'devourmagic',x=point[0],y=point[1])
             self.log('destroyer_dispel_attempt',clock=now,handle=u.handle,target=target.handle,
-                     point=(target.x,target.y),accepted=bool(receipt),attempt=self.attempts[key],
-                     reason=selected['reason'],priority=selected['priority'],effects=selected['effects'])
+                     point=point,accepted=bool(receipt),attempt=self.attempts[key],
+                     reason=selected['reason'],priority=selected['priority'],effects=selected['effects'],
+                     covered_count=len(hit),covered_handles=[t['unit'].handle for t in hit],
+                     protected_heroes=[dict(handle=h.handle,distance=round(g.dist(point,h)),
+                                            radius=radii[h.handle]) for h in protected])
             if receipt:
                 b.cast_until[u.handle]=now+1.2
                 self.dispel[u.handle]=dict(started=now,key=key,
                     reason=selected['reason'],
-                    targets=[(t['unit'].handle,t['unit'].hp) for t in targets if g.dist(t['unit'],target)<=area],
-                    effects=[(t['unit'].handle,t['effects']) for t in targets if t['effects'] and g.dist(t['unit'],target)<=area])
+                    targets=[(t['unit'].handle,t['unit'].hp) for t in hit],
+                    effects=[(t['unit'].handle,t['effects']) for t in hit if t['effects']])

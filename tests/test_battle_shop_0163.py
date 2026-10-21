@@ -155,8 +155,8 @@ class BurstTests(unittest.TestCase):
         self.assertFalse(b.emergency_portal([dk,*allies],100));self.assertFalse(orders)
 
 class Consumable163Tests(unittest.TestCase):
-    def test_lich_invulnerability_needs_low_dk_mana_and_handles_burst(self):
-        for mana,expected in [(75,False),(74,True)]:
+    def test_lich_burst_above_thirty_percent_does_not_use_invulnerability(self):
+        for mana,expected in [(75,False),(74,False)]:
             g=consumables.Game();dk,h,_=g.heroes;dk.mana=mana;h.hp=350;g.bags[h.handle][0]='pnvl'
             c=Consumables(lambda *a,**kw:None)
             c.tick(g,g.army,[unit('hfoo',90,200)],1,{},urgent={h.handle})

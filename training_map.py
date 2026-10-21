@@ -120,24 +120,40 @@ def patch_script(script, matchup, level, mode):
         choice = (f'    set udg_P1Race = 3\n    set udg_P2Race = {MATCHUPS[matchup]}\n'
                   f'    set udg_Hardcore = {str(mode == "hard").lower()}\n'
                   '    call ConditionalTriggerExecute( gg_trg_CourseName )\n'
+                  '    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 11)\n'
                   '    call TriggerSleepAction( 0.01 )\n'
-                  f'    set udg_RoundNo = {level}\n    call TriggerExecute( gg_trg_Main )\n')
-        return body[:start] + choice + body[end:]
+                  f'    set udg_RoundNo = {level}\n'
+                  '    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 12)\n'
+                  '    call TriggerExecute( gg_trg_Main )\n')
+        return ('    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 10)\n'
+                + body[:start] + choice + body[end:])
     edit('Trig_Initialiaztion_Actions', initialize)
-    # Public scoreboard is the adapter protocol; no hidden opponent data.
+    # Slot 0's small lumber value is an adapter signal read by a separate
+    # lifecycle auditor, never by the combat policy. The training round starts
+    # with preplaced forces; the adapter does not purchase units.
+    # 1 waiting, 2 battle, 3 slot-0 win, 4 slot-1 win.
     edit('Trig_Main_Actions', lambda body: body +
-         '    call LeaderboardSetLabel(PlayerGetLeaderboard(Player(0)), "OWT:waiting")\n')
+         '    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 1)\n')
+    edit('Trig_Main_Actions', lambda body:
+         '    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 20)\n' + body)
     def countdown(body):
         needle = 'set udg_Counting = false'
         if body.count(needle) != 2:
             raise ValueError('Unexpected countdown implementation')
-        return body.replace(needle, needle + '\n            call LeaderboardSetLabel(PlayerGetLeaderboard(Player(0)), "OWT:battle")')
+        return body.replace(needle, needle + '\n            call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 2)')
     edit('Trig_ComputerForceCountdown_Actions', countdown)
-    # Keep original Player1Win/Player2Win conditions and scoring. Stop only
-    # auto-advance, unit removal and menus after the map has adjudicated.
+    # Publish the original ten-second victory check's living, non-building
+    # enemy count to the separate lifecycle auditor. The fair combat policy
+    # never reads this signal. It distinguishes a hidden survivor from a
+    # broken win trigger without changing the original adjudication.
+    edit('Trig_CheckWin10_Actions', lambda body:
+         '    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 100 + CountUnitsInGroup(GetUnitsOfPlayerMatching(Player(1), Condition(function Trig_CheckWin10_Func002Func002001001002))))\n'
+         + body)
+    # Player1Win/Player2Win still adjudicate the round. CheckPass must stop
+    # before its original unit removal and automatic next-round branch.
     edit('Trig_CheckPass_Actions', lambda body:
          '    set udg_RoundOver = true\n'
-         '    call LeaderboardSetLabel(PlayerGetLeaderboard(Player(0)), "OWT:result:" + I2S(udg_win))\n'
+         '    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 2 + udg_win)\n'
          '    call DisplayTimedTextToForce(GetPlayersAll(), 60.0, "OWT single round complete; winner slot " + I2S(udg_win - 1))\n')
     return text.encode('latin-1')
 

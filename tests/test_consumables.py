@@ -76,11 +76,10 @@ class ConsumableTests(unittest.TestCase):
         self.step(blocked=[h.handle],coil_needed=True);self.assertFalse(g.orders)
         self.lock[h.handle]=8;self.step(5,coil_needed=True);self.assertFalse(g.orders)
         self.step(9,coil_needed=True);self.assertEqual(g.orders,[('use','Udea','pgma')])
-    def test_mana_stone_waits_for_coil_need_and_confirms_actual_mana_gain(self):
+    def test_mana_stone_restores_low_dk_mana_without_waiting_for_heal_target(self):
         g=self.g;dk=g.heroes[0];dk.mana=10;dk.mana_max=400
         g.bags[dk.handle][0]='mnst';g.effect=True
-        self.step();self.assertFalse(g.orders)
-        self.step(5,coil_needed=True)
+        self.step()
         self.assertEqual(g.orders,[('use','Udea','mnst')])
         self.assertEqual(dk.mana,310);self.assertNotIn('mnst',g.bags[dk.handle])
         self.step(7,coil_needed=True)
@@ -122,10 +121,9 @@ class ConsumableTests(unittest.TestCase):
         g.bags[dark.handle][0]='spro';self.step(1.5,[unit('hfoo',9,100)])
         self.assertEqual(len(g.orders),2)
 
-    def test_blue_potion_is_saved_when_no_coil_needed_or_held_by_other_hero(self):
+    def test_blue_potion_goes_to_low_mana_dk_without_a_coil_target(self):
         g=self.g;dk,lich,_=g.heroes;g.bags[dk.handle][0]='pman';g.bags[lich.handle][0]='pgma';dk.mana=lich.mana=0
-        self.step();self.assertFalse(g.orders)
-        self.step(5,coil_needed=True);self.assertEqual(g.orders,[('use','Udea','pman')])
+        self.step();self.assertEqual(g.orders,[('use','Udea','pman')])
 
     def test_roar_only_in_attack_phase_near_opponent_not_creeps(self):
         g=self.g;g.bags[g.heroes[0].handle][0]='sror';foe=unit('hfoo',9,100);foe.owner=1
@@ -143,7 +141,7 @@ class ScrollTests(unittest.TestCase):
         g=self.g;g.food=49;self.step();self.assertFalse(g.orders)
         g.food=50;g.gold=999;self.step(5,500);self.assertFalse(g.orders)
         g.gold=1000;self.step(9,500);self.assertEqual(g.orders,[('buy','shea')]);self.assertEqual(g.gold,750)
-    def test_one_at_a_time_distribute_and_cap_three(self):
+    def test_one_at_a_time_lich_first_then_balance_and_cap_three(self):
         g=self.g;g.gold=2000
         for t in range(1,40,4):self.step(t)
         self.assertEqual([b.count('shea') for b in g.bags.values()],[1,1,1])
@@ -160,9 +158,11 @@ class ScrollTests(unittest.TestCase):
         for t in range(1,60,4):self.step(t)
         self.assertEqual(len(g.orders),3)
         self.assertFalse(any(e['event']=='healing_scroll_purchase_confirmed' for e in self.events))
-    def test_restore_scroll_counts_toward_one_per_hero(self):
+    def test_restore_scrolls_count_toward_balanced_cap(self):
         for b in self.g.bags.values():b[0]='sres'
-        self.step();self.assertFalse(self.g.orders)
+        for t in range(1,30,4):self.step(t)
+        self.assertEqual([b.count('sres') for b in self.g.bags.values()],[1,1,1])
+        self.assertFalse(any(o[0]=='buy' for o in self.g.orders))
     def test_budget_reserves_core_replacements_tech_portal_and_absent_heroes(self):
         g=UpgradeGame();e=Economy(lambda *a,**k:None);e.ever_heroes={h.type for h in g.my_heroes()}
         e.upkeep_released=True

@@ -5,6 +5,14 @@ import w3paths
 from w3slk import read_slk
 
 
+def heal_eligible(unit):
+    """Hero Coil starts at half health; fiends wait until below 40%."""
+    if unit.hp<=0 or unit.hp_max<=0 or unit.type=='ucrm':return False
+    if unit.type in {'Ulic','Nbrn'}:return unit.hp<=unit.hp_max*.5
+    if unit.type=='ucry':return unit.hp<unit.hp_max*.4
+    return unit.hp_max-unit.hp>=100 or unit.hp/unit.hp_max<.45
+
+
 def ready(g, hero, now=None):
     """Unknown cooldown is never presented as zero; recovery is explicit."""
     if hasattr(g, 'coil_ready'):

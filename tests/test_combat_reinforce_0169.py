@@ -21,9 +21,10 @@ class ReinforceTests(unittest.TestCase):
         b,own,foes,orders,targets,events=self.make()
         b.respond_player_contact(own,10)
         moved={o[1]:o[2] for o in orders if o[0]=='move'}
-        for u in (own[0],own[1],own[4]):
+        for u in (own[0],own[1]):
             self.assertIn(u.handle,moved)
             self.assertLess(dist(moved[u.handle],own[2]),dist(u,own[2]))
+        self.assertNotIn(own[4].handle,moved) # Dedicated statue support owns its movement.
         for u in own[2:4]:
             self.assertNotIn(u.handle,moved);self.assertIs(targets[u.handle],foes[0])
         orders.clear();b.respond_player_contact(own,13)

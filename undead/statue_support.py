@@ -1,6 +1,6 @@
 """Manual alternating statue supply; only travel to catch the army or escape danger."""
-from math import hypot
-from .retreat import escape_point
+from math import hypot,cos,sin,atan2,pi
+from .retreat import escape_point,clearance
 from .targeting import enemy_player
 
 
@@ -35,6 +35,8 @@ class StatueSupport:
         anchor=min(core,key=lambda u:sum(g.dist(u,v) for v in core))
         local=[u for u in core if g.dist(u,anchor)<800]
         combat=b.action.name in {'ATTACK','HARASS'} or any(enemy_player(g,e) for e in hostiles)
+        battle=any(enemy_player(g,e) for e in hostiles)
+        if battle:local=[v for v in local if g.dist(v,anchor)<=500]
         statues=sorted((u for u in army if u.type=='uobs'),key=lambda u:u.handle)
         live={u.handle for u in statues};self.held &= live
         for i,u in enumerate(statues):
@@ -42,8 +44,9 @@ class StatueSupport:
                 self.held.discard(u.handle);continue
             threats=[e for e in hostiles if b.army_recovery.threat_range(e.type)>0 and
                      g.dist(e,u)<b.army_recovery.threat_range(e.type)+100]
-            threatened=bool(threats) or now-b.micro.hit.get(u.handle,-100)<3
-            preferred=b.army_recovery.statue_modes.get(u.handle,{}).get('mode','life')
+            threatened=bool(threats) or (now-b.micro.hit.get(u.handle,-100)<3 and
+                clearance((u.x,u.y),hostiles,b.army_recovery.threat_range)<120)
+            preferred=b.army_recovery.statue_modes.get(u.handle,{}).get('mode','life' if i%2==0 else 'mana')
             needs={'life':[v for v in local if v.hp<v.hp_max-15],
                    'mana':[v for v in local if v.type in {'Udea','Ulic','Nbrn','Nngs'} and getattr(v,'mana_max',0)-getattr(v,'mana',0)>=5]}
             # One nearby car must cover both resources, including after its partner morphs.
@@ -51,13 +54,16 @@ class StatueSupport:
             last=self.last_supply_mode.get(u.handle)
             mode=('mana' if last=='life' else 'life') if last else preferred
             nearby_cars=sum(g.dist(v,anchor)<900 for v in statues)
+            # With two local cars, keep complementary jobs even after both
+            # temporarily served the same resource. Only a lone car alternates.
+            if nearby_cars>=2:mode=preferred
             if nearby_cars<=1 and (last is None or any(v.hp<.45*v.hp_max for v in needs['life'])
                                   and now-self.mana_at.get(u.handle,now)<6):mode='life'
             other='mana' if mode=='life' else 'life'
             if not needs[mode] or g.cooldown(u,'Arpl' if mode=='life' else 'Arpm')!=0:
                 if needs[other] and g.cooldown(u,'Arpl' if other=='life' else 'Arpm')==0:mode=other
             # Do not chase a distant recipient while another needed supply is in range.
-            if not any(g.dist(u,v)<=220 for v in needs[mode]) and any(g.dist(u,v)<=220 for v in needs[other]):
+            if nearby_cars<=1 and not any(g.dist(u,v)<=220 for v in needs[mode]) and any(g.dist(u,v)<=220 for v in needs[other]):
                 mode=other
             needy=needs[mode]
             recipient=min(needy,key=lambda v:(g.dist(u,v)>220,-sum(g.dist(v,w)<=500 for w in needy),v.hp/v.hp_max if mode=='life' else
@@ -65,6 +71,7 @@ class StatueSupport:
             support_anchor=recipient or anchor
             covered=(g.dist(u,support_anchor)<=220 if recipient else
                      g.dist(u,anchor)<=520 and sum(g.dist(u,v)<=600 for v in local)>=max(1,(len(local)+1)//2))
+            if battle:covered=covered and g.dist(u,anchor)<=350
             pending=self.moves.get(u.handle)
             if pending and g.dist(u,pending['origin'])>64 and g.dist(u,pending['point'])<g.dist(pending['origin'],pending['point'])-64:
                 self.log('statue_support_movement_observed',clock=now,handle=u.handle,reason=pending['reason'],point=(u.x,u.y))
@@ -94,9 +101,24 @@ class StatueSupport:
             self.held.discard(u.handle)
             if now-self.last_plan.get(u.handle,-100)<2:continue
             self.last_plan[u.handle]=now
+            close=[]
+            if battle:
+                enemy=min(hostiles,key=lambda e:g.dist(anchor,e))
+                dx,dy=anchor.x-enemy.x,anchor.y-enemy.y;length=hypot(dx,dy) or 1
+                dx,dy=dx/length,dy/length;side=1 if i%2==0 else -1
+                close=[(anchor.x+dx*back-dy*side*flank,anchor.y+dy*back+dx*side*flank)
+                       for back in (100,160,220,280) for flank in (80,140)]
+                # Search both rear flanks before falling back to a long escape.
+                angle=atan2(dy,dx)
+                close += [(anchor.x+radius*cos(angle+offset),anchor.y+radius*sin(angle+offset))
+                          for radius in (160,220,280,340)
+                          for offset in (0,pi/6,-pi/6,pi/3,-pi/3,pi/2,-pi/2)]
+                close=[p for p in close if clearance(p,hostiles,b.army_recovery.threat_range)>=120]
+                close.sort(key=lambda p:(-sum(g.dist(p,v)<=220 for v in needy),
+                                         -sum(g.dist(p,v)<=500 for v in local),g.dist(p,anchor),g.dist(u,p)))
             if threatened:
                 point=escape_point(g,u,hostiles,b.army_recovery.threat_range,home=(anchor.x,anchor.y))
-                candidates=[point]
+                candidates=close+[point]
                 reason='threat_pullback'
             else:
                 # Two rear flank points, not the DK's central approach lane.
@@ -117,6 +139,8 @@ class StatueSupport:
                     candidates.sort(key=lambda p:(-sum(g.dist(p,v)<=700 and (v.handle in b.micro.pulling or v.hp<.45*v.hp_max) for v in recipients) if mode=='life' else 0,
                                                   -sum(g.dist(p,v)<=700 for v in recipients),
                                                   -sum(g.dist(p,v)<=220 for v in recipients),g.dist(u,p)))
+                if battle:
+                    candidates=close+[p for p in candidates if g.dist(p,anchor)<=350]
             point=next((p for p in candidates if p is not None and g.dist(u,p)>=80 and
                         b.army_recovery.safe_path(b,(u.x,u.y),p,hostiles,combat=combat) is not None),None)
             if point is None:continue

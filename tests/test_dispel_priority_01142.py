@@ -20,7 +20,7 @@ class DispelPriorityTests(unittest.TestCase):
         g,b,d,own,foes,orders,events,cd,res,effects,hero,enemy=self.scene()
         d.tick(b,own,foes,10)
         self.assertEqual(orders[-1][2],dict(x=hero.x,y=hero.y))
-        self.assertEqual(events[-1]['reason'],'hero_debuff')
+        self.assertEqual(events[-1]['reason'],'ally_hex')
 
     def test_summons_beat_buff_then_buff_alone_is_dispelled(self):
         for summon in (True,False):
@@ -37,7 +37,7 @@ class DispelPriorityTests(unittest.TestCase):
                 effects[hero.handle]=[effect];foes.clear();b.action=Action.CREEP
                 d.tick(b,own,[],10)
                 self.assertEqual(orders[-1][1],'avengerform')
-                self.assertEqual(events[-1]['trigger_priority'],0)
+                self.assertEqual(events[-1]['trigger_priority'],0 if effect=='BOhx' else 2)
 
     def test_each_supported_enemy_buff_triggers_morph_without_summons(self):
         for effect in ENEMY_BUFFS:
@@ -46,7 +46,7 @@ class DispelPriorityTests(unittest.TestCase):
                 effects[hero.handle]=[];effects[enemy.handle]=[effect];foes[:]=[enemy]
                 d.tick(b,own,foes,10)
                 self.assertEqual(orders[-1][1],'avengerform')
-                self.assertEqual(events[-1]['trigger_priority'],2)
+                self.assertEqual(events[-1]['trigger_priority'],3)
 
     def test_auras_poison_stun_invulnerability_and_unknown_do_not_trigger(self):
         for effect in ('BHab','BUau','Bpoi','BPSE','Bprg','BHds','Bvul','BNdo','Bzzz'):
@@ -65,14 +65,14 @@ class DispelPriorityTests(unittest.TestCase):
     def test_blocked_hero_outside_army_still_gets_dispelled(self):
         g,b,d,own,foes,orders,events,cd,res,effects,hero,enemy=self.scene()
         d.tick(b,[u for u in own if u!=hero],[],10,{hero.handle})
-        self.assertEqual(events[-1]['reason'],'hero_debuff')
+        self.assertEqual(events[-1]['reason'],'ally_hex')
 
     def test_existing_destroyer_can_free_hero_on_retreat_without_new_morph(self):
         for existing in (True,False):
             g,b,d,own,foes,orders,events,cd,res,effects,hero,enemy=self.scene(existing)
             b.action=Action.RETREAT;d.tick(b,own,foes,10)
             self.assertEqual(bool(orders),existing)
-            if existing:self.assertEqual(events[-1]['reason'],'hero_debuff')
+            if existing:self.assertEqual(events[-1]['reason'],'ally_hex')
 
     def test_range_and_caster_pullback_still_block_cast(self):
         for why in ('range','pull','cooldown'):
@@ -102,6 +102,53 @@ class DispelPriorityTests(unittest.TestCase):
         d.attempts[(own[0].handle,hero.handle)]=3
         d.tick(b,own,foes,10)
         self.assertEqual(events[-1]['reason'],'enemy_summon')
+
+    def test_enemy_hero_buff_is_dispelled_until_silence_is_present(self):
+        g,b,d,own,foes,orders,events,cd,res,effects,hero,enemy=self.scene()
+        effects[hero.handle]=[];foes[:]=[enemy]
+        enemy.type='Otch';enemy.is_hero=True
+        effects[enemy.handle]=['Broa']
+        d.tick(b,own,foes,10)
+        self.assertEqual(events[-1]['reason'],'enemy_buff')
+
+        g,b,d,own,foes,orders,events,cd,res,effects,hero,enemy=self.scene()
+        effects[hero.handle]=[];foes[:]=[enemy]
+        enemy.type='Otch';enemy.is_hero=True
+        effects[enemy.handle]=['Broa','BNsi']
+        d.tick(b,own,foes,10)
+        self.assertFalse(orders)
+
+    def test_blast_does_not_strip_enemy_silence_near_summon(self):
+        g,b,d,own,foes,orders,events,cd,res,effects,hero,enemy=self.scene()
+        effects[hero.handle]=[]
+        chief=unit('Otch',22,owner=1,x=foes[0].x+60);chief.has_detail=True
+        foes[:]=[foes[0],chief];effects[chief.handle]=['BNsi']
+        d.tick(b,own,foes,10)
+        self.assertFalse(orders)
+        chief.x=1500
+        d.tick(b,own,foes,11)
+        self.assertEqual(events[-1]['reason'],'enemy_summon')
+
+    def test_safe_summon_can_be_dispelled_when_other_cluster_is_protected(self):
+        g,b,d,own,foes,orders,events,cd,res,effects,hero,enemy=self.scene()
+        effects[hero.handle]=[]
+        safe=unit('efon',23,owner=1,x=-350)
+        chief=unit('Otch',22,owner=1,x=foes[0].x+60);chief.has_detail=True
+        foes[:]=[foes[0],safe,chief];effects[chief.handle]=['BNsi']
+        d.tick(b,own,foes,10)
+        self.assertEqual(orders[-1][2],dict(x=safe.x,y=safe.y))
+
+    def test_blast_does_not_strip_friendly_hero_frost_armor(self):
+        g,b,d,own,foes,orders,events,cd,res,effects,hero,enemy=self.scene()
+        effects[hero.handle]=['BOhx','BUfa'];foes.clear()
+        d.tick(b,own,foes,10)
+        self.assertEqual(events[-1]['reason'],'ally_hex') # Freeing Hex outranks retaining this hero's armor.
+
+        g,b,d,own,foes,orders,events,cd,res,effects,hero,enemy=self.scene()
+        effects[hero.handle]=['BUfa'];hero.x=foes[0].x+60
+        foes[:]=[foes[0]]
+        d.tick(b,own,foes,10)
+        self.assertFalse(orders)
 
 
 if __name__=='__main__':unittest.main()

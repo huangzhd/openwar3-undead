@@ -45,6 +45,19 @@ class HeroReentryTests(unittest.TestCase):
         e.x=3000
         self.assertNotIn(h.handle,step(11))
 
+    def test_half_health_backline_rejoins_with_coil_support_after_threat_ends(self):
+        for code in ('Ulic','Nbrn'):
+            with self.subTest(code=code):
+                dk=unit('Udea',1,0,600);dk.mana=150
+                hero=unit(code,2,-600,300)
+                fiend=unit('ucry',3,0,550);foe=unit('ogru',4,300,700)
+                micro=Micro(lambda *a,**k:None)
+                micro.pulling.add(hero.handle);micro.hit[hero.handle]=1
+                moves=micro.plan([dk,hero,fiend],[foe],10,lambda _:fiend.handle,
+                                 dist,lambda *p:True,(-3000,0),lambda _:100)
+                self.assertNotIn(hero.handle,moves)
+                self.assertNotIn(hero.handle,micro.pulling)
+
     def test_healing_hero_does_not_recall_healthy_fiends_or_dk(self):
         m,dk,h,f,e,step=self.scenario('Nbrn')
         self.assertEqual(set(step()),{h.handle})

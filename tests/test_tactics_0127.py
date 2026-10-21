@@ -21,7 +21,7 @@ class LichTacticsTests(unittest.TestCase):
                 self.assertEqual(lich.handle in moves,pull)
 
     def test_healing_priority_overrides_health_ratio_and_then_uses_ratio_within_type(self):
-        dk=unit('Udea',1,0);lich=unit('Ulic',2,100,450);dark=unit('Nbrn',3,100,120)
+        dk=unit('Udea',1,0);lich=unit('Ulic',2,100,300);dark=unit('Nbrn',3,100,120)
         fiend=unit('ucry',4,150,70);ghoul=unit('ugho',5,160,10);other_fiend=unit('ucry',6,160,50)
         own=[lich,dark,fiend,ghoul,other_fiend];casts=[]
         g=N(units=lambda side,codes:[u for u in own if u.type in codes],dist=dist,

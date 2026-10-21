@@ -1,4 +1,5 @@
 """Local pullback decisions; one damaged unit does not decide the army's retreat."""
+from .scouting import SKELETONS
 from math import hypot,cos,sin,atan2,pi
 from .damage import DamageTrend
 
@@ -18,8 +19,11 @@ class Micro:
         self.dk_recovering=None
         self.dk_support=None
 
-    def plan(self,army,hostiles,now,target_of,ground_distance,walkable,home,attack_range=lambda e:600,creeping=False,coil_ready=True):
-        core=[u for u in army if u.type not in {'uske','uskm','nsce','nsca'}]
+    def plan(self,army,hostiles,now,target_of,ground_distance,walkable,home,attack_range=lambda e:600,creeping=False,coil_ready=True,aggressive_training=False,aggressive_battle=False):
+        # The same risk profile now applies to real player battles. Creeping
+        # retains its separate health/aggro rules; training keeps its old API.
+        aggressive = aggressive_training or aggressive_battle
+        core=[u for u in army if u.type not in SKELETONS]
         self.damage.observe([u for u in core if u.is_hero],now)
         current={u.handle for u in core}
         self.losses.extend(now for _ in self.previous-current)
@@ -41,14 +45,25 @@ class Micro:
         dk_has_mana=dk is not None and getattr(dk,'mana',0)>=COIL_MANA
         # Creeping preserves Coil for emergencies; wounded units must not wait for routine healing.
         coil_ready=coil_ready and not creeping
+        def backline_urgent(u):
+            ratio=u.hp/u.hp_max
+            winning_trade=not creeping and ratio>=.35 and any(
+                e.is_hero and getattr(e,'hp_max',0)>0 and e.hp/e.hp_max<min(.5,ratio-.1)
+                and hypot(u.x-e.x,u.y-e.y)<750 for e in hostiles)
+            return self.damage.urgent(u,window=(.75 if winning_trade else 1.25) if aggressive else 8)
+        backline_hold=.28 if aggressive and not creeping else .7
+        backline_exit=.22 if aggressive and not creeping else .45
         eligible={u.handle for u in core if (u.type=='Udea' and (not creeping or u.hp/u.hp_max<=.5 or u.handle in self.pulling or self.damage.urgent(u))) or
-                  (u.type in {'Ulic','Nbrn'} and ((u.handle in self.pulling and u.hp/u.hp_max<.7) or
-                   (u.hp/u.hp_max<(.6 if creeping else .45) and not (dk_has_mana and coil_ready and hypot(u.x-dk.x,u.y-dk.y)<750))
-                   or self.damage.urgent(u))) or
+                  (u.type in {'Ulic','Nbrn'} and ((u.handle in self.pulling and u.hp/u.hp_max<backline_hold) or
+                   (u.hp/u.hp_max<(.6 if creeping else backline_exit) and not (dk_has_mana and coil_ready and hypot(u.x-dk.x,u.y-dk.y)<750))
+                   or backline_urgent(u))) or
                   (u.type=='ucry' and ((u.handle in self.pulling and u.hp/u.hp_max<.7) or
                    (u.hp/u.hp_max<.45 and not (dk_has_mana and coil_ready and hypot(u.x-dk.x,u.y-dk.y)<750)))) or
-                  (u.type not in {'Udea','Ulic','Nbrn','ucry'} and (not dk_has_mana or u.type in {'Nngs','uobs'} or u.is_hero and self.damage.urgent(u)) and
+                  (u.type not in {'Udea','Ulic','Nbrn','ucry'} and (not dk_has_mana or u.type in {'Nngs','uobs','ubsp'} or u.is_hero and self.damage.urgent(u)) and
                    (u.is_hero or u.hp/u.hp_max<.45 or u.handle in self.pulling))}
+        # Player-battle statues have one owner for escape AND return to supply.
+        # Generic persistent pullbacks otherwise keep the support controller blocked.
+        if aggressive and not creeping:eligible -= {u.handle for u in core if u.type=='uobs'}
         self.pulling &= eligible
         for u in core:
             if u.handle not in eligible:continue
@@ -57,13 +72,24 @@ class Micro:
                        and getattr(e,'owner',None)==12 else max(900,attack_range(e)+100))]
             fired=now-self.hit.get(u.handle,-100)<2 or bool(attackers)
             ratio=u.hp/u.hp_max
-            if fired and (u.type=='Udea' or ratio<.7 or len(attackers)>=2 or u.is_hero and self.damage.urgent(u)):
+            if aggressive and not creeping and u.type=='Udea':
+                should_pull=ratio<=.5 or self.damage.urgent(u,window=5)
+                fired=fired or (ratio<=.5 and any(attack_range(e)>0 and
+                    hypot(e.x-u.x,e.y-u.y)<=attack_range(e)+150 for e in hostiles))
+            elif aggressive and not creeping and u.type in {'Ulic','Nbrn'}:
+                should_pull=ratio<backline_exit or backline_urgent(u)
+            else:
+                should_pull=(u.type=='Udea' or ratio<.7 or len(attackers)>=2 or
+                             u.is_hero and self.damage.urgent(u,window=8))
+            if fired and should_pull:
                 if u.handle not in self.pulling:
                     self.log('unit_pullback',clock=now,unit=u.type,handle=u.handle,hp=round(u.hp),attackers=len(attackers))
                 self.pulling.add(u.handle)
                 if u.type=='Udea':self.dk_recovering=u.handle
             if u.handle not in self.pulling: continue
             near=attackers or [e for e in hostiles if hypot(e.x-u.x,e.y-u.y)<max(900,attack_range(e)+100)]
+            battle_dk=aggressive and not creeping and u.type=='Udea'
+            if battle_dk:near=[e for e in hostiles if attack_range(e)>0]
             exposed=any(hypot(e.x-u.x,e.y-u.y)<attack_range(e)+100 for e in near)
             if not fired and not exposed and now-self.hit.get(u.handle,-100)>3:
                 # Escaping fire is not healing. TH 104134's 244/525 lich
@@ -72,8 +98,16 @@ class Micro:
                 # A half-health creeping DK returns to deal damage after aggro
                 # is shed, rather than waiting for healing while the camp resets.
                 # Critically injured DKs and vulnerable damage dealers still wait.
-                if ((u.type in {'ucry','Ulic','Nbrn','Nngs'} and ratio<.7) or
-                        creeping and u.type=='Udea' and ratio<.35) and any(hypot(e.x-anchor.x,e.y-anchor.y)<1200 for e in hostiles):
+                supported_reentry=(not creeping and not aggressive and
+                                   u.type in {'Ulic','Nbrn'} and ratio>=.45 and
+                                   dk_has_mana and hypot(u.x-dk.x,u.y-dk.y)<750 and
+                                   not self.damage.urgent(u,window=3))
+                if ((u.type in {'ucry','Nngs'} and ratio<.7) or
+                        (u.type in {'Ulic','Nbrn'} and ratio<backline_hold and
+                         not (aggressive and not creeping) and not supported_reentry) or
+                        creeping and u.type=='Udea' and ratio<.35 or
+                        battle_dk and ratio<=.6) and any(hypot(e.x-v.x,e.y-v.y)<1200
+                            for e in hostiles for v in (core if battle_dk else [anchor])):
                     moves[u.handle]=(u.x,u.y)
                     continue
                 self.pulling.remove(u.handle)
@@ -82,6 +116,26 @@ class Micro:
                              reason='outside_weapon_range_without_recent_damage')
                 continue
             if not near: continue
+            if battle_dk:
+                # Safety outranks the old 750 support leash. Score every enemy
+                # weapon, including units not currently targeting the DK.
+                clearance=lambda p:min(hypot(p[0]-e.x,p[1]-e.y)-attack_range(e) for e in near)
+                before=clearance((u.x,u.y));choices=[]
+                closest=min(near,key=lambda e:hypot(u.x-e.x,u.y-e.y)-attack_range(e))
+                away=atan2(u.y-closest.y,u.x-closest.x)
+                for step in (160,320,520,760):
+                    for i in range(16):
+                        angle=away+i*pi/8
+                        point=(u.x+step*cos(angle),u.y+step*sin(angle))
+                        end=clearance(point)
+                        if end<=before+40:continue
+                        samples=[(u.x+(point[0]-u.x)*j/12,u.y+(point[1]-u.y)*j/12) for j in range(1,13)]
+                        if any(not walkable(*p) or clearance(p)<min(before,140)-8 for p in samples):continue
+                        route=ground_distance((u.x,u.y),point)
+                        if route is not None and route<=step*1.25+64:
+                            choices.append(((end<140,-min(end,140),route),point))
+                moves[u.handle]=min(choices,key=lambda p:p[0])[1] if choices else (u.x,u.y)
+                continue
             ex=sum(e.x for e in near)/len(near);ey=sum(e.y for e in near)/len(near)
             angle=atan2(anchor.y-ey,anchor.x-ex)
             support=[v for v in core if v.handle!=u.handle and v.handle not in self.pulling

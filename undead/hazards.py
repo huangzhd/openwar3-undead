@@ -1,4 +1,5 @@
 """Separate actual lightning-shield carriers using visible state only."""
+from .scouting import SKELETONS
 from math import hypot,cos,sin,pi,atan2
 
 # Local 1.27a Alsh/ACls/AIls Area1=160; add room for movement.
@@ -14,7 +15,7 @@ class LightningShield:
         self.blocked=set()
 
     def plan(self,army,hostiles,now,buffs,walkable,ground_distance):
-        shields=[u for u in army if SHIELD_BUFFS & set(buffs(u))]
+        shields=[u for u in army if (u.type not in SKELETONS or not hostiles) and SHIELD_BUFFS & set(buffs(u))]
         active={u.handle for u in shields}
         self.separated &= active
         self.blocked &= active

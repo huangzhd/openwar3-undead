@@ -214,7 +214,7 @@ class HealingTests(unittest.TestCase):
     def test_heal_precedes_damage_and_movement_cannot_cancel_cast(self):
         from undead.controller import Controller
         dk=unit('Udea',1,0);fiend=unit('ucry',2,50,100)
-        statue=unit('uobs',3,50,20);dark=unit('Nbrn',4,40,400)
+        statue=unit('uobs',3,50,20);dark=unit('Nbrn',4,40,300)
         enemy=unit('hfoo',5,200);own=[dk,fiend,statue,dark]
         casts=[];moves=[];attacks=[]
         g=N(units=lambda owner,codes:[u for u in own if u.type in codes],dist=dist,

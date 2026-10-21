@@ -75,7 +75,7 @@ class DestroyerTests(unittest.TestCase):
     def test_out_of_range_or_cast_blocked_does_not_chase_or_disrupt_retreat(self):
         for why in ('range','blocked','cooldown'):
             g,b,d,own,foes,orders,events,cd,res=self.scene();own[0].type='ubsp';blocked=set()
-            if why=='range':foes[0].x=650
+            if why=='range':foes[0].x=850 # Beyond cast range plus the dispel radius.
             if why=='blocked':blocked.add(own[0].handle)
             if why=='cooldown':cd[(own[0].handle,'Advm')]=4
             d.tick(b,own,foes,10,blocked);self.assertFalse(orders)

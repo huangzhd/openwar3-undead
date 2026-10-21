@@ -10,7 +10,7 @@ from .hero_spell_telemetry import ready as hero_spell_ready, level as hero_spell
 
 BLOCKED_BUFFS = {'BHds','Bvul','Bams','Bam2','BNms','BNss','Bcmg'}
 BLOCKED_ABILITIES = {'Avul','Amim','ACmi','ACm2','ACm3','AImx','ANss','ANse'}
-DISABLED_CASTERS = {'BNsi','BEsh','BPse','BPSE','BUsl','BSTN','Bstn','Bply','Bcyc'}
+DISABLED_CASTERS = {'BNsi','BEsh','BPse','BPSE','BUsl','BSTN','Bstn','Bply','Bcyc','BOhx'}
 SPELLS = (('N','Ulic','AUfn','frostnova'), ('C','Udea','AUdc','deathcoil'),
           ('F','Nngs','ANfl','forkedlightning'))
 

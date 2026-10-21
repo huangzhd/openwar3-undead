@@ -1,6 +1,6 @@
 """Pick up visible drops after a safe camp clear and verify their observed effect."""
 from math import hypot
-from .equipment import LICH_ITEMS,BLUE_POTIONS,can_receive
+from .equipment import LICH_ITEMS,BLUE_POTIONS,HEALTH_POTIONS,HEALING_SCROLLS,supply_receiver,scroll_priority,can_receive
 
 class Loot:
     def __init__(self,catalog,log):
@@ -13,7 +13,7 @@ class Loot:
     @staticmethod
     def key(item): return (item.handle_lo,item.handle_hi)
 
-    def tick(self,g,army,hostiles,now,all_heroes=None,camp_combat=False):
+    def tick(self,g,army,hostiles,now,all_heroes=None,camp_combat=False,allowed_codes=None):
         present=[u for u in (army if all_heroes is None else all_heroes) if u.is_hero]
         lich_present=any(u.type=='Ulic' for u in present)
         self.lich_seen=self.lich_seen or lich_present
@@ -26,7 +26,8 @@ class Loot:
         if any(g.dist(e,center)<950 and (not camp_combat or getattr(e,'owner',None)!=12) for e in hostiles):
             self.pending=None
             return None
-        visible={self.key(it):it for it in g.items_on_ground() if it.life>0}
+        visible={self.key(it):it for it in g.items_on_ground() if it.life>0
+                 and (allowed_codes is None or it.type in allowed_codes)}
         p=self.pending
         if p:
             hero=g.unit(p['hero'])
@@ -71,6 +72,12 @@ class Loot:
                 preferred='Ulic' if lich_present or self.lich_seen else 'Udea'
                 eligible=[h for h in eligible if h.type==preferred]
                 if not eligible:continue
+            if item.type in HEALTH_POTIONS:
+                eligible=[h for h in eligible if supply_receiver(h,g.inventory(h),item.type)]
+                if not eligible:continue
+                if any(h.type=='Ulic' for h in eligible):eligible=[h for h in eligible if h.type=='Ulic']
+            if item.type in HEALING_SCROLLS:
+                eligible=[min(eligible,key=lambda h:scroll_priority(h,g.inventory(h)))]
             if item.type in BLUE_POTIONS and any(h.type=='Udea' for h in eligible):
                 eligible=[h for h in eligible if h.type=='Udea']
             if item.type in LICH_ITEMS and any(h.type=='Ulic' for h in eligible):

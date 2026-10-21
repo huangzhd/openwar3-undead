@@ -18,7 +18,7 @@ class CoilWaitTests(unittest.TestCase):
         g,b,d,h,army,bags,orders,given,events,e,cd,casts=self.scene()
         self.assertFalse(b.emergency_portal(army,649.43))
         self.assertFalse(orders);self.assertFalse(given)
-        cd[0]=0;h.hp=315
+        cd[0]=0;h.hp=275
         self.assertTrue(b.emergency_portal(army,650.8))
         self.assertEqual(casts,[('deathcoil',h.handle)])
         self.assertFalse(orders);self.assertFalse(given)

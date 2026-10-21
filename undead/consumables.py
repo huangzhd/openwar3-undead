@@ -1,6 +1,8 @@
 """Conservative consumables using own inventories and fair nearby threats."""
-from .equipment import can_receive,BLUE_POTIONS
+from .equipment import can_receive,BLUE_POTIONS,HEALTH_POTIONS,HEALING_SCROLLS,Equipment,scroll_priority
 from .targeting import enemy_player,can_engage
+from .coil import ready as coil_ready,level as coil_level,heal_eligible
+from .nc_combo import DISABLED_CASTERS
 
 # Pinned installation AbilityData.slk: ability, heal, mana, radius, buff.
 ITEMS={
@@ -19,8 +21,9 @@ REGEN={f'rej{i}':(f'AIp{i}',hp,mp,area,'BIrg') for i,hp,mp,area in
 REGEN['envl']=REGEN['rej3']
 ITEMS.update(REGEN)
 ITEMS['fgsk']=('AIfs',0,0,0,None)
-SCROLLS={'shea','sres'}
+SCROLLS=HEALING_SCROLLS
 ORGANIC={'Udea','Ulic','Nbrn','Nngs','ucry','ugho'}
+ITEM_DISABLED={'BOhx','Bply','BPse','BPSE','BSTN','Bstn','BUsl','Bcyc'}
 
 class Consumables:
     def __init__(self,log):
@@ -50,7 +53,7 @@ class Consumables:
                 self.log('consumable_effect_observed',clock=now,hero=p['hero'],code=p['code'],
                          consumed=consumed,gains=gains,buffed=buffed,summoned=summoned)
                 self.pending.pop(handle)
-            elif now-p['started']>=3:
+            elif now-p['started']>=(.25 if buff=='Bvul' and not consumed else 3):
                 self.log('consumable_effect_unconfirmed',clock=now,hero=p['hero'],code=p['code'],consumed=consumed)
                 self.pending.pop(handle)
 
@@ -58,7 +61,8 @@ class Consumables:
         self.observe(g,now)
         # Most injured hero first; only one area scroll per observation window.
         for hero in sorted((u for u in army if u.is_hero),key=lambda u:u.hp/max(1,u.hp_max)):
-            if hero.handle in blocked or hero.handle in self.pending or now<cast_until.get(hero.handle,0):continue
+            if hero.hp<=0 or not getattr(hero,'alive',True) or hero.handle in blocked or hero.handle in self.pending:continue
+            locked=now<cast_until.get(hero.handle,0)
             bag=g.inventory(hero)
             if not bag:continue
             candidates=[]
@@ -66,15 +70,32 @@ class Consumables:
             ratio=hero.hp/max(1,hero.hp_max)
             buffs=set(g.buffs(hero)) if any(c in ITEMS for c in bag) else set()
             dk=next((u for u in army if u.type=='Udea'),None)
+            coil_cover=bool(heal_eligible(hero) and dk and getattr(dk,'alive',True) and dk.hp>0 and dk.mana>=75
+                and dk.handle not in blocked and now>=cast_until.get(dk.handle,0)
+                and g.dist(dk,hero)<750 and hasattr(g,'buffs') and not set(g.buffs(dk))&DISABLED_CASTERS
+                and (hasattr(g,'coil_level') or hasattr(g,'abilities')) and coil_level(g,dk)>0
+                and coil_ready(g,dk,now)) if hero.type=='Ulic' else False
+            focused=sum((t:=getattr(g,'current_target',lambda e:None)(e)) is not None
+                        and t.handle==hero.handle and g.dist(e,hero)<900 for e in hostiles)>=2
+            emergency=hero.handle in urgent or ratio<=.25 or (focused and ratio<=.5)
+            # Lich's 30% gate also applies under focus, urgent flags and TC approach.
+            invul_hp=(ratio<=.30) if hero.type=='Ulic' else (ratio<=.35 or emergency)
+            invul_needed=threat and invul_hp and 'Bvul' not in buffs
+            # Latest policy: a genuinely available Coil takes priority, even
+            # at critical HP. Otherwise keep requesting invulnerability through
+            # stun; an accepted item order is not evidence that it was used.
+            if hero.type=='Ulic' and coil_cover:invul_needed=False
             for slot,code in enumerate(bag):
                 if code not in ITEMS:continue
                 if code=='sror' and (not attacking or not any(0<=getattr(e,'owner',12)<12 and g.dist(e,hero)<700 for e in hostiles)):continue
                 ability,heal,mana,radius,buff=ITEMS[code]
+                if locked and not (buff=='Bvul' and invul_needed or hero.type=='Ulic' and code in HEALTH_POTIONS and 'Bvul' in buffs):continue
+                if hero.type=='Ulic' and code in HEALTH_POTIONS and coil_cover:continue
                 if g.cooldown(hero,ability)!=0:continue # unknown is not ready
                 addrs=getattr(hero,'item_addrs',()) or ()
                 identity=addrs[slot] if len(addrs)>slot and addrs[slot] else (slot,code)
                 key=(hero.handle,identity)
-                if self.attempts.get(key,0)>=3 or now<self.retry.get(key,0):continue
+                if (buff!='Bvul' and self.attempts.get(key,0)>=3) or now<self.retry.get(key,0):continue
                 targets=[u for u in army if u.type in ORGANIC and g.dist(u,hero)<=radius] if radius else [hero]
                 if code=='fgsk':
                     if ratio<.35 or not any(enemy_player(g,e) and can_engage(e) and g.dist(e,hero)<700 for e in hostiles):continue
@@ -86,8 +107,7 @@ class Consumables:
                     if hp_need<heal*.6 and mp_need<mana*.6:continue
                     priority=3
                 elif buff=='Bvul':
-                    if not threat or (ratio>.35 and hero.handle not in urgent) or buff in buffs:continue
-                    if hero.type=='Ulic' and dk and dk.mana>=75:continue
+                    if not invul_needed:continue
                     priority=0
                 elif radius:
                     if buff:
@@ -100,8 +120,8 @@ class Consumables:
                         injured=[u for u in targets if u.hp_max-u.hp>=75]
                         useful=sum(min(heal,max(0,u.hp_max-u.hp)) for u in injured)
                         mana_need=sum(min(mana,max(0,getattr(u,'mana_max',0)-getattr(u,'mana',0))) for u in targets)
-                        emergency=threat and any(u.is_hero and u.hp/u.hp_max<=.25 and u.hp_max-u.hp>=100 for u in targets)
-                        if not emergency and not (len(injured)>=2 and useful>=250) and not (code=='sres' and len(injured)>=1 and useful>=150 and mana_need>=150):continue
+                        group_emergency=threat and any(u.is_hero and u.hp/u.hp_max<=.25 and u.hp_max-u.hp>=100 for u in targets)
+                        if not group_emergency and not (len(injured)>=2 and useful>=250) and not (code=='sres' and len(injured)>=1 and useful>=150 and mana_need>=150):continue
                         priority=2
                 else:
                     missing=hero.hp_max-hero.hp;mp=getattr(hero,'mana',0);missing_mp=getattr(hero,'mana_max',0)-mp
@@ -110,7 +130,7 @@ class Consumables:
                     minimum={'Udea':75,'Ulic':125,'Nngs':120,'Nbrn':75}.get(hero.type,100)
                     need_mp=mana and mp<minimum and missing_mp>=mana*.65
                     if code in BLUE_POTIONS:
-                        need_mp=hero.type=='Udea' and ((coil_needed and mp<75) or (preparing and mp<150 and missing_mp>=min(mana,150)*.65))
+                        need_mp=hero.type=='Udea' and (mp<75 or (preparing and mp<150 and missing_mp>=min(mana,150)*.65))
                     if not (need_hp or need_mp):continue
                     priority=1 if need_hp else 4
                 candidates.append((priority,slot,code,key,targets))
@@ -120,20 +140,23 @@ class Consumables:
             count=bag.count(code)
             summons_before={u.handle for u in g.units('me',{'nsce','nsca'})} if code=='fgsk' else set()
             r=g.use_item(hero,slot)
-            self.attempts[key]=self.attempts.get(key,0)+1;self.retry[key]=now+4
+            invulnerable=ITEMS[code][4]=='Bvul'
+            self.attempts[key]=self.attempts.get(key,0)+1;self.retry[key]=now+(.25 if invulnerable else 4)
             # Protect even an uncertain receipt until fresh observation; never spam.
-            cast_until[hero.handle]=now+1.2
+            cast_until[hero.handle]=max(cast_until.get(hero.handle,0),now+(2 if invulnerable else 1.2))
             if ITEMS[code][3]:
                 if ITEMS[code][4]:self.buff_until[ITEMS[code][4]]=now+3
                 else:self.group_until=now+3
             self.pending[hero.handle]=dict(code=code,key=key,hero=hero.type,count=count,started=now,before=before,
                 summons_before=summons_before)
             self.log('consumable_use_attempt',clock=now,hero=hero.type,handle=hero.handle,code=code,
-                     hp=hero.hp,hp_max=hero.hp_max,accepted=bool(r),attempt=self.attempts[key],targets=[u.handle for u in targets])
+                     hp=hero.hp,hp_max=hero.hp_max,accepted=bool(r),attempt=self.attempts[key],targets=[u.handle for u in targets],
+                     buffs=sorted(buffs),emergency=emergency,overrode_cast_lock=locked,
+                     focused=focused,coil_cover=coil_cover,controlled=bool(buffs&ITEM_DISABLED))
 
 class ScrollSupply:
     def __init__(self,log):
-        self.log=log;self.pending=None;self.next_at=0;self.attempts={};self.transfer_attempts={}
+        self.log=log;self.pending=None;self.next_at=0;self.attempts={};self.equipment=Equipment(log)
 
     def tick(self,g,heroes,shops,now,reserved_gold,cast_until,safe=True):
         bags={h.handle:g.inventory(h) for h in heroes}
@@ -150,28 +173,14 @@ class ScrollSupply:
                 self.log('healing_scroll_purchase_unconfirmed',clock=now,shop=p['shop'])
                 self.pending=None
         if not safe:return
-        # The engine chooses the recipient. Redistribute an unexpected second
-        # scroll before another purchase; never sell/drop/replace equipment.
-        for donor in heroes:
-            bag=bags[donor.handle]
-            if sum(bag.count(c) for c in SCROLLS)<=1:continue
-            receiver=next((h for h in heroes if not any(c in bags[h.handle] for c in SCROLLS)
-                and can_receive(h,bags[h.handle],'shea') and g.dist(h,donor)<350),None)
-            if not receiver:return
-            key=(donor.handle,tuple(bag),receiver.handle)
-            if now<self.next_at or self.transfer_attempts.get(key,0)>=3:return
-            if now<cast_until.get(donor.handle,0):return
-            code=next(c for c in bag if c in SCROLLS)
-            r=g.give_item(donor,bag.index(code),receiver)
-            self.transfer_attempts[key]=self.transfer_attempts.get(key,0)+1
-            cast_until[donor.handle]=now+1.2;self.next_at=now+3
-            self.log('healing_scroll_distribution_attempt',clock=now,donor=donor.type,receiver=receiver.type,accepted=bool(r))
-            return
+        # Engine-selected buyers may receive a scroll on the wrong hero.
+        # Use the same observed handoff policy as training and melee equipment.
+        if self.equipment.tick(g,heroes,[],now,cast_until,True) or self.equipment.pending:return
         res=g.resources()
         if now<self.next_at or total>=3 or res.get('food_used',0)<50 or res.get('gold',0)-reserved_gold<500:return
-        candidates=[h for h in heroes if not any(c in bags[h.handle] for c in SCROLLS)
+        candidates=[h for h in heroes if not any(c in SCROLLS for c in bags[h.handle])
                     and can_receive(h,bags[h.handle],'shea') and now>=cast_until.get(h.handle,0) and h.hp/h.hp_max>.6]
-        for h in candidates:
+        for h in sorted(candidates,key=lambda h:scroll_priority(h,bags[h.handle])):
             for shop in sorted(shops,key=lambda s:g.dist(s,h)):
                 if g.dist(h,shop)>300:continue # optional purchase only when already at a safe shop
                 nearby=[v for v in heroes if g.dist(v,shop)<900]
