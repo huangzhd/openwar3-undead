@@ -71,7 +71,7 @@ class SharedBattleTests(unittest.TestCase):
 
     def test_live_ranged_threat_beats_low_hp_melee_until_hero_finisher(self):
         b,g,own,foes,orders,events,effects=self.scene()
-        foes[2].type='Oshd' # TC now has explicit priority ahead of ranged threats.
+        foes[2].type='Hpal' # Preserve the unchanged non-Orc targeting policy.
         melee=N(**vars(foes[0]));melee.type='ogru';melee.handle=(99,0);melee.hp=1
         foes.append(melee)
         g.current_target=lambda u:own[0] if u.handle==foes[0].handle else None
@@ -92,7 +92,7 @@ class SharedBattleTests(unittest.TestCase):
         self.assertFalse(b.combat_progress.allowed(foes[0],18))
 
     def test_precontact_layout_is_bounded_and_does_not_restart_during_fire(self):
-        b,g,own,foes,orders,events,effects=self.scene()
+        b,g,own,foes,orders,events,effects=self.scene(TrainingController)
         for e in foes:e.x=1000
         b.combat_spells=Mock();b.destroyer.tick=Mock()
         b.battle_actions(own,foes,10,{})

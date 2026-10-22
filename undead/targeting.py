@@ -6,6 +6,8 @@ from .structures import is_structure
 from .coil import can_damage
 from .nc_combo import spell_data, DISABLED_CASTERS, aoe_threat
 
+ORC_HERO_PRIORITY = {'Obla': 0, 'Otch': 1, 'Ofar': 2, 'Oshd': 3}
+
 @lru_cache(maxsize=256)
 def unit_stats(code):return combat.stats(code)
 
@@ -70,6 +72,23 @@ class HeroPressure:
         self.log=log;self.target=None;self.preferred=None;self.history={};self.rises={}
         self.events=[];self.downgraded={};self.last_sample=-100;self.tech={}
         self.chiefs=set();self.dead_chiefs={}
+        self.orc_seen=False
+        self.orc_melee_active=False;self.orc_battle_heroes=set()
+        self.tc_burst=None
+
+    def melee_orc(self,g,foes):
+        """Recognize a visible FS/TC melee army, independent of map or level."""
+        live=[e for e in foes if enemy_player(g,e) and can_engage(e) and getattr(e,'has_detail',False)]
+        if not live:
+            self.orc_melee_active=False;self.orc_battle_heroes.clear()
+            return False
+        self.orc_battle_heroes.update(e.type for e in live if e.is_hero)
+        troops=[e for e in live if not e.is_hero and not is_structure(e)]
+        melee=[e for e in troops if e.type in {'ogru','orai'}]
+        if {'Ofar','Otch'}<=self.orc_battle_heroes and len(melee)>=3 and len(melee)*2>=len(troops):
+            self.orc_melee_active=True
+        if not melee and not any(e.type=='owyv' and webbed_air(g,e) for e in troops):self.orc_melee_active=False
+        return self.orc_melee_active
 
     def observe_events(self,events):
         # The runner already filtered this stream through OpenWar3AI fair=True.
@@ -81,8 +100,11 @@ class HeroPressure:
         self.events=self.events[-128:]
 
     def orc_focus(self,g,army,foes,now):
-        """TC, then confirmed-dead TC's Farseer, then headhunters; no chase."""
+        """Melee-army response first; otherwise reachable Orc heroes in priority order."""
+        melee_battle=self.melee_orc(g,foes)
         visible=list(getattr(g,'enemies',lambda:foes)())
+        self.orc_seen=self.orc_seen or any(e.type in ORC_HERO_PRIORITY and enemy_player(g,e)
+                                         and getattr(e,'has_detail',False) for e in visible)
         known={e.handle for e in visible}
         for handle in self.chiefs-known:
             corpse=getattr(g,'unit',lambda h:None)(handle)
@@ -97,17 +119,26 @@ class HeroPressure:
                     self.log('tc_death_observed',clock=now,target=e.handle,source='visible_snapshot')
             elif e.handle in self.dead_chiefs and now>self.dead_chiefs[e.handle]+1:
                 self.dead_chiefs.pop(e.handle) # Observed revival, never guessed from absence.
-        chief=tc_pressure_target(g,army,foes)
-        if chief:return chief
-        if not self.chiefs:return None
         shooters=[u for u in army if u.type in {'ucry','Ulic','Nbrn','Nngs'} and u.hp>0]
         reachable=[e for e in foes if enemy_player(g,e) and can_engage(e)
                    and getattr(e,'has_detail',False) and not buffs(g,e)&{'Bvul','BHds'}
                    and 'Avul' not in abilities(g,e)
                    and sum(in_weapon_range(g,u,e) for u in shooters)>=2]
-        if self.chiefs.issubset(self.dead_chiefs):
-            seers=[e for e in reachable if e.type=='Ofar']
-            if seers:return min(seers,key=lambda e:(e.handle!=self.target,e.hp))
+        if melee_battle:
+            finishers=[e for e in reachable if e.type=='Otch' and
+                       (self.estimate(g,shooters,e)<=2.5 or self.tc_burst and
+                        self.tc_burst[0]==e.handle and now<self.tc_burst[1]) and
+                       not self.support(g,e,foes,now,2.5)]
+            if finishers:return min(finishers,key=lambda e:self.estimate(g,shooters,e))
+            trapped=[e for e in reachable if e.type=='owyv' and webbed_air(g,e)]
+            if trapped:return min(trapped,key=lambda e:(e.handle!=self.preferred,self.rank(g,shooters,e)))
+            front=[e for e in reachable if e.type in {'ogru','orai'}]
+            if front:return min(front,key=lambda e:(e.type!='ogru',e.handle!=self.preferred,self.rank(g,shooters,e)))
+        heroes=[e for e in reachable if e.type in ORC_HERO_PRIORITY]
+        if heroes:
+            self.orc_seen=True
+            return min(heroes,key=lambda e:(ORC_HERO_PRIORITY[e.type],e.handle!=self.target,e.hp))
+        if not self.orc_seen:return None
         heads=[e for e in reachable if e.type in {'ohun','otbk'}]
         return min(heads,key=lambda e:(e.handle!=self.preferred,self.rank(g,shooters,e))) if heads else None
 
@@ -198,7 +229,8 @@ class HeroPressure:
         chief=self.orc_focus(g,fighters,foes,now)
         if chief:
             if self.target!=chief.handle:
-                self.log('hero_pressure_started',clock=now,target=chief.handle,reason='tc_before_ranged' if chief.type=='Otch' else 'farseer_after_tc' if chief.type=='Ofar' else 'headhunters_after_hero')
+                self.log('hero_pressure_started',clock=now,target=chief.handle,
+                         reason='orc_melee_priority' if chief.type in {'ogru','orai'} else 'orc_hero_priority' if chief.is_hero else 'headhunters_after_hero')
             self.target=chief.handle if chief.is_hero else None;self.preferred=None if chief.is_hero else chief.handle
             return chief
         # Training evidence: remove exposed ranged damage dealers together,

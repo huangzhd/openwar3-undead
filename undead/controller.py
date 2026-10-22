@@ -28,7 +28,7 @@ from .scouting import SkeletonScouts,SKELETONS,CritterSearch
 from .coil import can_damage, ready as coil_ready, level as coil_level, heal_eligible
 from .hero_spell_telemetry import ready as hero_spell_ready, level as hero_spell_level
 from .nc_combo import NCCombo,spell_data,DISABLED_CASTERS,aoe_threat,target_legal
-from .targeting import in_weapon_range,priority,enemy_player,HeroPressure,webbed_air,can_engage,unit_collision,tc_pressure_target
+from .targeting import in_weapon_range,priority,enemy_player,HeroPressure,webbed_air,can_engage,unit_collision,tc_pressure_target,ORC_HERO_PRIORITY
 from .structures import is_structure
 from .siege import SiegeFocus,ANCIENTS,WORKERS,attackable as siege_attackable,reachable as siege_reachable
 from .creep_aggro import CreepAggro
@@ -265,6 +265,7 @@ class Controller(BattleTacticsMixin):
                    (self.attack_committed or self.g.dist(h,center)<1200) for h in heroes)
 
     def go(self,units,point,now,attack=False,travel=False):
+        if self.hold_blight_opening(units,now):return
         # Creeping uses explicit creep targets; attack-move must not acquire a player base.
         if self.action==Action.CREEP and not attack_ready(self.situation):attack=False
         units=[u for u in units if u.handle not in self.shield_moves and u.handle not in self.creep_aggro.protected and (u.handle not in self.shopping or self.action in (Action.RETREAT,Action.DEFEND) or self.battle_enemies)]
@@ -2103,11 +2104,14 @@ class Controller(BattleTacticsMixin):
         lich=next((u for u in army if u.type=='Ulic'),None)
         if (not lich or self.action==Action.RETREAT or self.teleport or lich.mana<40 or
             lich.handle in self.micro.pulling or lich.handle in self.shield_moves or
+            set(getattr(g,'buffs',lambda u:[])(lich))&(DISABLED_CASTERS|{'BOhx'}) or
             now<self.cast_until.get(lich.handle,0) or not hero_spell_ready(g,lich,'AUfu',now)):return
         if hero_spell_level(g,lich,'AUfu')<=0:return
         candidates=[]
         for hero in army:
-            if not hero.is_hero or g.dist(lich,hero)>800 or 'BUfa' in g.buffs(hero):continue
+            if (not (hero.is_hero or hero.type=='ucry') or hero.hp<=0 or
+                    hero.handle in self.fiend_burrow.pending or
+                    g.dist(lich,hero)>800 or 'BUfa' in g.buffs(hero)):continue
             attackers=[]
             for enemy in hostiles:
                 if is_structure(enemy):continue
@@ -2117,7 +2121,7 @@ class Controller(BattleTacticsMixin):
                 if target and target.handle==hero.handle:attackers.append(enemy)
             if attackers:candidates.append((hero,attackers))
         if not candidates or not self.due('frost_armor',now,1):return
-        hero,attackers=min(candidates,key=lambda pair:(pair[0].hp/pair[0].hp_max,-len(pair[1])))
+        hero,attackers=min(candidates,key=lambda pair:(not pair[0].is_hero,pair[0].hp/pair[0].hp_max,-len(pair[1])))
         rescue=self.coil_rescue_needed(hero)
         if not self.creep_mana.allow(self,lich,army,attackers,now,40,rescue=rescue):return
         r=g.cast(lich,'frostarmor',target=hero)
@@ -2222,6 +2226,19 @@ class Controller(BattleTacticsMixin):
         self.opening_nc_waiting=False
         self.nc_combo.observe(self.g,now)
         dk=next((u for u in army if u.type=='Udea'),None)
+        self.hero_pressure.tc_burst=None
+        melee_battle=self.hero_pressure.melee_orc(self.g,foes)
+        if melee_battle and self.action!=Action.RETREAT and not self.teleport and not self.army_recovery.active:
+            excluded=set(blocked)|set(self.micro.pulling)|set(self.shield_moves)|self.creep_aggro.protected
+            shooters=[u for u in army if u.handle not in excluded and now>=self.cast_until.get(u.handle,0)]
+            victim=tc_pressure_target(self.g,shooters,foes)
+            if victim and not self.hero_pressure.support(self.g,victim,foes,now,2.5):
+                reserved=excluded|({dk.handle} if dk and (self.heal_candidates(dk) or self.reserve_coil_for_hero(dk,now)) else set())
+                anchor=min(army,key=lambda u:sum(self.g.dist(u,v) for v in army))
+                options=self.nc_combo.options(self.g,army,victim,anchor,now,self.cast_until,reserved)
+                pending=self.nc_combo.focus(foes,now)
+                if self.nc_combo.select(options,victim.hp,now) or pending and pending.handle==victim.handle:
+                    self.hero_pressure.tc_burst=(victim.handle,now+3)
         priority_target=self.hero_pressure.orc_focus(self.g,army,foes,now)
         chief=priority_target if priority_target and priority_target.type=='Otch' else None
         critical=[u for u in self.heal_candidates(dk) if u.is_hero and u.hp/u.hp_max<=.25] if dk else []
@@ -2230,17 +2247,18 @@ class Controller(BattleTacticsMixin):
             return
         if self.action!=Action.RETREAT and not self.teleport and not self.army_recovery.active:
             excluded=set(blocked)|set(self.micro.pulling)|set(self.shield_moves)|self.creep_aggro.protected
-            if chief:
+            if priority_target and priority_target.type in ORC_HERO_PRIORITY:
                 silence_key_hero(self,army,foes,now,excluded,tc_only=True)
+            if chief:
                 # Latest battle priority: heal Lich before spending Coil on TC.
                 hurt=[u for u in self.heal_candidates(dk) if u.type=='Ulic'] if dk else []
                 if hurt:self.heal_allies(army,now,hurt)
                 nc_blocked=excluded|({dk.handle} if dk and (hurt or self.reserve_coil_for_hero(dk,now)) else set())
-                self.opening_nc_waiting=wait_for_opening_nc(self,army,chief,now,nc_blocked)
+                self.opening_nc_waiting=not melee_battle and wait_for_opening_nc(self,army,chief,now,nc_blocked)
                 if self.opening_nc_waiting:return
-                target=self.nc_combo.try_cast(self.g,army,[chief],now,self.cast_until,nc_blocked,pressure=True)
+                target=self.nc_combo.try_cast(self.g,army,[chief],now,self.cast_until,nc_blocked,pressure=not melee_battle)
             else:
-                # A withdrawn/invulnerable TC releases the army to ranged units.
+                # Damage follows the reachable Orc focus; silence is independent.
                 targets=[priority_target] if priority_target else ([e for e in foes if e.type=='Otch'] if any(e.type=='Otch' for e in foes) else foes)
                 target=self.nc_combo.try_cast(self.g,army,targets,now,self.cast_until,excluded)
             # Pressure NC requires supporting attacks; real healing remains first.
@@ -2254,7 +2272,7 @@ class Controller(BattleTacticsMixin):
         if self.action!=Action.RETREAT and not self.teleport and not self.army_recovery.active:
             silence_key_hero(self,army,foes,now,excluded)
             if chief:nova_tc(self,army,chief,now,excluded)
-            elif priority_target and priority_target.type=='Ofar':nova_tc(self,army,priority_target,now,excluded)
+            elif priority_target and priority_target.type in ORC_HERO_PRIORITY:nova_tc(self,army,priority_target,now,excluded)
             else:nova_cluster(self,army,foes,now,excluded)
 
     def heal_allies(self,army,now,candidates=None):
@@ -2404,7 +2422,7 @@ class Controller(BattleTacticsMixin):
         protected=set()
         dk=next((u for u in army if u.type=='Udea'),None)
         lich=next((u for u in army if u.type=='Ulic'),None)
-        tc_spell_safe=target.type not in {'Otch','Ofar'} or (hasattr(g,'abilities') and target_legal(g,target))
+        tc_spell_safe=target.type not in ORC_HERO_PRIORITY or (hasattr(g,'abilities') and target_legal(g,target))
         if (not single_finishing and dk and dk.mana>=COIL_MANA and now>=self.cast_until.get(dk.handle,0)
                 and tc_spell_safe and not set(getattr(g,'buffs',lambda u:[])(dk))&DISABLED_CASTERS
                 and coil_ready(g,dk,now) and not (player_fight and self.reserve_coil_for_hero(dk,now))

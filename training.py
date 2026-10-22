@@ -146,6 +146,10 @@ class TrainingSession(Session):
 
 class TrainingController(Controller):
     """Reuse combat components without economy, creeping, shopping or recruitment."""
+    # This arena starts in an open clearing; advancing enters a narrow forest.
+    # Ordinary melee keeps advancing and uses its moving battle formation.
+    wait_for_enemy_opening = True
+
     def __init__(self, g, log, race):
         super().__init__(g, log, race)
         self.action = self.requested = Action.ATTACK
@@ -256,6 +260,7 @@ class TrainingController(Controller):
                 self.go_raw([u], pulls[u.handle], now)
         fighting = [u for u in army if u.handle not in pulls and u.handle not in picking]
         self.engage_battle(fighting, foes, now)
+        if self.blight_waiting:return
         for hero in heroes:
             if hero.handle in picking or hero.type not in {'Udea', 'Ulic'} or now < self.cast_until.get(hero.handle, 0):
                 continue

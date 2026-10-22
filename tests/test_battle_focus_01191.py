@@ -34,10 +34,10 @@ class BattleFocusTests(unittest.TestCase):
             b.focus_ranged(own,foes,14);self.assertEqual(b.ranged_focus,foes[0].handle)
             self.assertNotEqual(b.ranged_focus,kodo.handle)
 
-    def test_missing_tc_is_not_death_and_does_not_prioritize_farseer(self):
+    def test_missing_tc_is_not_death_but_releases_focus_to_farseer(self):
         b,g,own,foes,orders,events,effects,dk,tc,fs,kodo=self.scene()
         b.focus_ranged(own,foes,10);foes.remove(tc)
-        self.assertIs(b.hero_pressure.choose(g,own,foes,12),foes[0])
+        self.assertIs(b.hero_pressure.choose(g,own,foes,12),fs)
         self.assertFalse(b.hero_pressure.dead_chiefs)
 
     def test_visible_dead_tc_and_revival(self):
@@ -92,7 +92,8 @@ class BattleFocusTests(unittest.TestCase):
             b.hero_pressure.orc_focus(g,own,foes,10)
             foes.remove(tc);tc.hp=0;tc.alive=False;tc.visible_to=lambda _:visible
             old=g.unit;g.unit=lambda h:tc if h==tc.handle else old(h)
-            self.assertIs(b.hero_pressure.orc_focus(g,own,foes,12),fs if visible else foes[0])
+            self.assertIs(b.hero_pressure.orc_focus(g,own,foes,12),fs)
+            self.assertEqual(tc.handle in b.hero_pressure.dead_chiefs,visible)
 
     def test_headhunter_nova_is_not_diverted_to_weak_kodo(self):
         from undead.battle_spells import nova_cluster

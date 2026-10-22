@@ -1,6 +1,7 @@
 """Visible dispel priorities: ally hex, enemy summons, other hero debuffs, enemy buffs."""
 from functools import lru_cache
 from math import hypot,cos,sin,pi
+from types import SimpleNamespace
 from .nc_combo import spell_data,DISABLED_CASTERS
 from .targeting import enemy_player,buffs,unit_stats
 
@@ -66,6 +67,46 @@ class Destroyer:
     def __init__(self,log):
         self.log=log;self.morph=None;self.morph_attempts={};self.next_morph=0
         self.dispel={};self.attempts={};self.next_cast={};self.deferred={}
+        self.reposition_attempts={};self.reposition_at={}
+
+    def reposition(self,b,u,army,enemies,targets,protected,reach,area,radii,now):
+        """A bounded safe shift behind the fighting line can expose a dispel point."""
+        if (not getattr(getattr(b,'hero_pressure',None),'orc_melee_active',False) or
+                getattr(b,'blight_waiting',False) or u.hp<=u.hp_max*.45 or
+                u.handle in b.micro.pulling or now<self.reposition_at.get(u.handle,0)):
+            return False
+        g=b.g
+        if not hasattr(g,'move'):return False
+        main=[v for v in army if v.type in {'ucry','Ulic','Nbrn','Nngs'} and v.hp>0]
+        if not main or not targets:return False
+        signature=tuple(sorted(t['unit'].handle for t in targets))
+        key=(u.handle,signature)
+        if self.reposition_attempts.get(key,0)>=3:return False
+        anchor=min(main,key=lambda v:sum(g.dist(v,w) for w in main))
+        enemy=min(targets,key=lambda t:g.dist(anchor,t['unit']))['unit']
+        dx,dy=enemy.x-anchor.x,enemy.y-anchor.y;length=max(1,hypot(dx,dy));dx,dy=dx/length,dy/length
+        front=max((v.x-anchor.x)*dx+(v.y-anchor.y)*dy for v in main)
+        threats=[(e,max((w.range for w in stats.weapons if 'air' in w.targets),default=0))
+                 for e in enemies if (stats:=unit_stats(e.type))]
+        clearance=lambda p:min((hypot(p[0]-e.x,p[1]-e.y)-r for e,r in threats if r),default=9999)
+        before=clearance((u.x,u.y));choices=[]
+        for step in (160,280):
+            for i in range(16):
+                point=(u.x+step*cos(i*pi/8),u.y+step*sin(i*pi/8))
+                if (point[0]-anchor.x)*dx+(point[1]-anchor.y)*dy>front:continue
+                if g.dist(point,anchor)>700:continue
+                if any(clearance((u.x+(point[0]-u.x)*j/8,u.y+(point[1]-u.y)*j/8))<min(100,before)-8
+                       for j in range(1,9)):continue
+                plan=dispel_plan(SimpleNamespace(x=point[0],y=point[1]),targets,protected,reach,area,radii)
+                if plan:choices.append((plan[1]['priority'],-len(plan[2]),step,point))
+        if not choices:return False
+        point=min(choices)[-1]
+        self.reposition_attempts[key]=self.reposition_attempts.get(key,0)+1;self.reposition_at[u.handle]=now+2
+        receipt=g.move(u,*point)
+        if receipt:b.cast_until[u.handle]=now+.4
+        b.log('destroyer_dispel_reposition',clock=now,handle=u.handle,point=point,
+              accepted=bool(receipt),attempt=self.reposition_attempts[key])
+        return bool(receipt)
 
     def targets(self,b,army,enemies):
         g=b.g;targets=[]
@@ -191,6 +232,7 @@ class Destroyer:
                        and self.attempts.get((u.handle,t['unit'].handle),0)<3]
             plan=dispel_plan(u,reachable,protected,reach,area,radii)
             if plan is None:
+                if not retreat and self.reposition(b,u,army,enemies,reachable,protected,reach,area,radii,now):continue
                 self.defer(u,now,'no_safe_reachable_point' if reachable else 'pending_or_attempt_limit',
                            targets=[t['unit'].handle for t in reachable],protected=[h.handle for h in protected])
                 continue
@@ -199,6 +241,8 @@ class Destroyer:
             key=(u.handle,target.handle)
             self.attempts[key]=self.attempts.get(key,0)+1;self.next_cast[u.handle]=now+2
             receipt=g.cast(u,'devourmagic',x=point[0],y=point[1])
+            if receipt:
+                self.reposition_attempts={k:v for k,v in self.reposition_attempts.items() if k[0]!=u.handle}
             self.log('destroyer_dispel_attempt',clock=now,handle=u.handle,target=target.handle,
                      point=point,accepted=bool(receipt),attempt=self.attempts[key],
                      reason=selected['reason'],priority=selected['priority'],effects=selected['effects'],

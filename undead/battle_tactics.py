@@ -6,13 +6,15 @@ and search waypoints belong to the training adapter, not this module.
 from math import hypot, cos, sin, pi
 from .structures import is_structure
 from .scouting import SKELETONS
-from .targeting import can_engage, in_weapon_range, unit_stats, webbed_air, abilities, tc_pressure_target
-from .nc_combo import spell_data
+from .targeting import can_engage, in_weapon_range, unit_stats, webbed_air, abilities, buffs, tc_pressure_target
+from .nc_combo import spell_data, DISABLED_CASTERS
 from .policy import Action
 from .battle_spells import silence_key_hero
 
 
 class BattleTacticsMixin:
+    wait_for_enemy_opening = False
+
     def init_battle_tactics(self):
         self.prep_points = {}
         self.prep_sent = {}
@@ -22,6 +24,61 @@ class BattleTacticsMixin:
         self.battle_dk_support = set()
         self.opening_nc_deadline=None
         self.opening_nc_waiting=False
+        self.blight_waiting=False;self.blight_opened=False;self.blight_item=None
+
+    def prepare_blight(self,army,foes,now,blocked=()):
+        """Use an owned skull at the feet only for the training opening."""
+        if not self.wait_for_enemy_opening:return
+        g=self.g
+        if self.teleport or self.action==Action.RETREAT:return
+        state=self.blight_item
+        if state and state.get('pending'):
+            hero=g.unit(state['handle']);bag=g.inventory(hero) if hero else None
+            if bag is not None and bag.count('skul')<state['count']:
+                state['pending']=False;state['consumed']=True
+                self.log('battle_skull_consumption_observed',clock=now,handle=state['handle'],
+                         point=state['point'],terrain_confirmed=False)
+            elif now-state['sent']>=3:state['pending']=False
+        contact=any(in_weapon_range(g,u,e) for u in army if u.type not in {'uobs'} for e in foes)
+        contact=contact or any((t:=g.current_target(e)) is not None and
+                              any(t.handle==u.handle for u in army) and in_weapon_range(g,e,t) for e in foes)
+        if contact:
+            self.blight_opened=True;self.blight_waiting=False
+            return
+        if self.blight_opened or not hasattr(g,'inventory') or not hasattr(g,'use_item'):return
+        if state is None:
+            for hero in army:
+                if not hero.is_hero or hero.hp<=0:continue
+                bag=g.inventory(hero)
+                if bag and 'skul' in bag:
+                    state=self.blight_item=dict(handle=hero.handle,point=(hero.x,hero.y),count=bag.count('skul'),
+                                               attempts=0,next_at=now,pending=False,consumed=False)
+                    self.blight_waiting=self.wait_for_enemy_opening
+                    break
+        if not state or state['consumed'] or state['pending'] or state['attempts']>=3 or now<state['next_at']:return
+        hero=g.unit(state['handle'])
+        if (hero is None or hero.hp<=0 or hero.handle in blocked or hero.handle in self.shopping or
+                hero.handle in self.battle_shop.reserved or now<self.cast_until.get(hero.handle,0) or
+                buffs(g,hero)&DISABLED_CASTERS or g.cooldown(hero,'Ablp')!=0):return
+        bag=g.inventory(hero)
+        if not bag or 'skul' not in bag:return
+        state.update(point=(hero.x,hero.y),count=bag.count('skul'),sent=now,next_at=now+3)
+        state['attempts']+=1
+        receipt=g.use_item(hero,bag.index('skul'),x=hero.x,y=hero.y)
+        state['pending']=bool(receipt)
+        if receipt:self.cast_until[hero.handle]=now+1.2
+        self.log('battle_skull_attempt',clock=now,handle=hero.handle,point=state['point'],
+                 attempt=state['attempts'],accepted=bool(receipt))
+
+    def hold_blight_opening(self,army,now,blocked=()):
+        if not self.wait_for_enemy_opening or not self.blight_waiting or self.teleport or self.action in (Action.RETREAT,Action.DEFEND):return False
+        for u in army:
+            if (u.handle in blocked or u.handle in self.shopping or u.handle in self.shield_moves or
+                    u.handle in self.micro.pulling or now<self.cast_until.get(u.handle,0)):continue
+            point=self.prep_points.get(u.handle)
+            if point is not None and self.g.dist(u,point)>75 and now-self.prep_sent.get(u.handle,-100)<3:continue
+            if self.due(('battle_opening_hold',u.handle),now,2):self.g.hold(u)
+        return True
 
     def prepare_battle(self, now, army=None, target=None, blocked=(), limit=None, foes=()):
         """The same role layout for a countdown or a visible approaching fight."""
@@ -29,6 +86,8 @@ class BattleTacticsMixin:
         if army is None:army = [u for u in g.my_units() if u.alive and not is_structure(u)]
         if not army:
             return set()
+        self.prepare_blight(army,foes,now,blocked)
+        if self.wait_for_enemy_opening and not self.blight_opened:self.blight_waiting=True
         target = target or self.enemy_main
         if target is None:return set()
         if not self.prep_points:
@@ -37,6 +96,7 @@ class BattleTacticsMixin:
             length = max(1, hypot(dx, dy))
             forward, side = (dx/length, dy/length), (-dy/length, dx/length)
             def point(front, flank):
+                if self.blight_waiting:front=min(0,front)
                 return (center[0]+front*forward[0]+flank*side[0],
                         center[1]+front*forward[1]+flank*side[1])
             roles = {'ugho': [(210, i*115) for i in range(-3, 4)],
@@ -75,17 +135,22 @@ class BattleTacticsMixin:
             if any(reach and any(g.dist((u.x+(point[0]-u.x)*i/8,u.y+(point[1]-u.y)*i/8),e)<reach+100
                                  for i in range(1,9)) for e,reach in threats):continue
             receipt = g.move(u, *point)
-            if receipt and u.type=='Udea':g.hold(u,queue='after')
+            if receipt and (u.type=='Udea' or self.blight_waiting):g.hold(u,queue='after')
             self.prep_sent[u.handle] = now
             if receipt:moving.add(u.handle)
             self.log('battle_prebattle_move_attempt', clock=now, handle=u.handle,
                      type=u.type, point=point, accepted=bool(receipt))
+        if self.blight_waiting:self.hold_blight_opening(army,now,set(blocked)|moving)
         return moving
 
     def battle_actions(self, army, foes, now, pulls, blocked=(), search_point=None):
         """Shared precontact layout, rear safety, dispel and offensive spells."""
         g=self.g
         if not army:return
+        self.prepare_blight(army,foes,now,set(pulls)|set(blocked))
+        if self.wait_for_enemy_opening and self.blight_waiting:
+            self.prepare_battle(now,army,blocked=set(pulls)|set(blocked),foes=foes)
+            if self.hold_blight_opening(army,now,set(pulls)|set(blocked)):return
         if foes:
             firing=any(in_weapon_range(g,u,e) for u in army if u.type not in {'uobs','ubsp'} for e in foes)
             own={u.handle for u in army}
@@ -94,10 +159,11 @@ class BattleTacticsMixin:
                 self.prebattle_since=now-5
             elif self.prebattle_since is None:
                 self.prebattle_since=now;self.prep_points.clear();self.prep_sent.clear()
-            if not firing and now-self.prebattle_since<=4 and any(g.dist(u,e)<1100 for u in army for e in foes):
+            if self.wait_for_enemy_opening and not firing and now-self.prebattle_since<=4 and any(g.dist(u,e)<1100 for u in army for e in foes):
                 target=min(foes,key=lambda e:min(g.dist(u,e) for u in army))
                 moving=self.prepare_battle(now,army,(target.x,target.y),set(pulls)|set(blocked),limit=2,foes=foes)
                 for handle in moving:pulls[handle]=self.prep_points[handle]
+                if self.blight_waiting:return
         else:
             self.prebattle_since=None
             self.opening_nc_deadline=None;self.opening_nc_waiting=False
@@ -109,7 +175,11 @@ class BattleTacticsMixin:
         # Dispel from current range before executing the retained retreat goal.
         dispel_blocked=(set(pulls)-{u.handle for u in army if u.type=='ubsp'})|set(blocked)|set(self.shield_moves)
         self.destroyer.tick(self,army,foes,now,dispel_blocked)
+        if not self.teleport and self.action!=Action.RETREAT and self.hero_pressure.melee_orc(g,foes):
+            self.heal_allies(army,now)
+            self.frost_armor([u for u in army if u.handle not in blocked],foes,now)
         self.combat_spells(army,foes,now,(set(pulls)-self.battle_dk_support)|set(blocked))
+        self.attack_destroyers(army,foes,now,set(pulls)|set(blocked)|set(self.shield_moves))
 
     def rear_dk(self,army,foes,now,pulls,blocked=()):
         """Keep the battle DK behind the ranged body, in healing distance."""
@@ -170,6 +240,7 @@ class BattleTacticsMixin:
     def rear_destroyers(self, army, foes, now, pulls, search_point):
         """Keep dispellers behind the ground force and outside AA fire."""
         g = self.g
+        melee_battle=self.hero_pressure.melee_orc(g,foes)
         ground = [u for u in army if u.type not in {'ubsp', 'uobs'}]
         if not ground:
             ground = [u for u in army if u.type == 'uobs']
@@ -181,6 +252,10 @@ class BattleTacticsMixin:
                 threats.append((e, reach))
         blocked = set()
         for u in (u for u in army if u.type == 'ubsp'):
+            if melee_battle and u.hp>u.hp_max*.45 and u.handle not in self.shield_moves:
+                # Healthy destroyers supply damage; normal backline spacing must not recall them.
+                pulls.pop(u.handle,None);self.micro.pulling.discard(u.handle)
+                continue
             anchor = min(ground, key=lambda a: sum(g.dist(a,b) for b in ground)) if ground else self.home
             enemy = min(foes, key=lambda e: g.dist(anchor,e)) if foes else None
             front = (enemy.x, enemy.y) if enemy else search_point or self.enemy_main
@@ -213,6 +288,34 @@ class BattleTacticsMixin:
                 # Hold prevents automatic acquisition from starting a forward chase.
                 g.hold(u)
         return blocked
+
+    def attack_destroyers(self,army,foes,now,blocked=()):
+        """Dispel first, then support the shared melee focus until wounded."""
+        if self.teleport or self.action==Action.RETREAT or not self.hero_pressure.melee_orc(self.g,foes):return
+        g=self.g
+        focus=self.hero_pressure.orc_focus(g,army,foes,now)
+        burst=self.hero_pressure.tc_burst
+        finish=focus and focus.type=='Otch' and (self.hero_pressure.estimate(g,army,focus)<=2.5 or
+                                               burst and burst[0]==focus.handle and now<burst[1])
+        for u in army:
+            if (u.type!='ubsp' or u.hp<=u.hp_max*.45 or u.handle in blocked or
+                    u.handle in self.shopping or u.handle in self.battle_shop.reserved or
+                    now<self.cast_until.get(u.handle,0) or buffs(g,u)&DISABLED_CASTERS):continue
+            targets=[e for e in foes if (e.type in {'ogru','orai'} or e.type=='owyv' and webbed_air(g,e)
+                     or e.type=='Otch' and finish and e.handle==focus.handle and in_weapon_range(g,u,e)) and can_engage(e)
+                     and getattr(e,'has_detail',False) and not buffs(g,e)&{'Bvul','BHds'}
+                     and 'Avul' not in abilities(g,e) and g.dist(u,e)<=900
+                     and self.combat_progress.allowed(e,now)]
+            if not targets:continue
+            target=next((e for e in targets if focus and e.handle==focus.handle),None)
+            target=target or min(targets,key=lambda e:({'owyv':0,'ogru':1,'orai':2}.get(e.type,3),g.dist(u,e),e.hp))
+            current=g.current_target(u)
+            if current and current.handle==target.handle:continue
+            if self.due(('battle_destroyer_attack',u.handle),now,1.2):
+                receipt=g.attack(u,target)
+                self.combat_progress.attack_result(u,target,now,bool(receipt),enabled=True)
+                self.log('battle_destroyer_attack',clock=now,handle=u.handle,target=target.handle,
+                         type=target.type,accepted=bool(receipt))
 
     def focus_ranged(self, army, foes, now):
         """Fiends, Lich and Dark Ranger share one persistent, reachable target."""
@@ -250,7 +353,7 @@ class BattleTacticsMixin:
         target = target or (previous if previous in shared else min(shared,key=lambda e:self.hero_pressure.rank(g,ready,e)))
         if target.handle != self.ranged_focus:
             self.log('battle_ranged_focus_selected',clock=now,target=target.handle,type=target.type,
-                     reason='tc_pressure' if target.type=='Otch' else 'farseer_after_tc' if chief and target.type=='Ofar' else 'hero_finish' if target.is_hero else 'unit_focus',shooters=coverage(target))
+                     reason='orc_melee_priority' if chief and target.type in {'ogru','orai'} else 'orc_hero_priority' if chief and target.is_hero else 'hero_finish' if target.is_hero else 'unit_focus',shooters=coverage(target))
         self.ranged_focus = target.handle
         for u in ready:
             current = g.current_target(u)
@@ -334,6 +437,7 @@ class BattleTacticsMixin:
     def engage_battle(self, army, foes, now):
         """Shared contact advance and attack dispatch; no map-specific search."""
         from .controller import ground_attack_range
+        if self.hold_blight_opening(army,now):return
         # Support positioning owns both statues and destroyers; generic
         # reinforcement movement must not overwrite their supply/escape orders.
         army=[u for u in army if u.type not in {'ubsp','uobs'} and not (foes and u.handle in self.battle_dk_support)]

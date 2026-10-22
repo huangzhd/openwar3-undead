@@ -81,7 +81,7 @@ class TrainingOrcFocusTests(unittest.TestCase):
 
     def test_fiends_lich_and_dark_share_target_and_keep_it_until_dead(self):
         b,g,own,foes,orders,events,effects=self.scene()
-        foes[2].type='Oshd'
+        foes[2].type='Hpal' # Preserve generic targeting coverage outside Orc priorities.
         group={u.handle for u in own if u.type in {'ucry','Ulic','Nbrn'}}
         self.assertEqual(b.focus_ranged(own,foes,10),group)
         self.assertEqual({o[1] for o in orders},group)
@@ -94,7 +94,7 @@ class TrainingOrcFocusTests(unittest.TestCase):
     def test_group_switches_to_killable_hero_but_not_invulnerable_hero(self):
         for immune in (False,True):
             b,g,own,foes,orders,events,effects=self.scene()
-            foes[2].type='Oshd'
+            foes[2].type='Hpal' # Preserve generic targeting coverage outside Orc priorities.
             b.focus_ranged(own,foes,10);orders.clear();foes[2].hp=15
             if immune:effects[foes[2].handle]=['Bvul']
             b.focus_ranged(own,foes,12)
@@ -103,7 +103,7 @@ class TrainingOrcFocusTests(unittest.TestCase):
 
     def test_active_spell_finisher_turns_the_entire_ranged_group_onto_hero(self):
         b,g,own,foes,orders,events,effects=self.scene()
-        foes[2].type='Oshd'
+        foes[2].type='Hpal' # Preserve generic targeting coverage outside Orc priorities.
         b.focus_ranged(own,foes,10);orders.clear()
         b.nc_combo.pending=dict(target=foes[2].handle,clock=11)
         b.focus_ranged(own,foes,12)
@@ -112,7 +112,7 @@ class TrainingOrcFocusTests(unittest.TestCase):
 
     def test_disappeared_target_is_replaced_and_busy_caster_is_not_interrupted(self):
         b,g,own,foes,orders,events,effects=self.scene()
-        foes[2].type='Oshd'
+        foes[2].type='Hpal' # Preserve generic targeting coverage outside Orc priorities.
         b.focus_ranged(own,foes,10);foes.pop(0);orders.clear()
         lich=own[6];b.cast_until[lich.handle]=20
         b.focus_ranged(own,foes,12)
@@ -122,7 +122,7 @@ class TrainingOrcFocusTests(unittest.TestCase):
 
     def test_outlying_fiend_regroups_without_attacking_a_different_target(self):
         b,g,own,foes,orders,events,effects=self.scene();own[0].x=-1100
-        foes[2].type='Oshd'
+        foes[2].type='Hpal' # Preserve generic targeting coverage outside Orc priorities.
         b.focus_ranged(own,foes,10)
         self.assertEqual([o[0] for o in orders if o[1]==own[0].handle],['move'])
         self.assertEqual({o[2] for o in orders if o[0]=='attack'},{foes[0].handle})

@@ -15,7 +15,8 @@ class AOEPressureTests(unittest.TestCase):
         self.assertIn(('ucry','attack',h.handle),orders)
         self.assertTrue(any(e.get('intent')=='aoe_pressure' and not e['damage_confirmed'] for e in events))
     def test_higher_aoe_hero_precedes_lower_health_other_hero(self):
-        b,d,l,h,f,own,foes,orders,*_=self.make();other=unit('Obla',40,350,300);other.owner=1;other.has_detail=True;foes.append(other)
+        b,d,l,h,f,own,foes,orders,*_=self.make();h.type='Hblm'
+        other=unit('Hpal',40,350,300);other.owner=1;other.has_detail=True;foes.append(other)
         choice=b.hero_pressure.choose(b.g,own,foes,10);self.assertIs(choice,h)
         h.x=900;choice=b.hero_pressure.choose(b.g,own,foes,11);self.assertIs(choice,other)
     def test_wounded_ally_or_no_support_keeps_heal_and_no_nonlethal_combo(self):

@@ -38,7 +38,7 @@ def silence_key_hero(b,army,foes,now,blocked=(),tc_only=False):
     if not targets:return
     # An approaching TC is silenced immediately, even with Roar/Speed buffs.
     # Other heroes retain the ordinary dispel-before-silence ordering.
-    target=min(targets,key=lambda e:(e.type!='Otch',not aoe_threat(g,e),g.dist(dark,e),e.hp))
+    target=min(targets,key=lambda e:({'Otch':0,'Oshd':1}.get(e.type,2),not aoe_threat(g,e),g.dist(dark,e),e.hp))
     if target.type!='Otch' and buffs(g,target)&ENEMY_BUFFS:return
     attempts=getattr(b,'silence_attempt_at',{})
     if now-attempts.get(dark.handle,-100)<1:return
@@ -78,8 +78,13 @@ def nova_tc(b,army,target,now,blocked=()):
     if b.nc_combo.pending or b.nc_combo.single_attempt_at==now:return
     g=b.g;lich,row=caster(b,army,'Ulic','AUfn',now,blocked)
     if lich is None or not spell_target(g,target) or g.dist(lich,target)>row['range']:return
+    key=(lich.handle,target.handle,'AUfn')
+    if b.nc_combo.failures.get(key,0)>=3 or now<b.nc_combo.retry_at.get(key,0):return
+    b.nc_combo.retry_at[key]=now+2
     receipt=g.cast(lich,'frostnova',target=target)
-    b.log('battle_tc_nova_attempt' if target.type=='Otch' else 'battle_farseer_nova_attempt',clock=now,target=target.handle,accepted=bool(receipt))
+    if not receipt:b.nc_combo.failures[key]=b.nc_combo.failures.get(key,0)+1
+    event={'Otch':'battle_tc_nova_attempt','Ofar':'battle_farseer_nova_attempt'}.get(target.type,'battle_orc_hero_nova_attempt')
+    b.log(event,clock=now,target=target.handle,type=target.type,accepted=bool(receipt))
     if receipt:b.cast_until[lich.handle]=now+.8
 
 
@@ -96,7 +101,7 @@ def nova_cluster(b,army,foes,now,blocked=()):
             targets.append(e)
     centers=[e for e in targets if g.dist(lich,e)<=row['range']]
     # A low-health Kodo must not divert the headhunter clear-up phase.
-    if b.hero_pressure.chiefs:
+    if b.hero_pressure.orc_seen:
         centers=[e for e in centers if e.type in {'ohun','otbk'}] or centers
     groups=[(sum(g.dist(e,v)<=row['area'] for v in targets),e) for e in centers]
     if not groups:return
