@@ -3,9 +3,11 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import time
 from uuid import uuid4
 
 from bootstrap import ROOT
+from undead.version import DISPLAY_NAME, VERSION as BOT_VERSION
 
 STATUS = ROOT / 'artifacts/training-control.json'
 COMMAND = ROOT / 'artifacts/training-command.json'
@@ -34,11 +36,13 @@ def read_json(path):
 
 
 def begin(selection, speed=100, seconds=180, wall_seconds=240):
+    previous=previous_round(read_json(STATUS))
     session_id = uuid4().hex
     COMMAND.unlink(missing_ok=True)
     atomic_json(STATUS, dict(session_id=session_id, phase='loading', round=1,
                              selection=selection, speed=speed, seconds=seconds,
-                             wall_seconds=wall_seconds, result=None))
+                             wall_seconds=wall_seconds, result=None,
+                             bot_name=DISPLAY_NAME, bot_version=BOT_VERSION, apm=None,last_round=previous))
     return session_id
 
 
@@ -56,8 +60,7 @@ def post(session_id, action, selection=None):
         return False
     if current.get('phase') != 'running':
         return False
-    if action == 'switch' and (not valid_selection(selection) or
-                               selection['matchup'] != current['selection']['matchup']):
+    if action == 'switch' and not valid_selection(selection):
         return False
     atomic_json(COMMAND, dict(session_id=session_id, action=action,
                               selection=selection if action == 'switch' else None,
@@ -70,7 +73,48 @@ def take(session_id):
     if not command or command.get('session_id') != session_id or command.get('action') not in VALID:
         return None
     COMMAND.unlink(missing_ok=True)
+    if command['action']=='switch' and not valid_selection(command.get('selection')):return None
     return command
+
+
+def round_summary(result):
+    selection=result.get('selection') or {}
+    return dict(result=result.get('result','unknown'),reason=result.get('reason'),
+                selection={k:selection.get(k) for k in ('matchup','level','mode')},
+                bot_name=result.get('bot_name'),artifact_dir=result.get('artifact_dir'),
+                average_apm=result.get('average_apm') if result.get('apm_basis')=='accepted_unit_commands_game_time_v2' else None,
+                accepted_actions=result.get('accepted_actions'),apm_game_seconds=result.get('apm_game_seconds'))
+
+
+def previous_round(state):
+    state=state or {}
+    if state.get('last_round'):return state['last_round']
+    if state.get('phase')=='finished':
+        result=read_json(Path(state['artifact_dir'])/'result.json') if state.get('artifact_dir') else None
+        return round_summary(result or state)
+    return None
+
+
+def previous_text(state):
+    last=previous_round(state)
+    if not last:return '上一局：暂无记录'
+    results={'win':'胜利','loss':'失败','forfeit':'认输','timeout':'超时','error':'异常',
+             'aborted':'已中止','restart_requested':'手动重开','selection_requested':'手动切关'}
+    selection=last.get('selection') or {}
+    race={'human':'人族','orc':'兽族','undead':'不死族','nightelf':'暗夜精灵'}.get(selection.get('matchup'),'')
+    mode={'easy':'简单','hard':'困难'}.get(selection.get('mode'),'')
+    average=last.get('average_apm')
+    value=f'{average:.1f}' if isinstance(average,(int,float)) else '未记录'
+    return f"上一局：{results.get(last.get('result'),last.get('result','未知'))} · {race} 第{selection.get('level','?')}关 {mode}\n上一局平均 APM：{value}"
+
+
+def metrics_text(state, now=None):
+    state=state or {}
+    label=state.get('bot_name') if state.get('phase') in {'running','loading','restarting'} else DISPLAY_NAME
+    label=label or DISPLAY_NAME
+    fresh=(state.get('phase')=='running' and state.get('apm') is not None and
+           (time.time() if now is None else now)-(state.get('metrics_updated') or 0)<=5)
+    return f"{label}   ·   APM {state['apm'] if fresh else '—'}"
 
 
 def launch(session_id):
@@ -95,8 +139,8 @@ def panel(session_id=None):
     session_id = session_id or (current or {}).get('session_id')
     selection = (current or {}).get('selection') or dict(matchup='orc', level=2, mode='easy')
     root = tk.Tk()
-    root.title('OpenWar3AI 训练面板')
-    root.geometry('470x210')
+    root.title('dayuan 训练面板')
+    root.geometry('550x320')
     root.resizable(False, False)
     root.attributes('-topmost', True)
     root.configure(bg='#eef2f7')
@@ -106,10 +150,19 @@ def panel(session_id=None):
     title = tk.Label(root, textvariable=title_text,
                      font=('Microsoft YaHei UI', 12, 'bold'), bg='#eef2f7')
     title.pack(pady=(14, 4))
+    metrics=tk.StringVar(value=metrics_text(current))
+    tk.Label(root,textvariable=metrics,font=('Microsoft YaHei UI',11,'bold'),bg='#eef2f7').pack(pady=3)
+    tk.Label(root,text='APM：最近60游戏秒内已接受的单位操作',font=('Microsoft YaHei UI',9),bg='#eef2f7',fg='#64748b').pack()
+    previous=tk.StringVar(value=previous_text(current))
+    tk.Label(root,textvariable=previous,font=('Microsoft YaHei UI',10),bg='#eef2f7',fg='#334155').pack(pady=4)
     message = tk.StringVar(value='训练图正在载入…')
     tk.Label(root, textvariable=message, font=('Microsoft YaHei UI', 10), bg='#eef2f7').pack(pady=3)
     choices = tk.Frame(root, bg='#eef2f7')
     choices.pack(pady=(8, 1))
+    tk.Label(choices,text='对战种族',bg='#eef2f7').pack(side='left',padx=(0,5))
+    race_choice=tk.StringVar(value=race[selection['matchup']])
+    ttk.Combobox(choices,textvariable=race_choice,values=list(race.values()),
+                 state='readonly',width=9).pack(side='left',padx=(0,18))
     tk.Label(choices, text='关卡', bg='#eef2f7').pack(side='left', padx=(0, 5))
     level_choice = tk.StringVar(value=str(selection['level']))
     ttk.Combobox(choices, textvariable=level_choice, values=[str(i) for i in range(1, 11)],
@@ -123,7 +176,7 @@ def panel(session_id=None):
     pending = {'action': None, 'round': None, 'process': None, 'log': None}
 
     def chosen():
-        return dict(matchup=selection['matchup'], level=int(level_choice.get()),
+        return dict(matchup=next(k for k,v in race.items() if v==race_choice.get()), level=int(level_choice.get()),
                     mode='easy' if mode_choice.get() == '简单' else 'hard')
 
     def launch_selected(next_selection, state):
@@ -168,6 +221,8 @@ def panel(session_id=None):
 
     def refresh():
         state = read_json(STATUS)
+        metrics.set(metrics_text(state))
+        previous.set(previous_text(state))
         if session_id and (not state or state.get('session_id') != session_id):
             root.destroy()
             return
@@ -201,7 +256,7 @@ def panel(session_id=None):
                 elif phase == 'running':
                     message.set('第 ' + str(attempt) + ' 次尝试 · 对局进行中')
                 else:
-                    message.set('选择关卡和难度后开始训练')
+                    message.set('选择种族、关卡和难度后开始训练')
         running = bool(state and state.get('phase') == 'running' and pending['action'] is None)
         for button in (forfeit, restart):
             button.configure(state='normal' if running else 'disabled')

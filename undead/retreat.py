@@ -6,6 +6,22 @@ def clearance(point,enemies,attack_range):
     return min((hypot(point[0]-e.x,point[1]-e.y)-attack_range(e.type) for e in enemies),default=9999)
 
 
+def statue_rally_rank(point,statues,enemies):
+    """Prefer the healing overlap behind the pair, not a flight to one flank.
+
+    Callers must check weapon clearance and route safety before this ranking.
+    """
+    if not statues:return (0,0,0)
+    center=(sum(s.x for s in statues)/len(statues),sum(s.y for s in statues)/len(statues))
+    enemy=min(enemies,key=lambda e:hypot(center[0]-e.x,center[1]-e.y),default=None)
+    dx,dy=(center[0]-enemy.x,center[1]-enemy.y) if enemy else (0,0)
+    length=hypot(dx,dy) or 1;dx,dy=dx/length,dy/length
+    rear=(center[0]+140*dx,center[1]+140*dy)
+    covered=sum(hypot(point[0]-s.x,point[1]-s.y)<=220 for s in statues)
+    front=(point[0]-center[0])*dx+(point[1]-center[1])*dy<0
+    return (-covered,front,hypot(point[0]-rear[0],point[1]-rear[1]))
+
+
 def escape_point(g,unit,enemies,attack_range,preferred=None,home=None):
     start=(unit.x,unit.y)
     nearby=enemies # Include visible threats near the destination, not just near the origin.

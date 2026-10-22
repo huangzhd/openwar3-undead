@@ -50,7 +50,7 @@ class RodTests(unittest.TestCase):
         self.assertTrue(b.maintain_skeletons(dk,0,100))
         b,dk,c,live,orders,events,cd=self.make();b.observe_rod_corpses([c],100)
         live.extend(unit('uske',10+i,100) for i in range(4))
-        self.assertFalse(b.maintain_skeletons(dk,0,100))
+        self.assertTrue(b.maintain_skeletons(dk,0,100)) # DK now uses every safe local opportunity.
 
     def test_lost_vision_is_not_a_corpse(self):
         b,dk,c,live,orders,events,cd=self.make();c.alive=True;c.hp=100

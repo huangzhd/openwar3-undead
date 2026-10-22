@@ -10,6 +10,7 @@ from .targeting import can_engage, in_weapon_range, unit_stats, webbed_air, abil
 from .nc_combo import spell_data, DISABLED_CASTERS
 from .policy import Action
 from .battle_spells import silence_key_hero
+from .retreat import statue_rally_rank
 
 
 class BattleTacticsMixin:
@@ -25,6 +26,8 @@ class BattleTacticsMixin:
         self.opening_nc_deadline=None
         self.opening_nc_waiting=False
         self.blight_waiting=False;self.blight_opened=False;self.blight_item=None
+        self.backline_guards=set()
+        self.backline_safe_output={}
 
     def prepare_blight(self,army,foes,now,blocked=()):
         """Use an owned skull at the feet only for the training opening."""
@@ -168,6 +171,7 @@ class BattleTacticsMixin:
             self.prebattle_since=None
             self.opening_nc_deadline=None;self.opening_nc_waiting=False
         self.rear_dk(army,foes,now,pulls,blocked)
+        self.rear_backline(army,foes,now,pulls,blocked)
         self.rear_destroyers([u for u in army if u.handle not in blocked],foes,now,pulls,search_point)
         reserved=set(pulls)|set(blocked)
         if not self.teleport:
@@ -179,7 +183,91 @@ class BattleTacticsMixin:
             self.heal_allies(army,now)
             self.frost_armor([u for u in army if u.handle not in blocked],foes,now)
         self.combat_spells(army,foes,now,(set(pulls)-self.battle_dk_support)|set(blocked))
+        self.battle_rod(army,now,(set(pulls)-self.battle_dk_support)|set(blocked)|set(self.shield_moves))
         self.attack_destroyers(army,foes,now,set(pulls)|set(blocked)|set(self.shield_moves))
+
+    def battle_rod(self,army,now,blocked=()):
+        """Use the DK's rod opportunistically after urgent spells, in both modes."""
+        dk=next((u for u in army if u.type=='Udea' and u.hp>0),None)
+        if not dk or dk.handle in blocked or not hasattr(self.g,'inventory'):return False
+        bag=self.g.inventory(dk) or []
+        return self.maintain_skeletons(dk,bag.index('rnec'),now) if 'rnec' in bag else False
+
+    def rear_backline(self,army,foes,now,pulls,blocked=()):
+        """Lich and Dark Ranger share early escape and stationary safe fire."""
+        heroes=[u for u in army if u.type in {'Ulic','Nbrn'} and u.hp>0]
+        self.backline_guards.intersection_update(u.handle for u in heroes)
+        for hero in heroes:self._rear_backline_hero(hero,army,foes,now,pulls,blocked)
+
+    def _rear_backline_hero(self,hero,army,foes,now,pulls,blocked=()):
+        """Escape before protection expires, then fire without chasing."""
+        from .controller import ground_attack_range
+        g=self.g
+        threats=[e for e in foes if can_engage(e) and ground_attack_range(e.type)>0]
+        if not hero or not threats:
+            self.backline_guards.discard(hero.handle)
+            return
+        if (self.teleport or self.action==Action.RETREAT or hero.handle in blocked or
+                hero.handle in self.shopping or hero.handle in self.battle_shop.reserved):return
+        dk=next((u for u in army if u.type=='Udea' and u.hp>0),None)
+        no_mana=dk is None or dk.mana<75
+        ratio=hero.hp/max(1,hero.hp_max)
+        protected='Bvul' in buffs(g,hero)
+        # Unknown buff age is not a fresh seven-second safety window.
+        remaining=self.consumables.invulnerable_until.get(hero.handle,now)-now if protected else 0
+        if not protected and not (no_mana and ratio<=.5) and hero.handle not in self.backline_guards:return
+        clearance=lambda p:min(g.dist(p,e)-ground_attack_range(e.type) for e in threats)
+        supports=[u for u in army if u.type=='uobs' and u.hp>0 and clearance((u.x,u.y))>=120]
+        origin=(hero.x,hero.y);before=clearance(origin)
+        grid=g.map() if hasattr(g,'map') else None
+        choices=[]
+        if before<140 and grid:
+            for step in (160,320,520,760,1000):
+                for i in range(24):
+                    point=(hero.x+step*cos(i*pi/12),hero.y+step*sin(i*pi/12))
+                    end=clearance(point)
+                    if end<before+40:continue
+                    samples=[(hero.x+(point[0]-hero.x)*j/12,hero.y+(point[1]-hero.y)*j/12) for j in range(1,13)]
+                    if any(not grid.walkable(*p) or clearance(p)<min(before,140)-8 for p in samples):continue
+                    route=g.path_distance(origin,point)
+                    if route is None or route>step*1.25+64:continue
+                    firing=any(g.dist(point,e)<=ground_attack_range(hero.type) for e in threats)
+                    overlap,front,gap=statue_rally_rank(point,supports,threats)
+                    choices.append(((end<140,-min(end,140),overlap,front,not firing,gap,route),point,route))
+        best=min(choices,key=lambda row:row[0]) if choices else None
+        # Include travel and command/tick latency; a slowed Lich leaves earlier.
+        speed=getattr(hero,'move_speed',0) or 240
+        if buffs(g,hero)&{'Bslo','BOsl','Bfro'}:speed=min(speed,120)
+        lead=max(3.,(best[2] if best else 760)/max(1,speed)+1.)
+        expiring=protected and remaining<=lead
+        urgent=(no_mana and ratio<=.5) or expiring
+        if hero.handle in self.backline_guards and not protected and ratio>=.65:
+            self.backline_guards.discard(hero.handle)
+        if hero.handle in self.backline_guards and not protected and dk and dk.mana>=75 and self.rescue_coil_ready(dk,now) and g.dist(dk,hero)<750:
+            self.backline_guards.discard(hero.handle)
+        if urgent and before<180:self.backline_guards.add(hero.handle)
+        if hero.handle not in self.backline_guards:return
+        # Keep all generic attack/advance paths from claiming the guarded hero.
+        pulls[hero.handle]=best[1] if before<140 and best else origin
+        self.micro.pulling.discard(hero.handle)
+        if self.due(('hero_safety',hero.handle),now,2):
+            self.log('battle_hero_safety',clock=now,handle=hero.handle,type=hero.type,dk_mana=dk.mana if dk else None,
+                     hp_ratio=round(ratio,3),invulnerable=protected,remaining=round(remaining,2),
+                     lead=round(lead,2),clearance=round(before),point=pulls[hero.handle])
+        if before<140:return
+        self.backline_safe_output[hero.handle]=now
+        if now<self.cast_until.get(hero.handle,0):return
+        targets=[e for e in threats if in_weapon_range(g,hero,e) and not buffs(g,e)&{'Bvul','BHds'}
+                 and 'Avul' not in abilities(g,e) and self.combat_progress.allowed(e,now)]
+        current=g.current_target(hero)
+        if current and any(e.handle==current.handle for e in targets):return
+        if self.due(('hero_safe_attack',hero.handle),now,.5):
+            if targets:
+                target=min(targets,key=lambda e:(e.handle!=self.ranged_focus,e.hp))
+                receipt=g.attack(hero,target)
+                self.combat_progress.attack_result(hero,target,now,bool(receipt),enabled=True)
+                self.log('battle_hero_safe_attack',clock=now,handle=hero.handle,type=hero.type,target=target.handle,accepted=bool(receipt))
+            else:g.hold(hero)
 
     def rear_dk(self,army,foes,now,pulls,blocked=()):
         """Keep the battle DK behind the ranged body, in healing distance."""

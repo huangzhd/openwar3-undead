@@ -5,6 +5,7 @@ from pathlib import Path
 from bootstrap import ROOT, UPSTREAM
 from run_window import parse_deadline,positive_minutes
 from undead.speed_control import speed_percent,SPEEDS
+from undead.version import VERSION, RULES_VERSION, DISPLAY_NAME
 
 
 def main():
@@ -78,7 +79,7 @@ def main():
         checks={name:(UPSTREAM/'bin'/name).is_file() for name in ('render_hook.dll','war3_launch.exe','war3_ui_command.exe')}
         checks['game_config']=(UPSTREAM/'openwar3.json').is_file()
         checks['python']=Path(ROOT/'.venv/Scripts/python.exe').is_file()
-        print(json.dumps(dict(version='0.1.174-dev',rules_version='0.1.174',phase='P1',checks=checks,active_project_pids=live,
+        print(json.dumps(dict(version=VERSION,rules_version=RULES_VERSION,bot_name=DISPLAY_NAME,phase='P1',checks=checks,active_project_pids=live,
                               default_opponent=dict(race='undead',race_id=3,difficulty='normal',difficulty_id=3),
                               default_game_minutes=None,default_wall_minutes=None,default_speed=400,speed_presets=list(SPEEDS),computer_use=False),ensure_ascii=False,indent=2))
         return 0 if all(checks.values()) else 1

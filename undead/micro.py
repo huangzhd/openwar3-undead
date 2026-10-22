@@ -2,6 +2,7 @@
 from .scouting import SKELETONS
 from math import hypot,cos,sin,atan2,pi
 from .damage import DamageTrend
+from .retreat import statue_rally_rank
 
 COIL_MANA=75
 DK_SUPPORT_DISTANCE=750
@@ -120,6 +121,7 @@ class Micro:
                 # Safety outranks the old 750 support leash. Score every enemy
                 # weapon, including units not currently targeting the DK.
                 clearance=lambda p:min(hypot(p[0]-e.x,p[1]-e.y)-attack_range(e) for e in near)
+                supports=[v for v in core if v.type=='uobs' and v.hp>0 and clearance((v.x,v.y))>=120]
                 before=clearance((u.x,u.y));choices=[]
                 closest=min(near,key=lambda e:hypot(u.x-e.x,u.y-e.y)-attack_range(e))
                 away=atan2(u.y-closest.y,u.x-closest.x)
@@ -133,7 +135,7 @@ class Micro:
                         if any(not walkable(*p) or clearance(p)<min(before,140)-8 for p in samples):continue
                         route=ground_distance((u.x,u.y),point)
                         if route is not None and route<=step*1.25+64:
-                            choices.append(((end<140,-min(end,140),route),point))
+                            choices.append(((end<140,-min(end,140),*statue_rally_rank(point,supports,near),route),point))
                 moves[u.handle]=min(choices,key=lambda p:p[0])[1] if choices else (u.x,u.y)
                 continue
             ex=sum(e.x for e in near)/len(near);ey=sum(e.y for e in near)/len(near)
@@ -160,10 +162,17 @@ class Micro:
                                for step in (320,160) for offset in (0,pi/4,-pi/4)]
             danger=min(hypot(u.x-e.x,u.y-e.y) for e in near)
             # Prefer a reachable point outside weapon range; partial escape is the fallback.
-            candidates.sort(key=lambda p:min(hypot(p[0]-e.x,p[1]-e.y)-attack_range(e) for e in near)<100)
+            supports=[v for v in core if u.is_hero and v.type=='uobs' and v.hp>0 and
+                      min(hypot(v.x-e.x,v.y-e.y)-attack_range(e) for e in near)>=120]
+            candidates.sort(key=lambda p:(min(hypot(p[0]-e.x,p[1]-e.y)-attack_range(e) for e in near)<100,
+                                          *statue_rally_rank(p,supports,near)))
             for point in candidates:
                 if min(hypot(point[0]-e.x,point[1]-e.y) for e in near)<=danger+40:continue
                 if not walkable(*point): continue
+                if supports:
+                    before=min(hypot(u.x-e.x,u.y-e.y)-attack_range(e) for e in near)
+                    samples=[(u.x+(point[0]-u.x)*j/12,u.y+(point[1]-u.y)*j/12) for j in range(1,13)]
+                    if any(not walkable(*p) or min(hypot(p[0]-e.x,p[1]-e.y)-attack_range(e) for e in near)<min(before,100)-8 for p in samples):continue
                 if main and u.type=='Udea':
                     support_route=ground_distance(point,(main.x,main.y))
                     if support_route is None:

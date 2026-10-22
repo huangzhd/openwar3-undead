@@ -70,6 +70,15 @@ class ActionMeter:
         span=min(60,max(1,self.last-self.started))
         return round(sum(n for _,n in self.samples)*60/span)
 
+    def summary(self,now):
+        # A snapshot captured before orders may lag the clock read in commands.
+        # That is not a new game. Keep counters and the elapsed denominator.
+        self.advance(max(float(now),self.last))
+        elapsed=max(0,self.last-self.started)
+        return dict(accepted_actions=self.total,apm_game_seconds=round(elapsed,3),
+                    average_apm=round(self.total*60/max(1,elapsed),1),
+                    apm=self.value(self.last),apm_basis='accepted_unit_commands_game_time_v2')
+
     def close(self):
         if self.g.lane.commands is self.wrapper:self.g.lane.commands=self.original
 

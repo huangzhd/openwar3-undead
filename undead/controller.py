@@ -337,6 +337,7 @@ class Controller(BattleTacticsMixin):
         handled=self.attack_skeletons(units,self.battle_enemies,now) if getattr(self,'battle_enemies',()) else set()
         for u in units:
             if u.handle in handled:continue
+            if getattr(self,'backline_safe_output',{}).get(u.handle)==now:continue
             if now<self.cast_until.get(u.handle,0):continue
             key=('go',u.handle)
             dest=(round(point[0]/128),round(point[1]/128),attack)
@@ -1478,6 +1479,8 @@ class Controller(BattleTacticsMixin):
         self.set_intent("撤退回家 · 恢复部队")
         if not self.emergency_portal(army,now):
             enemies=[e for e in self.g.enemies() if can_engage(e)]
+            self.statue_support.tick(self,army,enemies,now,set(self.shield_moves)|self.shopping)
+            army=[u for u in army if u.handle not in self.statue_support.rescue_handled]
             if any(self.g.dist(e,self.home)<1200 for e in enemies):
                 self.set_intent('基地受围 · 脱离敌军射程')
                 # Formation's home rally used to overwrite pullbacks inside the enemy army.
@@ -1723,7 +1726,7 @@ class Controller(BattleTacticsMixin):
             al_stop=(self.creeping.al_route(self.home) and self.creeping.al_route_stage(self.home)==self.creeping.al_route(self.home)[2]
                      and not (self.ni_rod_stop.done or self.ni_rod_stop.failed))
             if h.type in {'Udea','Ulic'} and 'rnec' in inv and not self.opening_corpse_pending(now) and not (h.type=='Udea' and (self.ni_rod_stop.mission or al_stop)):
-                self.maintain_skeletons(h,inv.index('rnec'),now)
+                if h.type!='Udea' or not self.player_contact:self.maintain_skeletons(h,inv.index('rnec'),now)
         jobs=self.bank_supply_jobs(now)
         if jobs:
             hero,shop,code,cost=jobs[0]
@@ -1748,6 +1751,9 @@ class Controller(BattleTacticsMixin):
 
     def maintain_skeletons(self,dk,slot,now):
         g=self.g
+        from .targeting import buffs
+        if (self.teleport or self.action==Action.RETREAT or dk.handle in self.shopping or
+                dk.handle in self.battle_shop.reserved or buffs(g,dk)&DISABLED_CASTERS):return False
         if self.camp_summon.pending(self) and not self.player_contact:
             if self.camp_summon.active or not any(g.current_target(e) is not None for e in g.creeps()):return False
         if self.battle_shop.rod and self.battle_shop.rod['hero']==dk.handle:return False # Buyer rejoins before summoning.
@@ -1755,7 +1761,7 @@ class Controller(BattleTacticsMixin):
         if now<self.rod_retry or now<self.cast_until.get(dk.handle,0) or dk.handle in self.micro.pulling:return False
         if g.cooldown(dk,'AIrd')!=0:return False
         # Local combat summons matter; a distant scout must not suppress reinforcement.
-        if sum(g.dist(dk,u)<1200 for u in g.units('me',SKELETONS))>=4:return False
+        if dk.type!='Udea' and sum(g.dist(dk,u)<1200 for u in g.units('me',SKELETONS))>=4:return False
         corpses=[(g.dist(dk,c['point']),h,c) for h,c in self.rod_corpses.items()
                  if h not in self.rod_used and now-c['clock']<60 and g.dist(dk,c['point'])<=850
                  and self.rod_attempts.get((dk.handle,h),0)<3]

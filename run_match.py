@@ -15,6 +15,7 @@ from undead.referee import Referee
 from undead.structures import is_structure
 from undead.speed_control import speed_percent,SPEEDS
 from undead.debug_console import DebugConsole
+from undead.version import VERSION, RULES_VERSION, DISPLAY_NAME
 
 def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty=3,restarted_from=None,map_alias=None):
     speed=speed_percent(speed)
@@ -38,7 +39,7 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
     (out/'source-manifest.json').write_text(json.dumps(manifest,indent=2))
     fh=(out/'events.jsonl').open('w',encoding='utf-8')
     started=time.monotonic()
-    result={'id':run_id,'version':'0.1.174-dev','rules_version':'0.1.174','policy':'rule','requested_speed':speed,
+    result={'id':run_id,'version':VERSION,'rules_version':RULES_VERSION,'bot_name':DISPLAY_NAME,'policy':'rule','requested_speed':speed,
             'opponent':{'race':enemy_race,'difficulty':difficulty},'result':'unknown','reason':'not_started','until_epoch':until,'max_game_seconds':max_game_seconds}
     if restarted_from is not None:result['restarted_from']=restarted_from
     def log(event,**data):

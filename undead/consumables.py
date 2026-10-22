@@ -24,12 +24,19 @@ ITEMS['fgsk']=('AIfs',0,0,0,None)
 SCROLLS=HEALING_SCROLLS
 ORGANIC={'Udea','Ulic','Nbrn','Nngs','ucry','ugho'}
 ITEM_DISABLED={'BOhx','Bply','BPse','BPSE','BSTN','Bstn','BUsl','Bcyc'}
+# Pinned AbilityData.slk, HeroDur1. Timers start at the attempt, only after
+# observing Bvul; a receipt or item disappearance alone never grants safety.
+INVUL_DURATION={'pnvu':15.,'pnvl':7.}
 
 class Consumables:
     def __init__(self,log):
         self.log=log;self.pending={};self.attempts={};self.retry={};self.group_until=0;self.buff_until={}
+        self.invulnerable_until={}
 
     def observe(self,g,now):
+        for handle in list(self.invulnerable_until):
+            hero=g.unit(handle)
+            if not hero or 'Bvul' not in g.buffs(hero):self.invulnerable_until.pop(handle,None)
         for handle,p in list(self.pending.items()):
             hero=g.unit(handle);bag=g.inventory(hero) if hero else None
             ability,heal,mana,radius,buff=ITEMS[p['code']]
@@ -50,6 +57,8 @@ class Consumables:
             if p['code']=='fgsk':
                 summoned=[u.handle for u in g.units('me',{'nsce','nsca'}) if u.handle not in p['summons_before']]
             if (consumed and gains) or buffed or (consumed and summoned):
+                if buff=='Bvul' and handle in buffed:
+                    self.invulnerable_until[handle]=p['started']+INVUL_DURATION[p['code']]
                 self.log('consumable_effect_observed',clock=now,hero=p['hero'],code=p['code'],
                          consumed=consumed,gains=gains,buffed=buffed,summoned=summoned)
                 self.pending.pop(handle)

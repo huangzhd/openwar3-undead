@@ -1,13 +1,74 @@
 """Manual alternating statue supply; only travel to catch the army or escape danger."""
 from math import hypot,cos,sin,atan2,pi
 from .retreat import escape_point,clearance
-from .targeting import enemy_player
+from .targeting import enemy_player,buffs
+from .nc_combo import DISABLED_CASTERS
 
 
 class StatueSupport:
     def __init__(self,log):
         self.log=log;self.moves={};self.held=set();self.last_plan={}
         self.supply_at={};self.supply_checks={};self.last_supply_mode={};self.mana_at={}
+        self.rescuing=set();self.rescue_handled=set()
+
+    def supply(self,b,u,recipient,needy,mode,now):
+        g=b.g;ability='Arpl' if mode=='life' else 'Arpm'
+        if (not recipient or getattr(u,'mana',0)<2 or g.cooldown(u,ability)!=0 or
+                now-self.supply_at.get(u.handle,-100)<2 or u.handle in self.supply_checks):return False
+        self.supply_at[u.handle]=now
+        receipt=g.cast(u,'replenishlife' if mode=='life' else 'replenishmana')
+        self.log('statue_supply_attempt',clock=now,handle=u.handle,mode=mode,
+                 recipient=recipient.handle,distance=round(g.dist(u,recipient)),accepted=bool(receipt))
+        if not receipt:return False
+        self.last_supply_mode[u.handle]=mode
+        self.mana_at.setdefault(u.handle,now)
+        if mode=='mana':self.mana_at[u.handle]=now
+        b.cast_until[u.handle]=now+1.2
+        self.held.add(u.handle)
+        self.supply_checks[u.handle]=dict(started=now,mode=mode,buff='Brpl' if mode=='life' else 'Brpm',
+            before={v.handle:(v.hp,getattr(v,'mana',0)) for v in needy if g.dist(u,v)<=700})
+        return True
+
+    def rescue(self,b,u,heroes,army,hostiles,now,threatened,assigned):
+        """Meet retreating heroes outside the main army, without crossing fire."""
+        g=b.g
+        if getattr(u,'mana',0)<2 or g.cooldown(u,'Arpl') is None:return False
+        targets=sorted((h for h in heroes if g.dist(u,h)<=1800),key=lambda h:(h.hp/h.hp_max,g.dist(u,h)))
+        if not targets:return False
+        pending=self.moves.get(u.handle)
+        if (pending and not pending.get('observed') and g.dist(u,pending['origin'])>64 and
+                g.dist(u,pending['point'])<g.dist(pending['origin'],pending['point'])-64):
+            pending['observed']=True
+            self.log('statue_support_movement_observed',clock=now,handle=u.handle,
+                     reason=pending['reason'],point=(u.x,u.y),hero=pending.get('hero'))
+        for hero in targets:
+            if g.dist(u,hero)<=220 and not threatened:
+                needy=[v for v in army if v.type in {'ucry','Udea','Ulic','Nbrn','Nngs'} and v.hp<v.hp_max-15]
+                if not self.supply(b,u,hero,needy,'life',now) and u.handle not in self.held:
+                    if g.hold(u):self.held.add(u.handle);b.last.pop(('go',u.handle),None)
+                self.moves.pop(u.handle,None)
+                return True
+        if now-self.last_plan.get(u.handle,-100)<1:
+            return bool(pending and pending.get('hero') in {h.handle for h in targets} and not threatened)
+        self.last_plan[u.handle]=now
+        for hero in targets:
+            points=[(hero.x+r*cos(i*pi/8),hero.y+r*sin(i*pi/8)) for r in (160,200) for i in range(16)]
+            points=[p for p in points if g.dist(u,p)>=80 and clearance(p,hostiles,b.army_recovery.threat_range)>=120]
+            points.sort(key=lambda p:(sum(g.dist(p,a)<120 for a in assigned),g.dist(u,p)))
+            for point in points:
+                length=b.army_recovery.safe_path(b,(u.x,u.y),point,hostiles,
+                    combat=b.action.name in {'ATTACK','HARASS','RETREAT'} or any(enemy_player(g,e) for e in hostiles))
+                if length is None or length>max(400,g.dist(u,point)*1.5):continue
+                self.held.discard(u.handle)
+                if not g.move(u,*point):return False
+                self.moves[u.handle]=dict(origin=(u.x,u.y),point=point,reason='retreating_hero',hero=hero.handle)
+                assigned.append(point)
+                self.log('statue_hero_rescue_move',clock=now,handle=u.handle,hero=hero.handle,type=hero.type,
+                         hp=hero.hp,point=point,distance=round(g.dist(u,hero)),accepted=True)
+                return True
+        # No safe route: leave ordinary escape/supply in charge this tick.
+        self.last_plan.pop(u.handle,None)
+        return False
 
     def observe_supply(self,g,now):
         for handle,p in list(self.supply_checks.items()):
@@ -26,12 +87,20 @@ class StatueSupport:
     def tick(self,b,army,hostiles,now,protected=()):
         g=b.g
         self.observe_supply(g,now)
+        self.rescue_handled=set()
         # Wounded units remain supply recipients. Excluding every pulling unit
         # can strand replacements at home or anchor them on an unsafe front.
         # The medoid and local majority keep one distant straggler from leading.
         core=[u for u in army if u.type in {'ucry','Udea','Ulic','Nbrn','Nngs'}
               and u.handle not in b.shopping]
         if not core:return
+        retreating=set(protected)|set(b.micro.pulling)|set(getattr(b,'backline_guards',()))|set(getattr(b,'portal_pulls',()))
+        heroes=[h for h in core if h.type!='ucry' and h.hp>0 and h.handle not in b.battle_shop.reserved]
+        self.rescuing.intersection_update(h.handle for h in heroes if h.hp<.65*h.hp_max)
+        self.rescuing.update(h.handle for h in heroes if h.hp<=.5*h.hp_max and
+                            (h.handle in retreating or b.action.name=='RETREAT'))
+        rescue_heroes=[h for h in heroes if h.handle in self.rescuing] if not b.teleport else []
+        assigned=[]
         anchor=min(core,key=lambda u:sum(g.dist(u,v) for v in core))
         local=[u for u in core if g.dist(u,anchor)<800]
         combat=b.action.name in {'ATTACK','HARASS'} or any(enemy_player(g,e) for e in hostiles)
@@ -40,12 +109,16 @@ class StatueSupport:
         statues=sorted((u for u in army if u.type=='uobs'),key=lambda u:u.handle)
         live={u.handle for u in statues};self.held &= live
         for i,u in enumerate(statues):
-            if u.handle in protected or now<b.cast_until.get(u.handle,0):
+            if (u.handle in protected or u.handle in b.shopping or u.handle in b.battle_shop.reserved or
+                    now<b.cast_until.get(u.handle,0) or buffs(g,u)&DISABLED_CASTERS):
                 self.held.discard(u.handle);continue
             threats=[e for e in hostiles if b.army_recovery.threat_range(e.type)>0 and
                      g.dist(e,u)<b.army_recovery.threat_range(e.type)+100]
             threatened=bool(threats) or (now-b.micro.hit.get(u.handle,-100)<3 and
                 clearance((u.x,u.y),hostiles,b.army_recovery.threat_range)<120)
+            if self.rescue(b,u,rescue_heroes,core,hostiles,now,threatened,assigned):
+                self.rescue_handled.add(u.handle)
+                continue
             preferred=b.army_recovery.statue_modes.get(u.handle,{}).get('mode','life' if i%2==0 else 'mana')
             needs={'life':[v for v in local if v.hp<v.hp_max-15],
                    'mana':[v for v in local if v.type in {'Udea','Ulic','Nbrn','Nngs'} and getattr(v,'mana_max',0)-getattr(v,'mana',0)>=5]}
@@ -73,26 +146,11 @@ class StatueSupport:
                      g.dist(u,anchor)<=520 and sum(g.dist(u,v)<=600 for v in local)>=max(1,(len(local)+1)//2))
             if battle:covered=covered and g.dist(u,anchor)<=350
             pending=self.moves.get(u.handle)
-            if pending and g.dist(u,pending['origin'])>64 and g.dist(u,pending['point'])<g.dist(pending['origin'],pending['point'])-64:
+            if pending and not pending.get('observed') and g.dist(u,pending['origin'])>64 and g.dist(u,pending['point'])<g.dist(pending['origin'],pending['point'])-64:
                 self.log('statue_support_movement_observed',clock=now,handle=u.handle,reason=pending['reason'],point=(u.x,u.y))
                 self.moves.pop(u.handle,None)
             if covered and not threatened:
-                ability='Arpl' if mode=='life' else 'Arpm'
-                if (recipient and getattr(u,'mana',0)>=2 and g.cooldown(u,ability)==0
-                        and now-self.supply_at.get(u.handle,-100)>=2 and u.handle not in self.supply_checks):
-                    self.supply_at[u.handle]=now
-                    receipt=g.cast(u,'replenishlife' if mode=='life' else 'replenishmana')
-                    self.log('statue_supply_attempt',clock=now,handle=u.handle,mode=mode,
-                             recipient=recipient.handle,distance=round(g.dist(u,recipient)),accepted=bool(receipt))
-                    if receipt:
-                        self.last_supply_mode[u.handle]=mode
-                        self.mana_at.setdefault(u.handle,now)
-                        if mode=='mana':self.mana_at[u.handle]=now
-                        b.cast_until[u.handle]=now+1.2
-                        self.held.add(u.handle) # Do not overwrite supply with a hold order next tick.
-                        self.supply_checks[u.handle]=dict(started=now,mode=mode,buff='Brpl' if mode=='life' else 'Brpm',
-                            before={v.handle:(v.hp,getattr(v,'mana',0)) for v in needy if g.dist(u,v)<=700})
-                        continue
+                if self.supply(b,u,recipient,needy,mode,now):continue
                 if u.handle not in self.held and g.hold(u):
                     self.held.add(u.handle);self.moves.pop(u.handle,None)
                     b.last.pop(('go',u.handle),None)

@@ -19,6 +19,8 @@ import training_control
 from undead.game_view import Game
 from undead.controller import Controller, ground_attack_range
 from undead.policy import Action
+from undead.version import VERSION as BOT_VERSION, RULES_VERSION, DISPLAY_NAME
+from undead.debug_console import ActionMeter
 from undead.structures import is_structure
 from undead.targeting import can_engage, in_weapon_range
 
@@ -164,6 +166,62 @@ class TrainingController(Controller):
         self.search_index = 0
         self.search_since = None
         self.start_potion_since = None
+        self.training_endgame=False
+        self.training_peak_enemies=0
+        self.training_contact=False
+
+    def update_training_phase(self,now,enemy_count,combat_started):
+        self.training_contact=self.training_contact or combat_started
+        # Countdown lumber can mimic a count (e.g. 150 -> 50). Establish the
+        # baseline only after actual combat, never from startup resources.
+        if enemy_count is not None and self.training_contact:
+            self.training_peak_enemies=max(self.training_peak_enemies,enemy_count)
+            if (self.training_contact and not self.training_endgame and
+                    0<enemy_count<self.training_peak_enemies and
+                    enemy_count<=max(3,self.training_peak_enemies//3)):
+                self.training_endgame=True
+                self.wait_for_enemy_opening=False
+                self.blight_opened=True;self.blight_waiting=False
+                self.log('training_endgame_started',clock=now,remaining=enemy_count,
+                         peak=self.training_peak_enemies,source='public_map_count')
+
+    def pursue_survivors(self,army,foes,now,blocked=(),search_point=None):
+        """Arena-only pursuit: visible survivors or last sighting/public route."""
+        if not self.training_endgame or self.teleport:return
+        g=self.g;grid=g.map()
+        if not grid:return
+        targets=[e for e in foes if can_engage(e)]
+        for u in army:
+            if (u.type in {'uobs','ubsp'} or u.handle in blocked or u.handle in self.shopping or
+                    u.handle in self.battle_shop.reserved or u.handle in self.micro.pulling or
+                    u.handle in self.backline_guards or now<self.cast_until.get(u.handle,0)):continue
+            # Retain a current in-range attack; never interrupt the damage cycle.
+            if any(in_weapon_range(g,u,e) for e in targets):continue
+            target=min(targets,key=lambda e:g.dist(u,e)) if targets else None
+            point=(target.x,target.y) if target else search_point
+            if point is None:continue
+            gap=g.dist(u,point)
+            if gap<=80:continue
+            step=min(400,gap)
+            dest=(u.x+(point[0]-u.x)*step/gap,u.y+(point[1]-u.y)*step/gap)
+            if hasattr(g,'walk_path'):
+                step=400 # The route may detour farther than the straight-line gap.
+                path=g.walk_path((u.x,u.y),point)
+                if not path:continue
+                previous=(u.x,u.y);budget=400
+                for waypoint in path:
+                    length=g.dist(previous,waypoint)
+                    if length>budget:
+                        dest=(previous[0]+(waypoint[0]-previous[0])*budget/length,
+                              previous[1]+(waypoint[1]-previous[1])*budget/length)
+                        break
+                    budget-=length;previous=waypoint;dest=waypoint
+            route=g.path_distance((u.x,u.y),dest)
+            if not grid.walkable(*dest) or route is None or route>step+128:continue
+            if self.due(('training_pursuit',u.handle),now,1.5):
+                receipt=g.attack_move(u,*dest)
+                self.log('training_survivor_pursuit',clock=now,handle=u.handle,
+                         target=target.handle if target else None,point=dest,accepted=bool(receipt))
 
     def search_target(self, army, foes, now):
         if foes:
@@ -260,14 +318,16 @@ class TrainingController(Controller):
                 self.go_raw([u], pulls[u.handle], now)
         fighting = [u for u in army if u.handle not in pulls and u.handle not in picking]
         self.engage_battle(fighting, foes, now)
+        self.pursue_survivors(fighting,foes,now,set(pulls)|set(picking)|set(self.shield_moves),search_point)
         if self.blight_waiting:return
         for hero in heroes:
             if hero.handle in picking or hero.type not in {'Udea', 'Ulic'} or now < self.cast_until.get(hero.handle, 0):
                 continue
+            if hero.type=='Udea' and foes:continue # Shared battle_rod already runs after rescue spells.
             bag = g.inventory(hero) or []
             if 'rnec' in bag:
                 self.maintain_skeletons(hero, bag.index('rnec'), now)
-        for u in fighting if not foes else ():
+        for u in fighting if not foes and not self.training_endgame else ():
             if (u.type in {'uobs','ubsp'} or u.handle in self.battle_focus_handles or
                     u.handle in self.battle_formation.pending or now < self.cast_until.get(u.handle, 0)):
                 continue
@@ -325,19 +385,24 @@ def run(args, control_id=None, round_no=1):
         STOP.unlink()  # Only an explicit train command consumes this training stop.
     session = TrainingSession(install_map(path, manifest), manifest, args.speed)
     session.startup_seconds = 45 if args.probe else 120
-    result = dict(version=VERSION, melee_rules='0.1.174', result='error', reason='not_started',
+    result = dict(version=VERSION, melee_rules=RULES_VERSION, bot_version=BOT_VERSION,
+                  bot_name=DISPLAY_NAME, result='error', reason='not_started',
                   selection=manifest, matrix_eligible=False, probe=args.probe,
                   max_game_seconds=args.seconds, max_wall_seconds=args.wall_seconds,
                   training_attempt=round_no)
     started = time.monotonic()
+    meter=None
     with (out / 'events.jsonl').open('w', encoding='utf-8') as stream:
         def log(event, **data):
             stream.write(json.dumps(dict(event=event, **data), ensure_ascii=False) + '\n')
             stream.flush()
         try:
             g = session.start()
+            meter=ActionMeter(g)
             if control_id:
-                training_control.status(control_id, phase='running', round=round_no)
+                training_control.status(control_id, phase='running', round=round_no,
+                                        bot_name=DISPLAY_NAME,bot_version=BOT_VERSION,apm=0,
+                                        metrics_updated=time.time())
             result['launch_settings'] = session.settings
             initial = [unit_row(g, u) for u in g.my_units()]
             result['initial_units'] = dict(Counter(u['type'] for u in initial))
@@ -409,6 +474,7 @@ def run(args, control_id=None, round_no=1):
                             signal='map_stage' if state == 2 else reason)
                 # The original countdown resets lumber and can erase stage 2.
                 # Once actual contact is visible, keep controlling the round.
+                bot.update_training_phase(snap.clock,enemy_count,combat_started)
                 if combat_started:
                     bot.tick()
                 elif state == 1:
@@ -418,7 +484,11 @@ def run(args, control_id=None, round_no=1):
                     raise RuntimeError('Unexpected training scoreboard: ' + state)
                 if snap.clock - sampled >= 1:
                     sampled = snap.clock
+                    metrics=meter.summary(snap.clock)
+                    if control_id:
+                        training_control.status(control_id,**metrics,game_clock=snap.clock,metrics_updated=time.time())
                     log('training_sample', clock=snap.clock, state=state,
+                        **metrics,
                         own=[unit_row(g, u) for u in own],
                         visible_enemies=[unit_row(g, u) for u in foes])
                 time.sleep(.2)
@@ -428,6 +498,9 @@ def run(args, control_id=None, round_no=1):
             result.update(result='error', reason=repr(exc))
             traceback.print_exc()
         finally:
+            if meter is not None:
+                result.update(meter.summary(max(meter.last,result.get('game_seconds',meter.last))))
+                meter.close()
             try:
                 session.stop()
                 result['cleanup_confirmed'] = True
@@ -458,8 +531,10 @@ def play(args):
     attempt = 1
     try:
         while True:
-            training_control.status(session_id, phase='loading', round=attempt, result=None)
+            training_control.status(session_id, phase='loading', round=attempt, result=None,apm=None,
+                                    metrics_updated=None,bot_name=DISPLAY_NAME,bot_version=BOT_VERSION)
             result = run(args, session_id, attempt)
+            training_control.status(session_id,last_round=training_control.round_summary(result))
             if result['result'] in ('restart_requested', 'selection_requested') and result['cleanup_confirmed']:
                 if result['result'] == 'selection_requested':
                     selection = result['next_selection']
