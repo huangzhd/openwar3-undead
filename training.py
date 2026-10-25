@@ -16,7 +16,7 @@ from machine_start import active_processes
 from session import Session
 from training_map import build, digest, MATCHUPS, VERSION
 import training_control
-from undead.game_view import Game
+from undead.game_view import Game, TrainingGame
 from undead.controller import Controller, ground_attack_range
 from undead.policy import Action
 from undead.version import VERSION as BOT_VERSION, RULES_VERSION, DISPLAY_NAME
@@ -51,6 +51,8 @@ def board_signal(source):
         state = j.GetPlayerState(j.Player(0), j.ConvertPlayerState(1))
     if 100 <= state < 200:
         return 1, state - 100
+    if 200 <= state < 300:
+        return 2, state - 200
     # The pinned countdown calls MeleeStartingResources after Main marks
     # waiting; it replaces the small marker with the normal 500 lumber.
     if state == 500:
@@ -109,7 +111,7 @@ class TrainingSession(Session):
                 self.remember(pid)
             if pid and self.game is None:
                 try:
-                    self.game = Game(pid=pid, fair=True)
+                    self.game = TrainingGame(pid=pid, fair=True)
                 except Exception as exc:
                     last_error = repr(exc)
             if self.game:
@@ -149,7 +151,7 @@ class TrainingSession(Session):
 class TrainingController(Controller):
     """Reuse combat components without economy, creeping, shopping or recruitment."""
     # This arena starts in an open clearing; advancing enters a narrow forest.
-    # Ordinary melee keeps advancing and uses its moving battle formation.
+    # Ordinary melee keeps advancing; neither controller reshapes during fire.
     wait_for_enemy_opening = True
 
     def __init__(self, g, log, race):
@@ -191,8 +193,10 @@ class TrainingController(Controller):
         g=self.g;grid=g.map()
         if not grid:return
         targets=[e for e in foes if can_engage(e)]
+        summons=self.attack_skeletons(army,foes,now)
         for u in army:
-            if (u.type in {'uobs','ubsp'} or u.handle in blocked or u.handle in self.shopping or
+            if u.type=='Udea' and (u.hp<=u.hp_max*.6 or not self.dk_cleanup_allowed(army,foes)):continue
+            if (u.type in {'uobs','ubsp','uban'} or u.handle in summons or u.handle in blocked or u.handle in self.shopping or
                     u.handle in self.battle_shop.reserved or u.handle in self.micro.pulling or
                     u.handle in self.backline_guards or now<self.cast_until.get(u.handle,0)):continue
             # Retain a current in-range attack; never interrupt the damage cycle.
@@ -269,7 +273,7 @@ class TrainingController(Controller):
 
     def prepare(self,now):
         army=[u for u in self.g.my_units() if u.alive and not is_structure(u)]
-        self.equipment.tick(self.g,army,self.g.enemies(),now,self.cast_until,potions_only=True)
+        self.equipment.tick(self.g,army,self.g.enemies(),now,self.cast_until)
         picking=self.collect_start_potion(now,army,self.g.enemies())
         return self.prepare_battle(now,army=army,blocked=picking)
 
@@ -289,7 +293,7 @@ class TrainingController(Controller):
         burrowing=self.fiend_burrow.tick(self,[u for u in army if u.type in {'ucry','ucrm'}],heroes,foes,now)
         self.micro.previous-=burrowing
         army=[u for u in army if u.type!='ucrm' and u.handle not in burrowing]
-        self.equipment.tick(g,heroes,foes,now,self.cast_until,potions_only=True)
+        self.equipment.tick(g,heroes,foes,now,self.cast_until,potions_only=self.battle_contact(army,foes,now))
         search_point = self.search_target(army, foes, now)
         self.player_contact = self.battle_enemies = foes
         self.creep_strength = army
@@ -308,7 +312,7 @@ class TrainingController(Controller):
                                              mp.walkable if mp else lambda *p: False, g.path_distance)
         pulls.update(self.shield_moves)
         self.consumables.tick(g, army, foes, now, self.cast_until,
-                              attacking=True, urgent={u.handle for u in heroes if u.hp/u.hp_max <= .25})
+                              attacking=True, urgent={u.handle for u in heroes if u.hp/u.hp_max <= .25},pending_heals=self.heal_checks)
         picking=self.collect_start_potion(now,army,foes,set(pulls))
         self.battle_actions(army, foes, now, pulls,blocked=picking,search_point=search_point)
         self.frost_armor([u for u in army if u.handle not in picking], foes, now)
@@ -328,7 +332,7 @@ class TrainingController(Controller):
             if 'rnec' in bag:
                 self.maintain_skeletons(hero, bag.index('rnec'), now)
         for u in fighting if not foes and not self.training_endgame else ():
-            if (u.type in {'uobs','ubsp'} or u.handle in self.battle_focus_handles or
+            if (u.type in {'uobs','ubsp','uban'} or u.handle in self.battle_focus_handles or
                     u.handle in self.battle_formation.pending or now < self.cast_until.get(u.handle, 0)):
                 continue
             # Preserve active attacks; approach only when outside weapon range.
@@ -347,9 +351,19 @@ def unit_row(g, u):
                 hp=round(u.hp, 2), mana=round(u.mana, 2),
                 target=target.handle if target else None)
     if u.is_hero:
+        row['raw_type']=getattr(u,'raw_type',u.type)
+        row['level']=u.level
+        row['skill_points']=u.skill_points
         row['has_detail']=getattr(u,'has_detail',False)
         row['buffs']=sorted(g.buffs(u)) if row['has_detail'] else None
-        if u.owner==g.me():row['inventory']=g.inventory(u)
+        if u.owner==g.me():
+            row['inventory']=g.inventory(u)
+            row['abilities']=g.abilities(u) if row['has_detail'] else None
+    if u.type in {'uban','ubsp','ucry','uobs'}:
+        row['has_detail']=getattr(u,'has_detail',False)
+        row['buffs']=sorted(g.buffs(u)) if row['has_detail'] else None
+        if u.owner==g.me() and u.type in {'uban','ubsp'}:
+            row['abilities']=g.abilities(u) if row['has_detail'] else None
     return row
 
 
@@ -391,7 +405,7 @@ def run(args, control_id=None, round_no=1):
                   max_game_seconds=args.seconds, max_wall_seconds=args.wall_seconds,
                   training_attempt=round_no)
     started = time.monotonic()
-    meter=None
+    meter=None;speed_control=None
     with (out / 'events.jsonl').open('w', encoding='utf-8') as stream:
         def log(event, **data):
             stream.write(json.dumps(dict(event=event, **data), ensure_ascii=False) + '\n')
@@ -399,6 +413,7 @@ def run(args, control_id=None, round_no=1):
         try:
             g = session.start()
             meter=ActionMeter(g)
+            speed_control=training_control.RoundSpeed(g,log,control_id,round_no,args.speed,started)
             if control_id:
                 training_control.status(control_id, phase='running', round=round_no,
                                         bot_name=DISPLAY_NAME,bot_version=BOT_VERSION,apm=0,
@@ -436,9 +451,12 @@ def run(args, control_id=None, round_no=1):
                     result.update(result=outcome, reason='user_panel_' + action)
                     if action == 'switch':
                         result['next_selection'] = command['selection']
+                    result['next_speed']=command.get('speed') or speed_control.preferred
                     log('training_panel_command', clock=snap.clock, action=action,
                         selection=command.get('selection'))
                     break
+                speed_control.observe(snap)
+                args.speed=speed_control.preferred
                 own = g.my_units()
                 foes = g.enemies()
                 if foes:
@@ -455,7 +473,7 @@ def run(args, control_id=None, round_no=1):
                     wipe_since = None
                 if STOP.exists():
                     result.update(result='aborted', reason='training_stop'); break
-                if time.monotonic() - started >= args.wall_seconds:
+                if speed_control.budget_used >= args.wall_seconds:
                     result.update(result='timeout', reason='wall_time_limit'); break
                 if snap.clock - start_clock >= args.seconds:
                     result.update(result='probe_complete' if args.probe else 'timeout',
@@ -498,6 +516,10 @@ def run(args, control_id=None, round_no=1):
             result.update(result='error', reason=repr(exc))
             traceback.print_exc()
         finally:
+            if speed_control is not None:
+                result['speed_history']=speed_control.history
+                result['final_speed']=speed_control.actual
+                result['wall_budget_used']=round(speed_control.budget_used,2)
             if meter is not None:
                 result.update(meter.summary(max(meter.last,result.get('game_seconds',meter.last))))
                 meter.close()
@@ -532,10 +554,12 @@ def play(args):
     try:
         while True:
             training_control.status(session_id, phase='loading', round=attempt, result=None,apm=None,
+                                    speed=args.speed,speed_actual=None,speed_pending=None,speed_message='',
                                     metrics_updated=None,bot_name=DISPLAY_NAME,bot_version=BOT_VERSION)
             result = run(args, session_id, attempt)
             training_control.status(session_id,last_round=training_control.round_summary(result))
             if result['result'] in ('restart_requested', 'selection_requested') and result['cleanup_confirmed']:
+                args.speed=result.get('next_speed',args.speed)
                 if result['result'] == 'selection_requested':
                     selection = result['next_selection']
                     args.matchup, args.level, args.mode = (selection['matchup'],
@@ -558,7 +582,7 @@ def main(argv=None):
     parser.add_argument('--matchup', choices=tuple(MATCHUPS), default='orc')
     parser.add_argument('--level', type=int, choices=range(1, 11), default=2)
     parser.add_argument('--mode', choices=('easy', 'hard'), default='easy')
-    parser.add_argument('--speed', type=int, choices=(25, 50, 100, 200, 400), default=100)
+    parser.add_argument('--speed', type=int, choices=training_control.SPEEDS, default=100)
     parser.add_argument('--seconds', type=int, default=180)
     parser.add_argument('--wall-seconds', type=int, default=240)
     parser.add_argument('--probe', action='store_true', help='Time-limited integration check, not a round pass')

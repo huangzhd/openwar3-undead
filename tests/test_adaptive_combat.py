@@ -23,7 +23,7 @@ class NCFTests(unittest.TestCase):
             if undead:h.type='Ulic'
             b.combat_spells(own,foes,10)
             with self.subTest(expected=expected):
-                self.assertEqual(events[0]['combination'],expected)
+                self.assertEqual(next(e for e in events if e['event'] in {'nc_attempt','hero_finisher_attempt'})['combination'],expected)
                 self.assertEqual(len(orders),len(expected))
                 self.assertTrue(all(order[2]==h.handle for order in orders))
 
@@ -40,7 +40,7 @@ class NCFTests(unittest.TestCase):
                     choices=[s for count in (1,2,3) for s in combinations(range(3),count) if sum(parts[i] for i in s)>=h.hp]
                     best=min(choices,key=lambda s:(len(s),sum((125,75,110)[i] for i in s),sum(parts[i] for i in s)-h.hp))
                     b.combat_spells(own,foes,10)
-                    self.assertEqual(events[0]['combination'],''.join('NCF'[i] for i in best))
+                    self.assertEqual(next(e for e in events if e['event'] in {'nc_attempt','hero_finisher_attempt'})['combination'],''.join('NCF'[i] for i in best))
 
     def test_fork_is_primary_damage_only(self):
         fixture,n=self.make();b,d,l,h,f,own,foes,orders,events,skills,buffs,cd=fixture
@@ -132,8 +132,8 @@ class NCFTests(unittest.TestCase):
         w=unit('emow',20,320,600);w.owner=1;w.has_detail=True;foes.append(w)
         skills[w.handle]=[dict(code='Ambt',level=1)]
         b.combat_spells(own,foes,10)
-        self.assertTrue(events[0]['healing_window_uncertain'])
-        self.assertFalse(events[0]['damage_confirmed'])
+        self.assertTrue(next(e for e in events if e['event'] in {'nc_attempt','hero_finisher_attempt'})['healing_window_uncertain'])
+        self.assertFalse(next(e for e in events if e['event'] in {'nc_attempt','hero_finisher_attempt'})['damage_confirmed'])
         self.assertIsNotNone(b.nc_combo.pending)
 
 class AdaptiveTargetTests(unittest.TestCase):

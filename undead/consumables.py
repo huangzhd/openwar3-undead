@@ -1,8 +1,9 @@
 """Conservative consumables using own inventories and fair nearby threats."""
 from .equipment import can_receive,BLUE_POTIONS,HEALTH_POTIONS,HEALING_SCROLLS,Equipment,scroll_priority
-from .targeting import enemy_player,can_engage
+from .targeting import enemy_player,can_engage,in_weapon_range,unit_stats
 from .coil import ready as coil_ready,level as coil_level,heal_eligible
 from .nc_combo import DISABLED_CASTERS
+from .structures import is_structure
 
 # Pinned installation AbilityData.slk: ability, heal, mana, radius, buff.
 ITEMS={
@@ -22,7 +23,7 @@ REGEN['envl']=REGEN['rej3']
 ITEMS.update(REGEN)
 ITEMS['fgsk']=('AIfs',0,0,0,None)
 SCROLLS=HEALING_SCROLLS
-ORGANIC={'Udea','Ulic','Nbrn','Nngs','ucry','ugho'}
+ORGANIC={'Udea','Ulic','Nbrn','Nngs','ucry','ugho','ubsp','uban'}
 ITEM_DISABLED={'BOhx','Bply','BPse','BPSE','BSTN','Bstn','BUsl','Bcyc'}
 # Pinned AbilityData.slk, HeroDur1. Timers start at the attempt, only after
 # observing Bvul; a receipt or item disappearance alone never grants safety.
@@ -32,6 +33,86 @@ class Consumables:
     def __init__(self,log):
         self.log=log;self.pending={};self.attempts={};self.retry={};self.group_until=0;self.buff_until={}
         self.invulnerable_until={}
+        self.emergency_scroll_at={}
+        self.hp_history={};self.aoe_cooldowns={};self.aoe_casts=[];self.aoe_used=-100
+
+    def observe_burst(self,g,army,hostiles,now):
+        """Visible cooldown transitions plus own HP loss, never hidden spell state."""
+        live={u.handle for u in army if u.hp>0}
+        self.hp_history={h:rows for h,rows in self.hp_history.items() if h in live}
+        for u in army:
+            if u.hp<=0:continue
+            rows=[r for r in self.hp_history.get(u.handle,[]) if now-r[0]<=5]
+            rows.append((now,u.hp));self.hp_history[u.handle]=rows
+        observed={}
+        for e in hostiles:
+            if not can_engage(e) or not getattr(e,'has_detail',False):continue
+            for a in getattr(g,'abilities',lambda _:[])(e):
+                code=a.get('code');cd=a.get('cooldown')
+                if code not in {'AOws','AOcl','AOsh','AHfs','AHbz','ANbf','AUfn'} or not a.get('level',0) or cd is None:continue
+                key=(e.handle,code);previous=self.aoe_cooldowns.get(key)
+                if previous and now-previous[0]<=1.5 and cd>previous[1]+.5:
+                    self.aoe_casts.append((now,code,e.handle))
+                    self.log('enemy_aoe_cooldown_started',clock=now,handle=e.handle,ability=code,damage_confirmed=False)
+                observed[key]=(now,cd)
+        self.aoe_cooldowns=observed
+        self.aoe_casts=[r for r in self.aoe_casts if now-r[0]<=4 and r[0]>self.aoe_used]
+
+    def burst_scroll(self,g,targets,hostiles,now,heal):
+        if not self.aoe_casts:return False,[]
+        nearby={e.handle for e in hostiles if any(g.dist(e,u)<=1100 for u in targets)}
+        casts=[r for r in self.aoe_casts if r[2] in nearby]
+        if not casts or now-max(r[0] for r in casts)>2:return False,[]
+        codes={r[1] for r in casts}
+        types={e.type for e in hostiles if e.handle in nearby}
+        # This common Orc combo is one round: wait for both casts unless the
+        # ordinary severe-injury/emergency rule has already become necessary.
+        if {'Otch','Ofar'}<=types and not {'AOws','AOcl'}<=codes:return False,[]
+        hurt=[u for u in targets if max((hp for t,hp in self.hp_history.get(u.handle,[]) if now-t<=5),default=u.hp)-u.hp>=40
+              and u.hp_max-u.hp>=heal*.8]
+        useful=sum(min(heal,u.hp_max-u.hp) for u in hurt)
+        return len(hurt)>=3 and useful>=heal*3*.85,sorted(codes)
+
+    def scroll_emergency(self,g,victim,army,hostiles,now,cast_until,blocked,urgent,pending_heals=()):
+        """Last resort for an endangered hero with no timely personal/Coil rescue."""
+        if not victim.is_hero or victim.hp<=0 or victim.hp_max<=0:return False
+        ratio=victim.hp/victim.hp_max
+        effects=set(g.buffs(victim))
+        if 'Bvul' in effects or 'BHds' in effects:return False
+        danger=any(can_engage(e) and g.dist(e,victim)<700 for e in hostiles)
+        if not danger or not (ratio<=.25 or victim.handle in urgent and ratio<=.35):return False
+        defense=unit_stats(victim.type)
+        dps=sum(s.dps_vs(defense) for e in hostiles if defense and
+                (t:=getattr(g,'current_target',lambda _:None)(e)) is not None and t.handle==victim.handle
+                and in_weapon_range(g,e,victim) and (s:=unit_stats(e.type)))
+        lifetime=victim.hp/dps if dps else float('inf')
+        pending=self.pending.get(victim.handle)
+        if pending and pending.get('accepted') and now-pending['started']<.3:
+            row=ITEMS[pending['code']]
+            if not row[3] and (row[1] or row[4]=='Bvul') and lifetime>.3:return False
+        if any(p['target']==victim.handle and 0<=now-p['started']<.8 and
+               lifetime>.8-(now-p['started']) for p in pending_heals):return False
+        # Only an executable item is an alternative, not merely owning one.
+        if victim.handle not in blocked and not effects&ITEM_DISABLED:
+            bag=g.inventory(victim) or []
+            for slot,code in enumerate(bag):
+                row=ITEMS.get(code)
+                if not row or row[3] or not (row[1]>0 and code not in REGEN or row[4]=='Bvul'):continue
+                if now<cast_until.get(victim.handle,0) and row[4]!='Bvul':continue
+                addrs=getattr(victim,'item_addrs',()) or ()
+                identity=addrs[slot] if len(addrs)>slot and addrs[slot] else (slot,code)
+                key=(victim.handle,identity)
+                if (g.cooldown(victim,row[0])==0 and now>=self.retry.get(key,0) and
+                        (row[4]=='Bvul' or self.attempts.get(key,0)<3)):return False
+        if victim.type in {'Ulic','Nbrn'}:
+            dk=next((u for u in army if u.type=='Udea' and u.hp>0),None)
+            cover=bool(dk and dk.mana>=75 and dk.handle not in blocked and now>=cast_until.get(dk.handle,0)
+                       and g.dist(dk,victim)<750 and not set(g.buffs(dk))&DISABLED_CASTERS
+                       and (hasattr(g,'abilities') or hasattr(g,'coil_level')) and coil_level(g,dk)>0
+                       and coil_ready(g,dk,now))
+            if cover:
+                if lifetime>.7+g.dist(dk,victim)/1100:return False
+        return True
 
     def observe(self,g,now):
         for handle in list(self.invulnerable_until):
@@ -66,8 +147,9 @@ class Consumables:
                 self.log('consumable_effect_unconfirmed',clock=now,hero=p['hero'],code=p['code'],consumed=consumed)
                 self.pending.pop(handle)
 
-    def tick(self,g,army,hostiles,now,cast_until,blocked=(),coil_needed=False,attacking=False,urgent=(),preparing=False):
+    def tick(self,g,army,hostiles,now,cast_until,blocked=(),coil_needed=False,attacking=False,urgent=(),preparing=False,pending_heals=()):
         self.observe(g,now)
+        self.observe_burst(g,army,hostiles,now)
         # Most injured hero first; only one area scroll per observation window.
         for hero in sorted((u for u in army if u.is_hero),key=lambda u:u.hp/max(1,u.hp_max)):
             if hero.hp<=0 or not getattr(hero,'alive',True) or hero.handle in blocked or hero.handle in self.pending:continue
@@ -87,6 +169,10 @@ class Consumables:
             focused=sum((t:=getattr(g,'current_target',lambda e:None)(e)) is not None
                         and t.handle==hero.handle and g.dist(e,hero)<900 for e in hostiles)>=2
             emergency=hero.handle in urgent or ratio<=.25 or (focused and ratio<=.5)
+            rescue_targets=[u for u in army if u.is_hero and g.dist(hero,u)<=600 and
+                            self.scroll_emergency(g,u,army,hostiles,now,cast_until,blocked,urgent,pending_heals)] if any(c in SCROLLS for c in bag) else []
+            rescue_targets=[u for u in rescue_targets if now-self.emergency_scroll_at.get(u.handle,-100)>=.8]
+            scroll_notes={}
             # Lich's 30% gate also applies under focus, urgent flags and TC approach.
             invul_hp=(ratio<=.30) if hero.type=='Ulic' else (ratio<=.35 or emergency)
             invul_needed=threat and invul_hp and 'Bvul' not in buffs
@@ -96,16 +182,18 @@ class Consumables:
             if hero.type=='Ulic' and coil_cover:invul_needed=False
             for slot,code in enumerate(bag):
                 if code not in ITEMS:continue
-                if code=='sror' and (not attacking or not any(0<=getattr(e,'owner',12)<12 and g.dist(e,hero)<700 for e in hostiles)):continue
+                if code in SCROLLS and buffs&ITEM_DISABLED:continue
+                if code=='sror' and (hero.type!='Ulic' or buffs&ITEM_DISABLED or
+                    not any(enemy_player(g,e) and can_engage(e) and not is_structure(e) for e in hostiles)):continue
                 ability,heal,mana,radius,buff=ITEMS[code]
-                if locked and not (buff=='Bvul' and invul_needed or hero.type=='Ulic' and code in HEALTH_POTIONS and 'Bvul' in buffs):continue
+                if locked and not (buff=='Bvul' and invul_needed or code in SCROLLS and rescue_targets or hero.type=='Ulic' and code in HEALTH_POTIONS and 'Bvul' in buffs):continue
                 if hero.type=='Ulic' and code in HEALTH_POTIONS and coil_cover:continue
                 if g.cooldown(hero,ability)!=0:continue # unknown is not ready
                 addrs=getattr(hero,'item_addrs',()) or ()
                 identity=addrs[slot] if len(addrs)>slot and addrs[slot] else (slot,code)
                 key=(hero.handle,identity)
-                if (buff!='Bvul' and self.attempts.get(key,0)>=3) or now<self.retry.get(key,0):continue
-                targets=[u for u in army if u.type in ORGANIC and g.dist(u,hero)<=radius] if radius else [hero]
+                if not (code in SCROLLS and rescue_targets) and ((buff!='Bvul' and self.attempts.get(key,0)>=3) or now<self.retry.get(key,0)):continue
+                targets=[u for u in army if u.type in ORGANIC and u.hp>0 and g.dist(u,hero)<=radius] if radius else [hero]
                 if code=='fgsk':
                     if ratio<.35 or not any(enemy_player(g,e) and can_engage(e) and g.dist(e,hero)<700 for e in hostiles):continue
                     priority=6
@@ -122,16 +210,30 @@ class Consumables:
                     if buff:
                         if now<self.buff_until.get(buff,0):continue
                         targets=[u for u in targets if buff not in g.buffs(u)]
-                        if not threat or len(targets)<3:continue
+                        if code=='sror':
+                            if not targets:continue
+                        elif not threat or len(targets)<3:continue
                         priority=5
                     else:
-                        if now<self.group_until:continue
-                        injured=[u for u in targets if u.hp_max-u.hp>=75]
+                        group_emergency=bool(rescue_targets)
+                        if now<self.group_until and not group_emergency:continue
+                        injured=[u for u in targets if u.hp<=u.hp_max*.5]
                         useful=sum(min(heal,max(0,u.hp_max-u.hp)) for u in injured)
-                        mana_need=sum(min(mana,max(0,getattr(u,'mana_max',0)-getattr(u,'mana',0))) for u in targets)
-                        group_emergency=threat and any(u.is_hero and u.hp/u.hp_max<=.25 and u.hp_max-u.hp>=100 for u in targets)
-                        if not group_emergency and not (len(injured)>=2 and useful>=250) and not (code=='sres' and len(injured)>=1 and useful>=150 and mana_need>=150):continue
-                        priority=2
+                        required=max(3,(len(targets)+1)//2)
+                        after_aoe,aoe_codes=self.burst_scroll(g,targets,hostiles,now,heal)
+                        # Several pressured units must not die while we wait
+                        # for untouched units to cross a majority threshold.
+                        wounded=[u for u in targets if u.hp<=u.hp_max*.6 and u.hp_max-u.hp>=heal*.85]
+                        pressured=[u for u in wounded if any((t:=getattr(g,'current_target',lambda _:None)(e)) is not None
+                                   and t.handle==u.handle and in_weapon_range(g,e,u) for e in hostiles)]
+                        timely=len(wounded)>=3 and len(pressured)>=2
+                        if not group_emergency and not (after_aoe or timely or len(injured)>=required and useful>=heal*len(injured)*.85):continue
+                        priority=-1 if group_emergency else 2
+                        scroll_notes[slot]=dict(scroll_emergency=group_emergency,half_health_units=len(injured),
+                            required_units=required,effective_healing=round(useful,1),
+                            after_aoe=after_aoe,aoe_abilities=aoe_codes,pressured_units=len(pressured),
+                            total_effective_healing=round(sum(min(heal,max(0,u.hp_max-u.hp)) for u in targets),1),
+                            rescue_heroes=[u.handle for u in rescue_targets])
                 else:
                     missing=hero.hp_max-hero.hp;mp=getattr(hero,'mana',0);missing_mp=getattr(hero,'mana_max',0)-mp
                     if heal and now<self.group_until and ratio>.25:continue
@@ -149,6 +251,9 @@ class Consumables:
             count=bag.count(code)
             summons_before={u.handle for u in g.units('me',{'nsce','nsca'})} if code=='fgsk' else set()
             r=g.use_item(hero,slot)
+            if code in SCROLLS:
+                for u in rescue_targets:self.emergency_scroll_at[u.handle]=now
+                self.aoe_used=now
             invulnerable=ITEMS[code][4]=='Bvul'
             self.attempts[key]=self.attempts.get(key,0)+1;self.retry[key]=now+(.25 if invulnerable else 4)
             # Protect even an uncertain receipt until fresh observation; never spam.
@@ -156,12 +261,12 @@ class Consumables:
             if ITEMS[code][3]:
                 if ITEMS[code][4]:self.buff_until[ITEMS[code][4]]=now+3
                 else:self.group_until=now+3
-            self.pending[hero.handle]=dict(code=code,key=key,hero=hero.type,count=count,started=now,before=before,
+            self.pending[hero.handle]=dict(code=code,key=key,hero=hero.type,count=count,started=now,before=before,accepted=bool(r),
                 summons_before=summons_before)
             self.log('consumable_use_attempt',clock=now,hero=hero.type,handle=hero.handle,code=code,
                      hp=hero.hp,hp_max=hero.hp_max,accepted=bool(r),attempt=self.attempts[key],targets=[u.handle for u in targets],
                      buffs=sorted(buffs),emergency=emergency,overrode_cast_lock=locked,
-                     focused=focused,coil_cover=coil_cover,controlled=bool(buffs&ITEM_DISABLED))
+                     focused=focused,coil_cover=coil_cover,controlled=bool(buffs&ITEM_DISABLED),**scroll_notes.get(slot,{}))
 
 class ScrollSupply:
     def __init__(self,log):

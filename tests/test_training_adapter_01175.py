@@ -46,7 +46,7 @@ class TrainingAdapterTests(unittest.TestCase):
             return script.split('function ' + name + ' takes nothing returns nothing', 1)[1].split('endfunction', 1)[0]
         self.assertIn('set udg_RoundNo = 2', body('Trig_Initialiaztion_Actions'))
         self.assertIn('SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 1)', body('Trig_Main_Actions'))
-        self.assertEqual(body('Trig_ComputerForceCountdown_Actions').count('SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 2)'), 2)
+        self.assertEqual(sum(body('OWT_CountdownRelease'+str(side)).count('SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 2)') for side in (0,1)), 2)
         self.assertIn('100 + CountUnitsInGroup(GetUnitsOfPlayerMatching(Player(1)',
                       body('Trig_CheckWin10_Actions'))
         result = body('Trig_CheckPass_Actions')

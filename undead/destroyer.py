@@ -56,9 +56,10 @@ def dispel_plan(caster,targets,protected,reach,area,protection_radii=None):
         if any(distance(point,h)<=(protection_radii or {}).get(h.handle,area+8) for h in protected):continue
         hit=[t for t in local if distance(point,t['unit'])<=radius]
         if not hit:continue
-        selected=min(hit,key=lambda t:(t['priority'],t['unit'].hp,t['unit'].handle))
+        selected=min(hit,key=lambda t:(t['priority'],'Bspl' not in t.get('effects',()),t['unit'].hp,t['unit'].handle))
         counts=tuple(-sum(t['priority']==rank for t in hit) for rank in range(4))
-        score=(selected['priority'],*counts,shifted,selected['unit'].hp,selected['unit'].handle)
+        links=-sum('Bspl' in t.get('effects',()) for t in hit)
+        score=(selected['priority'],*counts[:3],links,counts[3],shifted,selected['unit'].hp,selected['unit'].handle)
         if best is None or score<best[0]:best=(score,point,selected,hit)
     return best[1:] if best else None
 
@@ -68,10 +69,12 @@ class Destroyer:
         self.log=log;self.morph=None;self.morph_attempts={};self.next_morph=0
         self.dispel={};self.attempts={};self.next_cast={};self.deferred={}
         self.reposition_attempts={};self.reposition_at={}
+        self.escape_after=set()
 
     def reposition(self,b,u,army,enemies,targets,protected,reach,area,radii,now):
         """A bounded safe shift behind the fighting line can expose a dispel point."""
-        if (not getattr(getattr(b,'hero_pressure',None),'orc_melee_active',False) or
+        if (not (getattr(getattr(b,'hero_pressure',None),'orc_melee_active',False) or
+                 any('Bspl' in t['effects'] for t in targets)) or
                 getattr(b,'blight_waiting',False) or u.hp<=u.hp_max*.45 or
                 u.handle in b.micro.pulling or now<self.reposition_at.get(u.handle,0)):
             return False
@@ -127,7 +130,8 @@ class Destroyer:
             if summon:
                 targets.append(dict(unit=u,priority=1,reason='enemy_summon',effects=sorted(effects)))
             elif effects:
-                targets.append(dict(unit=u,priority=3,reason='enemy_buff',effects=sorted(effects)))
+                targets.append(dict(unit=u,priority=3,
+                                    reason='spirit_link' if 'Bspl' in effects else 'enemy_buff',effects=sorted(effects)))
         return targets
 
     def observe(self,b,now):
@@ -162,7 +166,12 @@ class Destroyer:
                          clock=now,handle=handle,cooldown=cd,targets=changes,effects=effects,
                          reason=p.get('reason','enemy_summon'),
                          basis='cooldown confirms cast; buff absence may include expiry/other dispels; hidden targets unknown')
-                if confirmed:self.attempts.pop(p['key'],None)
+                if confirmed:
+                    self.attempts.pop(p['key'],None)
+                    if p.get('spirit_link'):
+                        self.escape_after.add(handle)
+                        if b.cast_until.get(handle,0)<=p['started']+1.2:b.cast_until[handle]=now
+                        b.last.pop(('go',handle),None)
                 self.dispel.pop(handle,None)
 
     def defer(self,unit,now,reason,**details):
@@ -173,6 +182,7 @@ class Destroyer:
 
     def tick(self,b,army,enemies,now,blocked=()):
         g=b.g;self.observe(b,now)
+        self.escape_after.intersection_update(u.handle for u in army if u.hp>0)
         if b.teleport:return
         targets=self.targets(b,army,enemies)
         if not targets:return
@@ -223,7 +233,7 @@ class Destroyer:
         # first cast, but never issue a duplicate cast into the same area.
         available.sort(key=lambda u:(u.type!='ubsp',u.hp/max(1,u.hp_max)))
         for u in available:
-            if u.type!='ubsp' or u.handle in self.dispel or now<self.next_cast.get(u.handle,0):continue
+            if u.type!='ubsp' or u.handle in self.dispel or u.handle in self.escape_after or now<self.next_cast.get(u.handle,0):continue
             if g.cooldown(u,'Advm')!=0:
                 self.defer(u,now,'cooldown_not_ready',cooldown=g.cooldown(u,'Advm'))
                 continue
@@ -253,5 +263,6 @@ class Destroyer:
                 b.cast_until[u.handle]=now+1.2
                 self.dispel[u.handle]=dict(started=now,key=key,
                     reason=selected['reason'],
+                    spirit_link=any('Bspl' in t['effects'] for t in hit),
                     targets=[(t['unit'].handle,t['unit'].hp) for t in hit],
                     effects=[(t['unit'].handle,t['effects']) for t in hit if t['effects']])

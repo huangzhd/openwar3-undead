@@ -90,12 +90,13 @@ class EffectiveStatueTests(unittest.TestCase):
         self.assertTrue(any(e['event']=='statue_supply_unconfirmed' for e in events))
         self.assertFalse(any(e['event']=='statue_supply_recipients_observed' for e in events))
 
-    def test_immediate_threat_takes_priority_over_supply_cast(self):
+    def test_low_health_under_threat_takes_priority_over_supply_cast(self):
         b,g,events=fan_tests.StatueTests().scene();u=g.statues[0];u.x=0
+        u.hp=u.hp_max*.4
         b.army_recovery.statue_modes[u.handle]={'mode':'life'}
         foe=unit('hfoo',90,100);foe.owner=1
         b.statue_support.tick(b,g.army,[foe],10)
-        self.assertFalse(any(o[0]=='cast' for o in g.orders))
+        self.assertFalse(any(o[0]=='cast' and o[1]==u.handle for o in g.orders))
 
     def test_fan_destinations_leave_real_dk_lane_and_separation(self):
         b,g,events=fan_tests.FanTests().scene()

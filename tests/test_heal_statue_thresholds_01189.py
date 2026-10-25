@@ -26,11 +26,11 @@ class HealingThresholdTests(unittest.TestCase):
         b.player_contact=[unit('ogru',3,200)];b.heal_allies([dk,hero],10,[hero])
         self.assertFalse(casts)
 
-    def test_ghoul_missing_health_rule_is_unchanged(self):
+    def test_ghouls_are_excluded_from_coil_even_when_wounded(self):
         dk=unit('Udea',1,0,600);fiend=unit('ugho',2,100,450)
         b,casts,_=coil_cases.CoilTests().game([dk,fiend]);b.player_contact=[unit('ogru',3,200)]
         b.heal_allies([dk,fiend],10)
-        self.assertEqual(casts,[('deathcoil','ugho')])
+        self.assertEqual(casts,[])
 
     def test_fiend_coil_strict_forty_percent_boundary_and_explicit_lists(self):
         for kind in (Controller,TrainingController):
@@ -80,10 +80,13 @@ class StatueReturnTests(unittest.TestCase):
                                aggressive_training=training,aggressive_battle=not training)
             self.assertNotIn(car.handle,pulls);self.assertNotIn(car.handle,b.micro.pulling)
             b.statue_support.tick(b,g.army,[foe],10,set(pulls))
+            self.assertFalse(any(o[0]=='move' and o[1]==car.handle for o in g.orders))
+            car.hp=car.hp_max*.75
+            b.statue_support.tick(b,g.army,[foe],12,set(pulls))
             moves=[o for o in g.orders if o[0]=='move' and o[1]==car.handle]
             self.assertTrue(moves);car.x,car.y=moves[-1][2]
             self.assertLessEqual(dist(car,g.fiends[0]),350)
-            g.orders.clear();b.statue_support.tick(b,g.army,[foe],13)
+            g.orders.clear();b.statue_support.tick(b,g.army,[foe],15)
             self.assertIn(('cast',car.handle,'replenishlife'),g.orders)
 
     def test_recent_damage_does_not_send_safe_in_range_car_away_again(self):
@@ -95,6 +98,7 @@ class StatueReturnTests(unittest.TestCase):
 
     def test_opposite_rear_flank_is_used_before_long_escape(self):
         b,g,events,foe=self.scene();car=g.statues[0];car.x=100
+        car.hp=car.hp_max*.4
         original=b.army_recovery.safe_path
         b.army_recovery.safe_path=lambda bot,a,z,enemies,**kw:original(bot,a,z,enemies,**kw) if z[1]>20 else None
         b.statue_support.tick(b,g.army,[foe],10)

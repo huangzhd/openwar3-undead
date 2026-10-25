@@ -51,7 +51,7 @@ class NCTests(unittest.TestCase):
         skills[d.handle][0]['level']=2;skills[l.handle][0]['level']=2
         b.combat_spells(own,foes,11)
         self.assertEqual([r[1] for r in orders],['frostnova','deathcoil'])
-        self.assertGreater(events[0]['estimated_damage'],h.hp)
+        self.assertGreater(next(e for e in events if e['event'] in {'nc_attempt','hero_finisher_attempt'})['estimated_damage'],h.hp)
 
     def test_damage_boundary_not_raw_spell_sum(self):
         for hp,expected in [(sum(damage(1,1)),True),(sum(damage(1,1))+.01,False)]:
@@ -119,7 +119,7 @@ class NCTests(unittest.TestCase):
         self.assertEqual(len(orders),2)
         foes.remove(h);b.nc_combo.observe(b.g,11)
         self.assertEqual(events[-1]['outcome'],'target_unavailable')
-        self.assertFalse(events[0]['accepted'])
+        self.assertFalse(next(e for e in events if e['event'] in {'nc_attempt','hero_finisher_attempt'})['accepted'])
 
     def test_frost_armor_cannot_spend_reserved_nova_mana(self):
         b,d,l,h,f,own,foes,orders,events,skills,*_=self.make()

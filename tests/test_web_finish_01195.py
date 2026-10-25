@@ -16,13 +16,17 @@ class WebFinishTests(unittest.TestCase):
     def test_grounded_wyvern_then_grunt_then_raider_in_both_controllers(self):
         for kind in (Controller,TrainingController):
             b,g,own,foes,orders,events,effects,car,troops,tc,fs,wyvern=self.scene(kind)
+            fs.x=1200 # Safe destroyer fire; hostile AA protection is tested separately.
             for now,victim in ((10,wyvern),(12,troops[0]),(14,troops[2])):
                 if now==12:foes.remove(wyvern)
                 if now==14:foes[:]=[e for e in foes if e.type!='ogru']
                 orders.clear();b.focus_ranged(own,foes,now);b.attack_destroyers(own,foes,now)
                 shots=[o for o in orders if o[0]=='attack']
                 self.assertTrue(shots);self.assertEqual({o[2] for o in shots},{victim.handle})
-                self.assertIn(car.handle,{o[1] for o in shots})
+                if now==10:
+                    # Web stops flight, not the wyvern's AA attack. Stay safe.
+                    self.assertNotIn(car.handle,{o[1] for o in shots})
+                else:self.assertIn(car.handle,{o[1] for o in shots})
 
     def test_web_expiry_hidden_invulnerability_or_distance_releases_target(self):
         for why in ('expired','hidden','invulnerable','distant'):

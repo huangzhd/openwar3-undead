@@ -61,7 +61,7 @@ class LichOutputTests(unittest.TestCase):
         self.assertEqual(picked,['Ulic'])
 
     def test_gloves_int_agility_and_aura_equipment_transfer_without_losing_existing_items(self):
-        for code in ('gcel','rin1','ciri','rag1','belv','hcun','ckng','ajen','afac','ofro','oli2','oslo','ward'):
+        for code in ('gcel','rin1','ciri','hcun','ckng','ajen','afac','ofro','oli2','oslo','ward'):
             with self.subTest(code=code):
                 g,e,events=existing.EquipmentTests().setup_game();g.inv[g.dk.handle][0]=code
                 g.inv[g.lich.handle][0]='rlif'
@@ -75,6 +75,6 @@ class LichOutputTests(unittest.TestCase):
             g,loot,heroes,picked,_,_=self.game(code)
             loot.catalog['tstr']={'powerup':True,'effects':{'tome_str':1}}
             loot.tick(g,heroes,[],1)
-            self.assertEqual(picked,['Udea' if code=='tstr' else 'Ulic'])
+            self.assertEqual(picked,['Udea' if code in {'tstr','belv'} else 'Ulic']) # Agility waits for Dark Ranger.
 
 if __name__=='__main__':unittest.main()

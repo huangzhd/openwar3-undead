@@ -88,6 +88,7 @@ class TcFirstTests(unittest.TestCase):
 
     def test_level_two_stomp_goal_has_arrival_margin_without_losing_coil_range(self):
         b,g,own,foes,orders,events,effects,dk,tc=self.scene()
+        dk.hp=dk.hp_max*.5
         old=g.abilities;g.abilities=lambda u:([dict(code='AOws',level=2)] if u is tc else old(u))
         pulls={};b.rear_dk(own,foes,10,pulls)
         self.assertGreaterEqual(dist(pulls[dk.handle],own[6]),730)

@@ -105,7 +105,7 @@ class NCCombo:
                                            tuple(a['letter'] for a in s))) if usable else None
         return None
 
-    def try_cast(self,g,army,foes,now,cast_until,blocked=(),pressure=False):
+    def try_cast(self,g,army,foes,now,cast_until,blocked=(),pressure=False,key_pressure=False):
         if self.pending or not army:return None
         anchor=min(army,key=lambda u:sum(g.dist(u,v) for v in army));candidates=[]
         for e in foes:
@@ -115,7 +115,7 @@ class NCCombo:
         pressuring=False
         if not candidates and pressure:
             for e in foes:
-                if not aoe_threat(g,e):continue
+                if not aoe_threat(g,e) and not key_pressure:continue
                 opts=[a for a in self.options(g,army,e,anchor,now,cast_until,blocked)
                       if a['letter'] in {'N','C'} and self.failures.get(a['key'],0)<3 and now>=self.retry_at.get(a['key'],0)]
                 if {a['letter'] for a in opts}=={'N','C'}:candidates.append((e,tuple(opts)))

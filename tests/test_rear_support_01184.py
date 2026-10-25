@@ -17,8 +17,8 @@ class RearDkTests(unittest.TestCase):
         own.append(dk)
         return b,g,own,foes,orders,dk
 
-    def test_full_health_dk_moves_behind_main_and_does_not_melee(self):
-        b,g,own,foes,orders,dk=self.scene();pulls={}
+    def test_half_health_dk_moves_behind_main_and_does_not_melee(self):
+        b,g,own,foes,orders,dk=self.scene();pulls={};dk.hp=dk.hp_max*.5
         b.rear_dk(own,foes,10,pulls)
         point=pulls[dk.handle]
         self.assertLess(point[0],-140)
@@ -31,7 +31,7 @@ class RearDkTests(unittest.TestCase):
 
     def test_cast_lock_emergency_pull_and_blocked_path_are_preserved(self):
         for why in ('cast','pull','terrain'):
-            b,g,own,foes,orders,dk=self.scene();pulls={}
+            b,g,own,foes,orders,dk=self.scene();pulls={};dk.hp=dk.hp_max*.5
             if why=='cast':b.cast_until[dk.handle]=20
             if why=='pull':pulls[dk.handle]=(-900,0)
             if why=='terrain':b.army_recovery.safe_path=Mock(return_value=None)
@@ -63,7 +63,7 @@ class CloseStatueTests(unittest.TestCase):
             self.assertLessEqual(dist(p,g.fiends[0]),350)
             self.assertGreaterEqual(dist(p,foe)-450,120)
 
-    def test_life_statue_moves_to_injured_group_instead_of_copying_mana_partner(self):
+    def test_life_statue_supplies_in_range_without_chasing_ideal_spacing(self):
         b,g,events=support.StatueTests().scene();b.army_recovery.statues(b,1);g.orders.clear()
         for u in g.fiends:u.x=0;u.hp=200
         for h in g.heroes:h.x=-200;h.hp=h.hp_max;h.mana=100
@@ -72,7 +72,8 @@ class CloseStatueTests(unittest.TestCase):
         b.statue_support.tick(b,g.army,[foe],10)
         first=g.statues[0]
         self.assertFalse(any(o[:3]==('cast',first.handle,'replenishmana') for o in g.orders))
-        self.assertTrue(any(o[0]=='move' and o[1]==first.handle for o in g.orders))
+        self.assertFalse(any(o[0]=='move' and o[1]==first.handle for o in g.orders))
+        self.assertTrue(any(o[:3]==('cast',first.handle,'replenishlife') for o in g.orders))
 
 
 class LichInvulnerabilityTests(unittest.TestCase):

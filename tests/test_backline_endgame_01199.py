@@ -103,7 +103,7 @@ class EndgameTests(unittest.TestCase):
     def test_pursuit_follows_walkable_detour_instead_of_a_straight_line_into_trees(self):
         b,g,own,foes,orders,events,effects=self.scene()
         b.update_training_phase(70,2,True)
-        hero=own[0];hero.type='uske';target=foes[-1];target.x=200
+        hero=own[0];hero.type='ugho';target=foes[-1];target.x=200
         g.walk_path=lambda a,z:[a,(0,300),(200,300),z]
         b.pursue_survivors([hero],[target],70)
         self.assertEqual(orders[0],('attack_move',hero.handle,(100.,300.)))

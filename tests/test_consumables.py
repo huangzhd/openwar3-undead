@@ -68,7 +68,8 @@ class ConsumableTests(unittest.TestCase):
         for u in g.army:u.hp=u.hp_max
         dk.hp=200;g.army += [unit('uobs',9,10,1),unit('ucry',10,1000,1)]
         self.step();self.assertFalse(g.orders)
-        lich.hp=200;self.step(5)
+        lich.hp=200;self.step(5);self.assertFalse(g.orders)
+        g.army[3].hp=200;self.step(6)
         self.assertEqual(g.orders,[('use','Udea','shea')])
         targets=self.events[-1]['targets'];self.assertNotIn((9,0),targets);self.assertNotIn((10,0),targets)
     def test_low_mana_potion_and_cast_or_teleport_protection(self):
@@ -90,11 +91,11 @@ class ConsumableTests(unittest.TestCase):
     def test_restoration_and_combat_scrolls_avoid_existing_buffs(self):
         g=self.g;h=g.heroes[0];g.bags[h.handle][0]='sres';g.heroes[1].mana=0
         self.step();self.assertEqual(g.orders[-1],('use','Udea','sres'))
-        g.bags[h.handle][0]='sror';self.step(6);self.assertEqual(len(g.orders),1)
+        g.bags[h.handle][0]=None;h=g.heroes[1];g.bags[h.handle][0]='sror';self.step(6);self.assertEqual(len(g.orders),1)
         for u in g.army:g.bs[u.handle]=['Broa']
         foe=unit('hfoo',9,100);foe.owner=1
         self.step(10,[foe],attacking=True);self.assertEqual(len(g.orders),1)
-        g.bs.clear();self.step(15,[foe],attacking=True);self.assertEqual(g.orders[-1],('use','Udea','sror'))
+        g.bs.clear();self.step(15,[foe],attacking=True);self.assertEqual(g.orders[-1],('use','Ulic','sror'))
 
     def test_consumed_item_does_not_block_later_items_reusing_same_address(self):
         g=self.g;h=g.heroes[0];h.item_addrs=[12345,0,0,0,0,0];g.effect=True
@@ -125,12 +126,13 @@ class ConsumableTests(unittest.TestCase):
         g=self.g;dk,lich,_=g.heroes;g.bags[dk.handle][0]='pman';g.bags[lich.handle][0]='pgma';dk.mana=lich.mana=0
         self.step();self.assertEqual(g.orders,[('use','Udea','pman')])
 
-    def test_roar_only_in_attack_phase_near_opponent_not_creeps(self):
+    def test_roar_belongs_to_lich_and_uses_on_visible_opponent_not_creeps(self):
         g=self.g;g.bags[g.heroes[0].handle][0]='sror';foe=unit('hfoo',9,100);foe.owner=1
         self.step(1,[foe]);self.assertFalse(g.orders)
         foe.owner=12;self.step(5,[foe],attacking=True);self.assertFalse(g.orders)
-        foe.owner=1;foe.x=2000;self.step(9,[foe],attacking=True);self.assertFalse(g.orders)
-        foe.x=100;self.step(13,[foe],attacking=True);self.assertEqual(g.orders,[('use','Udea','sror')])
+        g.bags[g.heroes[0].handle][0]=None;g.bags[g.heroes[1].handle][0]='sror'
+        self.step(9,[foe]);self.assertFalse(g.orders)
+        foe.owner=1;foe.x=1000;self.step(13,[foe]);self.assertEqual(g.orders,[('use','Ulic','sror')])
 
 class ScrollTests(unittest.TestCase):
     def setUp(self):

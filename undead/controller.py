@@ -6,7 +6,7 @@ from .army_recovery import ArmyRecovery
 from .home_defense import HomeDefense
 from .formation import Formation
 from .battle_formation import BattleFormation
-from .battle_spells import silence_key_hero,nova_cluster,nova_tc,wait_for_opening_nc
+from .battle_spells import silence_key_hero,nova_cluster,nova_tc,wait_for_opening_nc,burst_troops,nova_wyverns
 from .battle_tactics import BattleTacticsMixin
 from .statue_support import StatueSupport
 from .destroyer import Destroyer
@@ -69,6 +69,7 @@ def rod_skeleton_lifetime():
 
 class Controller(BattleTacticsMixin):
     def __init__(self,g,log,enemy_race=3,first_attack_all_in=True):
+        self.log=log
         self.init_battle_tactics()
         self.fiend_burrow=FiendBurrow(log)
         self.illusion_front=IllusionFront(log)
@@ -269,9 +270,9 @@ class Controller(BattleTacticsMixin):
         # Creeping uses explicit creep targets; attack-move must not acquire a player base.
         if self.action==Action.CREEP and not attack_ready(self.situation):attack=False
         units=[u for u in units if u.handle not in self.shield_moves and u.handle not in self.creep_aggro.protected and (u.handle not in self.shopping or self.action in (Action.RETREAT,Action.DEFEND) or self.battle_enemies)]
-        combat={'Udea','Ulic','Nbrn','Nngs','ucry','uobs','ubsp'} | SKELETONS
+        combat={'Udea','Ulic','Nbrn','Nngs','ucry','uobs','ubsp','uban'} | SKELETONS
         battle=[e for e in self.battle_enemies if can_engage(e) and self.combat_progress.allowed(e,now)]
-        handled=self.attack_skeletons(units,battle,now) if battle else set()
+        handled=self.attack_skeletons(units,battle,now) if battle or self.skeleton_assaults else set()
         units=[u for u in units if u.handle not in handled]
         if not units:return
         if attack and len(units)>=2 and self.action not in (Action.RETREAT,Action.DEFEND):
@@ -334,7 +335,7 @@ class Controller(BattleTacticsMixin):
         self.go_raw(units,point,now,attack)
 
     def go_raw(self,units,point,now,attack=False):
-        handled=self.attack_skeletons(units,self.battle_enemies,now) if getattr(self,'battle_enemies',()) else set()
+        handled=self.attack_skeletons(units,getattr(self,'battle_enemies',()),now) if getattr(self,'battle_enemies',()) or getattr(self,'skeleton_assaults',{}) else set()
         for u in units:
             if u.handle in handled:continue
             if getattr(self,'backline_safe_output',{}).get(u.handle)==now:continue
@@ -382,7 +383,7 @@ class Controller(BattleTacticsMixin):
         heroes=g.my_heroes()
         if hasattr(g,'observe_coil'):g.observe_coil(heroes,now,self.log)
         fiends=g.units('me',{'ucry'})
-        army=g.units('me',{'Udea','Ulic','Nbrn','Nngs','ucry','uobs','ubsp'} | SKELETONS)
+        army=g.units('me',{'Udea','Ulic','Nbrn','Nngs','ucry','uobs','ubsp','uban'} | SKELETONS)
         army=[u for u in army if u.handle not in self.skeleton_scouts.assignments]
         self.observe_rod_skeletons(now)
         foes=self.active_foes(g.enemies(),now)
@@ -563,7 +564,7 @@ class Controller(BattleTacticsMixin):
         self.consumables.tick(g,army,hostiles,now,self.cast_until,
                               (self.teleport['hero'],) if self.teleport else (),self.coil_needed(dk),self.action==Action.ATTACK,
                               {h.handle for h in heroes if self.micro.damage.urgent(h)},
-                              self.action in (Action.ATTACK,Action.HARASS) and not self.battle_enemies)
+                              self.action in (Action.ATTACK,Action.HARASS) and not self.battle_enemies,self.heal_checks)
         if not self.teleport and self.emergency_portal(army,now):
             self.sleep_wake.cancel(g,now,self.cast_until,'emergency_portal')
             self.creeping.defer(now,'emergency_portal')
@@ -635,9 +636,14 @@ class Controller(BattleTacticsMixin):
         else:
             self.prebattle_since=None
             self.opening_nc_deadline=None;self.opening_nc_waiting=False
+            started=self.battle_contact(fighters,foes,now)
+            self.banshee_support.tick(self,fighters,foes,now,not started,set(pulls)|set(self.shield_moves)|self.shopping)
             self.destroyer.tick(self,fighters,foes,now,
                                 (set(pulls)-{u.handle for u in fighters if u.type=='ubsp'})|set(self.shield_moves)|self.shopping)
             self.combat_spells(fighters,foes,now,set(pulls)|set(self.shield_moves)|self.shopping)
+            self.battle_detection.tick(self,fighters,g.enemies(),now,set(pulls)|set(self.shield_moves)|self.shopping)
+            if self.battle_rejoin:
+                self.rejoin_battle_units(fighters,hostiles,now,pulls,set(self.shield_moves)|self.shopping)
         for u in fighters:
             if u.handle in self.shield_moves:self.go_raw([u],self.shield_moves[u.handle],now)
         pulls.update(self.shield_moves)
@@ -671,7 +677,7 @@ class Controller(BattleTacticsMixin):
                 if u.handle not in self.pull_checks:
                     self.pull_checks[u.handle]={'origin':(u.x,u.y),'target':pulls[u.handle],'started':now}
                 self.go_raw([u],pulls[u.handle],now)
-        healthy=[u for u in fighters if u.type!='uobs' and not (self.player_contact and u.type=='ubsp') and u.handle not in self.defense_shopping and u.handle not in pulls and u.handle not in tavern_reserved and now>=self.cast_until.get(u.handle,0)]
+        healthy=[u for u in fighters if u.type!='uobs' and not (self.player_contact and u.type in {'ubsp','uban'}) and u.handle not in self.defense_shopping and u.handle not in pulls and u.handle not in tavern_reserved and now>=self.cast_until.get(u.handle,0)]
         if not healthy:
             self.set_intent('部队脱险 · 恢复阵形')
             self.creeping.pause(now,'all_units_pulling_back')
@@ -2198,20 +2204,23 @@ class Controller(BattleTacticsMixin):
                     and not is_structure(target) and can_damage(target.type) and g.dist(dk,target)<750)
 
     def coil_candidate(self,u):
+        if self.hero_pressure.wyvern_priority and u.type=='ucry':
+            return 0<u.hp<=u.hp_max*.5 and u.handle not in self.fiend_burrow.pending
         return heal_eligible(u) and u.handle not in self.fiend_burrow.pending
 
     def heal_candidates(self,dk):
         # UnitBalance.slk marks Nbrn undead and uobs Mechanical; coil cannot heal statues.
-        return [u for u in self.g.units('me',{'Ulic','Nbrn','ucry','ugho'})
+        return [u for u in self.g.units('me',{'Ulic','Nbrn','ubsp','ucry'})
                 if self.coil_candidate(u) and self.g.dist(dk,u)<750]
 
     def reserve_coil_for_hero(self,dk,now):
         # TR 235051: Nbrn was missing 94 HP under tower fire; pressure Coil
         # went on cooldown just before a burst. Preserve readiness, not a heal order.
         if dk is None:return False
+        if self.hero_pressure.wyvern_priority:return True
         g=self.g
-        heroes=[u for u in g.units('me',{'Ulic','Nbrn'})
-                if u.hp>0 and u.hp/u.hp_max<.9 and g.dist(dk,u)<750]
+        heroes=[u for u in g.units('me',{'Ulic','Nbrn','ubsp'})
+                if u.hp>0 and u.hp/u.hp_max<(.7 if u.type=='ubsp' else .9) and g.dist(dk,u)<750]
         threats=[e for e in getattr(g,'enemies',lambda:[])() if enemy_player(g,e) and can_engage(e)]
         if dk.mana<2*COIL_MANA and any(g.dist(dk,e)<900 for e in threats):
             if self.due('coil_rescue_reserve',now,3):
@@ -2233,6 +2242,17 @@ class Controller(BattleTacticsMixin):
         self.nc_combo.observe(self.g,now)
         dk=next((u for u in army if u.type=='Udea'),None)
         self.hero_pressure.tc_burst=None
+        self.hero_pressure.select_strategy(self.g,army,foes,now)
+        if self.hero_pressure.wyvern_priority:
+            self.nc_combo.pending=None
+            if not self.teleport and dk and dk.handle not in set(blocked)|set(self.shopping)|set(self.shield_moves):
+                self.heal_allies(army,now)
+            if self.action!=Action.RETREAT and not self.teleport and not self.army_recovery.active:
+                excluded=set(blocked)|set(self.micro.pulling)|set(self.shield_moves)|self.creep_aggro.protected
+                self.hero_pressure.wyvern_focus(self.g,army,foes)
+                silence_key_hero(self,army,foes,now,excluded,tc_only=True)
+                nova_wyverns(self,army,foes,now,excluded)
+            return
         melee_battle=self.hero_pressure.melee_orc(self.g,foes)
         if melee_battle and self.action!=Action.RETREAT and not self.teleport and not self.army_recovery.active:
             excluded=set(blocked)|set(self.micro.pulling)|set(self.shield_moves)|self.creep_aggro.protected
@@ -2246,23 +2266,42 @@ class Controller(BattleTacticsMixin):
                 if self.nc_combo.select(options,victim.hp,now) or pending and pending.handle==victim.handle:
                     self.hero_pressure.tc_burst=(victim.handle,now+3)
         priority_target=self.hero_pressure.orc_focus(self.g,army,foes,now)
-        chief=priority_target if priority_target and priority_target.type=='Otch' else None
+        key_pressure=bool(self.hero_pressure.prefer_key_heroes and self.hero_pressure.tc_sequence and priority_target and priority_target.is_hero)
+        if (self.hero_pressure.strategy=='army_first' and not (priority_target and priority_target.is_hero)
+                and self.action!=Action.RETREAT and not self.teleport and not self.army_recovery.active):
+            excluded=set(blocked)|set(self.micro.pulling)|set(self.shield_moves)|self.creep_aggro.protected
+            self.heal_allies(army,now)
+            silence_key_hero(self,army,foes,now,excluded,tc_only=True)
+            rescue=excluded|({dk.handle} if dk and (self.heal_candidates(dk) or self.reserve_coil_for_hero(dk,now)) else set())
+            exposed=[e for e in foes if not self.hero_pressure.tc_sequence and e.is_hero and not self.hero_pressure.defensive_items(self.g,e)
+                     and not self.hero_pressure.support(self.g,e,foes,now,2.5) and
+                     sum(u.handle not in excluded and in_weapon_range(self.g,u,e) for u in army)>=2]
+            opportunity=self.nc_combo.try_cast(self.g,army,exposed,now,self.cast_until,rescue)
+            if opportunity and self.nc_combo.pending:
+                self.hero_pressure.opportunity=(opportunity.handle,now+3)
+                self.log('battle_hero_opportunity',clock=now,target=opportunity.handle,type=opportunity.type,
+                         strategy='army_first',basis='finite_spell_finisher_in_current_range')
+                return
+            burst_troops(self,army,foes,now,excluded)
+            return
+        chief=priority_target if priority_target and (priority_target.type=='Otch' or key_pressure) else None
         critical=[u for u in self.heal_candidates(dk) if u.is_hero and u.hp/u.hp_max<=.25] if dk else []
         if critical:
             self.heal_allies(army,now,critical)
             return
         if self.action!=Action.RETREAT and not self.teleport and not self.army_recovery.active:
             excluded=set(blocked)|set(self.micro.pulling)|set(self.shield_moves)|self.creep_aggro.protected
-            if priority_target and priority_target.type in ORC_HERO_PRIORITY:
+            if priority_target and (priority_target.type in ORC_HERO_PRIORITY or key_pressure):
                 silence_key_hero(self,army,foes,now,excluded,tc_only=True)
             if chief:
                 # Latest battle priority: heal Lich before spending Coil on TC.
-                hurt=[u for u in self.heal_candidates(dk) if u.type=='Ulic'] if dk else []
+                hurt=[u for u in self.heal_candidates(dk) if u.type in {'Ulic','Nbrn','ubsp'}] if dk else []
                 if hurt:self.heal_allies(army,now,hurt)
                 nc_blocked=excluded|({dk.handle} if dk and (hurt or self.reserve_coil_for_hero(dk,now)) else set())
-                self.opening_nc_waiting=not melee_battle and wait_for_opening_nc(self,army,chief,now,nc_blocked)
+                pressure=(not melee_battle or self.hero_pressure.tc_sequence) and not (dk and dk.handle in nc_blocked)
+                self.opening_nc_waiting=pressure and wait_for_opening_nc(self,army,chief,now,nc_blocked)
                 if self.opening_nc_waiting:return
-                target=self.nc_combo.try_cast(self.g,army,[chief],now,self.cast_until,nc_blocked,pressure=not melee_battle)
+                target=self.nc_combo.try_cast(self.g,army,[chief],now,self.cast_until,nc_blocked,pressure=pressure,key_pressure=key_pressure)
             else:
                 # Damage follows the reachable Orc focus; silence is independent.
                 targets=[priority_target] if priority_target else ([e for e in foes if e.type=='Otch'] if any(e.type=='Otch' for e in foes) else foes)
@@ -2299,7 +2338,7 @@ class Controller(BattleTacticsMixin):
         if not self.player_contact:
             hurt=[u for u in hurt if self.coil_rescue_needed(u)]
         if hurt and self.due('coil',now,1):
-            victim=min(hurt,key=lambda u:({'Ulic':0,'Nbrn':1,'ucry':2}.get(u.type,3),u.hp/u.hp_max))
+            victim=min(hurt,key=lambda u:({'Ulic':0,'Nbrn':1,'ubsp':2,'ucry':3}.get(u.type,4),u.hp/u.hp_max))
             r=g.cast(dk,'deathcoil',target=victim)
             self.log('coil_heal_attempt',clock=now,target=victim.type,accepted=bool(r),mana=dk.mana,context='player' if self.player_contact else 'rescue',target_hp=victim.hp,target_hp_max=victim.hp_max)
             if r:
@@ -2315,6 +2354,14 @@ class Controller(BattleTacticsMixin):
             current=g.current_target(u)
             remembered=self.hero_attack_targets.get(u.handle)
             hero=current if current and current.is_hero and enemy_player(g,current) else None
+            if (hero and u.type=='Udea' and hero.handle==self.dk_attack_target and u.hp>u.hp_max*.5 and
+                    u.handle not in self.micro.pulling and not self.dk_battle_recovering and g.dist(u,hero)<=650 and
+                    (route:=g.path_distance((u.x,u.y),(hero.x,hero.y))) is not None and route<=g.dist(u,hero)+150):
+                continue
+            if (hero and u.type=='ugho' and self.hero_pressure.tc_phase in {'tauren','key_heroes','opportunity'} and
+                    hero.handle==self.hero_pressure.sequence_target and g.dist(u,hero)<=750 and
+                    (route:=g.path_distance((u.x,u.y),(hero.x,hero.y))) is not None and route<=g.dist(u,hero)+200):
+                continue # Bounded TC approach is intentional; distant pursuit is still released.
             lost=remembered is not None and current is None and g.unit(remembered) is None
             if (hero and not in_weapon_range(g,u,hero)) or lost:
                 if self.due(('release_hero',u.handle),now,1):
@@ -2392,7 +2439,7 @@ class Controller(BattleTacticsMixin):
             foes=[e for e in self.creeping.include_drop_carriers(g,foes,anchor)
                   if can_engage(e) and self.combat_progress.allowed(e,now)]
         if self.skeleton_opening(army,foes,now):return True
-        combat=[u for u in army if u.type in {'Udea','Ulic','Nbrn','Nngs','ucry','uobs','ubsp'}]
+        combat=[u for u in army if u.type in {'Udea','Ulic','Nbrn','Nngs','ucry','uobs','ubsp','uban'}]
         if len(combat)>1 and not self.player_contact:
             anchor=min(combat,key=lambda u:sum(g.dist(u,v) for v in combat))
             limit=650
@@ -2421,10 +2468,13 @@ class Controller(BattleTacticsMixin):
         if player_fight:army=[u for u in army if u.type!='ubsp']
         if not army:return False
         pressure=self.hero_pressure.choose(g,army,foes,now) if player_fight else None
+        if player_fight and self.hero_pressure.wyvern_priority:
+            foes=[e for e in foes if e.type=='owyv']
+            if not foes:return False
         orc_focus=self.hero_pressure.orc_focus(g,army,foes,now) if player_fight else None
         target=orc_focus or self.nc_combo.focus(foes,now) or pressure or min(foes,key=lambda u:(not self.creeping.th_priority(u) if not player_fight else False,not self.creeping.carries_drop(u) if not player_fight else False,u.hp+(400 if is_structure(u) else 0)))
         poison_priority=not player_fight and self.creeping.th_poison_gnoll(target)
-        single_finishing=bool(self.nc_combo.pending) or self.nc_combo.single_attempt_at==now or (player_fight and pressure is None) or self.opening_nc_waiting
+        single_finishing=bool(self.nc_combo.pending) or self.nc_combo.single_attempt_at==now or (player_fight and pressure is None) or self.opening_nc_waiting or (player_fight and self.hero_pressure.strategy=='army_first' and not target.is_hero)
         protected=set()
         dk=next((u for u in army if u.type=='Udea'),None)
         lich=next((u for u in army if u.type=='Ulic'),None)
@@ -2475,13 +2525,14 @@ class Controller(BattleTacticsMixin):
                 self.log('forked_lightning_attempt',clock=now,target=target.type,accepted=bool(r))
                 if r:self.cast_until[naga.handle]=now+.8;protected.add(naga.handle)
         if player_fight:
-            protected.update(self.battle_formation.step(self,army,foes,target,now,protected))
+            # Formation is prepared before contact. Never interrupt combat
+            # attacks for a fan adjustment, including previously pending ones.
+            self.battle_formation.pending.clear()
             self.battle_focus_handles=self.focus_ranged([u for u in army if u.handle not in protected],foes,now)
             protected.update(self.battle_focus_handles)
-            self.focus_ghouls([u for u in army if u.type=='ugho' and u.handle not in protected],foes,now)
-            protected.update(u.handle for u in army if u.type=='ugho')
+            protected.update(self.focus_ghouls([u for u in army if u.type=='ugho' and u.handle not in protected],foes,now))
         for u in army:
-            if (u.handle in protected or u.type=='uobs' or now<self.cast_until.get(u.handle,0)
+            if (u.handle in protected or u.type in {'uobs','uban'} or now<self.cast_until.get(u.handle,0)
                     or player_fight and u.handle in self.battle_dk_support):
                 continue
             selected=target

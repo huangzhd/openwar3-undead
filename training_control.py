@@ -8,10 +8,84 @@ from uuid import uuid4
 
 from bootstrap import ROOT
 from undead.version import DISPLAY_NAME, VERSION as BOT_VERSION
+from undead.speed_control import SPEEDS
+
+LABELS={25:'0.25×',50:'0.5×',100:'1×',200:'2×',400:'4×',800:'8×'}
 
 STATUS = ROOT / 'artifacts/training-control.json'
 COMMAND = ROOT / 'artifacts/training-command.json'
+SPEED_COMMAND = ROOT / 'artifacts/training-speed-command.json'
 VALID = {'forfeit', 'restart', 'switch'}
+
+
+def valid_speed(percent):
+    return type(percent) is int and percent in SPEEDS
+
+
+def post_speed(session_id, percent):
+    current=read_json(STATUS)
+    if (not valid_speed(percent) or not current or current.get('session_id')!=session_id
+            or current.get('phase')!='running' or not current.get('speed_control_available')):return False
+    atomic_json(SPEED_COMMAND,dict(session_id=session_id,round=current['round'],percent=percent))
+    return True
+
+
+def take_speed(session_id, round_no):
+    command=read_json(SPEED_COMMAND)
+    if not command or command.get('session_id')!=session_id:return None
+    SPEED_COMMAND.unlink(missing_ok=True)
+    if command.get('round')!=round_no or not valid_speed(command.get('percent')):return None
+    return command['percent']
+
+
+def speed_text(state):
+    state=state or {}
+    if state.get('phase')!='running':return '实际速度：未运行（所选倍速用于下一局）'
+    value=state.get('speed_actual')
+    actual=LABELS.get(value,f'{value/100:g}×') if isinstance(value,(int,float)) else '读取中'
+    pending=state.get('speed_pending')
+    note=('正在设置 '+LABELS[pending]) if valid_speed(pending) else state.get('speed_message','')
+    return '实际速度：'+actual+(' · '+note if note else '')
+
+
+class RoundSpeed:
+    """Runner owns writes; the panel posts round-scoped requests only."""
+    def __init__(self,g,log,session_id,round_no,preferred,started,clock=time.monotonic):
+        self.g,self.log,self.session_id,self.round_no=g,log,session_id,round_no
+        self.preferred=preferred;self.clock=clock;self.at=clock()
+        self.budget_used=self.at-started;self.actual=None;self.pending=None
+        self.requested_at=0;self.message='';self.history=[];self.published=None
+
+    def observe(self,snapshot):
+        now=self.clock()
+        # Slow motion gets proportionate wall time; startup and stalls remain bounded.
+        self.budget_used+=(now-self.at)*min(1,max(25,self.actual or 100)/100)
+        self.at=now
+        value=getattr(snapshot,'speed_pct',None)
+        if type(value) is int and 25<=value<=800 and value!=self.actual:
+            self.actual=value
+            self.history.append(dict(clock=snapshot.clock,percent=value))
+            self.log('training_speed_observed',clock=snapshot.clock,percent=value)
+        if self.pending is not None:
+            if self.actual==self.pending:
+                self.preferred=self.pending;self.pending=None;self.message=''
+                self.log('training_speed_confirmed',clock=snapshot.clock,percent=self.actual)
+            elif now-self.requested_at>=3:
+                self.log('training_speed_unconfirmed',clock=snapshot.clock,requested=self.pending,actual=self.actual)
+                self.pending=None;self.message='未确认切换，请重试'
+        percent=take_speed(self.session_id,self.round_no) if self.session_id else None
+        if percent is not None:
+            self.pending=percent;self.requested_at=now;self.message=''
+            try:accepted=bool(self.g.set_speed(percent))
+            except Exception as exc:
+                accepted=False;self.log('training_speed_error',clock=snapshot.clock,error=repr(exc))
+            self.log('training_speed_requested',clock=snapshot.clock,percent=percent,accepted=accepted)
+            if not accepted:self.pending=None;self.message='设置失败，请重试'
+        published=(self.actual,self.pending,self.message,self.preferred)
+        if self.session_id and published!=self.published:
+            status(self.session_id,speed_actual=self.actual,speed_pending=self.pending,
+                   speed_message=self.message,speed=self.preferred)
+            self.published=published
 
 
 def valid_selection(selection):
@@ -36,13 +110,15 @@ def read_json(path):
 
 
 def begin(selection, speed=100, seconds=180, wall_seconds=240):
+    if not valid_speed(speed):raise ValueError('Unsupported training speed')
     previous=previous_round(read_json(STATUS))
     session_id = uuid4().hex
     COMMAND.unlink(missing_ok=True)
     atomic_json(STATUS, dict(session_id=session_id, phase='loading', round=1,
                              selection=selection, speed=speed, seconds=seconds,
                              wall_seconds=wall_seconds, result=None,
-                             bot_name=DISPLAY_NAME, bot_version=BOT_VERSION, apm=None,last_round=previous))
+                             bot_name=DISPLAY_NAME, bot_version=BOT_VERSION, apm=None,last_round=previous,
+                             speed_control_available=True,speed_actual=None,speed_pending=None,speed_message=''))
     return session_id
 
 
@@ -54,7 +130,7 @@ def status(session_id, **updates):
     atomic_json(STATUS, current)
 
 
-def post(session_id, action, selection=None):
+def post(session_id, action, selection=None, speed=None):
     current = read_json(STATUS)
     if action not in VALID or not current or current.get('session_id') != session_id:
         return False
@@ -62,8 +138,10 @@ def post(session_id, action, selection=None):
         return False
     if action == 'switch' and not valid_selection(selection):
         return False
+    if speed is not None and (action not in {'restart','switch'} or not valid_speed(speed)):return False
     atomic_json(COMMAND, dict(session_id=session_id, action=action,
                               selection=selection if action == 'switch' else None,
+                              speed=speed,
                               nonce=uuid4().hex))
     return True
 
@@ -74,6 +152,7 @@ def take(session_id):
         return None
     COMMAND.unlink(missing_ok=True)
     if command['action']=='switch' and not valid_selection(command.get('selection')):return None
+    if command.get('speed') is not None and not valid_speed(command['speed']):return None
     return command
 
 
@@ -140,7 +219,7 @@ def panel(session_id=None):
     selection = (current or {}).get('selection') or dict(matchup='orc', level=2, mode='easy')
     root = tk.Tk()
     root.title('dayuan 训练面板')
-    root.geometry('550x320')
+    root.geometry('550x400')
     root.resizable(False, False)
     root.attributes('-topmost', True)
     root.configure(bg='#eef2f7')
@@ -171,6 +250,19 @@ def panel(session_id=None):
     mode_choice = tk.StringVar(value=mode[selection['mode']])
     ttk.Combobox(choices, textvariable=mode_choice, values=['简单', '困难'],
                  state='readonly', width=7).pack(side='left')
+    speed_row=tk.Frame(root,bg='#eef2f7');speed_row.pack(pady=(10,0))
+    tk.Label(speed_row,text='游戏速度',bg='#eef2f7').pack(side='left',padx=(0,8))
+    speed_choice=tk.StringVar(value=LABELS.get((current or {}).get('speed',100),'1×'))
+    ttk.Combobox(speed_row,textvariable=speed_choice,values=list(LABELS.values()),
+                 state='readonly',width=7).pack(side='left',padx=(0,12))
+    def chosen_speed():return next(k for k,v in LABELS.items() if v==speed_choice.get())
+    speed_message=tk.StringVar(value=speed_text(current))
+    def apply_speed():
+        if post_speed(session_id,chosen_speed()):speed_message.set('调速请求已发送，等待引擎回读…')
+        else:speed_message.set('当前对局暂不支持调速，请在新版训练进程中使用')
+    speed_apply=tk.Button(speed_row,text='应用速度',command=apply_speed,font=('Microsoft YaHei UI',10))
+    speed_apply.pack(side='left')
+    tk.Label(root,textvariable=speed_message,font=('Microsoft YaHei UI',9),bg='#eef2f7',fg='#334155').pack(pady=3)
     buttons = tk.Frame(root, bg='#eef2f7')
     buttons.pack(pady=(13, 0))
     pending = {'action': None, 'round': None, 'process': None, 'log': None}
@@ -187,7 +279,7 @@ def panel(session_id=None):
         log_path = ROOT / 'artifacts' / ('training-panel-start-' + uuid4().hex[:8] + '.log')
         command = [sys.executable, '-B', str(ROOT / 'training.py'), 'play',
                    '--matchup', next_selection['matchup'], '--level', str(next_selection['level']),
-                   '--mode', next_selection['mode'], '--speed', str(settings.get('speed', 100)),
+                   '--mode', next_selection['mode'], '--speed', str(chosen_speed()),
                    '--seconds', str(settings.get('seconds', 180)),
                    '--wall-seconds', str(settings.get('wall_seconds', 240))]
         with log_path.open('w', encoding='utf-8') as output:
@@ -203,7 +295,8 @@ def panel(session_id=None):
         if action == 'switch' and (not state or state.get('phase') == 'finished'):
             launch_selected(chosen(), state)
             return
-        if post(session_id, action, chosen() if action == 'switch' else None):
+        if post(session_id, action, chosen() if action == 'switch' else None,
+                speed=chosen_speed() if action in {'restart','switch'} else None):
             pending.update(action=action, round=state.get('round'))
             message.set({'forfeit': '正在认输并清理…',
                          'restart': '正在清理并重开本关…',
@@ -222,6 +315,7 @@ def panel(session_id=None):
     def refresh():
         state = read_json(STATUS)
         metrics.set(metrics_text(state))
+        speed_message.set(speed_text(state))
         previous.set(previous_text(state))
         if session_id and (not state or state.get('session_id') != session_id):
             root.destroy()
@@ -258,6 +352,7 @@ def panel(session_id=None):
                 else:
                     message.set('选择种族、关卡和难度后开始训练')
         running = bool(state and state.get('phase') == 'running' and pending['action'] is None)
+        speed_apply.configure(state='normal' if running and state.get('speed_control_available') else 'disabled')
         for button in (forfeit, restart):
             button.configure(state='normal' if running else 'disabled')
         switch.configure(state='normal' if pending['action'] is None and

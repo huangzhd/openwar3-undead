@@ -78,3 +78,23 @@ class Game(SDKGame):
             return None
         items = current.items
         return list(items) if items is not None and len(items) == 6 else None
+
+
+class TrainingGame(Game):
+    """Own N001 is Nbrn in the SHA-pinned UD V61 map only.
+
+    Its object overrides change costs/requirements, never skills or combat
+    stats. Normalize the fair view so every shared combat component and
+    fresh-handle lookup sees the same identity; retain the raw type for logs.
+    Ordinary games and the full-map audit keep their original identities.
+    """
+    def _view(self, snapshot):
+        from dataclasses import replace
+        view = super()._view(snapshot)
+        units = []
+        for unit in view.units:
+            if unit.owner == view.me and unit.type == 'N001' and unit.is_hero:
+                unit = replace(unit, type='Nbrn')
+                unit.raw_type = 'N001'
+            units.append(unit)
+        return replace(view, units=units, by_handle={u.handle: u for u in units})

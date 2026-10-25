@@ -46,13 +46,13 @@ class StatueTests(unittest.TestCase):
         self.assertEqual(g.orders,[('hold',u.handle) for u in g.statues])
         self.assertEqual(sum(e['event']=='statue_support_movement_observed' for e in events),2)
 
-    def test_threatened_full_health_statue_pulls_but_safe_partner_stays(self):
+    def test_threatened_full_health_statue_and_safe_partner_stay(self):
         b,g,_=self.scene();s=b.statue_support
         for u in g.fiends+g.heroes:u.hp=u.hp_max;u.mana=u.mana_max
         first,second=g.statues;first.x=300;second.x=-350
         enemy=unit('hfoo',88,400);enemy.owner=1
         s.tick(b,g.army,[enemy],10)
-        self.assertTrue(any(o[0]=='move' and o[1]==first.handle for o in g.orders))
+        self.assertFalse(any(o[0]=='move' and o[1]==first.handle for o in g.orders))
         self.assertIn(('hold',second.handle),g.orders)
 
     def test_no_route_and_active_cast_do_not_create_move_orders(self):
@@ -101,7 +101,7 @@ class FanTests(unittest.TestCase):
         b,g,_=self.scene();g.path_distance=lambda *a:None
         self.assertFalse(b.battle_formation.step(b,g.army,g.foes,g.foes[0],10));self.assertFalse(g.orders)
 
-    def test_controller_moves_only_two_while_other_fiends_keep_attacking(self):
+    def test_controller_never_moves_fan_during_battle(self):
         from test_siege_0147 import SiegeTests
         b,a,f,cmd,cur,ids,p,ev=SiegeTests().game()
         a.extend(unit('ucry',100+i,0) for i in range(4))
@@ -113,7 +113,7 @@ class FanTests(unittest.TestCase):
         b.fight(a,f,10)
         moving={o[1] for o in cmd if o[0]=='move'}
         attacking={o[1] for o in cmd if o[0]=='attack'}
-        self.assertEqual(len(moving),2);self.assertFalse(moving & attacking)
+        self.assertFalse(moving)
         self.assertGreaterEqual(len(attacking),3)
         cmd.clear();target.owner=12;b.player_contact=[]
         b.fight(a,f,11)

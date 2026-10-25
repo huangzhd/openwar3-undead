@@ -10,6 +10,8 @@ class StatueSupport:
         self.log=log;self.moves={};self.held=set();self.last_plan={}
         self.supply_at={};self.supply_checks={};self.last_supply_mode={};self.mana_at={}
         self.rescuing=set();self.rescue_handled=set()
+        self.retreating=set()
+        self.health={}
 
     def supply(self,b,u,recipient,needy,mode,now):
         g=b.g;ability='Arpl' if mode=='life' else 'Arpm'
@@ -91,11 +93,11 @@ class StatueSupport:
         # Wounded units remain supply recipients. Excluding every pulling unit
         # can strand replacements at home or anchor them on an unsafe front.
         # The medoid and local majority keep one distant straggler from leading.
-        core=[u for u in army if u.type in {'ucry','Udea','Ulic','Nbrn','Nngs'}
+        core=[u for u in army if u.type in {'ucry','ugho','ubsp','uban','Udea','Ulic','Nbrn','Nngs'} and u.hp>0
               and u.handle not in b.shopping]
         if not core:return
         retreating=set(protected)|set(b.micro.pulling)|set(getattr(b,'backline_guards',()))|set(getattr(b,'portal_pulls',()))
-        heroes=[h for h in core if h.type!='ucry' and h.hp>0 and h.handle not in b.battle_shop.reserved]
+        heroes=[h for h in core if h.type in {'Udea','Ulic','Nbrn','Nngs'} and h.hp>0 and h.handle not in b.battle_shop.reserved]
         self.rescuing.intersection_update(h.handle for h in heroes if h.hp<.65*h.hp_max)
         self.rescuing.update(h.handle for h in heroes if h.hp<=.5*h.hp_max and
                             (h.handle in retreating or b.action.name=='RETREAT'))
@@ -108,20 +110,39 @@ class StatueSupport:
         if battle:local=[v for v in local if g.dist(v,anchor)<=500]
         statues=sorted((u for u in army if u.type=='uobs'),key=lambda u:u.handle)
         live={u.handle for u in statues};self.held &= live
+        self.retreating &= live
+        self.health={h:rows for h,rows in self.health.items() if h in live}
         for i,u in enumerate(statues):
+            history=[r for r in self.health.get(u.handle,[]) if now-r[0]<=2]
+            loss=max((hp-u.hp for _,hp in history),default=0)
+            history.append((now,u.hp));self.health[u.handle]=history
             if (u.handle in protected or u.handle in b.shopping or u.handle in b.battle_shop.reserved or
-                    now<b.cast_until.get(u.handle,0) or buffs(g,u)&DISABLED_CASTERS):
+                    buffs(g,u)&DISABLED_CASTERS):
                 self.held.discard(u.handle);continue
             threats=[e for e in hostiles if b.army_recovery.threat_range(e.type)>0 and
                      g.dist(e,u)<b.army_recovery.threat_range(e.type)+100]
-            threatened=bool(threats) or (now-b.micro.hit.get(u.handle,-100)<3 and
+            exposed=bool(threats) or (now-b.micro.hit.get(u.handle,-100)<3 and
                 clearance((u.x,u.y),hostiles,b.army_recovery.threat_range)<120)
-            if self.rescue(b,u,rescue_heroes,core,hostiles,now,threatened,assigned):
+            pursuers=[e for e in hostiles if (t:=g.current_target(e)) is not None and t.handle==u.handle]
+            chased=bool(pursuers)
+            focused=sum(g.dist(e,u)<b.army_recovery.threat_range(e.type)+180 for e in pursuers
+                        if b.army_recovery.threat_range(e.type)>0)
+            early=(focused>=2 or focused>=1 and u.hp<=u.hp_max*.75 or exposed and loss>=u.hp_max*.15)
+            if u.hp<=u.hp_max*.6 or early:self.retreating.add(u.handle)
+            elif u.hp>=u.hp_max*.75 and not chased:self.retreating.discard(u.handle)
+            threatened=(exposed or chased) and u.handle in self.retreating
+            if now<b.cast_until.get(u.handle,0):
+                # A supply animation must not postpone escape from focus fire.
+                # Only release this controller's own supply lock.
+                if threatened and b.cast_until[u.handle]==self.supply_at.get(u.handle,-100)+1.2:
+                    b.cast_until.pop(u.handle,None)
+                else:continue
+            if u.handle not in self.retreating and self.rescue(b,u,rescue_heroes,core,hostiles,now,exposed,assigned):
                 self.rescue_handled.add(u.handle)
                 continue
             preferred=b.army_recovery.statue_modes.get(u.handle,{}).get('mode','life' if i%2==0 else 'mana')
             needs={'life':[v for v in local if v.hp<v.hp_max-15],
-                   'mana':[v for v in local if v.type in {'Udea','Ulic','Nbrn','Nngs'} and getattr(v,'mana_max',0)-getattr(v,'mana',0)>=5]}
+                   'mana':[v for v in local if v.type in {'Udea','Ulic','Nbrn','Nngs','uban'} and getattr(v,'mana_max',0)-getattr(v,'mana',0)>=5]}
             # One nearby car must cover both resources, including after its partner morphs.
             # Start with life; alternate when both are needed, with short urgent-life priority.
             last=self.last_supply_mode.get(u.handle)
@@ -145,6 +166,10 @@ class StatueSupport:
             covered=(g.dist(u,support_anchor)<=220 if recipient else
                      g.dist(u,anchor)<=520 and sum(g.dist(u,v)<=600 for v in local)>=max(1,(len(local)+1)//2))
             if battle:covered=covered and g.dist(u,anchor)<=350
+            if battle and recipient and g.dist(u,recipient)<=600:covered=True
+            # While taking fire, keep restoring units already in the supply
+            # area instead of chasing a preferred 220-distance station.
+            if exposed and recipient and g.dist(u,recipient)<=600:covered=True
             pending=self.moves.get(u.handle)
             if pending and not pending.get('observed') and g.dist(u,pending['origin'])>64 and g.dist(u,pending['point'])<g.dist(pending['origin'],pending['point'])-64:
                 self.log('statue_support_movement_observed',clock=now,handle=u.handle,reason=pending['reason'],point=(u.x,u.y))
@@ -156,8 +181,13 @@ class StatueSupport:
                     b.last.pop(('go',u.handle),None)
                     self.log('statue_support_stationed',clock=now,handle=u.handle,point=(u.x,u.y),covered=sum(g.dist(u,v)<=600 for v in local))
                 continue
+            if u.handle in self.retreating and not threatened:
+                # Stay safely behind until recovered; supply from here if able.
+                if recipient and g.dist(u,recipient)<=600:self.supply(b,u,recipient,needy,mode,now)
+                elif u.handle not in self.held and g.hold(u):self.held.add(u.handle)
+                continue
             self.held.discard(u.handle)
-            if now-self.last_plan.get(u.handle,-100)<2:continue
+            if now-self.last_plan.get(u.handle,-100)<(.5 if threatened else 2):continue
             self.last_plan[u.handle]=now
             close=[]
             if battle:
@@ -204,4 +234,5 @@ class StatueSupport:
             if point is None:continue
             if g.move(u,*point):
                 self.moves[u.handle]=dict(origin=(u.x,u.y),point=point,reason=reason)
-                self.log('statue_support_move_attempt',clock=now,handle=u.handle,point=point,reason=reason,accepted=True)
+                self.log('statue_support_move_attempt',clock=now,handle=u.handle,point=point,reason=reason,accepted=True,
+                         hp=u.hp,hp_ratio=round(u.hp/u.hp_max,3),attackers=focused,recent_loss=round(loss,2))

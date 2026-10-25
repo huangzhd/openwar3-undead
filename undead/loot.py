@@ -1,6 +1,7 @@
 """Pick up visible drops after a safe camp clear and verify their observed effect."""
 from math import hypot
 from .equipment import LICH_ITEMS,BLUE_POTIONS,HEALTH_POTIONS,HEALING_SCROLLS,supply_receiver,scroll_priority,can_receive
+from .equipment import gear_owner
 
 class Loot:
     def __init__(self,catalog,log):
@@ -80,8 +81,9 @@ class Loot:
                 eligible=[min(eligible,key=lambda h:scroll_priority(h,g.inventory(h)))]
             if item.type in BLUE_POTIONS and any(h.type=='Udea' for h in eligible):
                 eligible=[h for h in eligible if h.type=='Udea']
-            if item.type in LICH_ITEMS and any(h.type=='Ulic' for h in eligible):
-                eligible=[h for h in eligible if h.type=='Ulic']
+            owner=gear_owner(item.type)
+            if owner and any(h.type==owner for h in eligible):
+                eligible=[h for h in eligible if h.type==owner]
             preferred='Ulic' if 'tome_int' in row.get('effects',{}) else 'Nbrn' if 'tome_agi' in row.get('effects',{}) else 'Udea'
             hero=min(eligible,key=lambda h:g.dist(h,item)+(0 if h.type==preferred else 150))
             route=g.path_distance((hero.x,hero.y),(item.x,item.y))

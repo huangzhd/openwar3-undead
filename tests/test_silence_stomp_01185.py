@@ -64,6 +64,7 @@ class PersistentInvulTests(unittest.TestCase):
 
     def test_group_scroll_iteration_does_not_erase_urgent_item_priority(self):
         g,dk,lich,foe,c,locks,events=self.scene()
+        dk.hp=dk.hp_max # Isolate Lich rescue; a dying DK now legitimately overrides this with a scroll.
         lich.hp=170;g.bags[lich.handle][:2]=['shea','pnvl']
         c.tick(g,g.army,[foe],10,locks,urgent={lich.handle})
         self.assertEqual(g.orders,[('use','Ulic','pnvl')])
@@ -104,6 +105,7 @@ class HeroSpacingTests(unittest.TestCase):
     def test_stomp_level_and_unknown_level_separate_heroes_inside_coil_range(self):
         for level in (1,2,3,None):
             b,g,own,foes,orders,dk=rear.RearDkTests().scene();lich=own[6]
+            dk.hp=dk.hp_max*.5
             old=g.abilities
             g.abilities=lambda u:([dict(code='AOws',level=level)] if level and u.type=='Otch' else old(u))
             pulls={};b.rear_dk(own,foes,10,pulls)
@@ -120,6 +122,7 @@ class HeroSpacingTests(unittest.TestCase):
 
     def test_separation_does_not_override_emergency_escape_or_unreachable_path(self):
         b,g,own,foes,orders,dk=rear.RearDkTests().scene()
+        dk.hp=dk.hp_max*.5
         pulls={dk.handle:(-1000,0)};b.rear_dk(own,foes,10,pulls)
         self.assertEqual(pulls[dk.handle],(-1000,0))
         b.army_recovery.safe_path=Mock(return_value=None);pulls={}
@@ -129,6 +132,7 @@ class HeroSpacingTests(unittest.TestCase):
     def test_training_telemetry_logs_only_owned_inventory_and_visible_details(self):
         b,g,own,foes,orders,events,effects=shared.SharedBattleTests().scene()
         lich=own[6];effects[lich.handle]=['BPSE'];g.inventory=Mock(return_value=['pnvl'])
+        lich.skill_points=0;foes[2].skill_points=0
         row=unit_row(g,lich)
         self.assertEqual(row['buffs'],['BPSE']);self.assertEqual(row['inventory'],['pnvl'])
         g.inventory.reset_mock();tc=foes[2];tc.has_detail=False

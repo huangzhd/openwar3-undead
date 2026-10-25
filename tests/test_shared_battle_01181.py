@@ -16,6 +16,7 @@ class SharedBattleTests(unittest.TestCase):
         old,g,own,foes,orders,events,effects=arena.TrainingOrcFocusTests().scene()
         b=kind(None,lambda e,**kw:events.append((e,kw)),2)
         b.g=g;b.home=old.home;b.enemy_main=old.enemy_main
+        b.hero_pressure.prefer_key_heroes=False # V1.83 default has dedicated coverage.
         b.action=old.action;b.attack_committed=True
         b.player_contact=foes;b.battle_enemies=foes
         g.walk_path=lambda a,c:[a,c]

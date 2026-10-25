@@ -39,6 +39,7 @@ class TrainingOrcFocusTests(unittest.TestCase):
             cast=lambda u,spell,**kw:orders.append(('cast',u.handle,spell,kw)) or True,
             observe_coil=lambda *a:None)
         b=TrainingController(None,lambda e,**kw:events.append((e,kw)),2);b.g=g
+        b.hero_pressure.prefer_key_heroes=False # Preserve the legacy adaptive-plan regression suite.
         return b,g,own,foes,orders,events,effects
 
     def test_six_fiends_spread_and_destroyer_starts_behind_all_ground_roles(self):

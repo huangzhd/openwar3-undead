@@ -6,7 +6,7 @@ class SingleFinisherTests(unittest.TestCase):
         b,d,l,h,f,own,foes,orders,events,*_=nc_tests.NCTests().make();h.hp=65
         b.combat_spells(own,foes,10);b.fight(own,foes,10)
         self.assertEqual([r for r in orders if r[1] in ('deathcoil','frostnova')],[('Udea','deathcoil',h.handle)])
-        self.assertEqual(events[0]['estimated_damage'],70)
+        self.assertEqual(next(e for e in events if e['event'] in {'nc_attempt','hero_finisher_attempt'})['estimated_damage'],70)
         self.assertEqual(b.nc_combo.pending['spells'],('AUdc',))
 
     def test_nova_alone_does_not_require_dk_or_his_mana(self):
@@ -29,7 +29,7 @@ class SingleFinisherTests(unittest.TestCase):
         skills[h.handle]=[dict(code='AIsr',level=1)];h.hp=65;d.mana=0
         b.combat_spells(own,foes,10)
         self.assertEqual(orders,[('Ulic','frostnova',h.handle)])
-        self.assertAlmostEqual(events[0]['estimated_damage'],70.35)
+        self.assertAlmostEqual(next(e for e in events if e['event'] in {'nc_attempt','hero_finisher_attempt'})['estimated_damage'],70.35)
         b,d,l,h,f,own,foes,orders,events,skills,buffs,cd=nc_tests.NCTests().make()
         h.hp=135;d.mana=0;skills[l.handle][0]['level']=2
         b.combat_spells(own,foes,10);self.assertEqual(orders,[('Ulic','frostnova',h.handle)])

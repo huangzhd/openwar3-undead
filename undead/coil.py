@@ -7,8 +7,9 @@ from w3slk import read_slk
 
 def heal_eligible(unit):
     """Hero Coil starts at half health; fiends wait until below 40%."""
-    if unit.hp<=0 or unit.hp_max<=0 or unit.type=='ucrm':return False
+    if unit.hp<=0 or unit.hp_max<=0 or unit.type in {'ucrm','ugho'}:return False
     if unit.type in {'Ulic','Nbrn'}:return unit.hp<=unit.hp_max*.5
+    if unit.type=='ubsp':return unit.hp<=unit.hp_max*.5
     if unit.type=='ucry':return unit.hp<unit.hp_max*.4
     return unit.hp_max-unit.hp>=100 or unit.hp/unit.hp_max<.45
 
@@ -121,4 +122,5 @@ def damage_types():
 
 def can_damage(code):
     # Unknown types are not assumed to be valid living targets.
-    return code in damage_types()
+    # Shared offensive policy: save Coil for healing instead of headhunters.
+    return code not in {'ohun','otbk'} and code in damage_types()

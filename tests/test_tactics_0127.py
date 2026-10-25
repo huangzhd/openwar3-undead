@@ -29,11 +29,13 @@ class LichTacticsTests(unittest.TestCase):
             unit=lambda h:next((u for u in own if u.handle==h),None))
         b=Controller(g,lambda *a,**kw:None)
         b.player_contact=[unit('hfoo',90,100)]
-        expected=[lich,dark,other_fiend,fiend,ghoul]
+        expected=[lich,dark,other_fiend,fiend]
         for now,target in enumerate(expected,1):
             b.heal_allies([dk,*own],now*5)
             self.assertIs(casts[-1],target)
             target.hp=target.hp_max
+        b.heal_allies([dk,*own],30)
+        self.assertEqual(len(casts),4) # A critically wounded ghoul never consumes Coil.
 
 
 class SkeletonScoutTests(unittest.TestCase):

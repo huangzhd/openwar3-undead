@@ -11,7 +11,7 @@ class WoundedStatueAnchorTests(unittest.TestCase):
         b,g,events=prior.StatueTests().scene()
         row=json.loads((Path(__file__).parent/'fixtures/ch-wounded-statue-anchor-01127.json').read_text(encoding='utf-8'))['sample']
         g.army=[N(**{**u,'handle':tuple(u['handle'])}) for u in row['army']]
-        hostiles=[N(**u) for u in row['enemies']]
+        hostiles=[N(**{**u,'handle':tuple(u['handle'])}) for u in row['enemies']]
         b.micro.pulling={u.handle for u in g.army if u.pulling}
         b.statue_support.tick(b,g.army,hostiles,row['clock'])
         moves=[o for o in g.orders if o[0]=='move']

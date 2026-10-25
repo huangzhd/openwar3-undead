@@ -22,6 +22,7 @@ class OrcMeleeTests(unittest.TestCase):
     def test_shared_group_grunts_then_raiders_before_heroes_and_old_combo(self):
         for kind in (Controller,TrainingController):
             b,g,own,foes,orders,events,effects,car,troops,tc,fs=self.scene(kind)
+            fs.x=1200 # Output sequence is tested outside the Farseer's AA zone.
             b.nc_combo.pending=dict(target=tc.handle,clock=10)
             for tick,victim in enumerate(troops):
                 orders.clear();now=10+2*tick
@@ -35,6 +36,9 @@ class OrcMeleeTests(unittest.TestCase):
     def test_healthy_destroyer_is_not_recalled_by_generic_pullback(self):
         for kind in (Controller,TrainingController):
             b,g,own,foes,orders,events,effects,car,*_=self.scene(kind)
+            # Healthy destroyers may fire freely only outside hostile AA,
+            # including the Farseer's ranged attack (V1.78 safety rule).
+            next(e for e in foes if e.type=='Ofar').x=1200
             car.hp=car.hp_max*.46;b.micro.pulling.add(car.handle);pulls={car.handle:(-900,0)}
             b.rear_destroyers(own,foes,10,pulls,None);b.attack_destroyers(own,foes,10,pulls)
             self.assertNotIn(car.handle,pulls);self.assertNotIn(car.handle,b.micro.pulling)
@@ -53,6 +57,7 @@ class OrcMeleeTests(unittest.TestCase):
     def test_dispel_wolf_precedes_attack_and_preserves_cast_window(self):
         for kind in (Controller,TrainingController):
             b,g,own,foes,orders,events,effects,car,troops,tc,fs=self.scene(kind)
+            fs.x=1200 # Avoid conflating the cast window with AA escape.
             wolf=unit('osw1',99,owner=1,x=-200);wolf.has_detail=True;wolf.mana=0;foes.append(wolf)
             # Isolate the dispel window; TC control ordering is checked separately.
             own[7].mana=0;b.combat_spells=Mock();b.frost_armor=Mock();b.heal_allies=Mock()

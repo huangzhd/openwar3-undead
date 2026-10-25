@@ -15,7 +15,7 @@ from w3mpq import Mpq
 COMMIT = '71c0e1fdafc3cd523cbbd7feb7f3570d3de020c2'
 SOURCE = 'converted-1.27/UD-decisive-V61-1.27.w3x'
 SHA256 = 'bc10e7835f7a99e4c6e678bb9aae3193cb2149694ecec666af1df9d970897718'
-VERSION = 'ud-training-0.1.0'
+VERSION = 'ud-training-0.1.1'
 MATCHUPS = {'human': 1, 'orc': 2, 'undead': 3, 'nightelf': 4}
 ORIGINAL = ROOT / 'vendor/ud-decisive' / SOURCE
 
@@ -133,21 +133,66 @@ def patch_script(script, matchup, level, mode):
     # with preplaced forces; the adapter does not purchase units.
     # 1 waiting, 2 battle, 3 slot-0 win, 4 slot-1 win.
     edit('Trig_Main_Actions', lambda body: body +
-         '    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 1)\n')
+         '    if udg_Counting then\n'
+         '        call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 1)\n'
+         '    else\n'
+         '        call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 2)\n'
+         '    endif\n')
     edit('Trig_Main_Actions', lambda body:
          '    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 20)\n' + body)
     def countdown(body):
-        needle = 'set udg_Counting = false'
-        if body.count(needle) != 2:
-            raise ValueError('Unexpected countdown implementation')
-        return body.replace(needle, needle + '\n            call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 2)')
+        # The original UI uses a game timer, but releases hidden/paused units
+        # after TriggerSleepAction. Those clocks can diverge under speed control.
+        # Use the displayed timer's expiry, retaining the original placement,
+        # unpause and reveal calls verbatim. Early manual Ready still owns its
+        # existing path; its Counting=false prevents a second release here.
+        callbacks=[]
+        for branch,inner,side in (('011','008',1),('012','007',0)):
+            name=f'OWT_CountdownRelease{side}'
+            guard=f'        if ( Trig_ComputerForceCountdown_Func{branch}Func{inner}C() ) then'
+            start=body.index(guard)
+            end=body.index('            set udg_Counting = false',start)
+            release=body[start+len(guard):end]
+            callbacks.append(f'function {name} takes nothing returns nothing\n'
+                '    if udg_RoundOver or not udg_Counting then\n        return\n    endif\n'
+                +release+'    set udg_Counting = false\n'
+                '    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 2)\n'
+                '    call TimerStart(CreateTimer(), 30.00, false, function OWT_CountdownDustReady)\n'
+                'endfunction\n\n')
+        prefix=body[:body.index('    if ( Trig_ComputerForceCountdown_Func011C() ) then')]
+        tail=''
+        for branch,side,title in (('011',1,'215'),('012',0,'216')):
+            first='002' if side==1 else '001';second='003' if side==1 else '002'
+            tail+=(f'    if ( Trig_ComputerForceCountdown_Func{branch}C() ) then\n'
+                   f'        call ForGroupBJ( GetUnitsOfPlayerAll(Player({side})), function Trig_ComputerForceCountdown_Func{branch}Func{first}002 )\n'
+                   f'        call ForGroupBJ( GetUnitsOfPlayerAll(Player({side})), function Trig_ComputerForceCountdown_Func{branch}Func{second}002 )\n'
+                   '        call DestroyTimerDialogBJ( GetLastCreatedTimerDialogBJ() )\n'
+                   f'        call CreateTimerDialogBJ( GetLastCreatedTimerBJ(), "TRIGSTR_{title}" )\n'
+                   f'        call TimerStart(GetLastCreatedTimerBJ(), udg_WaitingTime, false, function OWT_CountdownRelease{side})\n'
+                   '    endif\n')
+        helpers=('function OWT_CountdownDustReady takes nothing returns nothing\n'
+                 '    call DestroyTimer(GetExpiredTimer())\n'
+                 '    if not udg_RoundOver then\n'
+                 '        call EnableTrigger( gg_trg_P1_Dust )\n'
+                 '        call EnableTrigger( gg_trg_P2_Dust )\n'
+                 '    endif\nendfunction\n\n'+''.join(callbacks))
+        # edit() replaces by offsets; insert helpers afterwards instead.
+        countdown.helpers=helpers
+        return prefix+tail
     edit('Trig_ComputerForceCountdown_Actions', countdown)
+    text=text.replace('function Trig_ComputerForceCountdown_Actions takes',
+                      countdown.helpers+'function Trig_ComputerForceCountdown_Actions takes',1)
     # Publish the original ten-second victory check's living, non-building
     # enemy count to the separate lifecycle auditor. The fair combat policy
     # never reads this signal. It distinguishes a hidden survivor from a
     # broken win trigger without changing the original adjudication.
     edit('Trig_CheckWin10_Actions', lambda body:
-         '    call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 100 + CountUnitsInGroup(GetUnitsOfPlayerMatching(Player(1), Condition(function Trig_CheckWin10_Func002Func002001001002))))\n'
+         '    if not udg_RoundOver then\n'
+         '        if udg_Counting then\n'
+         '            call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 100 + CountUnitsInGroup(GetUnitsOfPlayerMatching(Player(1), Condition(function Trig_CheckWin10_Func002Func002001001002))))\n'
+         '        else\n'
+         '            call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 200 + CountUnitsInGroup(GetUnitsOfPlayerMatching(Player(1), Condition(function Trig_CheckWin10_Func002Func002001001002))))\n'
+         '        endif\n    endif\n'
          + body)
     # Player1Win/Player2Win still adjudicate the round. CheckPass must stop
     # before its original unit removal and automatic next-round branch.

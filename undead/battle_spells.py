@@ -2,8 +2,57 @@
 from .destroyer import ENEMY_BUFFS
 from .hero_spell_telemetry import ready, level
 from .nc_combo import spell_data, DISABLED_CASTERS, BLOCKED_BUFFS, BLOCKED_ABILITIES, aoe_threat
-from .targeting import buffs, abilities, enemy_player, can_engage, unit_stats
+from .targeting import buffs, abilities, enemy_player, can_engage, unit_stats, webbed_air
+
+
+def nova_wyverns(b,army,foes,now,blocked=()):
+    g=b.g;lich,row=caster(b,army,'Ulic','AUfn',now,blocked)
+    if not lich:return
+    targets=[e for e in foes if e.type=='owyv' and spell_target(g,e) and g.dist(lich,e)<=row['range']]
+    target=min(targets,key=lambda e:(not webbed_air(g,e),e.handle!=b.hero_pressure.preferred,
+               -sum(g.dist(e,v)<=row['area'] for v in targets),e.hp),default=None)
+    if not target or not b.due(('wyvern_nova',lich.handle),now,2):return
+    key=(lich.handle,target.handle,'AUfn')
+    if b.nc_combo.failures.get(key,0)>=3:return
+    receipt=g.cast(lich,'frostnova',target=target)
+    if not receipt:b.nc_combo.failures[key]=b.nc_combo.failures.get(key,0)+1
+    b.log('battle_wyvern_nova_attempt',clock=now,target=target.handle,webbed=webbed_air(g,target),accepted=bool(receipt))
+    if receipt:
+        b.cast_until[lich.handle]=now+.8;b.hero_pressure.preferred=target.handle
 from .structures import is_structure
+from .coil import can_damage
+
+
+def burst_troops(b,army,foes,now,blocked=()):
+    """Nova the headhunter cluster; reserve DK mana for healing.
+
+    Healing is performed by the caller first. Casts stay at current range;
+    the estimate prevents redundant spells but never claims a confirmed kill.
+    """
+    if b.nc_combo.pending or b.nc_combo.single_attempt_at==now:return
+    g=b.g
+    heads=[e for e in foes if e.type in {'ohun','otbk'} and spell_target(g,e)]
+    if not heads:return
+    lich,row=caster(b,army,'Ulic','AUfn',now,blocked)
+    candidates=[e for e in heads if lich and g.dist(lich,e)<=row['range']]
+    def attempt(u,code,spell,target,**fields):
+        key=(u.handle,target.handle,code)
+        if b.nc_combo.failures.get(key,0)>=3 or now<b.nc_combo.retry_at.get(key,0):return False
+        b.nc_combo.retry_at[key]=now+2
+        accepted=bool(g.cast(u,spell,target=target))
+        if not accepted:b.nc_combo.failures[key]=b.nc_combo.failures.get(key,0)+1
+        b.log('battle_troop_spell_attempt',clock=now,spell=spell,target=target.handle,
+              type=target.type,accepted=accepted,**fields)
+        return accepted
+    if candidates:
+        target=max(candidates,key=lambda e:(sum(g.dist(e,v)<=row['area'] for v in heads),
+                   e.handle==b.hero_pressure.preferred,-e.hp))
+        if b.due(('troop_nova',lich.handle,target.handle),now,2):
+            receipt=attempt(lich,'AUfn','frostnova',target,
+                            clustered=sum(g.dist(target,v)<=row['area'] for v in heads))
+            if receipt:
+                b.cast_until[lich.handle]=now+.8
+                b.hero_pressure.preferred=target.handle
 
 
 def spell_target(g,u):

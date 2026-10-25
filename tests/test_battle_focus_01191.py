@@ -119,8 +119,8 @@ class BattleFocusTests(unittest.TestCase):
                 sk=self.skeleton(own,code)
                 b.engage_battle(own,foes,12)
                 skorders=[o for o in orders if o[1]==sk.handle]
-                self.assertTrue(skorders);self.assertTrue(all(o[0]=='attack' for o in skorders))
-                victim=g.unit(skorders[0][2]);old=g.current_target
+                self.assertTrue(skorders);self.assertTrue(all(o[0]=='attack_move' for o in skorders))
+                victim=foes[0];old=g.current_target
                 g.current_target=lambda u:victim if u is sk else old(u)
                 orders.clear();b.go([sk],(-1000,0),14);b.go_raw([sk],(-1000,0),16)
                 self.assertFalse(orders) # Preserve approach and swing, no repeated attack/move.
