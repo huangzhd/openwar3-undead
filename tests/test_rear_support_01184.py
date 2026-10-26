@@ -23,7 +23,7 @@ class RearDkTests(unittest.TestCase):
         point=pulls[dk.handle]
         self.assertLess(point[0],-140)
         self.assertLess(dist(point,own[6]),750)
-        self.assertGreater(dist(point,own[6]),700)
+        self.assertLessEqual(abs(point[1]),180)
         dk.x,dk.y=point;b.rear_dk(own,foes,12,{})
         self.assertIn(('hold',dk.handle),orders)
         orders.clear();b.engage_battle(own,foes,13)

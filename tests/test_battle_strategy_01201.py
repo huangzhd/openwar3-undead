@@ -124,9 +124,10 @@ class BattleStrategyTests(unittest.TestCase):
         b.focus_ghouls(own[:6],foes,10)
         self.assertEqual({o[1] for o in orders},{own[4].handle,own[5].handle})
 
-    def test_destroyer_never_attacks_through_anti_air_or_when_retreating(self):
+    def test_destroyer_retreats_when_focused_by_anti_air(self):
         for kind in (Controller,TrainingController):
             b,g,own,foes,orders,events,effects,dk,tc=self.scene(kind);d=own[8];d.x=100
+            g.current_target=lambda u:d if u.type in {'ohun','otbk'} else None
             b.hero_pressure.select_strategy(g,own,foes,10)
             pulls={};b.rear_destroyers(own,foes,10,pulls,None);b.attack_destroyers(own,foes,10,pulls)
             self.assertIn(d.handle,pulls)

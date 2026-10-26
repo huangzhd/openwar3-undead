@@ -15,7 +15,48 @@ LABELS={25:'0.25×',50:'0.5×',100:'1×',200:'2×',400:'4×',800:'8×'}
 STATUS = ROOT / 'artifacts/training-control.json'
 COMMAND = ROOT / 'artifacts/training-command.json'
 SPEED_COMMAND = ROOT / 'artifacts/training-speed-command.json'
+MODE_COMMAND = ROOT / 'artifacts/training-mode-command.json'
 VALID = {'forfeit', 'restart', 'switch'}
+
+
+def post_mode(session_id, mode):
+    current=read_json(STATUS)
+    if (mode not in {'manual','auto'} or not current or current.get('session_id')!=session_id
+            or current.get('phase')!='running' or not current.get('mode_control_available')):return False
+    atomic_json(MODE_COMMAND,dict(session_id=session_id,round=current['round'],mode=mode))
+    return True
+
+
+def take_mode(session_id, round_no):
+    command=read_json(MODE_COMMAND)
+    if not command or command.get('session_id')!=session_id:return None
+    MODE_COMMAND.unlink(missing_ok=True)
+    if command.get('round')!=round_no or command.get('mode') not in {'manual','auto'}:return None
+    return command['mode']
+
+
+def control_text(state):
+    state=state or {}
+    if state.get('phase')!='running':return '控制：未运行（新一局默认自动）'
+    if not state.get('mode_control_available'):return '控制：旧训练进程不支持切换'
+    return ('控制：人工接管 · bot 已停止发令' if state.get('control_mode')=='manual'
+            else '控制：自动 · bot 控制部队')
+
+
+class RoundControl:
+    """Only the runner acknowledges a change, before any controller dispatch."""
+    def __init__(self,session_id,round_no,log):
+        self.session_id,self.round_no,self.log=session_id,round_no,log
+        self.mode='auto';self.history=[]
+
+    def observe(self,now):
+        mode=take_mode(self.session_id,self.round_no) if self.session_id else None
+        if mode is None or mode==self.mode:return None
+        self.mode=mode
+        self.history.append(dict(clock=now,mode=mode))
+        self.log('training_control_changed',clock=now,mode=mode)
+        if self.session_id:status(self.session_id,control_mode=mode)
+        return mode
 
 
 def valid_speed(percent):
@@ -56,7 +97,7 @@ class RoundSpeed:
         self.budget_used=self.at-started;self.actual=None;self.pending=None
         self.requested_at=0;self.message='';self.history=[];self.published=None
 
-    def observe(self,snapshot):
+    def observe(self,snapshot,override=None):
         now=self.clock()
         # Slow motion gets proportionate wall time; startup and stalls remain bounded.
         self.budget_used+=(now-self.at)*min(1,max(25,self.actual or 100)/100)
@@ -74,6 +115,8 @@ class RoundSpeed:
                 self.log('training_speed_unconfirmed',clock=snapshot.clock,requested=self.pending,actual=self.actual)
                 self.pending=None;self.message='未确认切换，请重试'
         percent=take_speed(self.session_id,self.round_no) if self.session_id else None
+        # Takeover wins over an already queued speed request in this iteration.
+        if override is not None:percent=override
         if percent is not None:
             self.pending=percent;self.requested_at=now;self.message=''
             try:accepted=bool(self.g.set_speed(percent))
@@ -109,7 +152,7 @@ def read_json(path):
         return None
 
 
-def begin(selection, speed=100, seconds=180, wall_seconds=240):
+def begin(selection, speed=100, seconds=None, wall_seconds=None):
     if not valid_speed(speed):raise ValueError('Unsupported training speed')
     previous=previous_round(read_json(STATUS))
     session_id = uuid4().hex
@@ -118,6 +161,7 @@ def begin(selection, speed=100, seconds=180, wall_seconds=240):
                              selection=selection, speed=speed, seconds=seconds,
                              wall_seconds=wall_seconds, result=None,
                              bot_name=DISPLAY_NAME, bot_version=BOT_VERSION, apm=None,last_round=previous,
+                             mode_control_available=True,control_mode='auto',
                              speed_control_available=True,speed_actual=None,speed_pending=None,speed_message=''))
     return session_id
 
@@ -219,7 +263,7 @@ def panel(session_id=None):
     selection = (current or {}).get('selection') or dict(matchup='orc', level=2, mode='easy')
     root = tk.Tk()
     root.title('dayuan 训练面板')
-    root.geometry('550x400')
+    root.geometry('550x470')
     root.resizable(False, False)
     root.attributes('-topmost', True)
     root.configure(bg='#eef2f7')
@@ -263,6 +307,21 @@ def panel(session_id=None):
     speed_apply=tk.Button(speed_row,text='应用速度',command=apply_speed,font=('Microsoft YaHei UI',10))
     speed_apply.pack(side='left')
     tk.Label(root,textvariable=speed_message,font=('Microsoft YaHei UI',9),bg='#eef2f7',fg='#334155').pack(pady=3)
+    mode_pending={'value':None,'round':None}
+    mode_message=tk.StringVar(value=control_text(current))
+    mode_row=tk.Frame(root,bg='#eef2f7');mode_row.pack(pady=(8,0))
+    def request_mode(value):
+        state=read_json(STATUS)
+        if post_mode(session_id,value):
+            mode_pending.update(value=value,round=state.get('round'))
+            if value=='manual':speed_choice.set('1×')
+            mode_message.set('控制切换请求已发送，等待运行器确认…')
+    manual=tk.Button(mode_row,text='人工接管（1×）',width=16,
+                     command=lambda:request_mode('manual'),font=('Microsoft YaHei UI',10))
+    automatic=tk.Button(mode_row,text='自动控制',width=16,
+                        command=lambda:request_mode('auto'),font=('Microsoft YaHei UI',10))
+    manual.pack(side='left',padx=9);automatic.pack(side='left',padx=9)
+    tk.Label(root,textvariable=mode_message,font=('Microsoft YaHei UI',9),bg='#eef2f7',fg='#334155').pack(pady=3)
     buttons = tk.Frame(root, bg='#eef2f7')
     buttons.pack(pady=(13, 0))
     pending = {'action': None, 'round': None, 'process': None, 'log': None}
@@ -275,13 +334,10 @@ def panel(session_id=None):
         if active_processes():
             message.set('已有对局在运行，暂不能启动新关卡')
             return None
-        settings = state or {}
         log_path = ROOT / 'artifacts' / ('training-panel-start-' + uuid4().hex[:8] + '.log')
         command = [sys.executable, '-B', str(ROOT / 'training.py'), 'play',
                    '--matchup', next_selection['matchup'], '--level', str(next_selection['level']),
-                   '--mode', next_selection['mode'], '--speed', str(chosen_speed()),
-                   '--seconds', str(settings.get('seconds', 180)),
-                   '--wall-seconds', str(settings.get('wall_seconds', 240))]
+                   '--mode', next_selection['mode'], '--speed', str(chosen_speed())]
         with log_path.open('w', encoding='utf-8') as output:
             process = subprocess.Popen(command, cwd=ROOT, stdout=output,
                                        stderr=subprocess.STDOUT,
@@ -352,6 +408,13 @@ def panel(session_id=None):
                 else:
                     message.set('选择种族、关卡和难度后开始训练')
         running = bool(state and state.get('phase') == 'running' and pending['action'] is None)
+        if (not running or state.get('round')!=mode_pending['round']
+                or state.get('control_mode')==mode_pending['value']):mode_pending['value']=None
+        waiting=mode_pending['value'] is not None
+        mode_message.set('控制切换请求已发送，等待运行器确认…' if waiting else control_text(state))
+        switchable=running and state.get('mode_control_available') and not waiting
+        manual.configure(state='normal' if switchable and state.get('control_mode')!='manual' else 'disabled')
+        automatic.configure(state='normal' if switchable and state.get('control_mode')=='manual' else 'disabled')
         speed_apply.configure(state='normal' if running and state.get('speed_control_available') else 'disabled')
         for button in (forfeit, restart):
             button.configure(state='normal' if running else 'disabled')

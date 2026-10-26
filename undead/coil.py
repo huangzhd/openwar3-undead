@@ -8,7 +8,7 @@ from w3slk import read_slk
 def heal_eligible(unit):
     """Hero Coil starts at half health; fiends wait until below 40%."""
     if unit.hp<=0 or unit.hp_max<=0 or unit.type in {'ucrm','ugho'}:return False
-    if unit.type in {'Ulic','Nbrn'}:return unit.hp<=unit.hp_max*.5
+    if unit.type in {'Ulic','Nbrn','Ucrl','uabo'}:return unit.hp<=unit.hp_max*.5
     if unit.type=='ubsp':return unit.hp<=unit.hp_max*.5
     if unit.type=='ucry':return unit.hp<unit.hp_max*.4
     return unit.hp_max-unit.hp>=100 or unit.hp/unit.hp_max<.45

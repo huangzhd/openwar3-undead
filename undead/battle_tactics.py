@@ -14,6 +14,8 @@ from .retreat import statue_rally_rank
 from .battle_rejoin import rejoin_units
 from .banshee_support import BansheeSupport
 from .battle_detection import BattleDetection
+from .frontline import attack_frontline
+from .stomp_response import StompResponse
 
 
 class BattleTacticsMixin:
@@ -41,6 +43,8 @@ class BattleTacticsMixin:
         self.battle_detection=BattleDetection(self.log)
         self.battle_started=False
         self.battle_last_enemy=-100
+        self.frontline_orders={};self.impale_after={}
+        self.stomp_response=StompResponse(self.log)
 
     def battle_contact(self,army,foes,now):
         g=self.g;own={u.handle for u in army}
@@ -114,6 +118,7 @@ class BattleTacticsMixin:
         if not army:
             return set()
         if self.battle_contact(army,foes,now):return set()
+        if any(u.type=='Ucrl' for u in army):self.frost_armor(army,foes,now)
         support=self.banshee_support.tick(self,army,foes,now,True,blocked)
         blocked=set(blocked)|support|self.equipment.reserved
         self.prepare_blight(army,foes,now,blocked)
@@ -130,18 +135,36 @@ class BattleTacticsMixin:
                 return (center[0]+front*forward[0]+flank*side[0],
                         center[1]+front*forward[1]+flank*side[1])
             roles = {'ugho': [(210, i*115) for i in range(-3, 4)],
-                     'Udea': [(-280, 540)], 'Ulic': [(-140, -180)],
-                     'Nbrn': [(-110, 180)], 'Nngs': [(-110, 180)],
-                     'ubsp': [(-400, -100), (-400, 100)],
-                     'uobs': [(-260, -100), (-260, 100)]}
+                     'Ucrl': [(200,0)],
+                     'Udea': [(-460, 0)], 'Ulic': [(-420, -220)],
+                     'Nbrn': [(-380, 220)], 'Nngs': [(-380, 220)],
+                     'ubsp': [(-680, -100), (-680, 100)],
+                     'uobs': [(-600, -220), (-600, 220)]}
             banshees=sorted((u for u in army if u.type=='uban'),key=lambda u:u.handle)
-            roles['uban']=[(-260-100*(i//6),(i%6-(min(6,len(banshees)-6*(i//6))-1)/2)*130)
+            for code,back,spacing in (('uobs',600,220),('ubsp',680,220)):
+                count=sum(u.type==code for u in army)
+                roles[code]=[(-back-160*(i//6),(i%6-(min(6,count-6*(i//6))-1)/2)*spacing)
+                             for i in range(count)]
+            abominations=sorted((u for u in army if u.type=='uabo'),key=lambda u:u.handle)
+            roles['uabo']=[(240-140*(i//6),(i//2+1)*220*(1 if i%2 else -1))
+                           for i in range(len(abominations))]
+            roles['uban']=[(-560-160*(i//6),(i%6-(min(6,len(banshees)-6*(i//6))-1)/2)*180)
                            for i in range(len(banshees))]
             for u in army:
                 if u.is_hero and u.type not in roles:roles[u.type]=[(-110,180)]
             fiends = [u for u in army if u.type == 'ucry']
-            roles['ucry'] = [(90-260*(i//6), (i%6-(min(6, len(fiends)-6*(i//6))-1)/2)*240+120*((i//6)%2))
+            roles['ucry'] = [(90-260*(i//6), (i%6-(min(6, len(fiends)-6*(i//6))-1)/2)*260+130*((i//6)%2))
                              for i in range(len(fiends))]
+            # A forward arc fits every fiend in Lich's roar and DK's scroll,
+            # while its >700 diameter prevents one 350-radius stomp covering all six.
+            lich=next((u for u in army if u.type=='Ulic'),None)
+            if (lich and 2<=len(fiends)<=6 and not any(u.type in {'uabo','Ucrl'} for u in army)
+                    and 'sror' in (g.inventory(lich) or [])):
+                roles['Ulic']=[(-300,0)]
+                roles['ucry']=[(-300+440*cos((-75+i*150/(len(fiends)-1))*pi/180),
+                               440*sin((-75+i*150/(len(fiends)-1))*pi/180)) for i in range(len(fiends))]
+            if self.blight_waiting and any(u.type in {'Ucrl','uabo'} for u in army):
+                roles['ucry']=[(min(-120,front),flank) for front,flank in roles['ucry']]
             for kind, slots in roles.items():
                 units = sorted((u for u in army if u.type == kind), key=lambda u: u.handle)
                 for u, (front, flank) in zip(units, slots):
@@ -149,11 +172,12 @@ class BattleTacticsMixin:
             self.log('battle_prebattle_layout', clock=now,
                      points=[dict(handle=h, point=p) for h,p in self.prep_points.items()])
         grid = g.map()
+        roar_waiting=any(u.type=='Ulic' and 'sror' in (g.inventory(u) or []) for u in army)
         moving=set(support)
         for u in army:
             point = self.prep_points.get(u.handle)
             if (point is None or u.handle in blocked or now<self.cast_until.get(u.handle,0)
-                    or g.dist(u, point) <= 75):
+                    or g.dist(u, point) <= (25 if roar_waiting and u.type in {'ucry','Ulic'} else 75)):
                 continue
             if limit is not None and len(moving)>=limit:break
             if now-self.prep_sent.get(u.handle,-100)<3:
@@ -205,6 +229,7 @@ class BattleTacticsMixin:
         else:
             self.prebattle_since=None
             self.opening_nc_deadline=None;self.opening_nc_waiting=False
+        self.stomp_response.tick(self,army,foes,now,pulls,blocked)
         self.rear_dk(army,foes,now,pulls,blocked)
         self.rear_backline(army,foes,now,pulls,blocked)
         self.rear_destroyers([u for u in army if u.handle not in blocked],foes,now,pulls,search_point)
@@ -216,7 +241,7 @@ class BattleTacticsMixin:
         self.destroyer.tick(self,army,foes,now,dispel_blocked)
         if self.destroyer.escape_after:
             self.rear_destroyers([u for u in army if u.handle not in blocked],foes,now,pulls,search_point)
-        if not self.teleport and self.action!=Action.RETREAT and self.hero_pressure.melee_orc(g,foes):
+        if not self.teleport and self.action!=Action.RETREAT and (self.hero_pressure.melee_orc(g,foes) or any(u.type=='Ucrl' for u in army)):
             self.heal_allies(army,now)
             self.frost_armor([u for u in army if u.handle not in blocked],foes,now)
         self.combat_spells(army,foes,now,(set(pulls)-self.battle_dk_support)|set(blocked))
@@ -321,7 +346,7 @@ class BattleTacticsMixin:
         self.dk_enemy_peak_hp=max(self.dk_enemy_peak_hp,hp)
         return (self.dk_enemy_peak_count>=4 and 0<len(local)<=2 and
                 hp<=self.dk_enemy_peak_hp*.35 and
-                not any(u.type in {'Ulic','Nbrn','ucry','ubsp'} and u.hp<=u.hp_max*.5 for u in army))
+                not any(u.type in {'Ulic','Nbrn','Ucrl','uabo','ucry','ubsp'} and u.hp<=u.hp_max*.5 for u in army))
 
     def rear_dk(self,army,foes,now,pulls,blocked=()):
         """Stay within support range during the main fight; melee only in cleanup."""
@@ -348,34 +373,30 @@ class BattleTacticsMixin:
         dx,dy=dx/length,dy/length
         threats=[(e,max((w.range for w in stats.weapons if 'ground' in w.targets),default=0))
                  for e in foes if (stats:=unit_stats(e.type))]
+        threats=[(e,max(reach,float(spell_data()[0]['AOws']['Area3'])) if e.type=='Otch' else reach)
+                 for e,reach in threats]
         clearance=lambda p:min((g.dist(p,e)-r for e,r in threats if r>0),default=9999)
         if self.opening_nc_waiting and now<(self.opening_nc_deadline or 0) and clearance(dk)>=100:
             if self.due('opening_nc_dk_hold',now,.5):g.hold(dk)
             return # Do not move farther away while TC is entering paired cast range.
         lich=next((u for u in main if u.type=='Ulic'),None)
-        chiefs=[e for e in foes if e.type=='Otch']
-        spacing=0
-        if lich and chiefs:
-            # One stomp can cover two heroes separated by twice its radius.
-            # Unknown enemy spell level uses the largest public radius; no
-            # hidden enemy state is queried. Remain inside Coil's 750 range.
-            row=spell_data()[0]['AOws']
-            levels=[abilities(g,e).get('AOws',{}).get('level') for e in chiefs]
-            spacing=32+2*max(float(row['Area'+str(l if l in (1,2,3) else 3)]) for l in levels)
+        # Stay behind the army and outside the actual TC danger zone. Requiring
+        # 732 separation from Lich drove DK sideways beyond aura/healing reach.
+        aura=float(spell_data()[0]['AUau']['Area1'])
+        coverage=lambda p:sum(g.dist(p,u)<=aura for u in army if u.hp>0 and u.type!='ubsp')
+        scroll=any(c in {'shea','sres'} for c in (g.inventory(dk) or []))
+        support_coverage=lambda p:sum(g.dist(p,u)<=575 for u in main)
         behind=(dk.x-anchor.x)*dx+(dk.y-anchor.y)*dy
-        if (behind>=140 and g.dist(dk,anchor)<=(740 if spacing else 600) and clearance(dk)>=100
-                and (not spacing or spacing<=g.dist(dk,lich)<740)):
+        lateral=abs((dk.x-anchor.x)*dy-(dk.y-anchor.y)*dx)
+        if (behind>=140 and lateral<=180 and g.dist(dk,anchor)<=600 and clearance(dk)>=100
+                and (not lich or g.dist(dk,lich)<740) and (not scroll or support_coverage(dk)==len(main))):
             pulls[dk.handle]=(dk.x,dk.y)
             if self.due(('battle_dk_hold',dk.handle),now,2):g.hold(dk)
             return
         candidates=[(anchor.x+dx*back-dy*side,anchor.y+dy*back+dx*side)
                     for back in (200,280,400,520) for side in (0,-160,160)]
-        if spacing:
-            goal_gap=min(736,spacing+100) # Allow for stopping short of the requested point.
-            candidates += [(lich.x+goal_gap*cos(i*pi/12),lich.y+goal_gap*sin(i*pi/12)) for i in range(24)]
-            candidates=[p for p in candidates if spacing<=g.dist(p,lich)<740
-                        and (p[0]-anchor.x)*dx+(p[1]-anchor.y)*dy>=140 and g.dist(p,anchor)<=850]
-        candidates.sort(key=lambda p:(clearance(p)<100,-min(clearance(p),100),g.dist(p,anchor),g.dist(p,dk)))
+        candidates.sort(key=lambda p:(clearance(p)<100,-support_coverage(p) if scroll else 0,-coverage(p),
+                                      abs((p[0]-anchor.x)*dy-(p[1]-anchor.y)*dx),g.dist(p,anchor),g.dist(p,dk)))
         candidates=[p for p in candidates if (not lich or g.dist(p,lich)<740)
                     and sum(g.dist(p,u)<740 for u in main)>=max(1,(len(main)+1)//2)]
         before=clearance(dk)
@@ -386,7 +407,7 @@ class BattleTacticsMixin:
             pulls[dk.handle]=point
             if self.due(('battle_dk_rear',dk.handle),now,2):
                 self.log('battle_dk_rear',clock=now,handle=dk.handle,point=point,clearance=round(clearance(point)),
-                         lich_distance=round(g.dist(point,lich)) if lich else None,minimum_spacing=spacing)
+                         lich_distance=round(g.dist(point,lich)) if lich else None,aura_covered=coverage(point))
             return
         # A blocked reposition must not fall through into melee attacks.
         pulls[dk.handle]=(dk.x,dk.y)
@@ -430,25 +451,47 @@ class BattleTacticsMixin:
             self.log('battle_dk_attack',clock=now,target=target.handle,type=target.type,
                      hp=dk.hp,hp_max=dk.hp_max,distance=round(g.dist(dk,target)),accepted=bool(receipt))
 
+    def destroyer_focused(self,u,foes):
+        attackers=[e for e in foes if can_engage(e) and
+                   (victim:=self.g.current_target(e)) is not None and victim.handle==u.handle and
+                   (stats:=unit_stats(e.type)) and any('air' in w.targets for w in stats.weapons)]
+        return len(attackers)>=2 or bool(attackers and u.hp<=u.hp_max*.6)
+
+    def destroyer_air_threats(self,u,army,foes):
+        g=self.g;stats=unit_stats(u.type)
+        own_range=max((w.range for w in stats.weapons if 'air' in w.targets),default=0) if stats else 0
+        threats=[]
+        for e in foes:
+            if not can_engage(e):continue
+            stats=unit_stats(e.type)
+            reach=max((w.range for w in stats.weapons if 'air' in w.targets),default=0) if stats else 0
+            if not reach:continue
+            if e.type=='owyv' and u.hp>u.hp_max*.45 and not self.destroyer_focused(u,foes):
+                reach=min(reach,max(0,own_range-170))
+            threats.append((e,reach))
+        return threats
+
     def rear_destroyers(self, army, foes, now, pulls, search_point):
-        """Keep dispellers behind the ground force and outside AA fire."""
+        """Keep firing after dispel; withdraw on focus fire or low health."""
         g = self.g
         ground = [u for u in army if u.type not in {'ubsp', 'uobs','uban'}]
         if not ground:
             ground = [u for u in army if u.type == 'uobs']
-        threats = []
-        for e in foes:
-            stats = unit_stats(e.type)
-            reach = max((w.range for w in stats.weapons if 'air' in w.targets), default=0) if stats else 0
-            if reach:
-                threats.append((e, reach))
         blocked = set()
         for u in (u for u in army if u.type == 'ubsp'):
+            threats=self.destroyer_air_threats(u,army,foes)
             if (foes and u.hp>u.hp_max*.45 and u.handle not in self.shield_moves
-                    and not any(g.dist(u,e)<reach+140 for e,reach in threats)):
+                    and not self.destroyer_focused(u,foes)):
+                if u.handle in self.destroyer.escape_after:
+                    self.last.pop(('battle_destroyer_attack',u.handle),None)
                 self.destroyer.escape_after.discard(u.handle)
                 # Healthy destroyers supply damage; normal backline spacing must not recall them.
                 pulls.pop(u.handle,None);self.micro.pulling.discard(u.handle)
+                goal=self.destroyer_output_point(u,army,foes,threats,now)
+                if goal is not None:
+                    pulls[u.handle]=goal;blocked.add(u.handle)
+                    if self.due(('destroyer_output_position',u.handle),now,2):
+                        self.log('battle_destroyer_output_position',clock=now,handle=u.handle,point=goal)
                 continue
             anchor = min(ground, key=lambda a: sum(g.dist(a,b) for b in ground)) if ground else self.home
             enemy = min(foes, key=lambda e: g.dist(anchor,e)) if foes else None
@@ -484,25 +527,67 @@ class BattleTacticsMixin:
                 if not current or not in_weapon_range(g,u,current):g.hold(u)
         return blocked
 
+    def destroyer_output_point(self,u,army,foes,threats,now):
+        """Re-enter weapon range from the safe rear; never cross an AA lane."""
+        g=self.g
+        if (self.teleport or self.action==Action.RETREAT or self.army_recovery.active
+                or u.handle in self.shopping or u.handle in self.battle_shop.reserved
+                or u.handle in self.destroyer.dispel or now<self.cast_until.get(u.handle,0)
+                or buffs(g,u)&DISABLED_CASTERS):return None
+        targets=[e for e in foes if can_engage(e) and getattr(e,'has_detail',False)
+                 and not is_structure(e) and not buffs(g,e)&{'Bvul','BHds'}
+                 and 'Avul' not in abilities(g,e) and self.combat_progress.allowed(e,now)]
+        targets=[e for e in targets if e.type=='owyv'] or targets
+        if any(in_weapon_range(g,u,e) for e in targets):return None
+        main=[v for v in army if v.type in {'ucry','Ulic','Nbrn','Nngs','uabo','Ucrl'} and v.hp>0]
+        if not main or not targets:return None
+        anchor=min(main,key=lambda v:sum(g.dist(v,w) for w in main))
+        front=min(targets,key=lambda e:g.dist(anchor,e))
+        dx,dy=front.x-anchor.x,front.y-anchor.y;length=max(1,hypot(dx,dy));dx/=length;dy/=length
+        tanks=[v for v in main if v.type in {'uabo','Ucrl'} and v.hp>v.hp_max*.5
+               and v.handle not in self.micro.pulling and g.dist(v,anchor)<=500]
+        rear_limit=max(-80,min(160,min(((v.x-anchor.x)*dx+(v.y-anchor.y)*dy-120
+                                      for v in tanks),default=-80)))
+        stats=unit_stats(u.type)
+        def reach(e):
+            es=unit_stats(e.type);kind='air' if es and es.is_air and not webbed_air(g,e) else 'ground'
+            return max((w.range for w in stats.weapons if kind in w.targets),default=0) if stats else 0
+        targets=[e for e in targets if reach(e)>0 and g.dist(anchor,e)<=1000]
+        targets.sort(key=lambda e:g.dist(u,e))
+        candidates=[(e.x+(reach(e)-30)*cos(i*pi/8),e.y+(reach(e)-30)*sin(i*pi/8))
+                    for e in targets[:8] for i in range(16)]
+        clearance=lambda p:min((g.dist(p,e)-r for e,r in threats if r),default=9999)
+        candidates=[p for p in candidates if (p[0]-anchor.x)*dx+(p[1]-anchor.y)*dy<=rear_limit
+                    and g.dist(p,anchor)<=700 and clearance(p)>=140
+                    and any(g.dist(p,e)<=reach(e)-10 for e in targets)]
+        candidates.sort(key=lambda p:g.dist(u,p))
+        for point in candidates:
+            travel=g.dist(u,point);samples=max(12,int(travel/64)+1)
+            if all(clearance((u.x+(point[0]-u.x)*i/samples,u.y+(point[1]-u.y)*i/samples))>=140 for i in range(1,samples+1)):
+                if travel>1000:point=(u.x+(point[0]-u.x)*1000/travel,u.y+(point[1]-u.y)*1000/travel)
+                return point if travel>65 else None
+        return None
+
     def attack_destroyers(self,army,foes,now,blocked=()):
         """Dispel first, then support the shared melee focus until wounded."""
         self.hero_pressure.select_strategy(self.g,army,foes,now)
-        if self.teleport or self.action==Action.RETREAT:return
+        if self.teleport or self.action==Action.RETREAT or self.army_recovery.active:return
         g=self.g
         focus=self.hero_pressure.orc_focus(g,army,foes,now)
         for u in army:
             if (u.type!='ubsp' or u.hp<=u.hp_max*.45 or u.handle in blocked or
                     u.handle in self.shopping or u.handle in self.battle_shop.reserved or
+                    (u.handle in self.destroyer.dispel and now-self.destroyer.dispel[u.handle]['started']<1.2) or u.handle in self.shield_moves or u.handle in self.micro.pulling or
                     now<self.cast_until.get(u.handle,0) or buffs(g,u)&DISABLED_CASTERS):continue
             targets=[e for e in foes if in_weapon_range(g,u,e) and can_engage(e)
                      and getattr(e,'has_detail',False) and not buffs(g,e)&{'Bvul','BHds'}
                      and 'Avul' not in abilities(g,e) and g.dist(u,e)<=900
                      and self.combat_progress.allowed(e,now)]
-            threats=[(e,max((w.range for w in s.weapons if 'air' in w.targets),default=0))
-                     for e in foes if (s:=unit_stats(e.type))]
-            if any(reach and g.dist(u,e)<reach+140 for e,reach in threats):continue
+            if self.destroyer_focused(u,foes):continue
             if not targets:continue
-            target=next((e for e in targets if focus and e.handle==focus.handle),None)
+            birds=[e for e in targets if e.type=='owyv']
+            target=min(birds,key=lambda e:(not webbed_air(g,e),e.handle!=self.hero_pressure.preferred,e.hp),default=None)
+            target=target or next((e for e in targets if focus and e.handle==focus.handle),None)
             target=target or min(targets,key=lambda e:({'owyv':0,'ogru':1,'orai':2}.get(e.type,3),g.dist(u,e),e.hp))
             current=g.current_target(u)
             if current and current.handle==target.handle:continue
@@ -522,6 +607,7 @@ class BattleTacticsMixin:
         ready = [u for u in squad if now>=self.cast_until.get(u.handle,0)]
         candidates = [e for e in foes if can_engage(e) and self.combat_progress.allowed(e,now) and
                       (not self.hero_pressure.wyvern_priority or e.type=='owyv') and
+                      (not self.hero_pressure.blade_wyvern_plan or e.type==('owyv' if self.hero_pressure.wyvern_priority else 'Obla')) and
                       any(in_weapon_range(g,u,e) for u in ready) and
                       self.hero_pressure.estimate(g,ready,e)<float('inf')]
         if not candidates:
@@ -674,7 +760,7 @@ class BattleTacticsMixin:
         # reinforcement movement must not overwrite their supply/escape orders.
         army=[u for u in army if u.type not in {'ubsp','uobs','uban'} and not (foes and u.handle in self.battle_dk_support)]
         if not army:return
-        handled=self.attack_skeletons(army,foes,now)
+        handled=self.attack_skeletons(army,foes,now)|attack_frontline(self,army,foes,now)
         army=[u for u in army if u.handle not in handled]
         if not army:return
         if not foes:

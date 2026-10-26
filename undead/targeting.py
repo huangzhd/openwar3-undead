@@ -84,6 +84,7 @@ class HeroPressure:
         self.prefer_key_heroes=True
         self.key_heroes_seen=set()
         self.wyvern_priority=False
+        self.blade_wyvern_plan=False
 
     def wyvern_focus(self,g,army,foes):
         shooters=[u for u in army if u.type in {'ucry','Ulic','Nbrn','Nngs'} and can_engage(u)]
@@ -201,7 +202,31 @@ class HeroPressure:
         troops=[e for e in enemies if not e.is_hero]
         anti_air=(sum(u.type=='ucry' for u in own)>=2 and len(wyverns)>=2
                   and len(wyverns)*2>=len(troops))
-        self.wyvern_priority=bool(wyverns and (anti_air or self.wyvern_priority))
+        # Mixed anti-air armies focus Blade; TC is controlled by Silence.
+        # Keep the plan while birds remain, even if our tanks are lost.
+        self.blade_wyvern_plan=bool(self.prefer_key_heroes and wyverns and
+            (self.blade_wyvern_plan or anti_air and any(u.type in {'uabo','Ucrl'} for u in own)))
+        # A mixed army with ground tanks can punish the exposed Orc front first.
+        # Pure tier-two fiends retain their anti-wyvern plan (e.g. training 7).
+        shooters=[u for u in own if u.type in {'ucry','Ulic','Nbrn','Nngs'}]
+        front_keys=[e for e in enemies if e.type in {'Obla','Otch'} and getattr(e,'has_detail',False)
+                    and not buffs(g,e)&{'Bvul','BHds'} and 'Avul' not in abilities(g,e)
+                    and sum(in_weapon_range(g,u,e) for u in shooters)>=2]
+        if self.blade_wyvern_plan:
+            front_keys=[e for e in front_keys if e.type=='Obla']
+            blade=min(front_keys,key=lambda e:(e.handle!=self.sequence_target,e.hp),default=None)
+            desired='hero_first' if blade else 'army_first'
+            if self.strategy!=desired or self.sequence_target!=getattr(blade,'handle',None):
+                self.log('battle_strategy_selected',clock=now,strategy=desired,
+                         reason='blade_then_wyverns',target=getattr(blade,'handle',None))
+            self.strategy=desired;self.strategy_since=now
+            self.wyvern_priority=blade is None;self.tc_sequence=blade is not None
+            self.tc_phase='blade' if blade else 'wyverns'
+            self.sequence_target=blade.handle if blade else None
+            self.opportunity=None;self.target=None
+            return desired
+        mixed_front=bool(self.prefer_key_heroes and any(u.type in {'uabo','Ucrl'} for u in own) and front_keys)
+        self.wyvern_priority=bool(wyverns and (anti_air or self.wyvern_priority) and not mixed_front)
         if self.wyvern_priority:
             if self.strategy!='army_first' or self.tc_sequence:
                 self.log('battle_strategy_selected',clock=now,strategy='army_first',reason='fiends_vs_wyvern_mass')

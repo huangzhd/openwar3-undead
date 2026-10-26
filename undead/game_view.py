@@ -11,6 +11,9 @@ class Game(SDKGame):
         return self._coil_telemetry
 
     def observe_coil(self, heroes, now, log):
+        # SDK queries can advance beyond the caller's tick snapshot.
+        # Do not misclassify that stale timestamp as a new game.
+        now = max(now, self.clock())
         telemetry = self._coil()
         telemetry.log = log
         telemetry.observe(self, next((h for h in heroes if h.type == 'Udea'), None), now)
@@ -26,7 +29,7 @@ class Game(SDKGame):
     def hero_spell_ready(self,hero,code,now=None):
         if code=='AUdc':return self.coil_ready(hero,now)
         return self._hero_spells().can_attempt(self,self._fresh(hero),code,
-                                               self.clock() if now is None else now)
+                                               self.clock() if now is None else max(now,self.clock()))
 
     def hero_spell_level(self,hero,code):
         if code=='AUdc':return self.coil_level(hero)

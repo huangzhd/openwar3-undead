@@ -23,7 +23,7 @@ REGEN['envl']=REGEN['rej3']
 ITEMS.update(REGEN)
 ITEMS['fgsk']=('AIfs',0,0,0,None)
 SCROLLS=HEALING_SCROLLS
-ORGANIC={'Udea','Ulic','Nbrn','Nngs','ucry','ugho','ubsp','uban'}
+ORGANIC={'Udea','Ulic','Nbrn','Nngs','Ucrl','uabo','ucry','ugho','ubsp','uban'}
 ITEM_DISABLED={'BOhx','Bply','BPse','BPSE','BSTN','Bstn','BUsl','Bcyc'}
 # Pinned AbilityData.slk, HeroDur1. Timers start at the attempt, only after
 # observing Bvul; a receipt or item disappearance alone never grants safety.
@@ -34,6 +34,7 @@ class Consumables:
         self.log=log;self.pending={};self.attempts={};self.retry={};self.group_until=0;self.buff_until={}
         self.invulnerable_until={}
         self.emergency_scroll_at={}
+        self.coverage_after={}
         self.hp_history={};self.aoe_cooldowns={};self.aoe_casts=[];self.aoe_used=-100
 
     def observe_burst(self,g,army,hostiles,now):
@@ -147,7 +148,7 @@ class Consumables:
                 self.log('consumable_effect_unconfirmed',clock=now,hero=p['hero'],code=p['code'],consumed=consumed)
                 self.pending.pop(handle)
 
-    def tick(self,g,army,hostiles,now,cast_until,blocked=(),coil_needed=False,attacking=False,urgent=(),preparing=False,pending_heals=()):
+    def tick(self,g,army,hostiles,now,cast_until,blocked=(),coil_needed=False,attacking=False,urgent=(),preparing=False,pending_heals=(),controller=None):
         self.observe(g,now)
         self.observe_burst(g,army,hostiles,now)
         # Most injured hero first; only one area scroll per observation window.
@@ -211,7 +212,8 @@ class Consumables:
                         if now<self.buff_until.get(buff,0):continue
                         targets=[u for u in targets if buff not in g.buffs(u)]
                         if code=='sror':
-                            if not targets:continue
+                            fiends=[u for u in army if u.type=='ucry' and u.hp>0]
+                            if not targets or any(g.dist(u,hero)>radius for u in fiends):continue
                         elif not threat or len(targets)<3:continue
                         priority=5
                     else:
@@ -226,12 +228,24 @@ class Consumables:
                         wounded=[u for u in targets if u.hp<=u.hp_max*.6 and u.hp_max-u.hp>=heal*.85]
                         pressured=[u for u in wounded if any((t:=getattr(g,'current_target',lambda _:None)(e)) is not None
                                    and t.handle==u.handle and in_weapon_range(g,e,u) for e in hostiles)]
-                        timely=len(wounded)>=3 and len(pressured)>=2
-                        if not group_emergency and not (after_aoe or timely or len(injured)>=required and useful>=heal*len(injured)*.85):continue
+                        recent=[u for u in targets if u.hp<=u.hp_max*.75 and u.hp_max-u.hp>=heal*.85
+                                and max((hp for t,hp in self.hp_history.get(u.handle,[]) if now-t<=5 and t>=self.aoe_used),default=u.hp)-u.hp>=40]
+                        sustained=len(recent)>=3 and sum(e.type=='owyv' and g.dist(hero,e)<1100 for e in hostiles)>=2
+                        timely=len(wounded)>=3 and len(pressured)>=2 or sustained
+                        if not group_emergency and not (after_aoe or timely or len(injured)>=required and useful>=heal*len(injured)*.85):
+                            # Reposition a ready carrier before scattered wounded units
+                            # disappear from the local healing threshold altogether.
+                            outside=[u for u in army if u.type in ORGANIC and 0<u.hp<=u.hp_max*.65
+                                     and u.hp_max-u.hp>=heal*.85 and g.dist(hero,u)<950]
+                            if controller is not None and len(outside)>=3:
+                                from .stomp_response import improve_scroll_position
+                                if improve_scroll_position(controller,hero,army,hostiles,now,radius,heal):
+                                    candidates=[];break
+                            continue
                         priority=-1 if group_emergency else 2
                         scroll_notes[slot]=dict(scroll_emergency=group_emergency,half_health_units=len(injured),
                             required_units=required,effective_healing=round(useful,1),
-                            after_aoe=after_aoe,aoe_abilities=aoe_codes,pressured_units=len(pressured),
+                            after_aoe=after_aoe,aoe_abilities=aoe_codes,pressured_units=len(pressured),recent_wounded=len(recent),
                             total_effective_healing=round(sum(min(heal,max(0,u.hp_max-u.hp)) for u in targets),1),
                             rescue_heroes=[u.handle for u in rescue_targets])
                 else:
@@ -247,6 +261,9 @@ class Consumables:
                 candidates.append((priority,slot,code,key,targets))
             if not candidates:continue
             _,slot,code,key,targets=min(candidates,key=lambda x:x[:2])
+            if code in SCROLLS and controller is not None and not rescue_targets:
+                from .stomp_response import improve_scroll_position
+                if improve_scroll_position(controller,hero,army,hostiles,now,ITEMS[code][3],ITEMS[code][1]):continue
             before={u.handle:(u.hp,getattr(u,'mana',0)) for u in targets}
             count=bag.count(code)
             summons_before={u.handle for u in g.units('me',{'nsce','nsca'})} if code=='fgsk' else set()
@@ -265,6 +282,8 @@ class Consumables:
                 summons_before=summons_before)
             self.log('consumable_use_attempt',clock=now,hero=hero.type,handle=hero.handle,code=code,
                      hp=hero.hp,hp_max=hero.hp_max,accepted=bool(r),attempt=self.attempts[key],targets=[u.handle for u in targets],
+                     eligible_units=[u.handle for u in army if u.hp>0 and u.type in ORGANIC] if ITEMS[code][3] else [hero.handle],
+                     missed_units=[u.handle for u in army if u.hp>0 and u.type in ORGANIC and g.dist(u,hero)>ITEMS[code][3]] if ITEMS[code][3] else [],
                      buffs=sorted(buffs),emergency=emergency,overrode_cast_lock=locked,
                      focused=focused,coil_cover=coil_cover,controlled=bool(buffs&ITEM_DISABLED),**scroll_notes.get(slot,{}))
 

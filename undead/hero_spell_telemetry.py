@@ -3,10 +3,10 @@
 Raw ability lists and cooldowns remain unchanged. Mana expenditure is not
 proof of a hit, buff application, or successful autocast configuration.
 """
-HERO_CODES={'Ulic':('AUfn','AUfu'), 'Nngs':('ANfl','ANfa'), 'Nbrn':('ANsi','ANba')}
+HERO_CODES={'Ulic':('AUfn','AUfu'), 'Nngs':('ANfl','ANfa'), 'Nbrn':('ANsi','ANba'), 'Ucrl':('AUim',)}
 ORDERS={'frostnova':'AUfn','frostarmor':'AUfu','forkedlightning':'ANfl',
         'silence':'ANsi','coldarrows':'ANfa','blackarrow':'ANba',
-        'coldarrowstarg':'ANfa'}
+        'coldarrowstarg':'ANfa','impale':'AUim'}
 TOGGLES={'frostarmoroff':'AUfu','frostarmoron':'AUfu',
          'coldarrows':'ANfa','coldarrowson':'ANfa','coldarrowsoff':'ANfa',
          'blackarrowon':'ANba','blackarrowoff':'ANba'}

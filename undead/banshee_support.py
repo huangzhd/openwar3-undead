@@ -43,7 +43,7 @@ class BansheeSupport:
                 row=spell_data()[0][code];reach=float(row['Rng1']);cost=float(row['Cost1'])
                 if u.mana<cost or g.cooldown(u,code)!=0:continue
                 targets=[v for v in army if v.hp>0 and v.alive and v.owner==g.me() and
-                         (v.is_hero or v.type=='ucry') and getattr(v,'has_detail',False) and
+                         (v.is_hero or v.type in {'ucry','uabo'}) and getattr(v,'has_detail',False) and
                          not buffs(g,v)&{'Bams','Bam2'} and v.handle not in self.pending and
                          self.failures.get(v.handle,0)<3 and now>=self.retry.get(v.handle,0)]
                 targets.sort(key=lambda v:(not v.is_hero,g.dist(u,v)))

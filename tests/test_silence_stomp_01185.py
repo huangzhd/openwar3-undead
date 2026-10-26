@@ -102,23 +102,27 @@ class SilenceProtectionTests(unittest.TestCase):
 
 
 class HeroSpacingTests(unittest.TestCase):
-    def test_stomp_level_and_unknown_level_separate_heroes_inside_coil_range(self):
+    def test_stomp_level_and_unknown_keep_dk_outside_tc_zone_and_in_coil_range(self):
         for level in (1,2,3,None):
             b,g,own,foes,orders,dk=rear.RearDkTests().scene();lich=own[6]
             dk.hp=dk.hp_max*.5
             old=g.abilities
             g.abilities=lambda u:([dict(code='AOws',level=level)] if level and u.type=='Otch' else old(u))
             pulls={};b.rear_dk(own,foes,10,pulls)
-            p=pulls[dk.handle];minimum=2*({1:250,2:300,3:350}.get(level,350))+32
-            self.assertGreaterEqual(dist(p,lich),minimum)
+            p=pulls[dk.handle]
+            tc=next(e for e in foes if e.type=='Otch')
+            self.assertGreaterEqual(dist(p,tc),450)
+            self.assertLessEqual(abs(p[1]),180)
             self.assertLess(dist(p,lich),750)
             self.assertLess(p[0],-140)
 
-    def test_prebattle_heroes_start_on_separate_flanks_in_coil_range(self):
+    def test_prebattle_dk_is_centered_behind_lich_in_coil_range(self):
         b,g,own,foes,orders,dk=rear.RearDkTests().scene();lich=own[6]
         b.prepare_battle(1,army=own,target=(2000,0))
         separation=dist(b.prep_points[dk.handle],b.prep_points[lich.handle])
-        self.assertGreater(separation,732);self.assertLess(separation,750)
+        self.assertLess(separation,750)
+        self.assertAlmostEqual(b.prep_points[dk.handle][1],0)
+        self.assertLess(b.prep_points[dk.handle][0],b.prep_points[lich.handle][0])
 
     def test_separation_does_not_override_emergency_escape_or_unreachable_path(self):
         b,g,own,foes,orders,dk=rear.RearDkTests().scene()

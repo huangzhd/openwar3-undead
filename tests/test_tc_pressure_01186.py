@@ -91,7 +91,8 @@ class TcFirstTests(unittest.TestCase):
         dk.hp=dk.hp_max*.5
         old=g.abilities;g.abilities=lambda u:([dict(code='AOws',level=2)] if u is tc else old(u))
         pulls={};b.rear_dk(own,foes,10,pulls)
-        self.assertGreaterEqual(dist(pulls[dk.handle],own[6]),730)
+        self.assertGreaterEqual(dist(pulls[dk.handle],tc),450)
+        self.assertLessEqual(abs(pulls[dk.handle][1]),180)
         self.assertLess(dist(pulls[dk.handle],own[6]),750)
 
 

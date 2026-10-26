@@ -100,7 +100,7 @@ class OrcMeleeTests(unittest.TestCase):
 
     def test_no_long_distance_destroyer_chase(self):
         b,g,own,foes,orders,events,effects,car,troops,*_=self.scene()
-        for u in troops:u.x=2000
+        for u in foes:u.x=2000
         b.attack_destroyers(own,foes,10)
         self.assertFalse(orders)
 

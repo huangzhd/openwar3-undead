@@ -100,13 +100,13 @@ class TrainingSpeedTests(unittest.TestCase):
         session=N(start=lambda:g,stop=lambda:closed.append(True),settings={})
         bot=N(observe_events=lambda _:None,update_training_phase=lambda *a:None,tick=lambda:ticks.append(game_clock[0]))
         meter=N(last=0,sample=lambda now:{},summary=lambda now:{},close=lambda:None)
-        args=N(matchup='orc',level=6,mode='easy',speed=100,probe=False,seconds=3,wall_seconds=240)
+        args=N(matchup='orc',level=6,mode='easy',speed=100,probe=True,seconds=3,wall_seconds=240)
         with patch.multiple(training,ROOT=root,STOP=root/'STOP',active_processes=lambda:[],
                 build=lambda *a,**k:(root/'map',{}),install_map=lambda *a:root/'map',
                 TrainingSession=lambda *a:session,TrainingController=lambda *a:bot,ActionMeter=lambda g:meter,
                 board_signal=lambda g:(2,None)),patch.object(training.time,'sleep',lambda _:None):
             result=training.run(args,self.sid,1)
-        self.assertEqual(result['reason'],'game_time_limit')
+        self.assertEqual(result['reason'],'bounded_integration_probe')
         self.assertEqual(ticks,[1,2]);self.assertEqual(closed,[True])
         self.assertEqual(result['final_speed'],200);self.assertEqual(args.speed,200)
         self.assertEqual([h['percent'] for h in result['speed_history']],[100,200])

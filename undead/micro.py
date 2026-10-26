@@ -60,7 +60,9 @@ class Micro:
                    or backline_urgent(u))) or
                   (u.type=='ucry' and ((u.handle in self.pulling and u.hp/u.hp_max<.7) or
                    (u.hp/u.hp_max<.45 and not (dk_has_mana and coil_ready and hypot(u.x-dk.x,u.y-dk.y)<750)))) or
-                  (u.type not in {'Udea','Ulic','Nbrn','ucry'} and (not dk_has_mana or u.type in {'Nngs','uobs','ubsp','uban'} or u.is_hero and self.damage.urgent(u)) and
+                  (u.type in {'Ucrl','uabo'} and (u.hp/u.hp_max<=.45 or u.handle in self.pulling or
+                   u.is_hero and self.damage.urgent(u,window=3))) or
+                  (u.type not in {'Udea','Ulic','Nbrn','ucry','Ucrl','uabo'} and (not dk_has_mana or u.type in {'Nngs','uobs','ubsp','uban'} or u.is_hero and self.damage.urgent(u)) and
                    (u.is_hero or u.hp/u.hp_max<.45 or u.handle in self.pulling))}
         # Player-battle statues have one owner for escape AND return to supply.
         # Generic persistent pullbacks otherwise keep the support controller blocked.

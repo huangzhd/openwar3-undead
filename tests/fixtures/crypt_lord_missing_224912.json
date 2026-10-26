@@ -1,0 +1,90 @@
+{
+  "source": "artifacts\\training-20261026-224912\\events.jsonl",
+  "sha256": "d2e0a0f243714f690b976276c746b8d1824530bf5d202b00283e25953f74248e",
+  "rows": [
+    {
+      "clock": 1.4,
+      "type": "Ucrl",
+      "abilities": [
+        {
+          "code": "Atrg",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 16
+        },
+        {
+          "code": "AUim",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 16
+        },
+        {
+          "code": "AIsx",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 2147483808
+        },
+        {
+          "code": "AIvl",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 8224
+        },
+        {
+          "code": "AId4",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 2147483808
+        },
+        {
+          "code": "AId2",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 2147483808
+        },
+        {
+          "code": "AInv",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 144
+        },
+        {
+          "code": "AHer",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 144
+        },
+        {
+          "code": "Aatk",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 537395344
+        },
+        {
+          "code": "Amov",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 2196
+        },
+        {
+          "code": "Ablr",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 16
+        }
+      ]
+    },
+    {
+      "clock": 3.305,
+      "type": "Ucrl",
+      "abilities": [
+        {
+          "code": "AUts",
+          "level": 1,
+          "cooldown": 0.0,
+          "flags": 528
+        }
+      ]
+    }
+  ]
+}

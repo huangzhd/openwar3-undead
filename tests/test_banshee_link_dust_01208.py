@@ -130,9 +130,10 @@ class BansheeLinkDustTests(unittest.TestCase):
         b.banshee_support.tick(b,own,foes,10,False)
         self.assertFalse(any(o[0]=='move' and o[1]==u.handle for o in orders))
 
-    def test_destroyer_attack_never_bypasses_visible_aa_safety(self):
+    def test_destroyer_attack_never_bypasses_visible_focus_fire(self):
         b,g,own,foes,orders,events,effects,dk,tc,banshees=self.scene()
         d=own[8];d.x=0;tc.type='ogru'
+        g.current_target=lambda u:d if u.type in {'ohun','otbk'} else None
         b.attack_destroyers(own,foes,10)
         self.assertFalse(any(o[0]=='attack' and o[1]==d.handle for o in orders))
 
@@ -140,6 +141,7 @@ class BansheeLinkDustTests(unittest.TestCase):
         for kind in (Controller,TrainingController):
             b,g,own,foes,orders,events,effects,dk,tc,banshees=self.scene(kind)
             d=own[8];d.x=0;foes[:]=foes[:2]
+            g.current_target=lambda u:d if u in foes else None
             for e in foes:effects[e.handle]=['Bspl']
             own[:]=[own[0],d]
             pulls={};b.battle_actions(own,foes,10,pulls)
@@ -149,7 +151,7 @@ class BansheeLinkDustTests(unittest.TestCase):
             g.cooldown=lambda u,c:6.8 if c=='Advm' else 0
             b.battle_actions(own,foes,10.2,pulls);b.go_raw([d],pulls[d.handle],10.2)
             self.assertTrue(any(o[0]=='move' and o[1]==d.handle for o in orders))
-            d.x,d.y=pulls[d.handle];g.cooldown=lambda *a:0
+            d.x,d.y=pulls[d.handle];g.cooldown=lambda *a:0;g.current_target=lambda u:None
             orders.clear();b.battle_actions(own,foes,18,{})
             self.assertTrue(any(o[0]=='cast' and o[2]=='devourmagic' for o in orders))
             self.assertFalse(any(o[0]=='attack' and o[1]==d.handle for o in orders))

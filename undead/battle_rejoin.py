@@ -32,7 +32,7 @@ def rejoin_units(b,army,foes,now,pulls,blocked=()):
         main=[v for v in allies if v.type not in {'uobs','ubsp'} and v.handle not in b.micro.pulling] or allies
         if not main:continue
         stats=unit_stats(u.type);air=bool(stats and stats.is_air)
-        melee=bool(stats and stats.weapons and max(w.range for w in stats.weapons)<=150 and not u.is_hero)
+        melee=bool(stats and stats.weapons and max(w.range for w in stats.weapons)<=150 and (not u.is_hero or u.type=='Ucrl'))
         tanked=set()
         dangers=[]
         for e in foes:
@@ -60,7 +60,7 @@ def rejoin_units(b,army,foes,now,pulls,blocked=()):
         if now-state['quiet']<(1 if fast_support else 3):continue
         anchor=min(main,key=lambda v:sum(g.dist(v,w) for w in main))
         local=[v for v in allies if g.dist(v,anchor)<=900]
-        protected=[v for v in local if v.type in {'Ulic','Nbrn','ubsp','ucry'}]
+        protected=[v for v in local if v.type in {'Ulic','Nbrn','Ucrl','ubsp','uabo','ucry'}]
         recipient=min(protected,key=lambda v:(v.hp>v.hp_max*.5,not v.is_hero,v.hp/v.hp_max),default=anchor)
         aura=float(spell_data()[0]['AUau']['Area1'])
         def useful(p):

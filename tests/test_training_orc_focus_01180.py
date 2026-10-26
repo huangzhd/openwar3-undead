@@ -55,6 +55,7 @@ class TrainingOrcFocusTests(unittest.TestCase):
 
     def test_full_health_destroyer_retreats_from_headhunter_fire(self):
         b,g,own,foes,orders,events,effects=self.scene();d=own[8];d.x=100
+        g.current_target=lambda u:d if u.type=='otbk' else None
         pulls={};blocked=b.rear_destroyers(own,foes,10,pulls,None)
         self.assertIn(d.handle,blocked)
         goal=pulls[d.handle]

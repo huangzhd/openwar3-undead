@@ -23,10 +23,8 @@ class WebFinishTests(unittest.TestCase):
                 orders.clear();b.focus_ranged(own,foes,now);b.attack_destroyers(own,foes,now)
                 shots=[o for o in orders if o[0]=='attack']
                 self.assertTrue(shots);self.assertEqual({o[2] for o in shots},{victim.handle})
-                if now==10:
-                    # Web stops flight, not the wyvern's AA attack. Stay safe.
-                    self.assertNotIn(car.handle,{o[1] for o in shots})
-                else:self.assertIn(car.handle,{o[1] for o in shots})
+                # Healthy, unfocused destroyers keep shooting, including birds.
+                self.assertIn(car.handle,{o[1] for o in shots})
 
     def test_web_expiry_hidden_invulnerability_or_distance_releases_target(self):
         for why in ('expired','hidden','invulnerable','distant'):
@@ -44,7 +42,8 @@ class WebFinishTests(unittest.TestCase):
             b,g,own,foes,orders,events,effects,car,troops,tc,fs,wyvern=self.scene(kind)
             tc.hp=30;b.focus_ranged(own,foes,10);b.attack_destroyers(own,foes,10)
             shots=[o for o in orders if o[0]=='attack']
-            self.assertEqual({o[2] for o in shots},{tc.handle})
+            self.assertEqual({o[2] for o in shots if o[1]!=car.handle},{tc.handle})
+            self.assertEqual({o[2] for o in shots if o[1]==car.handle},{wyvern.handle})
             tc.x=1800;orders.clear();b.focus_ranged(own,foes,12)
             self.assertEqual(b.ranged_focus,wyvern.handle)
 
