@@ -171,7 +171,7 @@ def follow_game(row, helper, dll, output, auto_resume, enemy_race, publish, read
                     holder.terminate();holder.wait(timeout=5)
 
 
-def watch(auto_resume=False, once=True, wait_seconds=1200, enemy_race=3, target_record=None,
+def watch(auto_resume=False, once=True, wait_seconds=1200, enemy_race=0, target_record=None,
           persistent=False, on_lock_wait=None, on_lock_acquired=None):
     # A named local file lock prevents duplicate watcher instances.
     import msvcrt

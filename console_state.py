@@ -36,14 +36,22 @@ def session_alive(state):
 
 
 def request_control(action, expected_session, root=ROOT):
-    if action not in ('pause','resume'):raise ValueError('控制台仅支持停止/继续接管')
+    if action not in ('pause','resume','surrender'):raise ValueError('未知的接管控制命令')
     state=read_json(root/'artifacts/attachment.json')
     if not expected_session or state.get('session')!=expected_session:
         raise RuntimeError('对局已变化，请等待面板刷新后重试')
     if not session_alive(state):raise RuntimeError('当前没有可控制的接管连接')
+    if action=='surrender' and 'surrender' not in state.get('control_capabilities',[]):
+        raise RuntimeError('当前接管进程不支持面板认输，请在下一局使用新版接管')
+    if state.get('surrender',{}).get('stage') in ('new','waiting_gg','exiting'):
+        raise RuntimeError('认输正在处理中，请等待结果')
     # A subsequent game ignores this old token, even if it starts during this write.
-    atomic_json(root/'artifacts/attachment-command.json',dict(session=expected_session,action=action))
-    return dict(session=expected_session,action=action)
+    command=dict(session=expected_session,action=action)
+    if action=='surrender':
+        from uuid import uuid4
+        command['request_id']=uuid4().hex
+    atomic_json(root/'artifacts/attachment-command.json',command)
+    return command
 
 
 class EventTail:
@@ -117,7 +125,9 @@ class DashboardModel:
         if logpath:
             try:age=max(0,time.time()-logpath.stat().st_mtime)
             except OSError:pass
-        stale=alive and not paused and (age is None or age>25)
+        heartbeat=state.get('updated')
+        heartbeat_age=max(0,time.time()-heartbeat) if isinstance(heartbeat,(int,float)) else age
+        stale=alive and (heartbeat_age is None or heartbeat_age>5) if heartbeat is not None else alive and not paused and (age is None or age>25)
         if stale:status='连接存在 · 等待状态更新'
         config=read_json(self.root/'artifacts/auto-takeover-config.json')
         watcher=read_json(self.root/'artifacts/auto-load.json')
@@ -127,8 +137,18 @@ class DashboardModel:
         try:listener=not service.get('closed',True) and psutil.Process(service['pid']).create_time()==service['created']
         except (psutil.Error,KeyError,TypeError):pass
         automation=('已启用 · 后台待命' if listener else '已启用 · 后台未运行') if enabled else '已停用'
+        try:
+            if not watcher.get('closed',True) and psutil.Process(watcher['observer_pid']).create_time()==watcher['observer_created']:
+                automation='单局监听运行中' if watcher.get('once') else '连续监听运行中'
+        except (psutil.Error,KeyError,TypeError):pass
         detail=watcher.get('error','') if watcher.get('stage')=='failed' else ''
+        surrender=state.get('surrender',{})
+        if alive and surrender.get('stage') in ('new','waiting_gg','exiting'):status=surrender.get('message','正在认输')
         return dict(session=self.session,alive=alive,paused=paused,stale=stale,status=status,
-                    clock=clock_text(self.clock),intent=self.intent,summary_clock=clock_text(self.summary_clock),
+                    clock=clock_text(state.get('clock',self.clock)),intent=self.intent,summary_clock=clock_text(self.summary_clock),
                     decision=self.decision,history=list(self.history),automation=automation,error=detail,
-                    log_age=age,pid=state.get('process',{}).get('pid'),enemy_race=config.get('enemy_race'))
+                    log_age=heartbeat_age,pid=state.get('process',{}).get('pid'),enemy_race=state.get('opponent',{}).get('race',0),
+                    opponent=state.get('opponent',{}),map=state.get('map',{}),version=state.get('bot_name'),
+                    apm=state.get('apm') if alive and not paused and not stale else None,
+                    average_apm=state.get('average_apm'),surrender=surrender,
+                    can_surrender=alive and not stale and 'surrender' in state.get('control_capabilities',[]))

@@ -16,7 +16,7 @@ def main():
     autoload.add_argument('--auto-resume',action='store_true',help='Start bot orders after verified attachment; default pauses')
     autoload.add_argument('--watch-restarts',action='store_true',help='Handle subsequent newly launched KK games until stopped')
     autoload.add_argument('--wait-seconds',type=int,default=1200)
-    autoload.add_argument('--enemy-race',type=int,choices=(1,2,3,4),default=3)
+    autoload.add_argument('--enemy-race',type=int,choices=(0,1,2,3,4),default=0,help='0 auto-detects; explicit values are fallback only')
     sub.add_parser('auto-load-build',help='Compile and verify the x86 helper without loading it into any game')
     sub.add_parser('auto-load-stop',help='Stop the watcher and its bot; leave the game running')
     sub.add_parser('auto-load-status',help='Read startup watcher status')
@@ -26,7 +26,7 @@ def main():
     inspect.add_argument('--pid',type=int,help='Inspect a specific game PID; omit to list candidates')
     attach=sub.add_parser('attach',help='Connect to an existing runtime, initially paused; never launch/inject')
     attach.add_argument('--pid',type=int,required=True)
-    attach.add_argument('--enemy-race',type=int,choices=(1,2,3,4),default=3)
+    attach.add_argument('--enemy-race',type=int,choices=(0,1,2,3,4),default=0,help='0 auto-detects; explicit values are fallback only')
     for command in ('attach-pause','attach-resume','attach-release','attach-status'):
         sub.add_parser(command,help='Control or inspect the attached bot without closing the game')
     play=sub.add_parser('play',help='Play a local rule-controlled match')

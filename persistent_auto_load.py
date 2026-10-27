@@ -15,7 +15,7 @@ STATE = ROOT/'artifacts/auto-takeover-service.json'
 
 def configuration():
     value = json.loads(CONFIG.read_text(encoding='utf-8'))
-    if type(value.get('enabled')) is not bool or value.get('enemy_race') not in (1, 2, 3, 4):
+    if type(value.get('enabled')) is not bool or value.get('enemy_race') not in (0, 1, 2, 3, 4):
         raise ValueError('Invalid automatic takeover configuration')
     return value
 

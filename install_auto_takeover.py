@@ -74,12 +74,12 @@ def main():
                                  capture_output=True,text=True)
         if created.returncode:
             raise RuntimeError(created.stdout+created.stderr)
-        atomic_json(CONFIG, dict(enabled=True,enemy_race=1,scope='KK configured 1v1 Undead practice'))
+        atomic_json(CONFIG, dict(enabled=True,enemy_race=0,scope='KK configured 1v1 Undead practice'))
         if STOP.exists():STOP.unlink()
         started = subprocess.run(['schtasks','/Run','/TN',TASK],capture_output=True,text=True)
         if started.returncode:
             raise RuntimeError(started.stdout+started.stderr)
-        atomic_json(report, dict(installed=True,task=TASK,sid=sid,enemy_race=1,
+        atomic_json(report, dict(installed=True,task=TASK,sid=sid,enemy_race=0,
                                 message=created.stdout+started.stdout))
         return 0
     except Exception as exc:

@@ -4,66 +4,61 @@ from pathlib import Path
 import sys
 import time
 import tkinter as tk
-from tkinter import ttk
 
 from bootstrap import ROOT
-from console_state import DashboardModel, ACTIONS, NAMES, request_control
+from console_state import DashboardModel, request_control
 
-BG='#101822';CARD='#192431';TEXT='#edf3fa';MUTED='#9badc2';GREEN='#5bd5a0';AMBER='#ffcb77'
+BG='#eef2f7';TEXT='#1e293b';MUTED='#64748b';GREEN='#15803d';AMBER='#92400e';RED='#d94141'
 
 
 class Console:
     def __init__(self,window,model=None,send=request_control):
         self.window=window;self.model=model or DashboardModel();self.send=send
-        self.current={};self.pending=None;self.last_rows=None
-        window.title('OpenWar3AI · 接管控制台');window.geometry('820x710');window.minsize(700,610)
+        self.current={};self.pending=None;self.pending_id=None
+        window.title('dayuan KK 对战控制面板');window.geometry('550x420')
+        window.resizable(False,False);window.attributes('-topmost',True)
         window.configure(bg=BG)
-        style=ttk.Style(window);style.theme_use('clam')
-        style.configure('Treeview',background=CARD,fieldbackground=CARD,foreground=TEXT,rowheight=30,
-                        borderwidth=0,font=('Microsoft YaHei UI',10))
-        style.configure('Treeview.Heading',background='#253549',foreground=TEXT,font=('Microsoft YaHei UI',10))
-        style.map('Treeview',background=[('selected','#294c61')])
-        outer=tk.Frame(window,bg=BG,padx=24,pady=20);outer.pack(fill='both',expand=True)
-        self.label(outer,'OPENWAR3AI  /  接管控制台',12,MUTED).pack(anchor='w')
-        top=tk.Frame(outer,bg=BG);top.pack(fill='x',pady=(16,12))
-        self.status=self.label(top,'读取状态…',23,GREEN);self.status.pack(side='left')
-        self.clock=self.label(top,'--:--',24,TEXT);self.clock.pack(side='right')
-        self.connection=self.label(outer,'',10,MUTED);self.connection.pack(anchor='w')
-        buttons=tk.Frame(outer,bg=BG);buttons.pack(fill='x',pady=(16,8))
-        self.pause=tk.Button(buttons,text='停止接管',command=lambda:self.command('pause'),bg='#ecbc70',fg='#17202b',
-                             activebackground='#ffd995',font=('Microsoft YaHei UI',12,'bold'),relief='flat',padx=28,pady=12)
-        self.pause.pack(side='left',fill='x',expand=True,padx=(0,8))
-        self.resume=tk.Button(buttons,text='继续接管',command=lambda:self.command('resume'),bg=GREEN,fg='#11271e',
-                              activebackground='#83eac0',font=('Microsoft YaHei UI',12,'bold'),relief='flat',padx=28,pady=12)
-        self.resume.pack(side='left',fill='x',expand=True,padx=(8,0))
-        self.feedback=self.label(outer,'停止接管后，游戏继续；已有采集、移动和训练指令会保留。',10,MUTED)
-        self.feedback.pack(anchor='w',pady=(0,12))
-        card=tk.Frame(outer,bg=CARD,padx=18,pady=16);card.pack(fill='x')
-        self.label(card,'当前决策',10,MUTED,bg=CARD).pack(anchor='w')
-        self.intent=self.label(card,'等待游戏连接',17,TEXT,bg=CARD);self.intent.configure(wraplength=680)
-        self.intent.pack(anchor='w',pady=(8,8))
-        self.strategy=self.label(card,'',10,MUTED,bg=CARD);self.strategy.pack(anchor='w')
-        self.army=self.label(card,'',11,TEXT,bg=CARD);self.army.pack(anchor='w',pady=(8,0))
-        self.heroes=self.label(card,'',10,MUTED,bg=CARD);self.heroes.configure(wraplength=680)
-        self.heroes.pack(anchor='w',pady=(7,0))
-        self.label(outer,'最近操作',11,MUTED).pack(anchor='w',pady=(18,8))
-        table=tk.Frame(outer,bg=BG);table.pack(fill='both',expand=True)
-        self.events=ttk.Treeview(table,columns=('clock','event'),show='headings',height=7)
-        self.events.heading('clock',text='游戏时间');self.events.heading('event',text='决策 / 操作记录')
-        self.events.column('clock',width=85,stretch=False,anchor='center');self.events.column('event',width=560)
-        scrollbar=ttk.Scrollbar(table,orient='vertical',command=self.events.yview)
-        self.events.configure(yscrollcommand=scrollbar.set);self.events.pack(side='left',fill='both',expand=True)
-        scrollbar.pack(side='right',fill='y')
-        self.footer=self.label(outer,'',10,MUTED);self.footer.pack(anchor='w',pady=(12,0))
-        self.label(outer,'关闭窗口不停止 AI。面板每秒刷新；决策说明来自最近日志。',9,MUTED).pack(anchor='w',pady=(6,0))
+        outer=tk.Frame(window,bg=BG,padx=22,pady=14);outer.pack(fill='both',expand=True)
+        self.status=self.label(outer,'读取状态…',12,TEXT)
+        self.status.configure(font=('Microsoft YaHei UI',12,'bold'));self.status.pack(pady=(0,5))
+        metrics=tk.Frame(outer,bg=BG);metrics.pack(pady=3)
+        self.clock=self.label(metrics,'时间 --:--',11,TEXT);self.clock.pack(side='left',padx=8)
+        self.apm=self.label(metrics,'APM —',11,TEXT);self.apm.pack(side='left',padx=8)
+        self.average=self.label(metrics,'局均 —',11,TEXT);self.average.pack(side='left',padx=8)
+        self.label(outer,'APM：最近 60 游戏秒 bot 已接受的操作，不含人工操作',9,MUTED).pack()
+        self.connection=self.label(outer,'',9,MUTED);self.connection.pack(pady=(6,9))
+        self.map_name=self.label(outer,'地图 · 等待识别',11,TEXT)
+        self.map_name.configure(wraplength=490);self.map_name.pack(pady=3)
+        self.map_detail=self.label(outer,'',9,MUTED)
+        self.map_detail.configure(wraplength=490);self.map_detail.pack(pady=1)
+        self.opponent=self.label(outer,'对方种族 · 等待识别',11,TEXT);self.opponent.pack(pady=(6,10))
+        buttons=tk.Frame(outer,bg=BG);buttons.pack(pady=(4,8))
+        self.toggle=tk.Button(buttons,text='人工接管',width=16,command=self.toggle_control,
+                              font=('Microsoft YaHei UI',11),bg=GREEN,fg='white',
+                              activebackground='#166534',activeforeground='white',disabledforeground='white')
+        self.toggle.pack(side='left',padx=6,ipady=4)
+        self.surrender=tk.Button(buttons,text='认输',width=16,command=lambda:self.command('surrender'),
+                                 font=('Microsoft YaHei UI',11),bg=RED,fg='white',
+                                 activebackground='#b91c1c',activeforeground='white',disabledforeground='white')
+        self.surrender.pack(side='left',padx=6,ipady=4)
+        self.feedback=self.label(outer,'人工接管后 bot 停止下令；认输会发送 gg 后退出游戏。',10,TEXT)
+        self.feedback.configure(wraplength=490);self.feedback.pack(pady=4)
+        self.note=self.label(outer,'关闭面板不会停止 bot；已有的游戏指令会保留。',9,MUTED)
+        self.note.pack(side='bottom',pady=(4,0))
+        self.footer=self.label(outer,'',9,MUTED)
+        self.footer.configure(wraplength=490);self.footer.pack(side='bottom')
         self.refresh()
+
+    def toggle_control(self):
+        self.command('resume' if self.current.get('paused',True) else 'pause')
 
     def label(self,parent,text,size,color,bg=BG):
         return tk.Label(parent,text=text,font=('Microsoft YaHei UI',size),fg=color,bg=bg,anchor='w',justify='left')
 
     def command(self,action):
         try:
-            self.send(action,self.current.get('session'))
+            response=self.send(action,self.current.get('session')) or {}
+            self.pending_id=response.get('request_id')
             self.pending=(action,self.current.get('session'),time.monotonic())
             self.feedback.config(text='请求已发送，正在等待 AI 确认…',fg=AMBER)
         except Exception as exc:self.feedback.config(text=str(exc),fg=AMBER)
@@ -72,35 +67,47 @@ class Console:
     def render(self,data):
         self.current=data
         self.status.config(text=data['status'],fg=AMBER if data['paused'] or data['stale'] or not data['alive'] else GREEN)
-        self.clock.config(text=data['clock'] if data['alive'] else '--:--')
+        self.clock.config(text='时间 '+(data['clock'] if data['alive'] else '--:--'))
         age=data.get('log_age');fresh='暂无日志' if age is None else f'日志更新于 {int(age)} 秒前'
-        self.connection.config(text=(f"当前游戏 · PID {data['pid']}  /  {fresh}" if data['alive'] else '等待 KK 游戏连接 · 下方保留上一局记录'))
+        self.connection.config(text=(f"当前游戏 · PID {data['pid']}  /  {fresh}" if data['alive'] else '等待 KK 游戏连接'))
         if self.pending:
             action,session,started=self.pending
-            if data['session']!=session or not data['alive']:
+            outcome=data.get('surrender',{})
+            if action=='surrender' and outcome.get('request_id')!=self.pending_id:outcome={}
+            if action=='surrender' and outcome.get('stage') in ('finished','failed'):
+                self.feedback.config(text=outcome.get('message',''),fg=GREEN if outcome['stage']=='finished' else AMBER);self.pending=None
+            elif data['session']!=session or not data['alive']:
                 self.feedback.config(text='连接已变化，请按当前状态操作。',fg=AMBER);self.pending=None
-            elif data['paused']==(action=='pause'):
+            elif action!='surrender' and data['paused']==(action=='pause'):
                 self.feedback.config(text='已确认：停止接管，可手动操作。' if action=='pause' else '已确认：AI 继续接管。',fg=GREEN);self.pending=None
+            elif action=='surrender' and outcome.get('stage') in ('new','waiting_gg','exiting'):
+                self.feedback.config(text=outcome.get('message','正在认输…'),fg=AMBER)
+                if time.monotonic()-started>18:
+                    self.feedback.config(text='认输确认超时，请检查当前游戏；未确认退出。',fg=AMBER);self.pending=None
             elif time.monotonic()-started>8:
                 self.feedback.config(text='尚未收到确认，请检查游戏是否仍运行；可以重试。',fg=AMBER);self.pending=None
-        self.pause.config(state='normal' if data['alive'] and not data['paused'] and not self.pending else 'disabled')
-        self.resume.config(state='normal' if data['alive'] and data['paused'] and not self.pending else 'disabled')
-        prefix='暂停前：' if data['alive'] and data['paused'] else '' if data['alive'] else '上局记录：'
-        self.intent.config(text=prefix+data['intent'])
-        decision=data['decision'];actual=ACTIONS.get(decision.get('actual'),'等待决策')
-        requested=ACTIONS.get(decision.get('requested'),'—')
-        self.strategy.config(text=f"战术：{actual}    /    策略建议：{requested}    /    意图采样：{data['summary_clock']}")
-        self.army.config(text=f"科技 {decision.get('tier','—')} 本    ·    蜘蛛 {decision.get('fiends','—')} 只")
-        self.heroes.config(text='  /  '.join(f'{NAMES.get(h[0],h[0])} Lv.{h[1]} · HP {h[2]}' for h in decision.get('heroes',[])) or '英雄：等待记录')
-        rows=list(reversed(data['history']))
-        if rows!=self.last_rows:
-            at_top=self.events.yview()[0]==0
-            self.events.delete(*self.events.get_children())
-            for row in rows:self.events.insert('','end',values=row)
-            if at_top:self.events.yview_moveto(0)
-            self.last_rows=rows
-        race={1:'人族',2:'兽族',3:'不死族',4:'暗夜精灵'}.get(data.get('enemy_race'),'未设置')
-        self.footer.config(text=f"下局自动接管：{data['automation']}    ·    对手策略：{race}")
+        busy=data.get('surrender',{}).get('stage') in ('new','waiting_gg','exiting')
+        can_toggle=data['alive'] and not data['stale'] and not self.pending and not busy
+        can_surrender=data.get('can_surrender') and not self.pending and not busy
+        self.toggle.config(text='恢复自动控制' if data['alive'] and data['paused'] else '人工接管',
+                           bg=GREEN if can_toggle else '#94a3b8',
+                           state='normal' if can_toggle else 'disabled')
+        self.surrender.config(bg=RED if can_surrender else '#94a3b8',state='normal' if can_surrender else 'disabled')
+        self.apm.config(text='APM '+(str(data['apm']) if data.get('apm') is not None else '—'))
+        self.average.config(text='局均 '+str(data.get('average_apm') if data.get('average_apm') is not None else '—'))
+        mp=data.get('map',{});verified=mp.get('status')=='verified'
+        prior='' if data['alive'] else '上局 · '
+        self.map_name.config(text=prior+'地图 · '+(f"{mp.get('alias','')} / {mp.get('name','')}" if verified else '未识别'))
+        reasons={'map_file_unavailable':'未获取到游戏打开的地图文件','unknown_map_fingerprint':'地图文件尚未收录',
+                 'ambiguous_map_files':'游戏打开了多份地图，无法唯一确认','live_starts_mismatch':'地图出生点校验不一致',
+                 'map_read_failed':'地图文件读取失败'}
+        self.map_detail.config(text=('哈希与出生点已校验 · '+mp.get('sha256','')[:12]) if verified else
+                               reasons.get(mp.get('reason'),'等待新接管进程识别地图'))
+        race={1:'人族',2:'兽族',3:'不死族',4:'暗夜精灵'}.get(data.get('enemy_race'),'未知 · 等待发现敌军' if data['alive'] else '未记录')
+        basis={'player_setup':'对局设置','visible_enemy':'可见敌军','explicit_fallback':'手工备用设置'}.get(data.get('opponent',{}).get('race_basis'),'')
+        self.opponent.config(text=f'对方种族 · {race}'+(f'  /  {basis}' if basis else ''))
+        from undead.version import DISPLAY_NAME
+        self.footer.config(text=f"监听：{data['automation']}  ·  bot：{data.get('version') or '未记录'}\n面板 {DISPLAY_NAME}")
 
     def refresh(self):
         try:self.render(self.model.poll())

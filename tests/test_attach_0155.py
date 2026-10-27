@@ -9,14 +9,20 @@ import attach_match as a
 
 class FakeGame:
     def __init__(self):
+        self.pid=123
         self.u=N(type='uaco',owner=4,alive=True,addr=10)
         self.s=N(in_game=True,clock=100.,me=4,epoch=7,speed_pct=100,publish_count=1,units=[self.u])
         self.raw=N(in_game=True,me=4,epoch=7)
         self.world=N(read=lambda:self.raw)
         self.released=[];self.claims=N(give_back=self.released.append)
         self.evs=[];self.closed=False
+        self.lane=N(commands=lambda calls,*a,**kw:[N(ok=True) for c in calls])
+        names=('point','target','immediate','build','learn','use_item','revive','rally','buy','item_drop')
+        self._w3fast=N(OP={n:i+1 for i,n in enumerate(names)})
+    def clock(self):return self.s.clock
     def snapshot(self,**kw):return self.s
     def my_units(self):return [self.u]
+    def map(self):return N(starts=[(-1,1),(1,1)])
     def events(self):return self.evs
     def close(self):self.closed=True
     # No launch/end/speed/kill API exists in this double: accidental use fails.
@@ -91,7 +97,7 @@ class AttachmentTests(unittest.TestCase):
             with self.assertRaises(RuntimeError,msg=reason):a.validate_snapshot(g.s)
 
     def test_live_map_does_not_inherit_launchers_default_catalog(self):
-        b=N(creeping=N(catalog=[1]),critter_search=N(spawns=[1]),economy=N(ever_heroes=set()),tavern_seen=set(),third_hero='Nbrn')
+        b=N(creeping=N(catalog=[1]),start_search=N(camps=[1]),critter_search=N(spawns=[1]),economy=N(ever_heroes=set()),tavern_seen=set(),third_hero='Nbrn')
         g=N(my_heroes=lambda:[N(type='Nbrn',handle=(5,6))])
         with patch('undead.controller.Controller',return_value=b):a.make_controller(g,lambda *a:None,3)
         self.assertEqual(b.creeping.catalog,[]);self.assertEqual(b.critter_search.spawns,[])
@@ -128,13 +134,14 @@ class LifecycleTests(unittest.TestCase):
         for error in (False,True):
             with tempfile.TemporaryDirectory() as temp:
                 root=Path(temp);(root/'undead').mkdir()
-                for name in ('attach_match.py','bridge_diagnostics.py','bot.py'):(root/name).write_text('# fixture')
+                (root/'data').mkdir()
+                for name in ('attach_match.py','attachment_setup.py','kk_control.py','bridge_diagnostics.py','bot.py','data/kk_map_pool.json','data/machine_profiles.json'):(root/name).write_text('# fixture')
                 g=FakeGame();meta=dict(ready=True,process={'pid':123},player=4,epoch=7,clock=100)
                 loop=N(paused=True,step=lambda action: 'released_by_user')
                 if error:
                     def fail(action):raise RuntimeError('disconnected')
                     loop.step=fail
-                with patch.object(a,'ROOT',root),patch.object(a,'STATE',root/'state.json'),patch.object(a,'COMMAND',root/'command.json'),patch.object(a,'RunnerLock',return_value=nullcontext()),patch.object(a,'probe',return_value=meta),patch.object(a,'still_same',return_value=True),patch('undead.game_view.Game',return_value=g) as connect,patch.object(a,'Attachment',return_value=loop):
+                with patch.object(a,'ROOT',root),patch.object(a,'STATE',root/'state.json'),patch.object(a,'COMMAND',root/'command.json'),patch.object(a,'RunnerLock',return_value=nullcontext()),patch.object(a,'probe',return_value=meta),patch.object(a,'still_same',return_value=True),patch('undead.game_view.Game',return_value=g) as connect,patch.object(a,'Attachment',return_value=loop),patch('attachment_setup.identify_map',return_value=(None,dict(status='unidentified'))),patch('attachment_setup.identify_opponent',return_value=dict(status='verified',race=2,race_basis='player_setup')):
                     r=a.run_attachment(123)
                 connect.assert_called_once_with(pid=123,player=4,fair=True)
                 self.assertTrue(g.closed);self.assertEqual(g.released,[10])

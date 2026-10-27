@@ -66,7 +66,7 @@ def probe(pid):
         mp=world.map()
         if mp is None:raise RuntimeError('地图接口未就绪，请稍后重新检测')
         starts=[tuple(p) for p in mp.starts if tuple(p)!=(0,0)]
-        if len(set(starts))!=2:raise RuntimeError('当前接管策略仅支持双出生点1v1近战地图')
+        if len(set(starts))<2:raise RuntimeError('当前接管策略需要至少两个地图出生点')
         if not still_same(row):raise RuntimeError('检测期间游戏进程发生变化')
         result.update(ready=True,reason='接口已就绪；联机命令同步仍需实测')
     except w3world.WorldUnavailable as exc:
@@ -121,8 +121,8 @@ def control(action):
 def make_controller(g,log,enemy_race):
     from undead.controller import Controller
     b=Controller(g,log,enemy_race)
-    # The launch configuration's default map is NOT evidence of the live map.
-    b.creeping.catalog=[];b.critter_search.spawns=[]
+    from attachment_setup import bind_map
+    bind_map(b,getattr(g,'attachment_catalog',None))
     heroes=g.my_heroes()
     b.economy.ever_heroes.update(h.type for h in heroes)
     if hasattr(g,'units'):
@@ -142,10 +142,14 @@ class Attachment:
         self.factory=controller_factory;self.bot=None;self.paused=True;self.last_clock=None
         self.ever_heroes=set()
         self.last_publish=None;self.published=time.monotonic();self.last_summary=-100
+        self.surrender=None;self.control_request_id=None;self.last_surrender_id=None
 
     def step(self,action,wall=None):
         wall=time.monotonic() if wall is None else wall
         if action=='release':return 'released_by_user'
+        if self.surrender is not None and self.surrender.stage=='exiting':
+            self.surrender.step(self.g,[],wall)
+            return None
         raw=self.g.world.read() # Only local player / epoch metadata is inspected here.
         if raw is None:raise RuntimeError('接管快照不可用')
         if not raw.in_game:return 'game_left'
@@ -158,10 +162,22 @@ class Attachment:
         elif wall-self.published>10:raise RuntimeError('世界快照停止更新，已停止接管')
         events=self.g.events()
         if any(e.kind=='game.ended' or (e.kind=='player.left' and getattr(e,'player',None)==s.me) for e in events):return 'game_or_local_player_left'
-        if action=='pause' and not self.paused:
+        if action=='surrender' and self.control_request_id and self.control_request_id!=self.last_surrender_id:
+            from kk_control import Surrender
+            self.last_surrender_id=self.control_request_id
+            self.surrender=Surrender(self.control_request_id,self.meta.get('local_name',''))
+        surrender_active=self.surrender is not None and self.surrender.active
+        if (action in ('pause','surrender') or surrender_active) and not self.paused:
             if hasattr(self.bot,'economy'):self.ever_heroes.update(self.bot.economy.ever_heroes)
+            self.enemy_race=getattr(self.bot,'enemy_race',0) or self.enemy_race
             self.paused=True;self.bot=None;release_claims(self.g)
             self.log('attachment_paused',clock=s.clock)
+        if surrender_active:
+            previous=self.surrender.stage
+            self.surrender.step(self.g,events,wall)
+            if previous!=self.surrender.stage:self.log('attachment_surrender',clock=s.clock,**self.surrender.state())
+            self.last_clock=s.clock
+            return None
         if action=='resume' and self.paused:
             validate_snapshot(s)
             self.bot=self.factory(self.g,self.log,self.enemy_race)
@@ -177,8 +193,10 @@ class Attachment:
         return None
 
 
-def run_attachment(pid,enemy_race=3):
+def run_attachment(pid,enemy_race=0):
     from undead.game_view import Game
+    from undead.version import VERSION, RULES_VERSION, DISPLAY_NAME
+    from attachment_setup import identify_map, identify_opponent
     with RunnerLock():
         metadata=probe(pid)
         if not metadata['ready']:raise RuntimeError(metadata['reason'])
@@ -190,14 +208,16 @@ def run_attachment(pid,enemy_race=3):
         out=ROOT/'artifacts'/('attach-'+time.strftime('%Y%m%d-%H%M%S')+'-'+token[:6]);out.mkdir(parents=True)
         import shutil
         manifest={}
-        for path in [ROOT/'attach_match.py',ROOT/'bridge_diagnostics.py',ROOT/'bot.py',*sorted((ROOT/'undead').glob('*.py'))]:
+        for path in [ROOT/'attach_match.py',ROOT/'attachment_setup.py',ROOT/'kk_control.py',ROOT/'bridge_diagnostics.py',ROOT/'bot.py',
+                     *sorted((ROOT/'undead').glob('*.py')),ROOT/'data/kk_map_pool.json',ROOT/'data/machine_profiles.json']:
             name=path.relative_to(ROOT).as_posix();dest=out/'source'/name;dest.parent.mkdir(parents=True,exist_ok=True)
             shutil.copy2(path,dest);manifest[name]=hashlib.sha256(path.read_bytes()).hexdigest()
         atomic_json(out/'source-manifest.json',manifest)
         state=dict(session=token,runner_pid=os.getpid(),runner_created=psutil.Process().create_time(),
-                   process=metadata['process'],player=metadata['player'],epoch=metadata['epoch'],closed=False,paused=True,artifacts=str(out))
-        result=dict(version='0.1.60-dev',rules_version='0.1.54',mode='attach',metadata=metadata,result='detached')
-        g=None;started=time.monotonic()
+                   process=metadata['process'],player=metadata['player'],epoch=metadata['epoch'],closed=False,paused=True,artifacts=str(out),
+                   version=VERSION,rules_version=RULES_VERSION,bot_name=DISPLAY_NAME)
+        result=dict(version=VERSION,rules_version=RULES_VERSION,bot_name=DISPLAY_NAME,mode='attach',metadata=metadata,result='detached')
+        g=None;meter=None;loop=None;started=time.monotonic();published=0
         with (out/'events.jsonl').open('w',encoding='utf-8') as stream:
             def log(event,**data):
                 line=json.dumps(dict(event=event,**data),ensure_ascii=False)
@@ -205,24 +225,58 @@ def run_attachment(pid,enemy_race=3):
                 if event.startswith('attachment_'):print(line,flush=True)
             try:
                 g=Game(pid=pid,player=metadata['player'],fair=True)
-                loop=Attachment(g,metadata,enemy_race,log)
+                live_map=g.map()
+                catalog,map_info=identify_map(pid,live_map)
+                opponent=identify_opponent(pid,metadata['player'])
+                if opponent['status']!='verified':
+                    raise RuntimeError('无法核验1v1玩家槽位，未开始接管：'+opponent.get('error','unknown'))
+                selected_race=opponent['race'] or enemy_race
+                opponent=dict(opponent,race=selected_race,requested_race=enemy_race,
+                              race_basis=opponent['race_basis'] if opponent['race'] or not enemy_race else 'explicit_fallback')
+                g.attachment_catalog=catalog
+                state.update(map=map_info,opponent=opponent)
+                result.update(map=map_info,opponent=opponent)
+                metadata['local_name']=opponent.get('local_name','')
+                state['control_capabilities']=['pause','resume','surrender']
+                log('attachment_setup',map=map_info,opponent=opponent,version=VERSION)
+                from undead.debug_console import ActionMeter
+                meter=ActionMeter(g)
+                loop=Attachment(g,metadata,selected_race,log)
                 atomic_json(COMMAND,dict(session=token,action='pause'));atomic_json(STATE,state)
                 log('attachment_ready',**state)
                 print('已连接，初始暂停。另开终端执行 bot.py attach-resume 开始，attach-pause 暂停，attach-release 释放。',flush=True)
                 while True:
-                    if not still_same(metadata['process']):result['reason']='process_exited_or_changed';break
+                    if not still_same(metadata['process']):
+                        result['reason']='process_exited_or_changed'
+                        if getattr(loop,'surrender',None) and loop.surrender.exit_requested and loop.surrender.gg_confirmed:
+                            result.update(result='forfeit',reason='user_surrender_gg_then_exit')
+                            loop.surrender.stage='finished';loop.surrender.message='gg 已发送，游戏已退出'
+                        break
                     try:command=json.loads(COMMAND.read_text(encoding='utf-8'))
                     except (OSError,ValueError):command={}
                     action=command.get('action','pause') if command.get('session')==token else 'pause'
-                    if action not in ('pause','resume','release'):action='pause'
+                    if action not in ('pause','resume','release','surrender'):action='pause'
+                    loop.control_request_id=command.get('request_id') if command.get('session')==token else None
                     reason=loop.step(action)
-                    if state['paused']!=loop.paused:
-                        state['paused']=loop.paused;atomic_json(STATE,state)
+                    now=time.monotonic()
+                    state.update(updated=time.time(),clock=getattr(loop,'last_clock',None) or meter.last,paused=loop.paused)
+                    state.update(meter.summary(state['clock']))
+                    if getattr(loop,'surrender',None):state['surrender']=loop.surrender.state()
+                    observed=getattr(getattr(loop,'bot',None),'enemy_race',0)
+                    if observed and observed!=opponent['race']:
+                        opponent.update(race=observed,race_basis='visible_enemy')
+                        atomic_json(STATE,state)
+                    if now-published>=.5:
+                        atomic_json(STATE,state);published=now
                     if reason:result['reason']=reason;break
                     time.sleep(.2)
             except KeyboardInterrupt:result['reason']='keyboard_interrupt'
             except Exception as exc:result.update(result='error',reason=repr(exc))
             finally:
+                if meter is not None:
+                    result.update(meter.summary(meter.last));meter.close()
+                if getattr(loop,'surrender',None):
+                    state['surrender']=loop.surrender.state();result['surrender']=loop.surrender.state()
                 if g is not None:
                     try:release_claims(g)
                     except Exception as exc:result['lease_release_error']=repr(exc)

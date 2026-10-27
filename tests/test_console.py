@@ -75,15 +75,16 @@ class ConsoleWidgetTests(unittest.TestCase):
         sent=[]
         try:
             ui=Console(window,model=N(poll=lambda:dict(data)),send=lambda action,session:sent.append((action,session)))
-            ui.pause.invoke();self.assertEqual(sent,[('pause','test')]);self.assertIsNotNone(ui.pending)
-            self.assertIn('等待',ui.feedback.cget('text'));self.assertEqual(ui.resume.cget('state'),'disabled')
+            ui.toggle.invoke();self.assertEqual(sent,[('pause','test')]);self.assertIsNotNone(ui.pending)
+            self.assertIn('等待',ui.feedback.cget('text'));self.assertEqual(ui.toggle.cget('state'),'disabled')
             data.update(paused=True,status='已停止接管 · 可手动操作');ui.render(dict(data))
-            self.assertIsNone(ui.pending);self.assertEqual(ui.resume.cget('state'),'normal')
-            ui.resume.invoke();self.assertEqual(sent[-1],('resume','test'));self.assertIsNotNone(ui.pending)
+            self.assertIsNone(ui.pending);self.assertEqual(ui.toggle.cget('state'),'normal')
+            self.assertIn('恢复',ui.toggle.cget('text'))
+            ui.toggle.invoke();self.assertEqual(sent[-1],('resume','test'));self.assertIsNotNone(ui.pending)
             data.update(paused=False,status='AI 正在接管');ui.render(dict(data))
             self.assertIsNone(ui.pending);self.assertIn('已确认',ui.feedback.cget('text'))
             window.update_idletasks()
-            self.assertGreater(ui.pause.winfo_reqwidth(),100)
+            self.assertGreater(ui.toggle.winfo_reqwidth(),100)
         finally:window.destroy()
 
 

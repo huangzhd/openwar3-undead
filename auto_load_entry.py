@@ -22,7 +22,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--auto-resume',action='store_true')
     parser.add_argument('--watch-restarts',action='store_true')
-    parser.add_argument('--enemy-race',type=int,choices=(1,2,3,4),default=3)
+    parser.add_argument('--enemy-race',type=int,choices=(0,1,2,3,4),default=0,help='0 detects the current opponent')
     args=parser.parse_args()
     if not ctypes.windll.shell32.IsUserAnAdmin():
         shell=ctypes.WinDLL('shell32',use_last_error=True)
