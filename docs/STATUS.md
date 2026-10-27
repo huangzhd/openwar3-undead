@@ -1,5 +1,51 @@
 # 版本与验证记录
 
+## 2026-10-28 · KK自动加点拦截与同步操作审计
+
+用户选择先手动加点做对照。新run_attachment设置manual_skill_learning=True；控制器记录hero_skill_manual_required而不调用学习，Game.learn防止其他调用绕过控制器。请求随状态发布，面板显示手动提示；手动加点后AI继续使用已学技能，普通本地/训练自动加点保持。其他游戏操作未改，避免同时改变多个变量。源码修改前确认无活动游戏；新接管子进程加载新代码，不热改既有游戏。
+
+1795项离线测试全部通过（artifacts/kk-manual-skills-full-tests-final.log，9.657秒），覆盖SDK调用拦截、非KK路径、手动消费技能点后请求清除及下一等级提示。首次新增夹具缺units的失败日志保留。前两次可对照日志在AUdc学习后数秒终止，终止点约127.5游戏秒；关联支持优先隔离，但无双端校验，不能直接证明网络根因。详见KK_SYNC_AUDIT.md，底层自动学习同步未修复，买卖/使用/转交物品、复活及其他订单仍需联机验证。本次未代开局，P0完成/P1部分完成/P2–P4未开始。用户已授权累计修改提交推送，远端结果以实际Git核验为准。
+
+## 2026-10-28 · TR/TM普通对战策略复用核对
+
+用户确认KK复用此前电脑练习的TR/TM练级、侦察和战术。核对run_attachment→make_controller→Controller→bind_map，确实使用普通对战同一控制器；无需新建策略或补运行代码。实际实例化Controller验证TR/TM各四个出生位置：TR22营/TM28营、营地与小动物和酒馆绑定正确，侦察排除本家保留其余三个候选，未看见敌方建筑时不假定敌方出生点。证据artifacts/kk-tr-tm-strategy-reuse.json；53项开局/连续练级/补给/地图/接管相关测试通过（artifacts/kk-tr-tm-strategy-tests.log）。TM专用练级规则随map_alias激活；TR复用既有本图营地选择与通用战术，其独立固定营地顺序仍未文档化，不能称已有固定路线表。
+
+本次只记录用户策略约定和离线核对，不修改运行源码、不重启监听、不代开局。P0完成/P1部分完成/P2–P4未开始；下一步用户新局核验实际练级/侦察/战斗表现，离线绑定不等于实战验收。
+
+## 2026-10-28 · TR/TM 四出生点支持与旧监听重载
+
+005922 TM对局的latest-probe曾报“仅支持双出生点1v1近战地图”。后台5280自2026-10-15运行，导入旧attach_match.probe中的len(set(starts))!=2；磁盘源码已为<2，常驻进程不会随git更新重新导入。该局未启动接管客户端，不属于地图识别阶段的失败。
+
+确认无活动游戏后写AUTO_LOAD_STOP使旧监听正常退出，确认service.closed和进程消失，再清除此临时停止标记并通过既有OpenWar3AI-KK-AutoTakeover-38993任务启动新版。2026-10-28 01:05新监听PID19988，状态watching/waiting_for_new_kk_game，进程创建时间核验通过。保留原enabled/auto_resume/持久监听设置，未启动游戏、未重新注册任务或修改权限。
+
+四出生点是地图可能出生位置，不等于四名活动玩家；probe允许至少两处，identify_opponent仍单独要求两名敌对活动玩家。新增测试覆盖TR/TM全部八个出生槽位、四处地图坐标完整匹配，少给两处时仍拒绝；已有额外玩家拒绝及逐出生点侦察测试继续通过。64项相关测试通过（artifacts/kk-four-start-tests.log），TR/TM真实文件离线identify_map均verified，证据artifacts/kk-four-start-verification.json。该离线测试模拟进程文件列表与公开出生点，尚未代用户实跑新局。
+
+TM文件f79be91089bc90d9aff7ba7c8fe1a1f9.w3x，SHA256 f7d7a7dd0b70dd5eb1e868388ac153b5499e86a31ed79c2cbc452553754f777f，13项内部资源与原标准TM相同（包括双方缺失的可选对象表），已加入upstream.map_variants.TM，原启动绑定保留。P0完成/P1部分完成/P2–P4未开始；下一步用户新局验收，未提交/push。
+
+## 2026-10-28 · 七张 KK 地图文件识别
+
+按用户给出的文件名表，AZ/AL/CH/LR/NI/TH/TR 已全部登记到 data/machine_profiles.json 的 upstream.map_variants。写前确认无活动游戏进程；TH此前待登记已完成。识别读取实际打开的地图文件，以登记的完整SHA256确认地图内容，再检查游戏公开出生点，保留原地图及两机启动默认绑定。无需改名或重启面板；下一次新接管读取新登记。
+
+七份文件的内部名称与标准地图一致，war3map.j/w3i/w3e/wpm/doo、war3mapUnits.doo及七种可选对象表逐项相同（可选项允许双方都缺失）；证据 artifacts/kk-seven-map-verification.json。七份真实地图通过离线 identify_map（进程列表/出生点使用夹具）均 verified，七份原标准图仍可识别；35项相关测试通过，日志 artifacts/kk-seven-map-tests.log。新登记后实机待验；P0完成/P1部分完成/P2–P4未开始，未开停局/重启监听/提交/push。
+
+## 2026-10-28 · KK 接管断开：状态文件写入竞争
+
+000453/001406 两局最后状态分别为178.750/68.050游戏秒；对应 auto-load-20261028-000442-13280、auto-load-20261028-001356-29128/bot.log 均记录 attachment.json 临时文件替换时报 WinError 5 拒绝访问。两局 attachment result.json 未保存、旧状态 closed=false。001406 的 LR/Last Refuge v1.5 已实际 verified，地图登记成功。监听器在客户端退出后标记 bot_released 并等游戏结束，不会重连；不是有证据的固定几分钟时限。最终 game_exited 是后续游戏退出，不能据此称游戏先退出导致 AI 断开。
+
+已确认错误为状态文件替换被拒绝；具体占用进程未确定。旧 finally 再写同一状态路径可能覆盖先前异常，因此旧日志不足以排除其他初始触发因素。修复前确认无活动游戏进程；未代开/停局、重启面板或监听。
+
+attach_match.atomic_json 对 PermissionError 最多7次原子替换尝试、总退避0.56秒，保持旧完整JSON，临时文件清理不覆盖原始错误。接管心跳在短暂写失败时继续处理控制指令，记录延迟及恢复；连续10秒未成功写入则报错并释放控制。初始连接/控制命令仍要求成功写入，其他磁盘错误不吞掉。最终状态写失败另记 final_status_write_error，仍尝试保存独立 result.json；运行异常新增事件与 traceback，不再由状态收尾错误掩盖。未更改监听器的自动重连策略。
+
+49项定向测试通过，包含 Windows CreateFileW 打开真实文件且不共享删除权限的复现、释放锁后重试、旧JSON完整性、持续失败有界退出、继续处理指令和最终结果保存。全量1791项通过（10.667秒，artifacts/kk-status-io-full-tests.log）；定向日志 artifacts/kk-status-io-tests.log。下一次新接管进程加载修复，旧常驻监听/面板未热更新；本次未做修复后实战验收。P0完成/P1部分完成/P2–P4未开始；未提交/push。
+
+## 2026-10-28 · KK LR 地图包指纹补登记
+
+用户确认当前 KK 地图为 LR，并要求记住以供下次识别。cdeb033fb68cd0b3909c6fdd568e5497.w3x 的 SHA256 为 be77e49e9f40f6cbee93d0af4993588c1458402d883cd09633951508fc4d847e；与已收录 (2)lastrefuge_s2_v1.5.w3x 的 war3map.j、war3map.w3i、war3map.w3e、war3map.wpm、war3map.doo、war3mapUnits.doo 逐字节一致，脚本出生点与 LR 目录一致。此前 unknown_map_fingerprint 是整个地图包哈希不同导致。
+
+data/machine_profiles.json 的 upstream.map_variants.LR 增加该指纹，catalog_for_path 支持额外已核验包；默认启动地图及两机旧指纹继续保留，仍按完整哈希及公开出生点双重校验，不按文件名猜测。修改前已确认 War3.exe 13280 与接管 runner 2304 均退出、活动游戏进程为空；旧 attachment.json 的 closed=false 为未收尾的遗留状态，原日志未修改，未代开/停局或重启监听。
+
+35 项地图识别/机器启动/地图池测试通过；实际 KK 文件离线经过 identify_map（进程文件列表与出生点使用夹具）返回 verified/LR，错误出生点返回 live_starts_mismatch。原标准 LR 仍可识别；下一次新接管实机显示待验，不能把离线校验当作新局验收。P0 完成、P1 部分完成、P2–P4 未开始；未提交/push。
+
 ## 2026-10-27 · dayuan V1.99 / 0.1.199-dev · KK 接管面板与对局识别
 
 KK 接管新增真实地图文件指纹及公开出生点校验；识别成功后绑定既有营地、小动物、搜索点与酒馆资料，继续使用原地图路线。未知地图明确显示未识别，不套用默认地图。核验两名敌对活动玩家；优先读取对局种族设置，未知时由可见敌军补充，显式参数仅作备用。修复接管结果中写死的旧版本号。

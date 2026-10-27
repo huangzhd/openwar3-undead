@@ -14,6 +14,41 @@ from tests.test_attach_0155 import FakeGame
 
 
 class MapIdentityTests(unittest.TestCase):
+    def test_tr_tm_four_spawn_catalogs_verify_all_starts(self):
+        from undead.maps import pool
+        for alias in ('TR','TM'):
+            catalog=pool()[alias]
+            starts=[(p['x'],p['y']) for p in catalog['starts']]
+            with tempfile.TemporaryDirectory() as directory:
+                path=Path(directory)/'kk.w3x';path.write_bytes(b'fixture')
+                process=N(open_files=lambda:[N(path=str(path))])
+                with patch.object(setup.psutil,'Process',return_value=process),patch.object(setup,'catalog_for_path',return_value=catalog):
+                    found,info=setup.identify_map(123,N(starts=starts+[(0,0)]*8))
+                    self.assertEqual(info['status'],'verified')
+                    self.assertEqual(found['alias'],alias)
+                    self.assertEqual(len(found['starts']),4)
+                    found,info=setup.identify_map(123,N(starts=starts[:2]))
+                    self.assertIsNone(found)
+                    self.assertEqual(info['reason'],'live_starts_mismatch')
+
+    def test_registered_variant_preserves_primary_map_and_launch_binding(self):
+        from undead.maps import catalog_for_path, bound_catalog
+        with tempfile.TemporaryDirectory() as directory:
+            primary=Path(directory)/'primary.w3x';primary.write_bytes(b'primary package')
+            variant=Path(directory)/'renamed.w3x';variant.write_bytes(b'verified variant')
+            digest=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+            catalog=dict(alias='LR',file=primary.name,map_sha256=digest(primary),starts=[],camps=[])
+            profiles={'upstream':dict(maps={},map_variants={'LR':[dict(file='original-name.w3x',map_sha256=digest(variant))]})}
+            with patch('undead.maps.pool',return_value={'LR':catalog}),patch('undead.maps.profiles',return_value=profiles):
+                self.assertEqual(catalog_for_path(primary)['alias'],'LR')
+                found=catalog_for_path(variant)
+                self.assertEqual(found['alias'],'LR')
+                self.assertEqual(found['map_sha256'],digest(variant))
+                self.assertEqual(found['file'],variant.name)
+                self.assertEqual(bound_catalog('LR','upstream')['file'],primary.name)
+                variant.write_bytes(b'unverified modification')
+                self.assertIsNone(catalog_for_path(variant))
+
     def identify(self, mode='known'):
         with tempfile.TemporaryDirectory() as directory:
             path=Path(directory)/'kk-hashed-name.w3x';path.write_bytes(b'known map')
@@ -116,6 +151,8 @@ class SetupLifecycleTests(unittest.TestCase):
         self.assertEqual(loops,[(4,catalog)])
         self.assertEqual(result['opponent']['race'],4)
         self.assertTrue(state['closed'])
+        self.assertTrue(state['manual_skill_learning'])
+        self.assertTrue(result['manual_skill_learning'])
         from undead.version import VERSION
         self.assertEqual(result['version'],VERSION)
 

@@ -57,4 +57,8 @@ def catalog_for_path(path):
             data = dict(row, **profile.get('maps', {}).get(alias, {}), machine_profile=machine)
             if data['map_sha256'] == digest:
                 return dict(data, file=path.name)
+            # Verified package variants affect recognition only, not launch defaults.
+            for variant in profile.get('map_variants', {}).get(alias, []):
+                if variant['map_sha256'] == digest:
+                    return dict(data, file=path.name, map_sha256=digest)
     return None

@@ -1657,6 +1657,7 @@ class Controller(BattleTacticsMixin):
 
     def skills(self,now):
         g=self.g
+        self.manual_skill_requests=[]
         # Observe real learned rows before another passive can hide them in the
         # bridge snapshot. Learn-order acceptance alone is never skill evidence.
         if hasattr(g,'observe_coil'):g.observe_coil(g.my_heroes(),now,self.log)
@@ -1673,13 +1674,20 @@ class Controller(BattleTacticsMixin):
         for h in g.my_heroes():
             if self.teleport and h.handle==self.teleport['hero']:continue
             if now<self.cast_until.get(h.handle,0):continue
-            if h.skill_points and self.due(('learn',h.handle),now,1):
+            if h.skill_points and (getattr(g,'manual_skill_learning',False) is True or self.due(('learn',h.handle),now,1)):
                 seq=orders.get(h.type,[])
                 idx=max(0,h.level-h.skill_points)
                 if idx<len(seq):
-                    r=g.learn(h,seq[idx])
-                    self.log('hero_skill_learn_attempt',clock=now,hero=h.type,hero_level=h.level,
-                             spent_points=idx,ability=seq[idx],accepted=bool(r))
+                    if getattr(g,'manual_skill_learning',False) is True:
+                        request=dict(hero=h.type,hero_level=h.level,ability=seq[idx],points=h.skill_points)
+                        self.manual_skill_requests.append(request)
+                        key=('manual_skill',h.handle,h.level,h.skill_points,seq[idx])
+                        if self.due(key,now,30):
+                            self.log('hero_skill_manual_required',clock=now,**request)
+                    else:
+                        r=g.learn(h,seq[idx])
+                        self.log('hero_skill_learn_attempt',clock=now,hero=h.type,hero_level=h.level,
+                                 spent_points=idx,ability=seq[idx],accepted=bool(r))
             if h.type in {'Ulic','Nngs'} and now>=self.cast_until.get(h.handle,0):
                 code,order=('AUfu','frostarmoroff') if h.type=='Ulic' else ('ANfa','coldarrows')
                 level=hero_spell_level(g,h,code)

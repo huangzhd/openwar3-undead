@@ -5,6 +5,11 @@ from .hero_spell_telemetry import HeroSpellTelemetry,HERO_CODES,ORDERS,TOGGLES
 
 
 class Game(SDKGame):
+    def learn(self,hero,ability):
+        # KK comparison mode: never issue W3P learn; local/training keeps the SDK path.
+        if getattr(self,'manual_skill_learning',False) is True:return False
+        return super().learn(hero,ability)
+
     def _coil(self):
         if not hasattr(self, '_coil_telemetry'):
             self._coil_telemetry = CoilTelemetry()

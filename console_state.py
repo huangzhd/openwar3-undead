@@ -149,6 +149,8 @@ class DashboardModel:
                     decision=self.decision,history=list(self.history),automation=automation,error=detail,
                     log_age=heartbeat_age,pid=state.get('process',{}).get('pid'),enemy_race=state.get('opponent',{}).get('race',0),
                     opponent=state.get('opponent',{}),map=state.get('map',{}),version=state.get('bot_name'),
+                    manual_skill_learning=state.get('manual_skill_learning',False),
+                    skill_requests=state.get('skill_requests',[]),
                     apm=state.get('apm') if alive and not paused and not stale else None,
                     average_apm=state.get('average_apm'),surrender=surrender,
                     can_surrender=alive and not stale and 'surrender' in state.get('control_capabilities',[]))

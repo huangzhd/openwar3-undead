@@ -44,6 +44,7 @@ class Console:
         self.feedback=self.label(outer,'人工接管后 bot 停止下令；认输会发送 gg 后退出游戏。',10,TEXT)
         self.feedback.configure(wraplength=490);self.feedback.pack(pady=4)
         self.note=self.label(outer,'关闭面板不会停止 bot；已有的游戏指令会保留。',9,MUTED)
+        self.note.configure(wraplength=490)
         self.note.pack(side='bottom',pady=(4,0))
         self.footer=self.label(outer,'',9,MUTED)
         self.footer.configure(wraplength=490);self.footer.pack(side='bottom')
@@ -106,6 +107,8 @@ class Console:
         race={1:'人族',2:'兽族',3:'不死族',4:'暗夜精灵'}.get(data.get('enemy_race'),'未知 · 等待发现敌军' if data['alive'] else '未记录')
         basis={'player_setup':'对局设置','visible_enemy':'可见敌军','explicit_fallback':'手工备用设置'}.get(data.get('opponent',{}).get('race_basis'),'')
         self.opponent.config(text=f'对方种族 · {race}'+(f'  /  {basis}' if basis else ''))
+        self.note.config(text='KK 自动学技能已停用，请手动加点。' if data.get('manual_skill_learning') else
+                         '关闭面板不会停止 bot；已有的游戏指令会保留。')
         from undead.version import DISPLAY_NAME
         self.footer.config(text=f"监听：{data['automation']}  ·  bot：{data.get('version') or '未记录'}\n面板 {DISPLAY_NAME}")
 

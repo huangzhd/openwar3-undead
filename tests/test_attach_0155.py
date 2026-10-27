@@ -105,6 +105,22 @@ class AttachmentTests(unittest.TestCase):
 
 
 class LifecycleTests(unittest.TestCase):
+    def test_tr_tm_probe_accepts_each_of_four_spawn_slots(self):
+        import w3world
+        from undead.maps import pool
+        for alias in ('TR','TM'):
+            starts=[(p['x'],p['y']) for p in pool()[alias]['starts']]
+            self.assertEqual(len(starts),4)
+            for player in range(4):
+                with self.subTest(map=alias,player=player):
+                    g=FakeGame();g.s.me=player;g.u.owner=player;closed=[]
+                    world=N(read=lambda:g.s,map=lambda:N(starts=starts+[(0,0)]*8),close=lambda:closed.append(True))
+                    with patch.object(a,'identity',return_value={}),patch.object(a,'compatible_dll',return_value=True),patch.object(a,'still_same',return_value=True),patch.object(w3world,'World',return_value=world):
+                        result=a.probe(123)
+                    self.assertTrue(result['ready'],result)
+                    self.assertEqual(result['player'],player)
+                    self.assertEqual(closed,[True])
+
     def test_missing_bridge_has_specific_diagnostic_and_does_not_create_client(self):
         import w3world
         row=dict(pid=123,created=1,name='war3.exe',exe='C:/Game/war3.exe')

@@ -40,6 +40,56 @@
   "upstream": {
     "description": "38993 upstream standard-name map packages",
     "game_dir": "C:\\Users\\38993\\Downloads\\War3_1.27a\\Warcraft III Frozen Throne 1.27a publish",
-    "maps": {}
+    "maps": {},
+    "map_variants": {
+      "TM": [
+        {
+          "file": "f79be91089bc90d9aff7ba7c8fe1a1f9.w3x",
+          "map_sha256": "f7d7a7dd0b70dd5eb1e868388ac153b5499e86a31ed79c2cbc452553754f777f"
+        }
+      ],
+      "LR": [
+        {
+          "file": "cdeb033fb68cd0b3909c6fdd568e5497.w3x",
+          "map_sha256": "be77e49e9f40f6cbee93d0af4993588c1458402d883cd09633951508fc4d847e"
+        }
+      ],
+      "AZ": [
+        {
+          "file": "0c5bf80d482b5ad2b6bd88645af805b0.w3x",
+          "map_sha256": "cec7b250ae174528ac35ede736ae370fc8a30c3ba5bca353944c727cb6d306a0"
+        }
+      ],
+      "AL": [
+        {
+          "file": "5a2c1ebd7838d380f9ef31086240f61a.w3x",
+          "map_sha256": "e623460c6b66b4f9142413bb55234de21d4abbb99a873720981286714d9d2430"
+        }
+      ],
+      "CH": [
+        {
+          "file": "14173203c1957508fb57dba6b1b4fea9.w3x",
+          "map_sha256": "c651314d50aa423170d387df6ed5a4a815e6f2dac5ad9f71af4d90603e91c1b5"
+        }
+      ],
+      "NI": [
+        {
+          "file": "ebd3e3e67ae653057e407b60618d3216.w3x",
+          "map_sha256": "6c980acd7db73bf661fe5ffb7e15cc75e313242c500c5bdfaaca3f632c870cb5"
+        }
+      ],
+      "TH": [
+        {
+          "file": "e796d4fd3164e139310439c8056c88ee.w3x",
+          "map_sha256": "556e4cde9c54f81f4303d45954c991d9d9450655dfd18d445b9baa8ea0c4993e"
+        }
+      ],
+      "TR": [
+        {
+          "file": "13c4a40ebefecb81a1bec1c856b88778.w3x",
+          "map_sha256": "2dc9cf40f2576220b242f0fd5fff7f721316cd4d1ec5f9ec31e0e3ba4a471023"
+        }
+      ]
+    }
   }
 }

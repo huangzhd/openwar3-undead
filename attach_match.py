@@ -4,6 +4,7 @@ import json
 import os
 import re
 import time
+import traceback
 import uuid
 from pathlib import Path
 import psutil
@@ -18,9 +19,38 @@ def atomic_json(path,value):
     temp=path.with_name(path.name+'.'+uuid.uuid4().hex+'.tmp')
     try:
         temp.write_text(json.dumps(value,ensure_ascii=False,indent=2),encoding='utf-8')
-        os.replace(temp,path)
+        # Windows readers may briefly deny deletion/replacement of an open file.
+        for attempt in range(7):
+            try:
+                os.replace(temp,path)
+                break
+            except PermissionError:
+                if attempt==6:raise
+                time.sleep(min(.01*2**attempt,.25))
     finally:
-        if temp.exists():temp.unlink()
+        try:temp.unlink(missing_ok=True)
+        except OSError:pass  # Cleanup must not hide the original write error.
+
+
+class StatusPublisher:
+    """Tolerate brief dashboard write contention while commands still run."""
+    def __init__(self,path,log):
+        self.path=path;self.log=log;self.failed_since=None;self.failures=0
+
+    def publish(self,state):
+        try:atomic_json(self.path,state)
+        except PermissionError as exc:
+            now=time.monotonic();self.failures+=1
+            if self.failed_since is None:
+                self.failed_since=now
+                self.log('attachment_status_write_delayed',error=repr(exc))
+            if now-self.failed_since>=10:
+                raise RuntimeError('接管状态文件持续10秒无法更新，停止接管：'+str(exc)) from exc
+            return False
+        if self.failed_since is not None:
+            self.log('attachment_status_write_recovered',failed_updates=self.failures)
+        self.failed_since=None;self.failures=0
+        return True
 
 
 def identity(pid):
@@ -66,6 +96,7 @@ def probe(pid):
         mp=world.map()
         if mp is None:raise RuntimeError('地图接口未就绪，请稍后重新检测')
         starts=[tuple(p) for p in mp.starts if tuple(p)!=(0,0)]
+        # TR/TM have four possible spawns; identify_opponent separately verifies 1v1.
         if len(set(starts))<2:raise RuntimeError('当前接管策略需要至少两个地图出生点')
         if not still_same(row):raise RuntimeError('检测期间游戏进程发生变化')
         result.update(ready=True,reason='接口已就绪；联机命令同步仍需实测')
@@ -223,8 +254,12 @@ def run_attachment(pid,enemy_race=0):
                 line=json.dumps(dict(event=event,**data),ensure_ascii=False)
                 stream.write(line+'\n');stream.flush()
                 if event.startswith('attachment_'):print(line,flush=True)
+            publisher=StatusPublisher(STATE,log)
             try:
                 g=Game(pid=pid,player=metadata['player'],fair=True)
+                g.manual_skill_learning=True
+                state['manual_skill_learning']=True
+                result['manual_skill_learning']=True
                 live_map=g.map()
                 catalog,map_info=identify_map(pid,live_map)
                 opponent=identify_opponent(pid,metadata['player'])
@@ -261,17 +296,19 @@ def run_attachment(pid,enemy_race=0):
                     now=time.monotonic()
                     state.update(updated=time.time(),clock=getattr(loop,'last_clock',None) or meter.last,paused=loop.paused)
                     state.update(meter.summary(state['clock']))
+                    state['skill_requests']=getattr(getattr(loop,'bot',None),'manual_skill_requests',[])
                     if getattr(loop,'surrender',None):state['surrender']=loop.surrender.state()
                     observed=getattr(getattr(loop,'bot',None),'enemy_race',0)
                     if observed and observed!=opponent['race']:
                         opponent.update(race=observed,race_basis='visible_enemy')
-                        atomic_json(STATE,state)
                     if now-published>=.5:
-                        atomic_json(STATE,state);published=now
+                        publisher.publish(state);published=now
                     if reason:result['reason']=reason;break
                     time.sleep(.2)
             except KeyboardInterrupt:result['reason']='keyboard_interrupt'
-            except Exception as exc:result.update(result='error',reason=repr(exc))
+            except Exception as exc:
+                result.update(result='error',reason=repr(exc),traceback=traceback.format_exc())
+                log('attachment_error',reason=result['reason'],traceback=result['traceback'])
             finally:
                 if meter is not None:
                     result.update(meter.summary(meter.last));meter.close()
@@ -282,7 +319,11 @@ def run_attachment(pid,enemy_race=0):
                     except Exception as exc:result['lease_release_error']=repr(exc)
                     try:g.close()
                     except Exception as exc:result['client_close_error']=repr(exc)
-                state.update(closed=True,paused=True);atomic_json(STATE,state)
+                state.update(closed=True,paused=True)
+                try:atomic_json(STATE,state)
+                except OSError as exc:
+                    result['final_status_write_error']=repr(exc)
+                    log('attachment_status_close_failed',error=repr(exc))
                 result['wall_seconds']=round(time.monotonic()-started,2)
                 atomic_json(out/'result.json',result)
         return result
