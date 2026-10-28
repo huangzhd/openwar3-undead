@@ -83,7 +83,7 @@ class AtomicStatusTests(unittest.TestCase):
                 if path==state and (value.get('closed') or value.get('updated') and not failed):
                     failed.append(True);raise PermissionError('locked status')
                 original(path,value)
-            with patch.object(a,'ROOT',root),patch.object(a,'STATE',state),patch.object(a,'COMMAND',command),patch.object(a,'RunnerLock',return_value=nullcontext()),patch.object(a,'probe',return_value=meta),patch.object(a,'still_same',return_value=True),patch('undead.game_view.Game',return_value=game),patch.object(a,'Attachment',return_value=loop),patch('attachment_setup.identify_map',return_value=(None,dict(status='unidentified'))),patch('attachment_setup.identify_opponent',return_value=dict(status='verified',race=2,race_basis='player_setup')),patch.object(a,'atomic_json',side_effect=write),patch.object(a.time,'sleep'):
+            with patch.object(a,'ROOT',root),patch.object(a,'STATE',state),patch.object(a,'COMMAND',command),patch.object(a,'RunnerLock',return_value=nullcontext()),patch.object(a,'probe',return_value=meta),patch.object(a,'still_same',return_value=True),patch('undead.game_view.Game',return_value=game),patch.object(a,'Attachment',return_value=loop),patch('attachment_setup.identify_map',return_value=(None,dict(status='unidentified'))),patch('attachment_setup.identify_opponent',return_value=dict(status='verified',controller=1,race=2,race_basis='player_setup')),patch.object(a,'atomic_json',side_effect=write),patch.object(a.time,'sleep'):
                 result=a.run_attachment(123)
             self.assertEqual(len(actions),3)
             self.assertEqual(result['reason'],'released_by_user')

@@ -40,6 +40,22 @@ def in_weapon_range(g,attacker,target):
     distance=g.dist(attacker,target)
     return any(kind in w.targets and w.min_range<=distance<=w.range for w in a.weapons)
 
+def nightelf_ground_target(g,army,foes,preferred=None):
+    shooters=[u for u in army if u.type in {'ucry','Ulic','Nbrn','Nngs','uabo','Ucrl','ugho'} and u.hp>0]
+    targets=[e for e in foes if e.type in {'edcm','edry'} and can_engage(e) and enemy_player(g,e) and
+             e.visible_to(g.me()) and not buffs(g,e)&{'Bvul','BHds'} and 'Avul' not in abilities(g,e) and
+             any(in_weapon_range(g,u,e) for u in shooters)]
+    if not targets:return None
+    bears=[e for e in targets if e.type=='edcm']
+    center=(sum(u.x for u in shooters)/len(shooters),sum(u.y for u in shooters)/len(shooters))
+    bear_front=min((g.dist(center,e) for e in bears),default=float('inf'))
+    # A dryad must be exposed to concentrated fire, not behind the bears.
+    exposed=[e for e in targets if e.type=='edry' and g.dist(center,e)<=bear_front and
+             sum(in_weapon_range(g,u,e) for u in shooters)>=max(2,(len(shooters)+1)//2)]
+    pool=exposed or bears or targets
+    return min(pool,key=lambda e:(e.handle!=preferred,e.hp,e.handle))
+
+
 def priority(target):
     stats=unit_stats(target.type)
     siege=not is_structure(target) and stats and any(w.attack_type=='siege' for w in stats.weapons)
@@ -450,6 +466,10 @@ class HeroPressure:
         return history
 
     def choose(self,g,army,foes,now):
+        ground=nightelf_ground_target(g,army,foes,self.preferred)
+        if ground:
+            self.target=None;self.preferred=ground.handle
+            return ground
         fighters=[u for u in army if u.type!='uobs' and u.hp>0]
         reachable=[e for e in foes if e.hp>0 and enemy_player(g,e) and any(in_weapon_range(g,u,e) for u in fighters)]
         heroes=[e for e in reachable if e.is_hero]

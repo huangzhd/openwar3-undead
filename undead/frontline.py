@@ -62,6 +62,7 @@ def impale(b,army,foes,now,blocked=()):
 
 
 def attack_frontline(b,army,foes,now):
+    from .targeting import nightelf_ground_target
     g=b.g
     if not any(enemy_player(g,e) for e in foes):return set()
     tanks=[u for u in army if u.type in TANKS]
@@ -74,6 +75,12 @@ def attack_frontline(b,army,foes,now):
         if (u.hp<=u.hp_max*.45 or u.handle in blocked or now<b.cast_until.get(u.handle,0)
                 or buffs(g,u)&DISABLED_CASTERS or b.backline_safe_output.get(u.handle,-100)>=now):continue
         current=g.current_target(u)
+        focus=nightelf_ground_target(g,army,targets)
+        if focus and in_weapon_range(g,u,focus):
+            if (not current or current.handle!=focus.handle) and b.due(('frontline_ground_focus',u.handle),now,1.2):
+                receipt=g.attack(u,focus)
+                b.log('battle_frontline_ground_focus',clock=now,handle=u.handle,target=focus.handle,accepted=bool(receipt))
+            continue
         if current and any(e.handle==current.handle and in_weapon_range(g,u,e) for e in targets):continue
         nearby=[e for e in targets if g.dist(u,e)<=900]
         target=min(nearby,key=lambda e:(e.is_hero,g.dist(u,e)),default=None)

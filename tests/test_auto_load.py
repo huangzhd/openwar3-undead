@@ -98,3 +98,27 @@ class AutoLoadTests(unittest.TestCase):
                 self.assertEqual(result,'stopped');self.assertEqual(launch.call_count,1)
                 self.assertEqual([x['action'] for x in writes], ['resume','release'] if automatic else ['release'])
                 self.assertIn('resume_requested' if automatic else 'attached_paused',stages)
+
+    def test_blocked_runner_exit_never_sends_auto_resume_or_reuses_old_refusal(self):
+        import attach_match
+        for fresh in (True,False):
+            with self.subTest(fresh=fresh),tempfile.TemporaryDirectory() as directory:
+                out=Path(directory);state=out/'attachment.json';command=out/'command.json'
+                refusal=dict(closed=True,paused=True,process=self.row,session='refused',
+                             runner_pid=77,runner_created=9 if fresh else 7,
+                             blocked_reason='multiplayer_orders_unsynchronized',
+                             blocked_message='当前运行时不支持真人联机同步下令')
+                state.write_text(json.dumps(refusal),encoding='utf-8')
+                child=N(pid=77,poll=lambda:1)
+                stages=[]
+                with patch.object(a,'STOP',out/'stop'),patch.object(a,'probe',return_value={'bridge':True,'ready':True}),patch.object(a,'still_same',return_value=True),patch.object(a.subprocess,'Popen',return_value=child),patch.object(a,'owns_runner',return_value=False),patch.object(attach_match,'STATE',state),patch.object(attach_match,'COMMAND',command),patch.object(a.time,'time',return_value=8):
+                    if fresh:
+                        result=a.follow_game(self.row,None,None,out,True,0,lambda stage,**kw:stages.append((stage,kw)))
+                        self.assertEqual(result,'takeover_blocked')
+                        self.assertEqual(stages[-1][1]['error'],refusal['blocked_message'])
+                    else:
+                        with self.assertRaisesRegex(RuntimeError,'客户端启动失败'):
+                            a.follow_game(self.row,None,None,out,True,0,lambda stage,**kw:stages.append((stage,kw)))
+                        self.assertNotIn('takeover_blocked',[stage for stage,_ in stages])
+                self.assertFalse(command.exists())
+                self.assertNotIn('resume_requested',[stage for stage,_ in stages])

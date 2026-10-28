@@ -1,5 +1,91 @@
 # 版本与验证记录
 
+## 2026-10-28 · 人族双战术陪练、OB 与 21:30 交付授权
+
+用户要求先做人族一本开矿和单矿火枪两个 bot，并明确保留 OB 槽。已新增 human_opponents.py、sparring.py、sparring_map.py 及 bot.py sparring 入口；首版仅 LR/100%/单局，P0 观战、P1 dayuan、P2 人族，各自 fair=True。原地图不覆盖，观战副本保留地形、物体、野怪与原掉落函数；只改玩家配置/开局，使用现有全灭建筑裁判，不宣称等同天梯全部规则。运行时不确认 OB、敌对关系和独立视野时拒绝继续。无后台持续运行能力，失焦仍暂停等待；无自动学习或批量续局。
+
+1875 项全量离线通过，0失败/错误/跳过，artifacts/sparring-full-tests-20261028.log；生成/解析与 CLI --check 通过。首次观战副本测试因换行变化改变掉落函数哈希失败，已限制变更范围并复验。无实机启动，OB 原生槽、双控制器运营和完整胜负均待验。细节和入口见 docs/SPARRING.md。KK 真人同步依旧未修复，拒绝保护保留。
+
+用户明确授权北京时间 2026-10-28 21:30 冻结当前累计代码并上传 GitHub，覆盖此前本轮不提交/push限制；不授权新局或恢复持续自动练习。已配置同对话的一次 21:30 提醒，到点停止功能扩展、审查暂存并提交推送 origin/main。提交/推送结果以最终响应和远端核验为准，不能把待验功能记为实机通过。P0完成/P1部分完成/P2–P4未开始。
+
+## 2026-10-28 · 暗夜第5关熊鹿优先与娜迦开局
+
+用户最新战术覆盖上一条角鹰优先：共用目标按可见兵种选择射程内熊；小鹿进入至少2名且多数主力射程、相对主力中心不在熊后方时抢先集火。熊鹿可攻击时过滤角鹰/英雄机会目标，前排同样参与；Nova打熊，不对魔免小鹿浪费Nova/叉状闪电。保留撤退、治疗、受控、施法和购物保护。毁灭优先原有树人>英雄返老还童>吼叫驱散，安全时输出熊，不对魔免小鹿攻击；被近距离单只角鹰/小鹿锁定即后拉，沿安全后排路径寻找输出位。
+
+核对固定原图war3map.j的C5R5P1ChooseUd3rdHero训练开始触发：u003祭坛训练N004会移除祭坛并生成Nngs。此关初始已有两毁灭，选择娜迦。适配器最多尝试3次、间隔3秒；只有看到己方Nngs才确认选择并重置20秒治疗药水拾取窗口，仍使用既有安全路线/背包容量/入包确认，不直接修改地图或生成单位。原脚本取证artifacts/training-source-audit.j。
+
+1852项全量离线通过，0失败/错误/跳过（artifacts/nightelf-ground-focus-tests-full.log）；9项专项覆盖熊鹿优先、角鹰忽略、前后排切换、魔免小鹿、毁灭被单只角鹰锁定后拉、祭坛重试与实际生成确认、药水窗口、原驱散顺序和保护。脚本编辑时一次系统编码读取失败已用明确UTF-8修正；修改前后无活动进程，训练状态finished，未开局、提交/push。真实选择/拾取/击杀和保护仍待用户新局；P0完成/P1部分完成/P2–P4未开始。
+
+## 2026-10-28 · 暗夜第5关角鹰/熊分工
+
+按用户要求，共用战斗逻辑优先让Lich/蜘蛛击杀已观察到网buff、可见可攻击且在射程内的角鹰，Nova同目标，不新起英雄NC抢走火力；毁灭优先射程内熊形态edcm，保留残血/集火撤退、受控及施法保护。按兵种与状态触发，普通/训练共用，不依赖关卡号。现有网机制保持，未宣称自动网下每只角鹰。
+
+敌方驱散顺序树人>英雄身上的返老还童>吼叫；多目标评分优先英雄返老还童，再比较普通buff覆盖，友方急救和保护区域不变。新增6项测试覆盖两控制器分工、持续目标、网失效/不可见/无敌/超距释放、残血与施法保护、Nova目标及三阶段驱散。1849项全量通过、0失败/错误/跳过（artifacts/nightelf-hippo-tests-full.log）；首轮夹具误将pulling集合当字典已修正。修改前后无活动进程，session closed、training control finished。未启动新局、提交/push；实际网下集火、驱散效果及全军保护待用户新局确认。P0完成/P1部分完成/P2–P4未开始。
+
+## 2026-10-28 · 人机练习面板、原生分辨率与白色背景
+
+用户要求修复模糊画面，并提供可选择地图、我方种族，点击“开始练习”就按设置开局的面板；随后明确要求白色背景。首局20261028-133320为P0真人兽族对P1亡灵dayuan、LR、100%，用户因模糊退出。该局四复盘（map/equipment/dk/battle-review）、core-strategy-review.json的C1–C8及source-audit.json的70份冻结核验已完成，原始result/events保持不变；提前退出不算完整实战验收。
+
+无活动游戏时核对到Warcraft III原视频设置800×600/16位，与本机当前2560×1440/59Hz不符。practice_video.py先将原值备份到artifacts/human-practice-video-before.json，之后不覆盖原备份；写入当前屏幕宽高、32位色深与纹理色深、有效刷新率，并回读验证。本机实际已修正2560×1440/32位/59Hz。以后每次启动读取当时屏幕设置，已有游戏时拒绝改写；这证明设置修正成功，尚未在第二局验证游戏内清晰度。
+
+human_practice.py及run_match.py本地陪练分支沿用单客户端两敌对槽：P0真人所选种族，P1亡灵dayuan，100%速度，暂停P1原生AI后使用现有公平Controller。新增practice_control.py管理一次启动、独立worker及状态，practice_panel.py提供8张地图/4个种族的选择与记忆；practice-panel.cmd与install_practice_panel.ps1提供面板入口和桌面快捷方式。后台启动避免终端抢操作，重复点击、多面板文件锁、待启动登记、活动worker/游戏与旧token隔离共同阻止双开；失败显示原因且不隐式重试。关闭面板不杀游戏，结束不自动续局。
+
+1843项全量离线通过、0失败/错误/跳过（artifacts/practice-panel-full-tests-final.log，15.317秒），包括新面板、启动互斥、失败状态与视频备份/回读等行为。用户要求白底后仅调整配色，6项UI复验通过（artifacts/practice-panel-light-tests.log，2.396秒）。桌面快捷方式已创建，当前仍运行旧深色面板；用户按Escape停止Computer Use后已停止UI操作，没有刷新旧面板。白底源码已完成，但白底版目视检查未完成，需要用户关闭旧面板并通过桌面快捷方式重开生效。所有离线结果都不代替完整实机验收。
+
+本次没有第二局、没有新Git提交或push。KK真人订单同步未修复，原拒绝保护保持；本地陪练不构成KK联机修复。P0完成/P1部分完成/P2–P4未开始。下一步由用户点击面板开始新练习，确认实际画面、所选地图/种族、正常操作与单局结束；局中继续冻结运行源码。
+
+## 2026-10-28 · 真人兽族 vs dayuan 亡灵，本地 LR 单局准备
+
+用户明确要求克隆分支并开一局，最后更正为自己用兽族。fork feature/human-vs-ai-mode/68c40c0完整Git克隆在artifacts/human-vs-ai-source-20261028，557文件、干净工作区和fsck通过。初次网络pack重置后，以原固定上游blob和固定SHA差异逐个核验补齐，记录human-vs-ai-clone-recovery.json。仅使用已审阅、固定SHA256的w3fullscreen/w3window辅助；全屏启动器单独副本，Runtime仍92bb7e6b…，没有运行fork的xwar3或自动重开farm。
+
+bot.py practice --race 2 --map LR：新HumanPracticeSession拥有单局实例73，P0真人兽族、P1电脑亡灵、100%/标准相机；严格检查两槽及双向敌对，PauseCompAI(P1,true)返回后才构造dayuan Controller。Game(player=1,fair=True)使用P1资源和可见信息，正常本地自动学习技能；不采用fork全图策略。陪练不创建DebugConsole，无bot调速/认输/重开面板；后台、时钟暂停和临时raw缺失均不下令，身份/epoch变化阻断，退出不续局。普通/训练及KK拒绝保护保持。新文件和实际执行的fork辅助纳入冻结清单。
+
+1822项全量离线通过、0失败/错误/跳过（human-practice-full-tests-final.log）；初轮1820中的7失败为新增runner夹具在并行适配raw守卫前的旧版本，原日志保留。首轮setup夹具缺IsPlayerAlly的3错误亦保留。启动前辅助哈希发现w3window常量漏一字符，修正后真实辅助加载、全屏副本及DLL哈希、LR地图校验通过，未以此声称实机完成。用户授权仅本局，启动与结果以实际日志为准；不提交/push，KK网络同步仍未修复。
+
+## 2026-10-28 · KK异步临时防护，底层同步未修复
+
+用户明确暂不开局，要求依据录像修复。已通过auto-load-stop正常停止PID2176单局监听；状态closed=true，无War3/RuntimeAttach、session/attachment closed、training finished后修改。未启动新局、替换DLL、恢复监听、提交或push。
+
+本地及上游两路审查确认：W3P公开flags/extra没有网络同步开关，extra bit0仅Shift排队；dev/player角色只有权限差异，旧w3cmd仍包装同一通道，旧控制action/JASS Issue*不能当同步替代。官方main仍为ffd7dd25，运行时manifest仍2026.09.26.1644、SHA256 92bb7e6b75e56f91e7eb905844b9a28085e88d4d991a547522c7da8c2907da97；没有可升级采用的新同步实现，DLL源码未公开。GitHub commits/main查询超时，未获取提交时间，其余HEAD/官网版本/manifest读取成功。
+
+本轮实现的是阻断已知故障路径：run_attachment在对手controller不是明确电脑1时，于ActionMeter/Attachment/控制器构造之前返回blocked；真人0标记multiplayer_orders_unsynchronized，缺失/未知标记opponent_controller_unverified，状态关闭、控制能力清空、原因落盘。不会发出第一条bot游戏命令，也不能通过恢复接管绕过。电脑路径继续原策略与手动加点；普通本地/训练未改。加载器识别同一会话拒绝及刚退出的本次拒绝，禁止发送auto-resume，不复用旧拒绝；CLI attach返回非零。面板禁用控制按钮并显示原因，历史记录明确为“上次接管”，不误称当前新局被拒绝。
+
+34项生命周期与22项身份/面板测试先通过，完整1808项离线通过，0失败/错误/跳过（artifacts/kk-sync-guard-full-tests.log）。随后仅修复历史拒绝的显示文案，9项面板测试复验通过（kk-sync-guard-console-final-tests.log）。bot.py check与git diff --check通过。未做新实机验证；离线通过只证明阻断和电脑路径回归，不证明真正联机同步。当前已打开的面板进程未热重载，显示改动于下次打开生效。版本仍V1.99，按实际源码冻结区分。
+
+真正修复仍需可审核的运行时同步提交实现或上游新接口；已询问用户是否持有DLL源码仓库/维护者同步接口说明，尚未获得。P0完成/P1部分完成/P2–P4未开始。防护完成不等于恢复真人接管，不能重新解除限制后以accepted作为验收。
+
+## 2026-10-28 · 回放确认bot订单缺失，优先查底层同步提交
+
+本机NI回放 `12_15_49_416.nwg` 与用户观察一致：SDK玩家0对应回放player1，78个命令块/3000字节完整严格解析只有选择类动作、零游戏订单；对手player2有46条正常游戏订单。本机接管日志却有107批下令/100接受，因此不能再把accepted当作联机成功，也不能仅归因于最后买棒或自动加点。证据强烈指向底层订单未进入正常联机/回放提交路径；未直接核验服务器收包、远端模拟或闭源DLL原生函数，尚未修复。
+
+NWG内完整W3G及7压缩块、有效长度均核对，主Agent独立流式解压并严格核验本机字节；解析器仅平台player3的58字节块有告警，本机和对手无此缺口。复核材料与限制见artifacts/kk-sync-live-20261028-121606/replay-analysis/README.md和docs/KK_SYNC_AUDIT.md顶部。
+
+用户随后要求打开KK对战面板并自行再开房间真人局，明确选择继续自动接管+手动加点。面板已打开；首个新进程20968在接口初始化前退出，loader明确Game exited before initialization，未生成接管命令，不算异步样本。按同一次测试重新挂起单局监听，12:30检查PID2176、waiting_for_new_kk_game、auto_resume=true、once=true、persistent=false。接手须重读状态；运行源码继续冻结，不代开局、不持续重启或提交/push。P0完成/P1部分完成/P2–P4未开始。
+
+## 2026-10-28 · 本机 NI 真人异步已复现，自动加点非本局触发操作
+
+用户自行开启 `attach-20261028-121606-4ae0b8`，NI地图verified、对手槽位1、人族、controller=0，manual_skill_learning=true。用户确认看到异步提示，随后平台要求其手动关闭游戏。123.93秒首次观察DK（1技能点、675血/255蓝、仅TP），123.98与126.1秒两次DK移动，127.5秒首次buy rnec并收到accepted，之后没有背包确认或use_item；全部107批提交均有回执，100接受/7拒绝，learn/use_item/revive/item_drop均为零。系统消息流未记录异步弹窗，不能精确确定弹窗先于还是晚于最后购买，也不能把回执当作两端同步成功。
+
+平台war3dll.log在12:18:13.834记录SafetyExitWar3/terminate war3；接管结果process_exited_or_changed，与用户按平台要求关闭的叙述一致，不归类为SDK异常或自然胜负。最后游戏时钟127.5与此前TH/AZ约127.5的记录接近，提示可能存在统一检测时刻；这是待验证假设，不能把首英雄出现或最后命令直接认定为分歧起点。
+
+64份接管源码及5份加载器源码的当前文件/冻结副本/manifest全部一致，未在局中改运行源码。command_trace_error=null，命令诊断有效；独立只读观察器因管理员进程AccessDenied未取得模块/World样本，只有进程生命周期可用。已保存原平台日志、nwg回放、SHA256、分析及四复盘/C1–C8，见artifacts/kk-sync-live-20261028-121606；原始events/result不改。本轮未改运行逻辑或再跑离线测试，不把此前65项通过当作同步验收。监听once=true已closed、观察器finished、无活动War3；未自动续局、提交/push。根因未定，P0完成/P1部分完成/P2–P4未开始；下一次最小对照需新进程加载DLL但从开始不下bot游戏命令。
+
+## 2026-10-28 · KK真人异步单局采集准备
+
+用户补充 KK 在线打电脑正常、真人对战通常首英雄出生后异步，并表示将在当前 huangzhiduo 电脑自行开一局供分析。无活动 War3、session/attachment closed、training finished 时增加 KK 专用游戏操作提交/回执/异常日志，以及现有 SDK 系统事件与首英雄公平快照留存。普通/训练不启用命令 trace；日志异常不阻止或重发游戏命令。未改策略，未代开局；开局后冻结源码。
+
+57 项现有相关测试和 8 项新增专项均通过；首轮沙箱临时目录导致 16 项 PermissionError，在沙箱外重跑 57 项通过，日志保留。未跑全量，未完成实机复现；底层同步原因仍待本局证据。仅准备单局监听，不恢复持续自动化，不提交/push。详见 KK_SYNC_AUDIT.md 顶部。
+
+实际启动状态：只读 `trace_kk_startup.py` 已运行，输出 `artifacts/kk-sync-local-observer-20261028`，等待/采集各限1200秒。单局接管助手两次启动均未进入waiting状态；第二次实际观察到Windows consent进程，随后启动器返回“Administrator launch was not approved or failed; no game was loaded.”，未再重试，`auto-load.json`仍为旧closed记录。不能报告接管已就绪；须完成正常UAC后重新核验。沙箱内进程枚举看不到外部助手，最终已在沙箱外复核，当时无War3；以后冻结守卫须采用能看到实际外部游戏的进程查询。
+
+后续用户明确要求重新批准。12:14（Asia/Shanghai）正常UAC启动成功，`auto-load.json`及新启动日志确认PID10368、administrator=true、stage=waiting_for_new_kk_game、closed=false、auto_resume=true、once=true、persistent=false、enemy_race=0；只读观察器亦仍等待。现在可以由用户开这一次对局，尚无实机结果；接手须重读状态，不能沿用此快照或修改运行源码。
+
+## 2026-10-28 · KK首英雄异步：手动加点仍复现的追加调查
+
+用户确认另一台38993电脑凌晨1点左右首英雄出现即提示异步，与手动加点无关。当前huangzhiduo电脑未取得该手动对照局原始日志，不能把旧005447/010811两局或本机10月27日样本当成它。当前代码学习拦截两项离线复验通过；首轮直接unittest因缺bootstrap导入失败，补项目bootstrap后通过，未重跑1795项全量。
+
+源码确认DK出现后仍可能走向商店、购买骷髅棒，满足条件后用棒；这些不受手动学习开关控制。Python技能/背包查询只读取快照。W3P回执只证明本机执行，闭源DLL的联机同步队列未被验证；现有APM与策略日志缺完整底层命令序列和系统提示，不能按最后一条学习记录认定根因。当前重点是运行时/命令通道联机兼容性，并区分从开局零bot操作仍异步与单命令触发；没有证据宣称已经修复，详见KK_SYNC_AUDIT.md顶部。仅改文档，未开停局、改运行源码、重启监听、提交/push；P0完成/P1部分完成/P2–P4未开始。
+
 ## 2026-10-28 · KK自动加点拦截与同步操作审计
 
 用户选择先手动加点做对照。新run_attachment设置manual_skill_learning=True；控制器记录hero_skill_manual_required而不调用学习，Game.learn防止其他调用绕过控制器。请求随状态发布，面板显示手动提示；手动加点后AI继续使用已学技能，普通本地/训练自动加点保持。其他游戏操作未改，避免同时改变多个变量。源码修改前确认无活动游戏；新接管子进程加载新代码，不热改既有游戏。

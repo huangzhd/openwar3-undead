@@ -36,6 +36,14 @@ def main():
     play.add_argument('--enemy-race',type=int,choices=(0,1,2,3,4),default=3,help='0 uniform random; 1 human, 2 orc, 3 undead, 4 night elf')
     play.add_argument('--map',dest='map_alias',choices=('AZ','AL','CH','LR','NI','TH','TR','TM'))
     play.add_argument('--difficulty',type=int,choices=(2,3,4),default=3,help='2 easy, 3 normal, 4 insane')
+    practice=sub.add_parser('practice',help='One local human P0 versus dayuan P1 game, normal speed, no restart')
+    practice.add_argument('--race',type=int,choices=(1,2,3,4),default=2,help='Human race; dayuan is undead')
+    practice.add_argument('--map',dest='map_alias',choices=('AZ','AL','CH','LR','NI','TH','TR','TM'),default='LR')
+    spar=sub.add_parser('sparring',help='One local bot duel with P0 observer; first version supports LR')
+    spar.add_argument('--opponent',choices=('human-fast-expand','human-rifle'),required=True)
+    spar.add_argument('--map',dest='map_alias',choices=('LR',),default='LR')
+    spar.add_argument('--check',action='store_true',help='Build and verify scenario without launching a game')
+    spar.add_argument('--minutes',type=positive_minutes,default=None,help='Optional diagnostic limit; default no time limit')
     sub.add_parser('stop',help='Request graceful stop of the project match')
     args=parser.parse_args()
     if args.command.startswith('auto-load'):
@@ -63,7 +71,7 @@ def main():
                 result=probe(args.pid) if args.pid is not None else candidates()
                 ok=result['ready'] if isinstance(result,dict) else any(r['ready'] for r in result)
             elif args.command=='attach':
-                result=run_attachment(args.pid,args.enemy_race);ok=result['result']!='error'
+                result=run_attachment(args.pid,args.enemy_race);ok=result['result'] not in ('error','blocked')
             elif args.command=='attach-status':
                 result=json.loads(STATE.read_text(encoding='utf-8')) if STATE.exists() else {'closed':True,'reason':'no_attachment'}
                 ok=True
@@ -87,9 +95,26 @@ def main():
         (ROOT/'artifacts/STOP').write_text('user requested stop',encoding='utf-8')
         print('Stop requested for the local match only. For an attached game use attach-release; it leaves the game running.')
         return 0
+    if args.command=='sparring' and args.check:
+        from sparring import source_files
+        from sparring_map import prepare_map
+        path,catalog=prepare_map(args.map_alias)
+        print(json.dumps(dict(opponent=args.opponent,map=str(path),map_sha256=catalog['map_sha256'],
+                              source_files=len(source_files()),observer_player=0,dayuan_player=1,human_bot_player=2,
+                              background_supported=False,game_launched=False,live_verified=False),ensure_ascii=False,indent=2))
+        return 0
     stop=ROOT/'artifacts/STOP'
     if stop.exists():
         stop.unlink()
+    if args.command=='practice':
+        from run_match import run_match
+        r=run_match(speed=100,enemy_race=args.race,difficulty=2,map_alias=args.map_alias,human_practice=True)
+        return 1 if r['result']=='error' else 0
+    if args.command=='sparring':
+        from run_match import run_match
+        r=run_match(speed=100,map_alias=args.map_alias,sparring=args.opponent,
+                    max_game_seconds=args.minutes*60 if args.minutes is not None else None)
+        return 1 if r['result']=='error' else 0
     from run_match import play_matches
     r=play_matches(args.speed,args.minutes*60 if args.minutes is not None else None,args.until,args.enemy_race,args.difficulty,map_alias=args.map_alias)
     return 1 if r['result']=='error' else 0

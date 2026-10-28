@@ -56,10 +56,12 @@ def dispel_plan(caster,targets,protected,reach,area,protection_radii=None):
         if any(distance(point,h)<=(protection_radii or {}).get(h.handle,area+8) for h in protected):continue
         hit=[t for t in local if distance(point,t['unit'])<=radius]
         if not hit:continue
-        selected=min(hit,key=lambda t:(t['priority'],'Bspl' not in t.get('effects',()),t['unit'].hp,t['unit'].handle))
+        hero_rejuvenation=lambda t:t['unit'].is_hero and 'Brej' in t.get('effects',()) and t['priority']==3
+        selected=min(hit,key=lambda t:(t['priority'],not hero_rejuvenation(t),'Bspl' not in t.get('effects',()),t['unit'].hp,t['unit'].handle))
         counts=tuple(-sum(t['priority']==rank for t in hit) for rank in range(4))
         links=-sum('Bspl' in t.get('effects',()) for t in hit)
-        score=(selected['priority'],*counts[:3],links,counts[3],shifted,selected['unit'].hp,selected['unit'].handle)
+        rejuvenations=-sum(hero_rejuvenation(t) for t in hit)
+        score=(selected['priority'],*counts[:3],rejuvenations,links,counts[3],shifted,selected['unit'].hp,selected['unit'].handle)
         if best is None or score<best[0]:best=(score,point,selected,hit)
     return best[1:] if best else None
 

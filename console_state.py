@@ -121,6 +121,7 @@ class DashboardModel:
         paused=bool(state.get('paused',True))
         if alive:status='已停止接管 · 可手动操作' if paused else 'AI 正在接管'
         else:status='当前未连接游戏'
+        if state.get('blocked_reason'):status='上次接管已阻止 · 当前未连接'
         age=None
         if logpath:
             try:age=max(0,time.time()-logpath.stat().st_mtime)
@@ -150,6 +151,7 @@ class DashboardModel:
                     log_age=heartbeat_age,pid=state.get('process',{}).get('pid'),enemy_race=state.get('opponent',{}).get('race',0),
                     opponent=state.get('opponent',{}),map=state.get('map',{}),version=state.get('bot_name'),
                     manual_skill_learning=state.get('manual_skill_learning',False),
+                    blocked_reason=state.get('blocked_reason'),blocked_message=state.get('blocked_message'),
                     skill_requests=state.get('skill_requests',[]),
                     apm=state.get('apm') if alive and not paused and not stale else None,
                     average_apm=state.get('average_apm'),surrender=surrender,

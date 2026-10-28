@@ -168,6 +168,7 @@ class TrainingController(Controller):
         self.search_index = 0
         self.search_since = None
         self.start_potion_since = None
+        self.altar_choice = dict(attempts=0,next_at=0,done=False,requested=False)
         self.training_endgame=False
         self.training_peak_enemies=0
         self.training_contact=False
@@ -332,6 +333,23 @@ class TrainingController(Controller):
         return point
 
 
+    def choose_opening_hero(self,now):
+        """Use the original u003 altar's N004 training option (Naga)."""
+        g=self.g;state=self.altar_choice
+        if state['done'] or not hasattr(g,'train'):return
+        units=g.my_units()
+        if state['requested'] and any(u.type=='Nngs' and u.alive for u in units):
+            state['done']=True;self.start_potion_since=now
+            self.log('training_altar_choice_confirmed',clock=now,choice='Nngs')
+            return
+        altars=[u for u in units if u.type=='u003' and u.alive and u.owner==g.me()]
+        if not altars or state['attempts']>=3 or now<state['next_at']:return
+        if self.battle_started or any(g.dist(e,altars[0])<900 for e in g.enemies()):return
+        receipt=g.train(altars[0],'N004')
+        state.update(attempts=state['attempts']+1,next_at=now+3,requested=True)
+        self.log('training_altar_choice_attempt',clock=now,choice='Nngs',order='N004',
+                 accepted=bool(receipt),attempt=state['attempts'])
+
     def collect_start_potion(self,now,army,foes,blocked=()):
         """Arena-only opening pickup; never send a hero through a live fight."""
         if not hasattr(self.g,'items_on_ground'):return set()
@@ -346,6 +364,7 @@ class TrainingController(Controller):
         return {pickup[0].handle} if pickup else set()
 
     def prepare(self,now):
+        self.choose_opening_hero(now)
         army=[u for u in self.g.my_units() if u.alive and not is_structure(u)]
         self.equipment.tick(self.g,army,self.g.enemies(),now,self.cast_until)
         picking=self.collect_start_potion(now,army,self.g.enemies())
@@ -354,6 +373,7 @@ class TrainingController(Controller):
     def tick(self):
         g = self.g
         now = g.clock()
+        self.choose_opening_hero(now)
         army = [u for u in g.my_units() if u.alive and not is_structure(u)
                 and u.type not in {'uaco', 'hpea', 'opeo', 'ewsp'}]
         if not army:

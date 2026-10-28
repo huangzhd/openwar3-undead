@@ -37,6 +37,26 @@ class ConsoleModelTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError,'没有'):c.request_control('pause','a',root)
             self.assertFalse((root/'artifacts/attachment-command.json').exists())
 
+    def test_closed_sync_blocked_session_preserves_reason_and_rejects_resume(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);(root/'artifacts').mkdir()
+            message='当前运行时不支持真人联机同步下令，已停止自动接管，可手动游戏。'
+            state=dict(session='blocked',closed=True,paused=True,control_capabilities=[],
+                       blocked_reason='multiplayer_orders_unsynchronized',blocked_message=message)
+            (root/'artifacts/attachment.json').write_text(json.dumps(state),encoding='utf-8')
+            command=root/'artifacts/attachment-command.json'
+            command.write_text(json.dumps(dict(session='older',action='pause')),encoding='utf-8')
+            previous=command.read_bytes()
+            data=c.DashboardModel(root).poll()
+            self.assertFalse(data['alive'] or data['can_surrender'])
+            self.assertTrue(data['paused'])
+            self.assertIn('已阻止',data['status'])
+            self.assertIn('上次',data['status'])
+            self.assertIn('当前未连接',data['status'])
+            self.assertEqual(data['blocked_message'],message)
+            with self.assertRaisesRegex(RuntimeError,'没有'):c.request_control('resume','blocked',root)
+            self.assertEqual(command.read_bytes(),previous)
+
     def test_new_session_clears_old_decision_and_paused_status_is_confirmed_state(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);out=root/'artifacts/one';out.mkdir(parents=True)
@@ -64,6 +84,35 @@ class ConsoleModelTests(unittest.TestCase):
 
 
 class ConsoleWidgetTests(unittest.TestCase):
+    def test_blocked_session_explains_reason_and_buttons_cannot_send_commands(self):
+        import tkinter as tk
+        from bot_console import Console
+        from types import SimpleNamespace as N
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);(root/'artifacts').mkdir()
+            message='当前运行时不支持真人联机同步下令，已停止自动接管，可手动游戏。'
+            state=dict(session='blocked',closed=True,paused=True,control_capabilities=[],
+                       blocked_reason='multiplayer_orders_unsynchronized',blocked_message=message)
+            (root/'artifacts/attachment.json').write_text(json.dumps(state),encoding='utf-8')
+            model=c.DashboardModel(root);sent=[]
+            window=tk.Tk();window.withdraw()
+            try:
+                ui=Console(window,model=model,send=lambda action,session:sent.append((action,session)))
+                self.assertEqual(ui.note.cget('text'),'上次接管：'+message)
+                self.assertEqual(ui.toggle.cget('state'),'disabled')
+                self.assertEqual(ui.surrender.cget('state'),'disabled')
+                ui.toggle.invoke();ui.surrender.invoke()
+                self.assertEqual(sent,[])
+                # A subsequent usable connection must clear the old block in the same panel.
+                data=model.poll()
+                data.update(session='computer',alive=True,paused=False,stale=False,
+                            status='AI 正在接管',blocked_reason=None,blocked_message=None)
+                ui.render(data)
+                self.assertNotEqual(ui.note.cget('text'),message)
+                ui.toggle.invoke()
+                self.assertEqual(sent,[('pause','computer')])
+            finally:window.destroy()
+
     def test_buttons_wait_for_acknowledgement_and_never_touch_live_game(self):
         import tkinter as tk
         from bot_console import Console

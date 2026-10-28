@@ -16,6 +16,7 @@ from .banshee_support import BansheeSupport
 from .battle_detection import BattleDetection
 from .frontline import attack_frontline
 from .stomp_response import StompResponse
+from .targeting import nightelf_ground_target
 
 
 class BattleTacticsMixin:
@@ -455,7 +456,10 @@ class BattleTacticsMixin:
         attackers=[e for e in foes if can_engage(e) and
                    (victim:=self.g.current_target(e)) is not None and victim.handle==u.handle and
                    (stats:=unit_stats(e.type)) and any('air' in w.targets for w in stats.weapons)]
-        return len(attackers)>=2 or bool(attackers and u.hp<=u.hp_max*.6)
+        nightelf_pressure=any(e.type in {'ehip','edry'} and
+                              any('air' in w.targets and self.g.dist(u,e)<=w.range+80
+                                  for w in unit_stats(e.type).weapons) for e in attackers)
+        return nightelf_pressure or len(attackers)>=2 or bool(attackers and u.hp<=u.hp_max*.6)
 
     def destroyer_air_threats(self,u,army,foes):
         g=self.g;stats=unit_stats(u.type)
@@ -537,7 +541,10 @@ class BattleTacticsMixin:
         targets=[e for e in foes if can_engage(e) and getattr(e,'has_detail',False)
                  and not is_structure(e) and not buffs(g,e)&{'Bvul','BHds'}
                  and 'Avul' not in abilities(g,e) and self.combat_progress.allowed(e,now)]
-        targets=[e for e in targets if e.type=='owyv'] or targets
+        targets=[e for e in targets if e.type!='edry']
+        if any(e.type in {'edcm','edry'} for e in foes):
+            targets=[e for e in targets if e.type=='edcm']
+        else:targets=[e for e in targets if e.type=='owyv'] or targets
         if any(in_weapon_range(g,u,e) for e in targets):return None
         main=[v for v in army if v.type in {'ucry','Ulic','Nbrn','Nngs','uabo','Ucrl'} and v.hp>0]
         if not main or not targets:return None
@@ -583,10 +590,16 @@ class BattleTacticsMixin:
                      and getattr(e,'has_detail',False) and not buffs(g,e)&{'Bvul','BHds'}
                      and 'Avul' not in abilities(g,e) and g.dist(u,e)<=900
                      and self.combat_progress.allowed(e,now)]
+            targets=[e for e in targets if e.type!='edry']
+            if any(e.type in {'edcm','edry'} and can_engage(e) for e in foes):
+                targets=[e for e in targets if e.type=='edcm']
             if self.destroyer_focused(u,foes):continue
             if not targets:continue
             birds=[e for e in targets if e.type=='owyv']
-            target=min(birds,key=lambda e:(not webbed_air(g,e),e.handle!=self.hero_pressure.preferred,e.hp),default=None)
+            bears=[e for e in targets if e.type=='edcm']
+            current=g.current_target(u)
+            target=min(bears,key=lambda e:(not current or e.handle!=current.handle,e.hp,e.handle),default=None)
+            target=target or min(birds,key=lambda e:(not webbed_air(g,e),e.handle!=self.hero_pressure.preferred,e.hp),default=None)
             target=target or next((e for e in targets if focus and e.handle==focus.handle),None)
             target=target or min(targets,key=lambda e:({'owyv':0,'ogru':1,'orai':2}.get(e.type,3),g.dist(u,e),e.hp))
             current=g.current_target(u)
@@ -600,11 +613,14 @@ class BattleTacticsMixin:
     def focus_ranged(self, army, foes, now):
         """Fiends, Lich and Dark Ranger share one persistent, reachable target."""
         army_first=self.hero_pressure.select_strategy(self.g,army,foes,now)=='army_first'
-        if sum(u.type=='ucry' for u in army)<2 and not army_first and not self.hero_pressure.tc_sequence:
+        if sum(u.type=='ucry' for u in army)<2 and not army_first and not self.hero_pressure.tc_sequence and not nightelf_ground_target(self.g,army,foes):
             return set()
         g = self.g
         squad = [u for u in army if u.type in {'ucry','Ulic','Nbrn','Nngs'}]
-        ready = [u for u in squad if now>=self.cast_until.get(u.handle,0)]
+        ready = [u for u in squad if now>=self.cast_until.get(u.handle,0) and
+                 u.handle not in self.micro.pulling and u.handle not in self.shield_moves and
+                 u.handle not in self.shopping and u.handle not in self.battle_shop.reserved and
+                 not buffs(g,u)&DISABLED_CASTERS]
         candidates = [e for e in foes if can_engage(e) and self.combat_progress.allowed(e,now) and
                       (not self.hero_pressure.wyvern_priority or e.type=='owyv') and
                       (not self.hero_pressure.blade_wyvern_plan or e.type==('owyv' if self.hero_pressure.wyvern_priority else 'Obla')) and
@@ -631,7 +647,7 @@ class BattleTacticsMixin:
         shared = [e for e in pool if coverage(e)>=enough] or pool
         chief=self.hero_pressure.orc_focus(g,ready,foes,now)
         if chief not in candidates:chief=None
-        target=chief
+        target=nightelf_ground_target(g,ready,candidates,self.ranged_focus) or chief
         target = target or combo or (min(heroes,key=lambda e:self.hero_pressure.estimate(g,ready,e)) if heroes else None)
         target = target or (previous if previous in shared else min(shared,key=lambda e:self.hero_pressure.rank(g,ready,e)))
         if target.handle != self.ranged_focus:

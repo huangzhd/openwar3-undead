@@ -123,6 +123,7 @@ def follow_game(row, helper, dll, output, auto_resume, enemy_race, publish, read
                 time.sleep(1)
             else: raise RuntimeError('150秒内游戏接口/对局条件未就绪；不会自动重试加载')
             # A live, advancing fair snapshot is validated again by run_attachment.
+            launched_at=time.time()
             bot=subprocess.Popen([str(ROOT/'.venv/Scripts/python.exe'),'-u','-B',str(ROOT/'bot.py'),
                                   'attach','--pid',str(row['pid']),'--enemy-race',str(enemy_race)],
                                  cwd=ROOT,stdin=subprocess.DEVNULL,stdout=bot_log,stderr=subprocess.STDOUT,
@@ -131,11 +132,21 @@ def follow_game(row, helper, dll, output, auto_resume, enemy_race, publish, read
             deadline=time.monotonic()+30; connected=None
             while time.monotonic()<deadline:
                 if STOP.exists() or not still_same(row): return 'stopped_or_game_exited'
-                if bot.poll() is not None: raise RuntimeError('接管客户端启动失败，见bot.log')
                 if bot_state.exists():
                     state=json.loads(bot_state.read_text(encoding='utf-8'))
-                    if not state.get('closed') and state.get('process')==row and owns_runner(bot,state):
-                        connected=state;break
+                    if state.get('process')==row:
+                        owned=owns_runner(bot,state)
+                        # A refused runner may exit before this poll. A fresh,
+                        # closed refusal is safe to report, never to resume.
+                        refused_exit=(bot.poll() is not None and state.get('closed')
+                                      and state.get('runner_created',0)>=launched_at)
+                        if state.get('blocked_reason') and (owned or refused_exit):
+                            publish('takeover_blocked',game=row,artifacts=str(output),
+                                    error=state['blocked_message'])
+                            return 'takeover_blocked'
+                        if owned and not state.get('closed'):
+                            connected=state;break
+                if bot.poll() is not None: raise RuntimeError('接管客户端启动失败，见bot.log')
                 time.sleep(.2)
             if connected is None: raise RuntimeError('接管客户端30秒内未确认连接')
             if auto_resume:

@@ -2263,6 +2263,18 @@ class Controller(BattleTacticsMixin):
         dk=next((u for u in army if u.type=='Udea'),None)
         self.hero_pressure.tc_burst=None
         self.hero_pressure.select_strategy(self.g,army,foes,now)
+        from .targeting import nightelf_ground_target
+        excluded=(set(blocked)|set(self.micro.pulling)|set(self.shield_moves)|self.creep_aggro.protected|
+                  set(self.shopping)|set(self.battle_shop.reserved))
+        ground=nightelf_ground_target(self.g,[u for u in army if u.handle not in excluded],
+                              [e for e in foes if self.combat_progress.allowed(e,now)],self.ranged_focus)
+        if ground:
+            self.nc_combo.pending=None
+            if not self.teleport and dk and dk.handle not in excluded|set(self.shopping):
+                self.heal_allies(army,now)
+            if self.action!=Action.RETREAT and not self.teleport and not self.army_recovery.active:
+                if ground.type=='edcm':nova_tc(self,army,ground,now,excluded)
+            return
         if self.hero_pressure.wyvern_priority or self.hero_pressure.blade_wyvern_plan:
             self.nc_combo.pending=None
             if not self.teleport and dk and dk.handle not in set(blocked)|set(self.shopping)|set(self.shield_moves):
@@ -2448,6 +2460,9 @@ class Controller(BattleTacticsMixin):
         foes=[e for e in foes if can_engage(e) and self.combat_progress.allowed(e,now)]
         if self.action==Action.DEFEND:foes=[e for e in foes if enemy_player(g,e)]
         army=[u for u in army if u.handle not in self.shield_moves and u.handle not in self.creep_aggro.protected and (u.handle not in self.shopping or self.action in (Action.RETREAT,Action.DEFEND) or self.battle_enemies)]
+        from .targeting import nightelf_ground_target
+        ground=nightelf_ground_target(g,army,foes,self.ranged_focus)
+        if ground:foes=[e for e in foes if e.type in {'edcm','edry'}]
         handled=(self.attack_skeletons(army,foes,now)|attack_frontline(self,army,foes,now)) if any(enemy_player(g,e) for e in foes) else set()
         army=[u for u in army if u.handle not in handled]
         self.stop_hero_chases(army,now)
@@ -2503,7 +2518,7 @@ class Controller(BattleTacticsMixin):
         protected=set()
         dk=next((u for u in army if u.type=='Udea'),None)
         lich=next((u for u in army if u.type=='Ulic'),None)
-        tc_spell_safe=target.type not in ORC_HERO_PRIORITY or (hasattr(g,'abilities') and target_legal(g,target))
+        tc_spell_safe=target.type!='edry' and (target.type not in ORC_HERO_PRIORITY or (hasattr(g,'abilities') and target_legal(g,target)))
         if (not single_finishing and dk and dk.mana>=COIL_MANA and now>=self.cast_until.get(dk.handle,0)
                 and tc_spell_safe and not set(getattr(g,'buffs',lambda u:[])(dk))&DISABLED_CASTERS
                 and coil_ready(g,dk,now) and not (player_fight and self.reserve_coil_for_hero(dk,now))
@@ -2542,7 +2557,7 @@ class Controller(BattleTacticsMixin):
                         self.frost_arrow_effects.add(arrow_target.handle)
                         self.log('frost_arrow_effect_observed',clock=now,target=arrow_target.type,
                                  handle=arrow_target.handle,buffs=sorted(buffs))
-            if (not single_finishing and naga.mana>=float(spell_data()[0]['ANfl']['Cost1']) and now>=self.cast_until.get(naga.handle,0) and
+            if (not single_finishing and target.type!='edry' and naga.mana>=float(spell_data()[0]['ANfl']['Cost1']) and now>=self.cast_until.get(naga.handle,0) and
                 hero_spell_ready(g,naga,'ANfl',now) and hero_spell_level(g,naga,'ANfl')>0 and
                 not is_structure(target) and
                 g.dist(naga,target)<=float(spell_data()[0]['ANfl']['Rng1']) and self.due('forked_lightning',now,1)):

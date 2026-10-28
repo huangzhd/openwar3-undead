@@ -42,12 +42,14 @@ class ActionMeter:
     This is bot command APM, not human input/replay APM or successful ability effects.
     Queries, rejected orders, speed/UI/camera commands never contribute.
     """
-    def __init__(self,g):
+    def __init__(self,g,trace=None):
         self.g=g;self.samples=deque();self.total=0
+        self.trace=trace;self.trace_enabled=trace is not None;self.trace_error=None;self.trace_batch=0
         self.started=self.last=float(g.clock())
         self.original=g.lane.commands
         self.action_ops={g._w3fast.OP[n] for n in ('point','target','immediate','build','learn',
                           'use_item','revive','rally','buy','item_drop')}
+        self.op_names={value:name for name,value in g._w3fast.OP.items()}
         self.wrapper=self.commands
         g.lane.commands=self.wrapper
 
@@ -58,9 +60,33 @@ class ActionMeter:
         self.last=now
         while self.samples and self.samples[0][0]<=now-60:self.samples.popleft()
 
+    def record(self,event,**data):
+        if self.trace is None:return
+        try:self.trace(event,**data)
+        except Exception as exc:
+            # Diagnostic disk failures must never suppress or repeat a game order.
+            self.trace_error=repr(exc);self.trace=None
+
     def commands(self,calls,*args,**kwargs):
-        receipts=self.original(calls,*args,**kwargs)
+        selected=[i for i,c in enumerate(calls) if c.op in self.action_ops] if self.trace is not None else []
+        if selected:
+            self.trace_batch+=1;batch_id=self.trace_batch
+            self.record('attachment_commands_submitted',batch_id=batch_id,
+                        clock=getattr(getattr(self.g,'_snap',None),'clock',self.last),
+                        clock_basis='cached_snapshot',wall_time=time.time(),
+                        commands=[dict(index=i,op=self.op_names[calls[i].op],args=list(getattr(calls[i],'args',())))
+                                  for i in selected])
+        try:receipts=self.original(calls,*args,**kwargs)
+        except Exception as exc:
+            if selected:self.record('attachment_commands_failed',batch_id=batch_id,wall_time=time.time(),error=repr(exc))
+            raise
         self.advance(self.g.clock())
+        if selected:
+            self.record('attachment_commands_completed',batch_id=batch_id,clock=self.last,wall_time=time.time(),
+                        receipts=[dict(index=i,ok=bool(r.ok),reason=getattr(r,'reason',None),
+                                       faulted=getattr(r,'faulted',None),ret=getattr(r,'ret',None),
+                                       order_after=getattr(r,'order_after',None))
+                                  for i,r in enumerate(receipts) if i in selected])
         count=sum(c.op in self.action_ops and r.ok for c,r in zip(calls,receipts))
         if count:self.samples.append((self.last,count));self.total+=count
         return receipts
@@ -75,9 +101,11 @@ class ActionMeter:
         # That is not a new game. Keep counters and the elapsed denominator.
         self.advance(max(float(now),self.last))
         elapsed=max(0,self.last-self.started)
-        return dict(accepted_actions=self.total,apm_game_seconds=round(elapsed,3),
+        result=dict(accepted_actions=self.total,apm_game_seconds=round(elapsed,3),
                     average_apm=round(self.total*60/max(1,elapsed),1),
                     apm=self.value(self.last),apm_basis='accepted_unit_commands_game_time_v2')
+        if self.trace_enabled:result['command_trace_error']=self.trace_error
+        return result
 
     def close(self):
         if self.g.lane.commands is self.wrapper:self.g.lane.commands=self.original

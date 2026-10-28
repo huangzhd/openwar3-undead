@@ -129,41 +129,101 @@ class OpponentTests(unittest.TestCase):
 
 
 class SetupLifecycleTests(unittest.TestCase):
-    def run_case(self,opponent,map_catalog=None,requested_race=3):
+    def run_case(self,opponent,map_catalog=None,requested_race=3,auto_resume=False):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);(root/'undead').mkdir();(root/'data').mkdir()
             for name in ('attach_match.py','attachment_setup.py','kk_control.py','bridge_diagnostics.py','bot.py','data/kk_map_pool.json','data/machine_profiles.json'):
                 (root/name).write_text('# fixture')
             g=FakeGame();metadata=dict(ready=True,process={'pid':123},player=4,epoch=7,clock=100)
-            loops=[]
+            loops=[];orders=[]
+            g.u.order=0
+            def send(calls,*args,**kwargs):
+                orders.extend(calls)
+                for call in calls:g.u.order=call.args[3]
+                return [N(ok=True,reason='accepted',order_after=g.u.order) for call in calls]
+            g.lane.commands=send
             def loop(game,meta,race,log):
                 loops.append((race,game.attachment_catalog))
-                return N(paused=True,step=lambda action:'released_by_user')
-            with patch.object(attach,'ROOT',root),patch.object(attach,'STATE',root/'state.json'),patch.object(attach,'COMMAND',root/'command.json'),patch.object(attach,'RunnerLock',return_value=nullcontext()),patch.object(attach,'probe',return_value=metadata),patch.object(attach,'still_same',return_value=True),patch('undead.game_view.Game',return_value=g),patch.object(setup,'identify_map',return_value=(map_catalog,dict(status='verified' if map_catalog else 'unidentified'))),patch.object(setup,'identify_opponent',return_value=opponent),patch.object(attach,'Attachment',side_effect=loop):
+                runner=N(paused=True)
+                def step(action):
+                    if action=='resume':
+                        runner.paused=False
+                        game.lane.commands([N(op=game._w3fast.OP['point'],args=[10,0,0,851986])])
+                    return 'released_by_user'
+                runner.step=step
+                return runner
+            def still_same(process):
+                if auto_resume:
+                    state=json.loads((root/'state.json').read_text())
+                    attach.atomic_json(root/'command.json',dict(session=state['session'],action='resume'))
+                return True
+            with patch.object(attach,'ROOT',root),patch.object(attach,'STATE',root/'state.json'),patch.object(attach,'COMMAND',root/'command.json'),patch.object(attach,'RunnerLock',return_value=nullcontext()),patch.object(attach,'probe',return_value=metadata),patch.object(attach,'still_same',side_effect=still_same),patch('undead.game_view.Game',return_value=g),patch.object(setup,'identify_map',return_value=(map_catalog,dict(status='verified' if map_catalog else 'unidentified'))),patch.object(setup,'identify_opponent',return_value=opponent),patch.object(attach,'Attachment',side_effect=loop):
                 result=attach.run_attachment(123,enemy_race=requested_race)
             state=json.loads((root/'state.json').read_text())
             self.assertTrue(g.closed)
-            return result,state,loops
+            out=Path(state['artifacts'])
+            evidence=N(orders=orders,unit_order=g.u.order,
+                       events=[json.loads(line) for line in (out/'events.jsonl').read_text(encoding='utf-8').splitlines()],
+                       saved=json.loads((out/'result.json').read_text(encoding='utf-8')),
+                       command=json.loads((root/'command.json').read_text()) if (root/'command.json').exists() else None)
+            return result,state,loops,evidence
 
     def test_verified_current_race_overrides_old_manual_setting_and_passes_map(self):
         catalog={'alias':'LR'}
-        result,state,loops=self.run_case(dict(status='verified',race=4,race_basis='player_setup'),catalog)
+        result,state,loops,evidence=self.run_case(dict(status='verified',controller=1,race=4,race_basis='player_setup'),catalog)
         self.assertEqual(loops,[(4,catalog)])
         self.assertEqual(result['opponent']['race'],4)
         self.assertTrue(state['closed'])
         self.assertTrue(state['manual_skill_learning'])
         self.assertTrue(result['manual_skill_learning'])
+        self.assertEqual(evidence.command,dict(session=state['session'],action='pause'))
+        self.assertEqual(evidence.orders,[])
         from undead.version import VERSION
         self.assertEqual(result['version'],VERSION)
 
     def test_unverified_player_slots_never_start_controller(self):
-        result,state,loops=self.run_case(dict(status='unavailable',race=0,error='timeout'))
+        result,state,loops,evidence=self.run_case(dict(status='unavailable',race=0,error='timeout'))
         self.assertFalse(loops)
         self.assertEqual(result['result'],'error')
         self.assertTrue(state['paused'] and state['closed'])
+        self.assertEqual(evidence.orders,[])
+
+    def test_human_or_unknown_controller_cannot_reach_auto_resume_or_game_orders(self):
+        for controller in (0,None,2,'1','missing'):
+            with self.subTest(controller=controller):
+                opponent=dict(status='verified',race=1,race_basis='player_setup')
+                if controller!='missing':opponent['controller']=controller
+                result,state,loops,evidence=self.run_case(opponent,auto_resume=True)
+                self.assertFalse(loops)
+                self.assertEqual(evidence.orders,[])
+                self.assertEqual(evidence.unit_order,0)
+                self.assertIsNone(evidence.command)
+                self.assertTrue(state['paused'] and state['closed'])
+                self.assertFalse(state['control_capabilities'])
+                self.assertEqual(result['result'],'blocked')
+                expected='multiplayer_orders_unsynchronized' if controller==0 else 'opponent_controller_unverified'
+                self.assertEqual(state['blocked_reason'],expected)
+                self.assertEqual(evidence.saved['reason'],expected)
+                self.assertEqual(evidence.saved['message'],state['blocked_message'])
+                self.assertIn('attachment_blocked',[event['event'] for event in evidence.events])
+                self.assertNotIn('attachment_ready',[event['event'] for event in evidence.events])
+
+    def test_verified_computer_can_resume_and_deliver_an_order(self):
+        result,state,loops,evidence=self.run_case(
+            dict(status='verified',controller=1,race=2,race_basis='player_setup'),auto_resume=True)
+        self.assertEqual(loops,[(2,None)])
+        self.assertEqual(result['reason'],'released_by_user')
+        self.assertNotIn('blocked_reason',state)
+        self.assertIn('resume',state['control_capabilities'])
+        self.assertEqual(evidence.unit_order,851986)
+        self.assertEqual([order.op for order in evidence.orders],[1])
+        accepted=[event for event in evidence.events if event['event']=='attachment_commands_completed']
+        self.assertEqual(accepted[0]['receipts'][0]['order_after'],evidence.unit_order)
+        self.assertTrue(accepted[0]['receipts'][0]['ok'])
+        self.assertEqual(evidence.saved['accepted_actions'],1)
 
     def test_unknown_setup_race_reaches_visible_detection_and_survives_pause(self):
-        result,state,loops=self.run_case(dict(status='verified',race=0,race_basis='await_visible_enemy'),requested_race=0)
+        result,state,loops,evidence=self.run_case(dict(status='verified',controller=1,race=0,race_basis='await_visible_enemy'),requested_race=0)
         self.assertEqual(loops,[(0,None)])
         from undead.controller import Controller
         bot=N(enemy_race=0,g=N(me=lambda:4),tavern_mission=None,economy=N(ever_heroes=set()),

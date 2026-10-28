@@ -132,7 +132,8 @@ def nova_tc(b,army,target,now,blocked=()):
     b.nc_combo.retry_at[key]=now+2
     receipt=g.cast(lich,'frostnova',target=target)
     if not receipt:b.nc_combo.failures[key]=b.nc_combo.failures.get(key,0)+1
-    event={'Otch':'battle_tc_nova_attempt','Ofar':'battle_farseer_nova_attempt'}.get(target.type,'battle_orc_hero_nova_attempt')
+    event={'Otch':'battle_tc_nova_attempt','Ofar':'battle_farseer_nova_attempt',
+           'edcm':'battle_bear_nova_attempt'}.get(target.type,'battle_orc_hero_nova_attempt')
     b.log(event,clock=now,target=target.handle,type=target.type,accepted=bool(receipt))
     if receipt:b.cast_until[lich.handle]=now+.8
 

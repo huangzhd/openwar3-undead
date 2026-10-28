@@ -174,6 +174,7 @@ class Attachment:
         self.ever_heroes=set()
         self.last_publish=None;self.published=time.monotonic();self.last_summary=-100
         self.surrender=None;self.control_request_id=None;self.last_surrender_id=None
+        self.observed_heroes=set()
 
     def step(self,action,wall=None):
         wall=time.monotonic() if wall is None else wall
@@ -192,6 +193,19 @@ class Attachment:
         if s.publish_count!=self.last_publish:self.last_publish=s.publish_count;self.published=wall
         elif wall-self.published>10:raise RuntimeError('世界快照停止更新，已停止接管')
         events=self.g.events()
+        # Preserve existing fair observations before an exit short-circuits the loop.
+        # No extra engine queries and no commands are issued for this audit.
+        for event in events:
+            if event.kind in {'game.ended','player.left'} or (event.kind=='message' and not getattr(event,'chat',None)):
+                self.log('attachment_game_event',kind=event.kind,clock=getattr(event,'clock',s.clock),
+                         wall_time=time.time(),text=getattr(event,'text',None),player=getattr(event,'player',None))
+        for hero in s.units:
+            if getattr(hero,'is_hero',False) and hero.owner==s.me and hero.alive and hero.handle not in self.observed_heroes:
+                self.observed_heroes.add(hero.handle)
+                self.log('attachment_hero_observed',clock=s.clock,wall_time=time.time(),hero=hero.type,
+                         handle=hero.handle,level=hero.level,skill_points=hero.skill_points,
+                         hp=hero.hp,mana=hero.mana,items=getattr(hero,'items',None),
+                         manual_skill_learning=getattr(self.g,'manual_skill_learning',False))
         if any(e.kind=='game.ended' or (e.kind=='player.left' and getattr(e,'player',None)==s.me) for e in events):return 'game_or_local_player_left'
         if action=='surrender' and self.control_request_id and self.control_request_id!=self.last_surrender_id:
             from kk_control import Surrender
@@ -271,11 +285,24 @@ def run_attachment(pid,enemy_race=0):
                 g.attachment_catalog=catalog
                 state.update(map=map_info,opponent=opponent)
                 result.update(map=map_info,opponent=opponent)
+                # The pinned runtime executes orders locally but does not record
+                # them in multiplayer replays. Only a verified computer opponent
+                # may use this transport; do not create a controller for humans.
+                if opponent.get('controller')!=1:
+                    reason=('multiplayer_orders_unsynchronized' if opponent.get('controller')==0
+                            else 'opponent_controller_unverified')
+                    message=('当前运行时不支持真人联机同步下令，已停止自动接管，可手动游戏。'
+                             if opponent.get('controller')==0 else
+                             '无法确认对手是电脑，已停止自动接管；当前运行时不支持真人联机同步下令。')
+                    state.update(blocked_reason=reason,blocked_message=message,control_capabilities=[])
+                    result.update(result='blocked',reason=reason,message=message)
+                    log('attachment_blocked',reason=reason,message=message,opponent=opponent)
+                    return result
                 metadata['local_name']=opponent.get('local_name','')
                 state['control_capabilities']=['pause','resume','surrender']
                 log('attachment_setup',map=map_info,opponent=opponent,version=VERSION)
                 from undead.debug_console import ActionMeter
-                meter=ActionMeter(g)
+                meter=ActionMeter(g,trace=log)
                 loop=Attachment(g,metadata,selected_race,log)
                 atomic_json(COMMAND,dict(session=token,action='pause'));atomic_json(STATE,state)
                 log('attachment_ready',**state)
