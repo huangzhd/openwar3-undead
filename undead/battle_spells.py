@@ -80,10 +80,12 @@ def caster(b,army,kind,code,now,blocked):
 def silence_key_hero(b,army,foes,now,blocked=(),tc_only=False):
     g=b.g;dark,row=caster(b,army,'Nbrn','ANsi',now,blocked)
     if dark is None:return
+    from .ghoul_tc import opening_target
+    ghoul_tc=opening_target(g,army,foes)
     targets=[e for e in foes if e.is_hero and spell_target(g,e) and g.dist(dark,e)<=row['range']
              and not buffs(g,e)&{'BNsi','BNso'}
              and (not tc_only or e.type=='Otch')
-             and any(u.type not in {'uobs','ubsp'} and g.dist(u,e)<=550 for u in army)]
+             and (e==ghoul_tc or any(u.type not in {'uobs','ubsp'} and g.dist(u,e)<=550 for u in army))]
     if not targets:return
     # An approaching TC is silenced immediately, even with Roar/Speed buffs.
     # Other heroes retain the ordinary dispel-before-silence ordering.

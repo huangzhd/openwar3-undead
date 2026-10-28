@@ -20,11 +20,15 @@ class TaurenSequenceTests(unittest.TestCase):
                 if u.type=='ugho':u.hp=1 # Dogs never steal opening Coil.
             b.combat_spells(own,foes,10)
             spells=[o for o in orders if o[0]=='cast']
+            self.assertEqual([o[2] for o in spells],['silence'])
+            effects[tc.handle]=['BNsi']
+            b.combat_spells(own,foes,11)
+            spells=[o for o in orders if o[0]=='cast']
             self.assertEqual([o[2] for o in spells],['silence','frostnova','deathcoil'])
             self.assertTrue(all(o[3]['target']==tc for o in spells))
             self.assertEqual(b.hero_pressure.tc_phase,'tauren')
-            orders.clear();b.focus_ranged(own,foes,11)
-            b.focus_ghouls([u for u in own if u.type=='ugho'],foes,11)
+            orders.clear();b.focus_ranged(own,foes,12)
+            b.focus_ghouls([u for u in own if u.type=='ugho'],foes,12)
             self.assertEqual({o[2] for o in orders if o[0]=='attack'},{tc.handle})
             self.assertEqual(len([o for o in orders if o[0]=='attack']),9)
 
@@ -64,7 +68,7 @@ class TaurenSequenceTests(unittest.TestCase):
         self.assertFalse(orders)
         tc.x=1800;b.stop_hero_chases([ghoul],12)
         self.assertTrue(any(o[0]=='hold' for o in orders))
-        orders.clear();tc.x=400;g.path_distance=lambda *a:None
+        orders.clear();tc.x=400;g.path_distance=lambda *a:None;effects[tc.handle]=['BNsi']
         b.focus_ghouls([ghoul],foes,13)
         self.assertFalse(orders)
 
@@ -85,6 +89,8 @@ class TaurenSequenceTests(unittest.TestCase):
         b.combat_spells(own,foes,10)
         coils=[o for o in orders if o[0]=='cast' and o[2]=='deathcoil']
         self.assertEqual(len(coils),1);self.assertIs(coils[0][3]['target'],own[8])
+        self.assertFalse(any(o[0]=='cast' and o[2]=='frostnova' for o in orders))
+        effects[tc.handle]=['BNsi'];b.combat_spells(own,foes,11)
         self.assertTrue(any(o[0]=='cast' and o[2]=='frostnova' and o[3]['target']==tc for o in orders))
 
     def test_destroyer_under_fire_reserves_coil_before_half_health(self):

@@ -349,6 +349,8 @@ class Controller(BattleTacticsMixin):
             r=self.g.attack_move(u,*point) if attack else self.g.move(u,*point)
             if r:
                 self.last[key]=(dest,now)
+                if not attack and u.handle in getattr(self,'ghoul_tc_waiting',()):
+                    self.g.hold(u,queue='after')
                 if not attack and u.handle in getattr(self,'battle_dk_support',()):
                     held=self.g.hold(u,queue='after')
                     self.log('battle_dk_move_hold_attempt',clock=now,handle=u.handle,point=point,accepted=bool(held))
@@ -2266,6 +2268,15 @@ class Controller(BattleTacticsMixin):
         from .targeting import nightelf_ground_target
         excluded=(set(blocked)|set(self.micro.pulling)|set(self.shield_moves)|self.creep_aggro.protected|
                   set(self.shopping)|set(self.battle_shop.reserved))
+        from .ghoul_tc import opening_target, waiting
+        ghoul_tc=opening_target(self.g,army,foes)
+        if waiting(self.g,ghoul_tc):
+            if not self.teleport and dk and dk.handle not in excluded:
+                self.heal_allies(army,now)
+            if self.action!=Action.RETREAT and not self.teleport and not self.army_recovery.active:
+                silence_key_hero(self,army,foes,now,excluded,tc_only=True)
+            self.opening_nc_waiting=True
+            return
         ground=nightelf_ground_target(self.g,[u for u in army if u.handle not in excluded],
                               [e for e in foes if self.combat_progress.allowed(e,now)],self.ranged_focus)
         if ground:

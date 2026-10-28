@@ -17,6 +17,7 @@ from .battle_detection import BattleDetection
 from .frontline import attack_frontline
 from .stomp_response import StompResponse
 from .targeting import nightelf_ground_target
+from .ghoul_tc import opening_target, waiting, retreat_ghouls
 
 
 class BattleTacticsMixin:
@@ -46,6 +47,7 @@ class BattleTacticsMixin:
         self.battle_last_enemy=-100
         self.frontline_orders={};self.impale_after={}
         self.stomp_response=StompResponse(self.log)
+        self.ghoul_tc_waiting=set()
 
     def battle_contact(self,army,foes,now):
         g=self.g;own={u.handle for u in army}
@@ -118,6 +120,8 @@ class BattleTacticsMixin:
         if army is None:army = [u for u in g.my_units() if u.alive and not is_structure(u)]
         if not army:
             return set()
+        if waiting(g,opening_target(g,army,foes)):
+            blocked=set(blocked)|{u.handle for u in army if u.type=='ugho'}
         if self.battle_contact(army,foes,now):return set()
         if any(u.type=='Ucrl' for u in army):self.frost_armor(army,foes,now)
         support=self.banshee_support.tick(self,army,foes,now,True,blocked)
@@ -230,6 +234,7 @@ class BattleTacticsMixin:
         else:
             self.prebattle_since=None
             self.opening_nc_deadline=None;self.opening_nc_waiting=False
+        retreat_ghouls(self,army,foes,now,pulls,blocked)
         self.stomp_response.tick(self,army,foes,now,pulls,blocked)
         self.rear_dk(army,foes,now,pulls,blocked)
         self.rear_backline(army,foes,now,pulls,blocked)
@@ -248,7 +253,7 @@ class BattleTacticsMixin:
         self.combat_spells(army,foes,now,(set(pulls)-self.battle_dk_support)|set(blocked))
         self.battle_detection.tick(self,army,g.enemies(),now,set(pulls)|set(blocked))
         self.battle_rod(army,now,(set(pulls)-self.battle_dk_support)|set(blocked)|set(self.shield_moves))
-        self.rejoin_battle_units(army,foes,now,pulls,blocked)
+        self.rejoin_battle_units(army,foes,now,pulls,set(blocked)|self.ghoul_tc_waiting)
         self.attack_dk(army,foes,now,set(pulls)|set(blocked))
         self.attack_destroyers(army,foes,now,set(pulls)|set(blocked)|set(self.shield_moves))
 
@@ -696,6 +701,19 @@ class BattleTacticsMixin:
 
     def focus_ghouls(self, ghouls, foes, now):
         g = self.g;handled=set()
+        if not ghouls:return handled
+        tc=opening_target(g,g.my_units(),foes) if any(e.type=='Otch' for e in foes) else None
+        if waiting(g,tc):
+            # Also guard direct fight callers; the normal frame already owns pulls.
+            for u in ghouls:
+                if g.dist(u,tc)<=1000:
+                    handled.add(u.handle)
+                    if (u.handle not in self.ghoul_tc_waiting and u.handle not in self.micro.pulling
+                            and u.handle not in self.shopping and u.handle not in self.battle_shop.reserved
+                            and u.handle not in self.shield_moves and now>=self.cast_until.get(u.handle,0)
+                            and not buffs(g,u)&DISABLED_CASTERS and self.due(('ghoul_tc_hold',u.handle),now,1)):
+                        g.hold(u)
+            ghouls=[u for u in ghouls if u.handle not in handled]
         for ghoul in ghouls:
             if (ghoul.handle in self.shield_moves or ghoul.handle in self.micro.pulling or
                     ghoul.handle in self.shopping or ghoul.handle in self.battle_shop.reserved or
