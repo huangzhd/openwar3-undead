@@ -94,12 +94,12 @@ class HumanPracticeSession(Session):
             raise RuntimeError('An existing game/session blocks practice launch: '+repr(active))
         self.map_path, self.map_catalog = self.practice_map()
         args = farm.parse_args(['--first','73','--count','73','--race',str(self.enemy_race),
-                                '--enemy-race','3','--difficulty','2','--speed','100','--no-director',
+                                '--enemy-race','3','--difficulty','2','--speed',str(self.speed),'--no-director',
                                 '--cam-distance','1650'])
         args.map = str(self.map_path)
         config = farm.Farm(args)
         self.settings = farm.next_game(farm.w3paths.inst_dir(73), config.base(), config.maps_dir())
-        expected = (self.enemy_race, 3, 2, 100)
+        expected = (self.enemy_race, 3, 2, self.speed)
         if tuple(int(self.settings[k]) for k in ('race','enemyRace','difficulty','speed')) != expected:
             raise RuntimeError('next_game.json overrides practice player/race/speed')
         if Path(self.settings['map']).resolve() != self.map_path.resolve():
@@ -126,7 +126,7 @@ class HumanPracticeSession(Session):
                 snap = self.game.snapshot(max_age=0)
                 if snap and snap.in_game and snap.clock > 1:
                     own_types = {u.type for u in self.game.my_units()}
-                    if snap.me != 1 or snap.speed_pct != 100 or not {'unpl','uaco'} <= own_types:
+                    if snap.me != 1 or snap.speed_pct != self.speed or not {'unpl','uaco'} <= own_types:
                         raise RuntimeError('Wrong practice identity/race/speed: '+repr(own_types))
                     if not snap.resources_known:
                         time.sleep(.2)

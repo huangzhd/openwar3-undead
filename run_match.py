@@ -17,16 +17,16 @@ from undead.speed_control import speed_percent,SPEEDS
 from undead.debug_console import DebugConsole,ActionMeter
 from undead.version import VERSION, RULES_VERSION, DISPLAY_NAME
 
-def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty=3,restarted_from=None,map_alias=None,human_practice=False,practice_status=None,sparring=None):
+def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty=3,restarted_from=None,map_alias=None,human_practice=False,practice_status=None,sparring=None,strategy_trace=False):
     if human_practice and sparring:raise ValueError("Choose human practice or bot sparring")
+    if strategy_trace and sparring!='kfai-human':raise ValueError('Strategy trace requires kfai-human')
     local_practice=human_practice or sparring is not None
     if sparring:
-        from sparring import SparringSession,source_files as sparring_sources
-        from human_opponents import PROFILES
-        if sparring not in PROFILES or map_alias not in (None,"LR"):raise ValueError("Invalid sparring profile/map")
+        from sparring import SparringSession,source_files as sparring_sources,OPPONENTS
+        if sparring not in OPPONENTS or map_alias not in (None,"LR"):raise ValueError("Invalid sparring profile/map")
         enemy_race=1
     speed=speed_percent(speed)
-    if local_practice and speed!=100:raise ValueError('Human practice requires 100% speed')
+    if human_practice and speed!=100:raise ValueError('Human practice requires 100% speed')
     if max_game_seconds is not None:
         positive_minutes(max_game_seconds/60)
     run_id=time.strftime('%Y%m%d-%H%M%S')
@@ -75,10 +75,13 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
         status_at=now
         try:practice_status(phase,run_id=run_id,artifacts=str(out),**data)
         except Exception as exc:log('practice_status_error',error=repr(exc))
-    session=(SparringSession(sparring,map_alias or 'LR') if sparring else HumanPracticeSession(enemy_race,map_alias or 'LR') if local_practice else
+    session=(SparringSession(sparring,map_alias or 'LR',speed=speed) if sparring else HumanPracticeSession(enemy_race,map_alias or 'LR') if local_practice else
              Session(speed,enemy_race,difficulty,**({"map_alias":map_alias} if map_alias else {})))
     console=None
     meter=None
+    if strategy_trace:
+        session.strategy_trace_path=out/'opponent-strategy.jsonl'
+        result['opponent_strategy_trace']='experimental_observer_only'
     try:
         if local_practice:report_practice('launching')
         ensure_time(until)
@@ -217,6 +220,8 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
         result.update(result='error',reason=repr(exc))
         traceback.print_exc()
     finally:
+        # A failed launch still needs its map identity/configuration for stage 0.
+        result.setdefault('launch_settings',dict(getattr(session,'settings',{})))
         if meter is not None:meter.close()
         if console is not None:
             try:console.close()

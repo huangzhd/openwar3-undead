@@ -2,6 +2,7 @@ import contextlib
 import hashlib
 import struct
 import unittest
+import tempfile
 from pathlib import Path
 from types import SimpleNamespace as N
 from unittest.mock import Mock,patch
@@ -14,21 +15,36 @@ from w3mpq import Mpq,decrypt
 
 
 class ObserverMapTests(unittest.TestCase):
+    def test_staging_preserves_bytes_and_refuses_overwriting_a_changed_copy(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);source=root/'scenario.w3x';source.write_bytes(b'original scenario')
+            target=sparring_map.stage_map(source,root/'game')
+            self.assertEqual(target.parent,root/'game'/'Maps'/'dayuan')
+            self.assertEqual(target.read_bytes(),source.read_bytes())
+            self.assertEqual(sparring_map.stage_map(source,root/'game'),target)
+            target.write_bytes(b'changed')
+            with self.assertRaises(RuntimeError):sparring_map.stage_map(source,root/'game')
+            self.assertEqual(target.read_bytes(),b'changed')
+            self.assertEqual(source.read_bytes(),b'original scenario')
+
     def test_replacement_roundtrip_keeps_original_archive_members_unchanged(self):
         original,catalog=resolve_map('LR');blob=original.read_bytes();before=Mpq(blob)
         changed=sparring_map.replace_members(blob,{'war3map.j':b'new script'})
         after=Mpq(changed)
         self.assertEqual(after.read('war3map.j'),b'new script')
         self.assertEqual(before.hash,after.hash)
-        changed_blocks=[]
+        # StormLib also updates archive bookkeeping; game resources must stay intact.
+        mutable=[before._find(name) for name in ('war3map.j','(listfile)','(attributes)')]
         for index in range(len(before.block)//16):
             old=struct.unpack_from('<IIII',before.block,index*16)
             new=struct.unpack_from('<IIII',after.block,index*16)
-            if old!=new:changed_blocks.append(old)
+            if old!=new:self.assertIn(old,mutable)
             else:
                 self.assertEqual(blob[before.base+old[0]:before.base+old[0]+old[1]],
                                  changed[after.base+new[0]:after.base+new[0]+new[1]])
-        self.assertEqual(changed_blocks,[before._find('war3map.j')])
+        for name in before.read('(listfile)').decode('utf-8').splitlines():
+            if name not in ('war3map.j','(listfile)','(attributes)'):
+                self.assertEqual(before.read(name),after.read(name),name)
         self.assertEqual(hashlib.sha256(original.read_bytes()).hexdigest(),catalog['map_sha256'])
 
     def test_observer_scenario_has_fixed_bot_slots_and_does_not_change_camps_or_objects(self):
@@ -36,6 +52,8 @@ class ObserverMapTests(unittest.TestCase):
         path,catalog=sparring_map.prepare_map('LR')
         original=Path(catalog['source_map_path']);a,b=Mpq(original.read_bytes()),Mpq(path.read_bytes())
         metadata=parse_w3i(b.read('war3map.w3i'),{})
+        header=path.read_bytes();pos=header.index(b'\0',8)+1
+        self.assertEqual(struct.unpack_from('<II',header,pos),(metadata['flags'],len(metadata['players'])))
         self.assertEqual([(r['id'],r['type'],r['race']) for r in metadata['players']],[(0,1,1),(1,2,3),(2,2,1)])
         old,new=a.read('war3map.j').decode('utf8'),b.read('war3map.j').decode('utf8')
         for fn in ('CreateNeutralHostile','CreateNeutralPassive','CreateNeutralPassiveBuildings'):
@@ -56,16 +74,21 @@ class ObserverMapTests(unittest.TestCase):
 
 
 class SparringSessionTests(unittest.TestCase):
-    def setup_connection(self,observer=True,owned_observer=False,shared=False):
+    def setup_connection(self,observer=True,owned_observer=False,shared=False,native=False):
         paused=[]
         j=N(Player=lambda i:i,GetPlayerSlotState=lambda i:int(i in (0,1,2)),
-            GetPlayerController=lambda i:int(i!=0),GetPlayerRace=lambda i:3 if i==1 else 1,
+            GetPlayerController=lambda i:int(i!=0 and not (native and i==1)),GetPlayerRace=lambda i:3 if i==1 else 1,
             IsPlayerObserver=lambda i:observer if i==0 else False,
             IsPlayerEnemy=lambda a,b:{a,b}=={1,2},GetPlayerAlliance=lambda a,b,k:shared,
             PauseCompAI=lambda i,v:paused.append((i,v)))
         raw=N(in_game=True,me=0,units=[N(alive=True,owner=0)] if owned_observer else [])
         @contextlib.contextmanager
-        def connect(**kw):yield N(world=N(read=lambda:raw),jass=j)
+        def connect(**kw):
+            import w3claim
+            self.assertIn(kw.get('owner','bot'),w3claim.MODULES)
+            import w3fast
+            yield N(world=N(read=lambda:raw),jass=j,_w3fast=w3fast,
+                    lane=N(commands=lambda calls:[N(ok=True) for _ in calls]))
         return connect,paused
 
     def test_setup_pauses_only_competing_players_and_requires_observer(self):
@@ -79,6 +102,19 @@ class SparringSessionTests(unittest.TestCase):
             connect,paused=self.setup_connection(**options)
             with patch.object(sparring,'Game',side_effect=connect),self.assertRaises(RuntimeError):session.prepare_players(123)
             self.assertFalse(paused)
+
+    def test_native_kfai_keeps_opponent_running_and_only_observes_it(self):
+        connect,paused=self.setup_connection()
+        session=sparring.SparringSession('kfai-human')
+        with patch.object(sparring,'Game',side_effect=connect):session.prepare_players(123)
+        self.assertEqual(paused,[(1,True)])
+        self.assertEqual(session.settings['opponent_fairness'],'native_KFAI_unverified')
+        snap=N(resources_known=True,epoch=73,me=2,in_game=True,clock=40)
+        session.opponent_game=N(snapshot=lambda **kw:snap,resources=lambda:dict(lumber_gathered=20),
+                                my_units=lambda:[N(type='hpea')])
+        session.opponent_log=Mock();session.opponent_summary_at=-100
+        self.assertTrue(session.tick_opponent(73))
+        self.assertEqual(session.opponent_log.call_args.kwargs['resources']['lumber_gathered'],20)
 
     def test_epoch_and_player_guard_prevent_orders_after_new_match(self):
         for override in ({'epoch':74},{'me':0},{'in_game':False}):

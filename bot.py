@@ -40,12 +40,16 @@ def main():
     practice.add_argument('--race',type=int,choices=(1,2,3,4),default=2,help='Human race; dayuan is undead')
     practice.add_argument('--map',dest='map_alias',choices=('AZ','AL','CH','LR','NI','TH','TR','TM'),default='LR')
     spar=sub.add_parser('sparring',help='One local bot duel with P0 observer; first version supports LR')
-    spar.add_argument('--opponent',choices=('human-fast-expand','human-rifle'),required=True)
+    spar.add_argument('--opponent',choices=('human-fast-expand','human-rifle','kfai-human'),required=True)
     spar.add_argument('--map',dest='map_alias',choices=('LR',),default='LR')
+    spar.add_argument('--speed',type=speed_percent,choices=SPEEDS,default=400)
     spar.add_argument('--check',action='store_true',help='Build and verify scenario without launching a game')
+    spar.add_argument('--strategy-trace',action='store_true',help='Experimental KFAI observer strategy diagnostics (separate map/log)')
     spar.add_argument('--minutes',type=positive_minutes,default=None,help='Optional diagnostic limit; default no time limit')
     sub.add_parser('stop',help='Request graceful stop of the project match')
     args=parser.parse_args()
+    if args.command=='sparring' and args.strategy_trace and args.opponent!='kfai-human':
+        parser.error('--strategy-trace requires --opponent kfai-human')
     if args.command.startswith('auto-load'):
         from auto_load import watch,build_helper,verified_runtime,STATE,STOP
         try:
@@ -98,8 +102,11 @@ def main():
     if args.command=='sparring' and args.check:
         from sparring import source_files
         from sparring_map import prepare_map
-        path,catalog=prepare_map(args.map_alias)
+        if args.opponent=='kfai-human':
+            from kfai_map import prepare_map
+        path,catalog=prepare_map(args.map_alias,**({'strategy_trace':True} if args.strategy_trace else {}))
         print(json.dumps(dict(opponent=args.opponent,map=str(path),map_sha256=catalog['map_sha256'],
+                              strategy_trace=args.strategy_trace,
                               source_files=len(source_files()),observer_player=0,dayuan_player=1,human_bot_player=2,
                               background_supported=False,game_launched=False,live_verified=False),ensure_ascii=False,indent=2))
         return 0
@@ -112,8 +119,8 @@ def main():
         return 1 if r['result']=='error' else 0
     if args.command=='sparring':
         from run_match import run_match
-        r=run_match(speed=100,map_alias=args.map_alias,sparring=args.opponent,
-                    max_game_seconds=args.minutes*60 if args.minutes is not None else None)
+        r=run_match(speed=args.speed,map_alias=args.map_alias,sparring=args.opponent,
+                    max_game_seconds=args.minutes*60 if args.minutes is not None else None,strategy_trace=args.strategy_trace)
         return 1 if r['result']=='error' else 0
     from run_match import play_matches
     r=play_matches(args.speed,args.minutes*60 if args.minutes is not None else None,args.until,args.enemy_race,args.difficulty,map_alias=args.map_alias)

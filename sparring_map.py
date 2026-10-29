@@ -7,40 +7,37 @@ import hashlib
 import json
 import re
 import struct
+import ctypes
+import tempfile
+from pathlib import Path
 from bootstrap import ROOT
-from w3mpq import Mpq, CT, mpq_hash
+from w3mpq import Mpq
+from training_map import stormlib
 from undead.maps import resolve_map
 
 
-def encrypt(data,key):
-    seed=0xEEEEEEEE;out=[]
-    for plain, in struct.iter_unpack('<I',data):
-        seed=(seed+CT[0x400+(key&0xFF)])&0xFFFFFFFF
-        out.append(plain^((key+seed)&0xFFFFFFFF))
-        key=(((((~key)<<21)&0xFFFFFFFF)+0x11111111)|(key>>11))&0xFFFFFFFF
-        seed=(plain+seed+(seed<<5)+3)&0xFFFFFFFF
-    return struct.pack('<'+'I'*len(out),*out)
-
-
 def replace_members(blob,members):
-    """Append replacement members and relocate only the block table (MPQ v0)."""
-    archive=Mpq(blob);base=archive.base
-    header=struct.unpack_from('<IIHHIIII',blob,base+4)
-    if header[2]!=0:raise ValueError('Only reviewed MPQ v0 maps are supported')
-    out=bytearray(blob[:base+header[1]])
-    blocks=bytearray(archive.block)
-    for name,payload in members.items():
-        a,b=mpq_hash(name,1),mpq_hash(name,2)
-        matches=[bi for ha,hb,loc,platform,bi in struct.iter_unpack('<IIHHI',archive.hash)
-                 if (ha,hb)==(a,b) and bi<0xFFFFFFFE]
-        if len(matches)!=1:raise ValueError('Expected exactly one archive member: '+name)
-        struct.pack_into('<IIII',blocks,matches[0]*16,len(out)-base,len(payload),len(payload),0x81000000)
-        out.extend(payload)
-    block_pos=len(out)-base
-    out.extend(encrypt(blocks,mpq_hash('(block table)',3)))
-    struct.pack_into('<I',out,base+8,len(out)-base)
-    struct.pack_into('<I',out,base+20,block_pos)
-    result=bytes(out);check=Mpq(result)
+    """Use the pinned StormLib writer, as required by the 1.27 game reader."""
+    original=Mpq(blob)
+    for name in members:
+        if original.read(name) is None:raise ValueError('Missing archive member: '+name)
+    lib=stormlib()
+    def require(ok):
+        if not ok:raise OSError(ctypes.get_last_error(),'Sparring map update failed')
+    with tempfile.TemporaryDirectory(prefix='sparring-map-') as temp:
+        path=Path(temp)/'scenario.w3x';path.write_bytes(blob)
+        archive=ctypes.c_void_p()
+        require(lib.SFileOpenArchive(str(path),0,0,ctypes.byref(archive)))
+        try:
+            for name,payload in members.items():
+                file=ctypes.c_void_p()
+                require(lib.SFileCreateFile(archive,name.encode('ascii'),0,len(payload),0,
+                                           0x80000200,ctypes.byref(file)))
+                try:require(lib.SFileWriteFile(file,ctypes.c_char_p(payload),len(payload),2))
+                finally:require(lib.SFileFinishFile(file))
+        finally:require(lib.SFileCloseArchive(archive))
+        result=path.read_bytes()
+    check=Mpq(result)
     if any(check.read(name)!=data for name,data in members.items()):raise RuntimeError('Map replacement verification failed')
     return result
 
@@ -75,6 +72,33 @@ def lobby_metadata(blob,starts):
     for slot,label in enumerate(('Observer','dayuan','Human opponent')):
         rows.extend(struct.pack('<II',0,1<<slot)+label.encode()+b'\0')
     return bytes(data[:player_start]+rows+tail)
+
+
+def scenario_header(blob):
+    """Keep the external Warcraft header consistent with the three-slot lobby."""
+    if blob[:4]!=b'HM3W':raise ValueError('Expected Warcraft map header')
+    pos=blob.index(b'\0',8)+1
+    if pos+8>Mpq(blob).base:raise ValueError('Invalid Warcraft map header')
+    result=bytearray(blob)
+    flags=struct.unpack_from('<I',result,pos)[0]
+    struct.pack_into('<II',result,pos,(flags|16|32)&~4,3)
+    return bytes(result)
+
+
+def stage_map(source,game_dir):
+    """Deploy exact scenario bytes under the game's Maps directory for -loadfile."""
+    blob=Path(source).read_bytes()
+    digest=hashlib.sha256(blob).hexdigest()
+    folder=Path(game_dir)/'Maps'/'dayuan'
+    folder.mkdir(parents=True,exist_ok=True)
+    target=folder/('sp-'+digest[:12]+'.w3x')
+    if target.exists():
+        if target.read_bytes()!=blob:raise RuntimeError('Staged sparring map hash collision or modification')
+    else:
+        with target.open('xb') as output:output.write(blob)
+    if hashlib.sha256(target.read_bytes()).hexdigest()!=digest:
+        raise RuntimeError('Staged sparring map verification failed')
+    return target
 
 
 def scenario_script(script,starts):
@@ -132,7 +156,7 @@ def prepare_map(alias='LR'):
     if len(starts)!=2:raise ValueError('Observer scenario requires exactly two original starts')
     replacements={'war3map.j':scenario_script(archive.read('war3map.j').decode('utf-8'),starts),
                   'war3map.w3i':lobby_metadata(archive.read('war3map.w3i'),starts)}
-    result=replace_members(blob,replacements)
+    result=scenario_header(replace_members(blob,replacements))
     digest=hashlib.sha256(result).hexdigest()
     folder=ROOT/'artifacts'/'sparring-maps';folder.mkdir(parents=True,exist_ok=True)
     target=folder/('LR-observer-'+digest[:16]+'.w3x')
