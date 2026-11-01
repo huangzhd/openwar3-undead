@@ -63,7 +63,9 @@ def inspect_run(folder):
     if result.get('mode') != 'bot_vs_bot' or profile not in (*PROFILES, *NATIVE_PROFILES):
         issues.append('not_supported_sparring_run')
     if broken or not manifest:issues.append('source_snapshot_invalid')
-    if result.get('cleanup_error') or result.get('ui_cleanup_error'):issues.append('cleanup_failed')
+    if any(result.get(k) for k in ('cleanup_error', 'ui_cleanup_error',
+                                   'trajectory_cleanup_error', 'visibility_cleanup_error', 'runtime_guard_cleanup_error')):
+        issues.append('cleanup_failed')
     if not natural:issues.append('no_natural_terminal')
     ai_isolation = settings.get('native_ai_paused') is True
     if profile in NATIVE_PROFILES:

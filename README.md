@@ -35,6 +35,8 @@
 
 ## 本地环境
 
+给朋友使用关卡训练面板：提供可移植训练包，整个 `dayuan-training` 文件夹放到游戏目录中（与 `War3.exe`、`Game.dll` 同层），双击其中的 `启动训练.cmd`。无需安装 Python/Git/Codex。需要完整 1.27a / 1.27.0.52240，首次从朋友自己的游戏提取数据；具体结构与操作见 [朋友训练包说明](docs/FRIEND_TRAINING.md)。源码仓库不包含便携Python或运行组件；开发机用 `build_training_bundle.py --output <新输出目录>` 从已验证的本地依赖制作完整 ZIP，不要单独发送 CMD。
+
 需要 Windows、Python 和合法安装的 Warcraft III 1.27a。此仓库只保存本项目源码、测试、数据目录与文档，不包含游戏文件、运行时二进制、第三方上游、虚拟环境、模型或对局 artifacts。历史文档中的 artifacts 路径指开发机本地证据，仓库内不含这些文件。
 
 本项目依赖 [OpenWar3AI](https://war3ai.com/en/)，固定提交 `ffd7dd25a3c2478f457b74bde89d23e605b24243`。将该版本放在 `vendor/OpenWar3AI-ffd7dd25a3c2478f457b74bde89d23e605b24243`，按上游文档配置合法游戏路径、安装运行时并提取游戏数据；`bootstrap.py` 使用该固定目录。首次恢复后先运行 `bot.py check`，确认本地依赖就绪；check不启动游戏。

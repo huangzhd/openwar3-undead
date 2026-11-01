@@ -1,6 +1,7 @@
 """Reserve generous building envelopes and an outward lane at the home base."""
 from math import cos,sin,pi,hypot
 from time import perf_counter
+from .replay_opening import fixed_slot,LR_HALF
 
 # Planning envelopes, not claims about exact engine collision footprints.
 ENVELOPES={'unpl':192,'unp1':192,'unp2':192,'ugol':192,
@@ -51,7 +52,8 @@ class HomeLayout:
                 if order<0x20202020 or now-p['progress']>=3:
                     if order>=0x20202020:g.hold(worker)
                     self.pending.pop(code,None)
-                    self.failed_spots[(code,p['point'])]=now+45
+                    fixed=fixed_slot(self.map_alias,p.get('home'),code,buildings) if p.get('home') is not None else None
+                    self.failed_spots[(code,p['point'])]=now+(3 if fixed==p['point'] else 45)
                     self.log('home_foundation_unconfirmed',clock=now,code=code,point=p['point'],
                              worker=p['worker'],order=order,reason='order_lost' if order<0x20202020 else 'no_worker_progress')
                     home=p.get('home')
@@ -63,6 +65,12 @@ class HomeLayout:
             # The initial snapshot grace also applies to towers and production.
 
     def candidates(self,code,home,buildings):
+        fixed=fixed_slot(self.map_alias,home,code,buildings)
+        if fixed is not None:
+            # The user asked for this exact location, including on retries.
+            # An occupied slot waits; it must not silently search a different site.
+            if clear_of_buildings(fixed,buildings,0,LR_HALF[code]):yield fixed
+            return
         half=ENVELOPES.get(code,160)
         length=hypot(home.x,home.y)
         direction=(-home.x/length,-home.y/length) if length else (1,0)
@@ -106,16 +114,18 @@ class HomeLayout:
             if clear_of_buildings(point,buildings,128,half):yield point
 
     def build(self,g,worker,code,home,now=None):
-        # Keep SDK pending-foundation tracking, failure blacklisting and receipts.
+        # Generic sites retain SDK tracking. Fixed sites use our foundation
+        # tracker, avoiding the SDK's 45 wall-second failed-site blacklist.
         if code in self.pending:return self.pending[code]['point']
         started=perf_counter()
         buildings=g.my_buildings()
+        fixed=fixed_slot(self.map_alias,home,code,buildings)
         points=list(self.candidates(code,home,buildings))
         grid=g.map() if hasattr(g,'map') else None
         # Visibility is a synchronous engine query. Check only trees touching
         # the candidate being tried, with a hard per-tick query budget.
         trees=g.trees(home.x,home.y,limit=400) if hasattr(g,'trees') and hasattr(g,'visible') else []
-        half=ENVELOPES.get(code,160)
+        half=LR_HALF[code] if fixed is not None else ENVELOPES.get(code,160)
         if not points:return None
         visibility={};queries=0;attempts=0
         def finish(spot):
@@ -127,8 +137,10 @@ class HomeLayout:
             index=(start+offset)%len(points);point=points[index]
             self.cursors[key]=(index+1)%len(points)
             if now is not None and now<self.failed_spots.get((code,point),-1):continue
+            # Inspect interior cell centers, not cells just outside the fixed footprint.
+            sample=half-16 if fixed is not None else half
             if grid and hasattr(grid,'buildable') and not all(grid.buildable(point[0]+x,point[1]+y)
-                    for x in (-half,0,half) for y in (-half,0,half)):continue
+                    for x in (-sample,0,sample) for y in (-sample,0,sample)):continue
             blocked=False
             for tree in trees:
                 if max(abs(tree.x-point[0]),abs(tree.y-point[1]))>=half+64:continue
@@ -144,7 +156,13 @@ class HomeLayout:
                 if visibility[loc]:blocked=True;break
             if blocked:continue
             attempts+=1
-            spot=g.build_near(worker,code,*point,min_r=0,max_r=0,max_tries=1)
+            if fixed is not None:
+                spot=point if g.can_afford(code) and g.build(worker,code,*point) else None
+            else:
+                spot=g.build_near(worker,code,*point,min_r=0,max_r=0,max_tries=1)
+            if fixed is not None and not spot and now is not None:
+                self.failed_spots[(code,point)]=now+3
+                self.log('home_fixed_slot_retry',clock=now,code=code,point=point,retry_at=now+3)
             if spot and now is not None and now<self.failed_spots.get((code,tuple(spot)),-1):
                 return finish(None) # Wait for SDK to observe the cancellation, not another 24s hold.
             # An existing SDK walking order returns its earlier point. Keep it

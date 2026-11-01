@@ -72,6 +72,7 @@ class SparringSession(HumanPracticeSession):
 
     def start_opponent(self,log):
         self.opponent_game=Game(pid=self.game.pid,player=2,fair=True)
+        if self.profile!='kfai-human':self.opponent_game.bind_player_visibility()
         self.opponent_log=log;self.opponent_summary_at=-100
         if self.profile!='kfai-human':self.opponent=HumanOpponent(self.opponent_game,log,self.profile,self.map_catalog)
         if self.strategy_trace_path:

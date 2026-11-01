@@ -5,6 +5,37 @@ from .hero_spell_telemetry import HeroSpellTelemetry,HERO_CODES,ORDERS,TOGGLES
 
 
 class Game(SDKGame):
+    def bind_player_visibility(self):
+        """Called only after this owned local session verifies its player setup."""
+        from .player_visibility import PlayerVisibility
+        raw = self.world.read()
+        if (self.player not in (1, 2) or self.fair is not True or raw is None
+                or not raw.in_game or raw.me != 0):
+            raise RuntimeError('Explicit visibility requires a verified local P1/P2 session')
+        old = getattr(self, '_player_visibility', None)
+        if old is not None:old.close()
+        self._player_visibility = None
+        client = SDKGame(pid=self.pid, fair=False)
+        try:self._player_visibility = PlayerVisibility(client, self.pid, raw.epoch, self.player)
+        except BaseException:
+            client.close()
+            raise
+
+    def visible(self, x, y):
+        if getattr(self, 'player', None) is None:
+            return super().visible(x, y)
+        oracle = getattr(self, '_player_visibility', None)
+        if oracle is None or oracle.pid != self.pid or oracle.player != self.player:
+            return None
+        return oracle.query(x, y)['visible']
+
+    def close(self):
+        try:
+            oracle = getattr(self, '_player_visibility', None)
+            if oracle is not None:oracle.close()
+        finally:
+            super().close()
+
     def learn(self,hero,ability):
         # KK comparison mode: never issue W3P learn; local/training keeps the SDK path.
         if getattr(self,'manual_skill_learning',False) is True:return False

@@ -1539,6 +1539,7 @@ class Controller(BattleTacticsMixin):
 
     def scout(self,now):
         g=self.g
+        self.critter_search.map_alias=self.creeping.map_alias
         # Remember an observed death, never infer a corpse merely from lost vision.
         if self.scout_critter and self.scout_corpse is None:
             target=g.unit(self.scout_critter)
@@ -1592,7 +1593,7 @@ class Controller(BattleTacticsMixin):
                     self.scout_critter=target.handle
                     self.log('scout_critter_target',clock=now,handle=target.handle,point=(target.x,target.y))
                 self.scout_critter_point=(target.x,target.y);self.scout_critter_seen=now
-                if self.critter_search.camp_focus:
+                if self.critter_search.camp_focus or self.critter_search.reference_active(self.home):
                     distance=g.dist(scout,target)
                     # Once visible, issue an actual attack at any safe reachable
                     # distance. Never replace its pursuit with point movement.

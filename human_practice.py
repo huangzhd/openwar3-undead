@@ -136,6 +136,8 @@ class HumanPracticeSession(Session):
                         continue
                     self.verify_map(self.game)
                     self.prepare_players(pid)
+                    self.game.bind_player_visibility()
+                    self.settings['point_visibility_player'] = 1
                     self.settings['own_start_sample'] = dict(clock=snap.clock,
                         own_halls=[dict(type=h.type,x=h.x,y=h.y) for h in self.game.my_units() if h.type=='unpl'],
                         basis='first_ready_fair_P1_buildings')

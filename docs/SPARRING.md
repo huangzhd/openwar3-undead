@@ -1,6 +1,10 @@
 # 人族战术陪练初版
 
-实验诊断（2026-10-29）：`bot.py sparring --opponent kfai-human --strategy-trace --check`仅生成/检查带内部策略发布的独立副本，不开游戏；不带`--check`才运行。`--strategy-trace`默认关闭且只允许KFAI，日志为`opponent-strategy.jsonl`，不进入dayuan决策。缓存桥尚未实机验证，不能据离线通过声称已捕获策略切换；详细限制及下一步探针见[阶段0说明](LEARNING_STAGE0.md)。
+指定玩家视野修复（2026-11-01）：本地P1和自写P2现在使用各自绑定的native点视野，无绑定/错误不回退P0。显式限时或trajectory对局启用runtime-timing和协作式截止保护，限时诊断阶段预算2秒；代码1951项离线通过，234922的12个P1点对照一致并在180.000秒退出；自写P2及更广泛场景仍待验，详细限制见[轨迹契约](LEARNING_TRAJECTORY.md)。
+
+轨迹采集（2026-11-01）：新增默认关闭的 `--trajectory`，仅P1陪练可用，生成独立 `trajectory.jsonl`。只记录显式白名单观察和动作请求/回执/终局，不接入学习actor；隔离测试及234922实机白名单结构检查通过，完整动作适配与阶段0仍待完成，见[轨迹契约](LEARNING_TRAJECTORY.md)。与 `--check` 组合不启动游戏。
+
+实验诊断（更新2026-11-01）：`bot.py sparring --opponent kfai-human --strategy-trace --check`仅生成/检查带内部策略发布的独立副本，不开游戏；不带`--check`才运行。`--strategy-trace`默认关闭且只允许KFAI，日志为`opponent-strategy.jsonl`，不进入dayuan决策。230642限时探针已读到初始Gryph标签，缓存桥初始读取实机通过；中途切换尚未观察，详细证据和限制见[阶段0说明](LEARNING_STAGE0.md)。
 
 最新默认（2026-10-29）：视距2500、4倍速，覆盖下方旧6000/1倍速说明。`bot.py sparring --opponent kfai-human`使用4倍速；可显式`--speed 100`等，真人practice入口仍1倍速。新打开的观战面板初选值也为2500/4倍速，已打开的旧面板只继续刷新实际读回。125914已完成一局自然胜（2343.505游戏秒、全灭敌建筑），不代表全策略/学习环境验收；详见HANDOFF顶部。
 

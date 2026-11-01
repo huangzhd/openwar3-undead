@@ -58,6 +58,7 @@ import w3paths
 from w3slk import read_slk
 from openwar3 import combat
 from .targeting import in_weapon_range
+from .replay_opening import matches as reference_matches,approach as reference_points
 
 @lru_cache(maxsize=1)
 def ground_critters():
@@ -88,6 +89,37 @@ class CritterSearch:
         self.hunt=None;self.hunt_failed=set()
         self.general_visits=0
         self.camp_focus=None
+        self.map_alias=None
+        self.reference_index=0;self.reference_job=None;self.reference_done=False
+
+    def reference_active(self,home):
+        return reference_matches(self.map_alias,home) and not self.camp_focus
+
+    def reference_approach(self,g,scout,home,now,safe_route):
+        if not self.reference_active(home) or self.reference_done:return None
+        route=reference_points(self.map_alias,home)
+        while self.reference_index<len(route):
+            point=route[self.reference_index]
+            if g.dist(scout,point)<160:
+                self.reference_index+=1;self.reference_job=None
+                continue
+            distance=g.path_distance(scout,point)
+            safe=safe_route is None or safe_route((scout.x,scout.y),point)
+            job=self.reference_job
+            if job is None:
+                job=self.reference_job=dict(distance=distance,progress=now,started=now)
+                self.log('scout_reference_approach',clock=now,point=point,
+                         source='LR_reference_move_destination',home=(home.x,home.y),index=self.reference_index)
+            if distance is not None and (job['distance'] is None or distance<job['distance']-60):
+                job.update(distance=distance,progress=now)
+            if distance is None or not safe or now-job['progress']>=8 or now-job['started']>=24:
+                self.reference_done=True
+                self.log('scout_reference_deferred',clock=now,point=point,
+                         reason='route_unavailable' if distance is None else 'unsafe' if not safe else 'no_progress')
+                return None
+            return point
+        self.reference_done=True
+        return None
 
     def focus_camp(self,camp,now):
         """Replace the generic home search with one opening camp's vicinity."""
@@ -115,11 +147,12 @@ class CritterSearch:
         centers=[(p['x'],p['y']) for p in self.local_spawns(g,home)]
         observed=[u for u in g.units('all') if 12<=u.owner<=15 and u.type in ground_critters()
                   and u.hp>0 and u.handle not in self.hunt_failed]
-        if self.camp_focus:
+        if self.camp_focus or self.reference_active(home):
             observed=[u for u in observed if u.visible_to(g.me())]
         visible=[u for u in observed if (g.dist(u,self.camp_focus)<=1500 if self.camp_focus else
                                         (g.dist(u,home)<=3000 or any(g.dist(u,p)<=600 for p in centers)))]
-        guarded=lambda u:bool(self.camp_focus and any(e.hp>0 and g.dist(e,u)<650 for e in g.creeps()))
+        guarded=lambda u:bool((self.camp_focus or self.reference_active(home)) and
+                             any(e.hp>0 and g.dist(e,u)<650 for e in g.creeps()))
         visible=[u for u in visible if not guarded(u)]
         # The camp radius selects a new target, not the continuation of a hunt.
         # A fleeing critter must not silently disappear from our own job.
@@ -176,6 +209,8 @@ class CritterSearch:
     def choose(self,g,scout,home,now,safe_route=None):
         if now>=self.DEADLINE:
             self.job=None;return None
+        point=self.reference_approach(g,scout,home,now,safe_route)
+        if point is not None:return point
         if now-self.last_eval<1:return self.job['point'] if self.job else None
         self.last_eval=now
         if self.points is None:

@@ -1,0 +1,295 @@
+{
+  "replay_sha256": "7d858deddb81f49815d274bd188190c7a0b3df1c65a61be6fd0280fb8b7279e1",
+  "home": [
+    3840,
+    3328
+  ],
+  "map_script_sha256": "d622571d45153734550a3ff004e989d1cebf54bfe0cf54bb48cb7d0158b8d90b",
+  "header_seconds": 89.95,
+  "timeslot_seconds": 96.21,
+  "build_orders": [
+    {
+      "code": "uaod",
+      "point": [
+        3616,
+        2784
+      ],
+      "time_slot_seconds": 7.788,
+      "selected": [
+        {
+          "handle": [
+            15276,
+            15282
+          ],
+          "type": "uaco"
+        }
+      ]
+    },
+    {
+      "code": "uzig",
+      "point": [
+        4192,
+        3424
+      ],
+      "time_slot_seconds": 14.46,
+      "selected": [
+        {
+          "handle": [
+            15276,
+            15282
+          ],
+          "type": "uaco"
+        }
+      ]
+    },
+    {
+      "code": "usep",
+      "point": [
+        3264,
+        3712
+      ],
+      "time_slot_seconds": 34.835,
+      "selected": [
+        {
+          "handle": [
+            14553,
+            17483
+          ],
+          "type": "uaco"
+        }
+      ]
+    },
+    {
+      "code": "utom",
+      "point": [
+        4352,
+        3136
+      ],
+      "time_slot_seconds": 58.616,
+      "selected": [
+        {
+          "handle": [
+            14695,
+            18598
+          ],
+          "type": "uaco"
+        }
+      ]
+    },
+    {
+      "code": "ugrv",
+      "point": [
+        3904,
+        3776
+      ],
+      "time_slot_seconds": 83.725,
+      "selected": [
+        {
+          "handle": [
+            15251,
+            15257
+          ],
+          "type": "uaco"
+        }
+      ]
+    }
+  ],
+  "all_build_attempts": [
+    {
+      "t": 6.694,
+      "player": 1,
+      "id": 17,
+      "abilityFlags": 4,
+      "orderId": [
+        100,
+        111,
+        97,
+        117
+      ],
+      "target": [
+        3616,
+        2784
+      ],
+      "order": "uaod",
+      "selection": [
+        {
+          "handle": [
+            15276,
+            15282
+          ],
+          "type": "uaco"
+        }
+      ],
+      "target_type": null
+    },
+    {
+      "t": 7.788,
+      "player": 1,
+      "id": 17,
+      "abilityFlags": 4,
+      "orderId": [
+        100,
+        111,
+        97,
+        117
+      ],
+      "target": [
+        3616,
+        2784
+      ],
+      "order": "uaod",
+      "selection": [
+        {
+          "handle": [
+            15276,
+            15282
+          ],
+          "type": "uaco"
+        }
+      ],
+      "target_type": null
+    },
+    {
+      "t": 14.46,
+      "player": 1,
+      "id": 17,
+      "abilityFlags": 4,
+      "orderId": [
+        103,
+        105,
+        122,
+        117
+      ],
+      "target": [
+        4192,
+        3424
+      ],
+      "order": "uzig",
+      "selection": [
+        {
+          "handle": [
+            15276,
+            15282
+          ],
+          "type": "uaco"
+        }
+      ],
+      "target_type": null
+    },
+    {
+      "t": 34.835,
+      "player": 1,
+      "id": 17,
+      "abilityFlags": 4,
+      "orderId": [
+        112,
+        101,
+        115,
+        117
+      ],
+      "target": [
+        3264,
+        3712
+      ],
+      "order": "usep",
+      "selection": [
+        {
+          "handle": [
+            14553,
+            17483
+          ],
+          "type": "uaco"
+        }
+      ],
+      "target_type": null
+    },
+    {
+      "t": 58.616,
+      "player": 1,
+      "id": 17,
+      "abilityFlags": 4,
+      "orderId": [
+        109,
+        111,
+        116,
+        117
+      ],
+      "target": [
+        4352,
+        3136
+      ],
+      "order": "utom",
+      "selection": [
+        {
+          "handle": [
+            14695,
+            18598
+          ],
+          "type": "uaco"
+        }
+      ],
+      "target_type": null
+    },
+    {
+      "t": 83.725,
+      "player": 1,
+      "id": 17,
+      "abilityFlags": 4,
+      "orderId": [
+        118,
+        114,
+        103,
+        117
+      ],
+      "target": [
+        3904,
+        3776
+      ],
+      "order": "ugrv",
+      "selection": [
+        {
+          "handle": [
+            15251,
+            15257
+          ],
+          "type": "uaco"
+        }
+      ],
+      "target_type": null
+    }
+  ],
+  "attack_commands": [
+    {
+      "t": 74.053,
+      "player": 1,
+      "id": 18,
+      "abilityFlags": 0,
+      "orderId": [
+        15,
+        0,
+        13,
+        0
+      ],
+      "target": [
+        1416.5430908203125,
+        3507.3515625
+      ],
+      "object": [
+        14601,
+        14601
+      ],
+      "order": "851983",
+      "selection": [
+        {
+          "handle": [
+            14695,
+            18598
+          ],
+          "type": "uaco"
+        }
+      ],
+      "target_type": null
+    }
+  ],
+  "evidence": "Recorded commands only; engine completion, actual path, death and corpse not encoded here."
+}

@@ -61,6 +61,15 @@ class BaselineTests(unittest.TestCase):
         same = self.run_folder('same', 'human-fast-expand')
         self.assertTrue(inventory([rifle, same])['baselines'][0]['both_opponents_recorded'])
 
+    def test_trajectory_or_visibility_cleanup_failure_cannot_qualify(self):
+        for field in ('trajectory_cleanup_error', 'visibility_cleanup_error', 'runtime_guard_cleanup_error'):
+            folder = self.run_folder(field)
+            result = json.loads((folder/'result.json').read_text())
+            result[field] = 'failed'
+            (folder/'result.json').write_text(json.dumps(result))
+            self.assertIn('cleanup_failed', inspect_run(folder)['issues'])
+            self.assertFalse(inspect_run(folder)['terminal_candidate'])
+
     def test_kfai_requires_native_ai_isolation_and_retains_unverified_fairness(self):
         folder=self.run_folder('kfai','kfai-human')
         self.assertIn('setup_verification_missing',inspect_run(folder)['issues'])

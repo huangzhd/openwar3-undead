@@ -7,9 +7,11 @@ import hashlib
 import shutil
 from collections import Counter
 from dataclasses import asdict
+from contextlib import nullcontext
 from bootstrap import ROOT
 from session import Session
 from run_window import DeadlineReached,ensure_time,parse_deadline,positive_minutes
+from run_guard import RunGuard,RunInterrupted
 from undead.controller import Controller
 from undead.referee import Referee
 from undead.structures import is_structure
@@ -17,9 +19,10 @@ from undead.speed_control import speed_percent,SPEEDS
 from undead.debug_console import DebugConsole,ActionMeter
 from undead.version import VERSION, RULES_VERSION, DISPLAY_NAME
 
-def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty=3,restarted_from=None,map_alias=None,human_practice=False,practice_status=None,sparring=None,strategy_trace=False):
+def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty=3,restarted_from=None,map_alias=None,human_practice=False,practice_status=None,sparring=None,strategy_trace=False,trajectory=False):
     if human_practice and sparring:raise ValueError("Choose human practice or bot sparring")
     if strategy_trace and sparring!='kfai-human':raise ValueError('Strategy trace requires kfai-human')
+    if trajectory and not sparring:raise ValueError('Trajectory recording requires P1 observer sparring')
     local_practice=human_practice or sparring is not None
     if sparring:
         from sparring import SparringSession,source_files as sparring_sources,OPPONENTS
@@ -42,6 +45,8 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
     if local_practice:
         from human_practice import HumanPracticeSession,source_files
         practice_sources=sparring_sources() if sparring else source_files()
+    if trajectory:practice_sources=[*practice_sources,*sorted((ROOT/'learning').glob('*.py'))]
+    if local_practice and (ROOT/'run_guard.py').exists():practice_sources=[*practice_sources,ROOT/'run_guard.py']
     for path in [ROOT/'session.py',ROOT/'run_match.py',*practice_sources,*([ROOT/'extract_map_pool.py'] if (ROOT/'extract_map_pool.py').exists() else []),ROOT/'game_preferences.py',*([ROOT/'run_window.py'] if (ROOT/'run_window.py').exists() else []),*sorted((ROOT/'undead').glob('*.py')),*sorted((ROOT/'data').glob('*.json'))]:
         name=path.relative_to(ROOT).as_posix()
         manifest[name]=hashlib.sha256(path.read_bytes()).hexdigest()
@@ -79,6 +84,11 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
              Session(speed,enemy_race,difficulty,**({"map_alias":map_alias} if map_alias else {})))
     console=None
     meter=None
+    trajectory_recorder=None
+    point_visibility=None
+    natural_confirmed=False
+    guard=None
+    def timed(name):return guard.stage(name) if guard is not None else nullcontext()
     if strategy_trace:
         session.strategy_trace_path=out/'opponent-strategy.jsonl'
         result['opponent_strategy_trace']='experimental_observer_only'
@@ -108,6 +118,26 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
             practice_epoch=g.snapshot(max_age=0).epoch
             report_practice('running',clock=g.clock(),background=False)
         else:console=DebugConsole(g,log)
+        if trajectory:
+            from learning.trajectory import TrajectoryRecorder,PointVisibility
+            from undead.game_view import Game
+            point_visibility=PointVisibility(Game(pid=g.pid,fair=False),g.pid,practice_epoch)
+            # Public map candidates only: discard slot IDs, never label the enemy's spawn.
+            public_points=[(p['x'],p['y']) for p in session.map_catalog.get('starts',[])]
+            trajectory_recorder=TrajectoryRecorder(g,out/'trajectory.jsonl',visibility=point_visibility,
+                                                    public_points=public_points)
+            result['trajectory']='experimental_p1_whitelist_v1'
+        if local_practice and (trajectory or max_game_seconds is not None or until is not None):
+            guard=RunGuard(g,out/'runtime-timing.jsonl',game_limit=max_game_seconds,until=until,
+                           stage_seconds=2.0 if max_game_seconds is not None or until is not None else None)
+            clients=[('P1',g),('P1_visibility',getattr(getattr(g,'_player_visibility',None),'client',None)),
+                     ('P2',getattr(session,'opponent_game',None)),
+                     ('P2_visibility',getattr(getattr(getattr(session,'opponent_game',None),'_player_visibility',None),'client',None)),
+                     ('strategy_trace',getattr(getattr(session,'strategy_trace',None),'game',None)),
+                     ('trajectory_visibility',getattr(point_visibility,'client',None))]
+            for label,client in clients:
+                if client is not None:guard.attach(client,label)
+            result['runtime_guard']='cooperative_stages_world_reads_native_wait_cap_v1'
         speed_control=console.speed if console else None
         last_pub=None
         last_speed=None
@@ -123,17 +153,19 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
         snapshot_at=-100
         while True:
             ensure_time(until)
+            if guard:guard.checkpoint()
             if local_practice:
                 if (ROOT/'artifacts'/'STOP').exists():
                     result.update(result='aborted',reason='user_stop');break
                 if not session.alive():
                     result.update(result='aborted',reason='human_game_closed');break
-                if not session.active():
+                with timed('foreground_check'):active=session.active()
+                if not active:
                     # Native single-player fullscreen pauses when backgrounded.
                     published=moved=time.monotonic()
                     report_practice('running',clock=last_clock,background=True)
                     time.sleep(.2);continue
-            s=g.snapshot(max_age=0)
+            with timed('snapshot'):s=g.snapshot(max_age=0)
             if s is None:
                 if local_practice:
                     time.sleep(.2);continue
@@ -141,14 +173,16 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
             if local_practice and (not s.in_game or s.epoch!=practice_epoch or s.me!=1):
                 result.update(result='aborted',reason='practice_match_changed');break
             if local_practice:
-                practice_raw=g.world.read()
+                with timed('observer_snapshot'):practice_raw=g.world.read()
                 if practice_raw is None:
                     time.sleep(.2);continue
                 if not practice_raw.in_game or practice_raw.epoch!=practice_epoch or practice_raw.me!=0:
                     result.update(result='aborted',reason='practice_match_changed');break
                 report_practice('running',clock=s.clock,background=False)
+            if trajectory_recorder:
+                with timed('trajectory_observation'):trajectory_recorder.observe()
             if speed_control:speed_control.observe(s)
-            bot.observe_events(g.events())  # Fair death evidence and manual UI event dispatch.
+            with timed('controller_events'):bot.observe_events(g.events())
             if s.speed_pct!=last_speed:
                 last_speed=s.speed_pct
                 result['speed_history'].append({'clock':s.clock,'percent':last_speed})
@@ -165,8 +199,9 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
             wall_now=time.monotonic()
             if s.clock-check_at>=2 or wall_now-check_wall>=.5:
                 check_at,check_wall=s.clock,wall_now
-                terminal=referee.observe(practice_raw if local_practice else g.world.read(),s.me,is_structure)
+                with timed('referee'):terminal=referee.observe(practice_raw if local_practice else g.world.read(),s.me,is_structure)
                 if terminal:
+                    natural_confirmed=True
                     result.update(result=terminal[0],reason=terminal[1])
                     log('terminal_confirmed',clock=s.clock,result=terminal[0],reason=terminal[1])
                     break
@@ -194,27 +229,37 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
             if max_game_seconds is not None and s.clock>=max_game_seconds:
                 result.update(result='timeout',reason='game_time_limit')
                 break
-            if sparring and not session.tick_opponent(practice_epoch):
-                time.sleep(.2);continue
-            bot.tick()
+            if sparring:
+                with timed('opponent_tick'):opponent_ready=session.tick_opponent(practice_epoch)
+                if not opponent_ready:
+                    time.sleep(.2);continue
+            if trajectory_recorder:
+                with timed('trajectory_points'):trajectory_recorder.observe_points()
+            with timed('controller_tick'):bot.tick()
             if console:console.observe(s,bot)
             if s.clock-snapshot_at>=15:
                 snapshot_at=s.clock
-                own=Counter(u.type for u in g.my_units())
-                last_own_counts=dict(own)
-                log('summary',clock=s.clock,resources=g.resources(),units=dict(own),situation=asdict(bot.situation),
-                    heroes=[{'type':h.type,'level':h.level,'hp':h.hp,'mana':h.mana,'inventory':g.inventory(h),'abilities':g.abilities(h)} for h in g.my_heroes()],
-                    own_upgrades=g.tech_many(['Rura','Rucr','Ruwb']),
-                    production=[{'type':b.type,'kind':p.kind,'queue':p.queue,'progress':p.progress} for b,p in g.all_production('me')])
+                with timed('summary'):
+                    own=Counter(u.type for u in g.my_units())
+                    last_own_counts=dict(own)
+                    log('summary',clock=s.clock,resources=g.resources(),units=dict(own),situation=asdict(bot.situation),
+                        heroes=[{'type':h.type,'level':h.level,'hp':h.hp,'mana':h.mana,'inventory':g.inventory(h),'abilities':g.abilities(h)} for h in g.my_heroes()],
+                        own_upgrades=g.tech_many(['Rura','Rucr','Ruwb']),
+                        production=[{'type':b.type,'kind':p.kind,'queue':p.queue,'progress':p.progress} for b,p in g.all_production('me')])
             time.sleep(.2)
         disconnected=local_practice and (not session.alive() or result.get('reason')=='practice_match_changed')
         result['game_seconds']=last_clock if disconnected else g.clock()
         result['units_at_end']=last_own_counts if disconnected else dict(Counter(u.type for u in g.my_units()))
         if disconnected:result['units_at_end_basis']='last_summary_before_process_exit'
         if meter:result.update(meter.summary(result['game_seconds']))
+    except RunInterrupted as exc:
+        result.update(result='aborted' if exc.reason in ('automation_deadline','game_epoch_changed') else 'timeout',
+                      reason=exc.reason,game_seconds=exc.clock)
+        if meter:result.update(meter.summary(exc.clock))
     except DeadlineReached:
         result.update(result='aborted',reason='automation_deadline')
-        if session.game is not None:
+        if guard is not None:result['game_seconds']=guard.clock
+        elif session.game is not None:
             result['game_seconds']=session.game.clock()
     except Exception as exc:
         result.update(result='error',reason=repr(exc))
@@ -222,6 +267,15 @@ def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty
     finally:
         # A failed launch still needs its map identity/configuration for stage 0.
         result.setdefault('launch_settings',dict(getattr(session,'settings',{})))
+        if guard:
+            try:guard.close()
+            except Exception as exc:result['runtime_guard_cleanup_error']=repr(exc)
+        if trajectory_recorder:
+            try:trajectory_recorder.finish(result['result'],result['reason'],natural_confirmed=natural_confirmed)
+            except Exception as exc:result['trajectory_cleanup_error']=repr(exc)
+        if point_visibility:
+            try:point_visibility.close()
+            except Exception as exc:result['visibility_cleanup_error']=repr(exc)
         if meter is not None:meter.close()
         if console is not None:
             try:console.close()
