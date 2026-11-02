@@ -1,5 +1,59 @@
 # 协作约定
 
+## 2026-11-02 · 当前累计代码GitHub交付授权
+
+用户明确要求把代码上传GitHub，授权提交并推送当前累计后台运行、阶段0契约/证据边界、统一环境/实例隔离/恢复及阶段2基础动作、测试与文档，覆盖此前本轮未提交/push限制。交付前fetch确认main与origin/main同为14ac09f；最新2057全量离线通过后运行代码未变，无活动游戏。vendor、artifacts、模型及本机凭据按.gitignore保留本地；四实例未通过、基础动作未实机/未训练模型的状态不变。不扩展为新局或批量训练授权，实际提交与推送结果以Git历史及最终响应为准。下一步仍为有界基础动作实机验证。
+
+## 2026-11-02 · 阶段2首批基础动作已离线接入
+
+用户“开始下一步”后新增learning/actions.py，显式RuleEnvironment(control='primitives')支持wait/move/attack_move/attack/stop/hold，默认rule不变；外部模式不创建P1规则Controller，不混合下令。动作严格schema、绑定现有token、float32坐标与公开边界、己方存活/已知Amov及攻击Aatk、决策帧和当前P1可见P2目标双检，超过8游戏秒拒绝；无任意订单号/地址/队列/强制攻击入口。候选preflight是缓存预检查，不等同完整合法掩码，路径、所有控制状态/攻防类型等仍由后续完善及引擎拒绝处理。
+
+primitive-actions.jsonl记录完整六动作请求、决策/预检查观察id、回执和原生请求id、后续更晚观察；无后续观察记null，effect始终unverified。SDK超时99/缺回执/异常记unknown，不重试写命令，原生trajectory相应99也记null。policy与冻结contract标external_primitives，baseline拒绝混入规则基线；旧规则v1的extra/mode缺口没有自动补齐。末帧/动作日志失败仍继续清理且记录失败。
+
+新增20项检查，最终2057全量通过（artifacts/primitive-full-tests-verified-20261102.log，20.523秒）；19项时2056通过后补策略身份/基线隔离修正再全量复验。初次测试夹具绑定SDK _q/缺_QUEUE的错误日志保留；无实机、新对局、模型训练、提交/push，核查无活动游戏。阶段2仅完成部分基础执行入口，不宣称完整动作空间或训练就绪。下一步有界单局验证六动作/控制权隔离/记录，之后扩展经济技能动作与训练读取器；四实例后置。详见docs/LEARNING_ACTIONS.md。
+
+## 2026-11-02 · 四实例改为效率优化，训练主线继续
+
+用户最新明确不强制同时开启4个，不能让并发效率阻塞训练。单实例连续reset、双实例隔离和受控退出后独立恢复已有实测证据；四实例/100局吞吐改为后续效率与规模稳定性工作，不作为推进阶段2的门槛，也不将阶段1所有能力标成完成。优先单实例补齐学习动作参数、执行前校验、数据读取和样本对齐，再接模型训练；具体战术仍后置。
+
+本轮新增81–84实例与four_instance_probe，但三次实测均失败、没有进入四实例共同运行/重置验收。第一次共享owner/session读取PermissionError，离线复现后加入7次有界读取重试，四进程各100次注册通过（不是400局）；清理改为完整身份限定、启动器Job先退出、保留瞬时未知和最终残留。后两次启动速度100而非400；5秒只读等待实测仍未解决，闭源启动器根因未知。已找到现有按PID设置速度接口，但用户调整优先级后未新增设置调用，不继续开局排查并发。
+
+三次原始报告four-instance-{live,retry-live,final-live}-20261102及各failed-review/index保留，部分启动局缺result/trajectory等明确不可完整复盘；最终无活动进程。2037全量离线通过，见four-instance-speed-full-tests-final-20261102.log，不能代替四实例实机通过。无提交/push。
+
+训练准备只读核对112434：1855观察、2991请求/回执，无缺回执；2959有可观察动作载荷，29目标不可见/3来源不满足条件载荷省略。v1未记录完整extra/mode，eligible不等于可重放或合法动作，后续观察不等于因果效果；不得从原始全图诊断补成actor输入。证据artifacts/training-readiness-audit-20261102.json。下一步离线实现版本化完整动作适配与必要校验，再补训练读取器；不自动开批量局或训练模型。
+
+## 2026-11-02 · 异常退出后独立重开及伙伴连续性通过
+
+用户“继续下一步”授权有界故障恢复实测。run_match先查进程再guard/共享内存，死亡后终局仅缓存、process_exit/null；Session.stop仅向完整身份匹配且存活的自有game发end_game。新增recovery_probe：81仅一次故障/一次reset，82同绑定持续；parent300秒、worker总240墙钟/每局600游戏秒，失败/STOP/清理未知不续。首次recovery-live-20261102直接killgame被DACL权限拒绝，未确认故障、未reset，原始失败及复盘保留。按上游已记录Job机制改为owned_launcher_job_exit：核worker/cohort与唯一launcher/game完整身份及父链，仅结束所属launcher，确认game实际消失后才reset，无提权/全局kill。
+
+recovery-job-live-20261102复验69.518wall通过：81旧PID22208在88.205game记process_exit，清理后重开PID25656，8step/8接受，新局旧token拒绝；82 PID16988始终不变，确认故障后clock11.505→重开ready96.24，88step/新增33接受，之后到107.93再8step/7接受。三局97源码/72依赖同版本、局末一致，最终无游戏/worker残留。四复盘/hero/opening/C1–C8及recovery-job-live-review-20261102.json；首次failed独立引用，不池化。2024全量通过，日志recovery-job-full-tests-final-20261102.log；复验后未改Python、未提交/push，无额外续局。
+
+阶段1仍部分完成。下一步四实例小规模有界稳定性验证，再逐步100局/吞吐。仅受控launcher退出触发game退出的恢复已验，任意崩溃、worker自身崩溃/卡死、最小化和通用watchdog未验，学习actor未批准。日志/CLI与局中源码冻结继续有效；详见LEARNING_ENVIRONMENT。
+
+## 2026-11-02 · 两个独立实例同时运行验证通过
+
+用户“执行下一步”授权双实例隔离实现及有界实测。RuleEnvironment新增显式instance_id81/82与cohort，每实例独立Python worker/锁/owner/session/STOP、唯一run_id和上游instN目录；SDK/IPC显式PID绑定，同worker多实例拒绝。同cohort完整身份核验后才允许伙伴共存，未知游戏仍阻止；默认73与真人入口保留。共享地图及启动到ready有界串行，父进程无游戏时配置视频一次，worker只读校验。全局STOP停止所有，局部STOP只停该实例；source-audit明确owned_instance范围，不能把伙伴存活记清理失败或把局部空列表当全机清理。上游render_hook.log仍共享，不作实例隔离证据。
+
+parallel-live-20261102总46.185墙钟秒通过：81/PID22312与82/PID13388同时ready约1.125秒，重叠实际clock均推进；87/15规则step、36/9接受。跨实例令牌拒绝且当前令牌未消费；81清理后82再推进5.275游戏秒、6step并新增1接受。两局environment_close/rewardnull，96源码/72依赖一致，最终无活动游戏/worker。2016全量测试通过；四复盘/C1–C8及parallel-live-review-20261102.json。实机后未改Python，未提交/push，无额外续局。
+
+阶段1仍部分完成。下一步单实例异常退出后清理/独立重开且伙伴连续，再逐步4实例100局与吞吐；本轮没有实机崩溃/最小化/长期并发验证、没有模型训练。详见docs/LEARNING_ENVIRONMENT.md；仅日志/CLI，不使用Computer Use，运行源码冻结继续有效。
+
+## 2026-11-02 · 阶段1单实例接口与连续reset
+
+用户“继续下一步”授权推进统一环境及有界连续重置。新增learning.environment.RuleEnvironment（reset/observe/step/result/close），复用run_match内部生成器；普通入口连续消费同一循环。step只支持rule_tick，不伪称学习执行器；observe为带时间缓存，实时引擎不暂停，yield空闲时无独立watchdog。逻辑环境/episode/run_id/PID/epoch/P1/观察编号/nonce令牌防旧局与重复请求，单实例锁覆盖整局，reset前重新核验源码/依赖、旧audit和实际进程；STOP/未知清理拒绝，不清STOP、不自动重试，seed非None拒绝。
+
+有界探针115149→115224共66.975墙钟秒，两局60.78/60.105游戏秒截断，各15命令接受、59/60规则step，第二局旧令牌拒绝；PID6924→14864，epoch均1但episode/nonce独立。每局93源码/72依赖一致、清理确认后才下一局，无游戏残留。四复盘/C1–C8及environment-reset-live-review.json，series为artifacts/environment-reset-live-20261102.json。2003全量通过，0失败/错误/跳过（environment-full-tests-final-20261102.log），运行后未改Python；未提交/push，不再开局。
+
+阶段1部分完成，下一步先隔离实例编号、目录、session/控制状态和IPC，再做两个实例验证；四实例/100局、最小化与独立看门狗未验，不直接开批量训练。完整契约见docs/LEARNING_ENVIRONMENT.md，阶段0冻结基线与历史失败继续保留，具体策略后置。
+
+## 2026-11-02 · 阶段0基线收口与后台运行
+
+用户要求继续完成阶段0，随后明确优先解决切后台停摆。机器人sparring现允许后台初始化和持续观察/双方tick/裁判，真人practice失焦行为不变；焦点变化记日志，时钟不推进不重复下令，后台停滞15墙钟秒失败清理。112222全后台300.705游戏秒截断，457帧/278接受，奖励null；112434默认KFAI图649c355b、400%、2500视距在970.33游戏秒/285.45墙钟秒自然胜，False→True→False→True焦点切换连续，后台覆盖685.175游戏秒。1855帧最大间隔3.275秒，2991请求回执/2887接受/104拒绝，终局+1；12点/18实体独立对照一致，6个P0独有视野点被P1拒绝。两局同一源码摘要dc9170b1…，各91冻结文件/72依赖完整、session closed、无进程残留。最小化未验，不宣称后台多实例或长期无人值守通过。
+
+阶段0按LR/KFAI规则基线限定范围收口：新增版本化契约LEARNING_CONTRACT、统一终止分类、启动逐native诊断及自动源码/依赖/清理审计；学习actor保持未批准。原111142联合身份/速度校验错误、111320短局、111513受旧失焦停发影响的自然负局全部留档，不池化；另一电脑002405/002500原始日志未同步，历史超时根因未宣称解决。四复盘/C1–C8及验收索引artifacts/stage0-acceptance-20261102.json。
+
+112434结束后补了必要快照持续缺失10秒退出保护（P1/观战交替缺失不重置），只有离线故障注入验证，不回填自然局。最终1984项通过，0失败/错误/跳过，artifacts/stage0-background-final-tests-20261102.log；初轮旧mock缺pid的2错误已修复并留日志。当前无活动游戏，不续局、不提交/push。下一步阶段1统一环境reset/observe/step/result/close及连续重置，之后独立多实例；具体战术继续后置，只用日志/离线方法，不使用Computer Use。
+
 ## 2026-11-02 · 最新优先级：具体策略后置，核对AlphaStar训练主线
 
 用户实局验证后明确“具体游戏策略之后优化，先看训练计划到哪一步”。本轮002811左下300.005秒完成：五固定坐标精确完工、棒入包/升二本，参考路线及早期召唤未通过；002405/002500初始化超时保留，诊断图成功不证明根因。三次87份冻结一致、复盘/清理完成，430帧/231对轨迹结构通过，未改运行源码/提交/push。后续不要自动继续调建造或微操：当前阶段0技术验收未完成，阶段2采集部分实现，阶段1后台/重置/并行及阶段3–6模型能力未实现。优先接口契约、启动稳定性/终局/清理，再按原计划环境层；策略弱不应无限阻塞环境建设。右上仍未验、遗留战术问题保持登记；当前无新局/批量训练授权。详见HANDOFF与LEARNING_STAGE0顶部。

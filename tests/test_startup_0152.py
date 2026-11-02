@@ -116,3 +116,21 @@ class CleanupTests(unittest.TestCase):
     def test_client_close_failure_still_cleans_processes_and_preserves_error(self):
         kills,record,owned=self.exercise('close_error')
         self.assertEqual(kills,[11,12]);self.assertTrue(record['closed']);self.assertFalse(owned)
+
+    def test_dead_or_reused_game_receives_no_end_game_command(self):
+        from unittest.mock import Mock
+        for state in ('dead','reused','live'):
+            with tempfile.TemporaryDirectory() as tmp:
+                s=session.Session();s.record=Path(tmp)/'session.json'
+                s.owned=[dict(pid=12,created=2,name='War3-81.exe')]
+                live=[state=='live']
+                def end():live[0]=False
+                s.game=N(pid=12,end_game=Mock(side_effect=end),close=Mock())
+                game=s.game
+                def process(pid):
+                    if state=='dead':raise psutil.NoSuchProcess(pid)
+                    return N(create_time=lambda:2 if live[0] else 999,name=lambda:'War3-81.exe')
+                with patch.object(session.psutil,'Process',side_effect=process):s.stop()
+                self.assertEqual(game.end_game.call_count,int(state=='live'))
+                game.close.assert_called_once()
+                self.assertTrue(json.loads(s.record.read_text())['closed'])

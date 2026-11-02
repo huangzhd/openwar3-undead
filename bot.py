@@ -110,7 +110,7 @@ def main():
                               strategy_trace=args.strategy_trace,
                               trajectory=args.trajectory,
                               source_files=len(source_files()),observer_player=0,dayuan_player=1,human_bot_player=2,
-                              background_supported=False,game_launched=False,live_verified=False),ensure_ascii=False,indent=2))
+                              background_supported=True,game_launched=False,live_verified=False),ensure_ascii=False,indent=2))
         return 0
     stop=ROOT/'artifacts/STOP'
     if stop.exists():

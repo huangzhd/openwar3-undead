@@ -14,6 +14,18 @@ STATE=ROOT/'artifacts/attachment.json'
 COMMAND=ROOT/'artifacts/attachment-command.json'
 
 
+def read_atomic_json(path):
+    """Read an atomically replaced record; Windows sharing denial is transient.
+
+    Missing or invalid records remain errors. Never turn unknown state into {}.
+    """
+    for attempt in range(7):
+        try:return json.loads(path.read_text(encoding='utf-8'))
+        except PermissionError:
+            if attempt==6:raise
+            time.sleep(min(.01*2**attempt,.25))
+
+
 def atomic_json(path,value):
     path.parent.mkdir(parents=True,exist_ok=True)
     temp=path.with_name(path.name+'.'+uuid.uuid4().hex+'.tmp')

@@ -8,11 +8,10 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+from learning.outcome import NATURAL as TERMINALS, classify_outcome
 
 PROFILES = ('human-fast-expand', 'human-rifle')
 NATIVE_PROFILES = ('kfai-human',)
-TERMINALS = {'win': 'all_enemy_buildings_destroyed',
-             'loss': 'all_own_buildings_destroyed'}
 
 
 def read_json(path):
@@ -34,18 +33,19 @@ def inspect_run(folder):
         elif hashlib.sha256(path.read_bytes()).hexdigest() != expected:
             broken.append(name)
     outcome, reason = result.get('result'), result.get('reason')
-    natural = outcome in TERMINALS and reason == TERMINALS[outcome] and any(
+    confirmed = any(
         row.get('event') == 'terminal_confirmed' and row.get('result') == outcome
         and row.get('reason') == reason for row in rows)
-    classification = ('natural_terminal' if natural else 'runtime_failure' if outcome == 'error'
-                      else 'process_exit' if reason == 'human_game_closed'
-                      else 'user_abort' if reason in ('user_stop', 'manual_restart')
-                      else 'incomplete')
+    termination = classify_outcome(outcome, reason, natural_confirmed=confirmed)
+    natural = termination['terminated']
+    classification = termination['classification']
     settings = result.get('launch_settings', {})
     profile = result.get('opponent', {}).get('controller')
     source_id = hashlib.sha256(json.dumps(manifest, sort_keys=True,
         separators=(',', ':')).encode()).hexdigest()
     issues = []
+    if result.get('policy','rule') != 'rule' or result.get('control','rule') != 'rule':
+        issues.append('not_rule_policy')
     history = result.get('speed_history', [])
     speeds = [r.get('percent') for r in history]
     if not speeds or any(type(v) is not int or v <= 0 for v in speeds):
@@ -64,7 +64,9 @@ def inspect_run(folder):
         issues.append('not_supported_sparring_run')
     if broken or not manifest:issues.append('source_snapshot_invalid')
     if any(result.get(k) for k in ('cleanup_error', 'ui_cleanup_error',
-                                   'trajectory_cleanup_error', 'visibility_cleanup_error', 'runtime_guard_cleanup_error')):
+                                   'trajectory_cleanup_error', 'visibility_cleanup_error', 'runtime_guard_cleanup_error',
+                                   'primitive_cleanup_error','environment_frame_cleanup_error',
+                                   'meter_cleanup_error', 'evidence_error')):
         issues.append('cleanup_failed')
     if not natural:issues.append('no_natural_terminal')
     ai_isolation = settings.get('native_ai_paused') is True
@@ -80,8 +82,8 @@ def inspect_run(folder):
             and settings.get('opponent_player') == 2 and ai_isolation):
         issues.append('setup_verification_missing')
     if not settings.get('map_sha256'):issues.append('map_fingerprint_missing')
-    return dict(run_id=result.get('id', folder.name), opponent=profile,
-                classification=classification, reason=reason, outcome=outcome,
+    return dict(run_id=result.get('id', folder.name), opponent=profile, policy=result.get('policy','rule'),
+                classification=classification, reason=reason, outcome=outcome, termination=termination,
                 source_id=source_id, broken_sources=broken,
                 map_sha256=settings.get('map_sha256'), issues=issues,
                 speed_condition=speed_condition,

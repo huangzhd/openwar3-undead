@@ -173,7 +173,7 @@ class DashboardModel:
                 self.pending = None
         events = self.tail.read(run / 'events.jsonl')
         state.update(live, token=token, run=run.name, profile=settings.get('opponent_profile'),
-                     status='失焦暂停 · 切回游戏继续' if live['background'] else '对局进行中',
+                     status=('后台运行中' if settings.get('background_supported') else '失焦暂停 · 切回游戏继续') if live['background'] else '对局进行中',
                      dayuan=events.get('summary', {}), opponent=events.get('human_summary', {}),
                      decision=events.get('decision', {}).get('actual', '—'),
                      pending=self.pending, message=self.message)

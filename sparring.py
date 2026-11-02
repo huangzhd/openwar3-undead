@@ -18,13 +18,27 @@ def source_files():
 
 
 class SparringSession(HumanPracticeSession):
-    def __init__(self,profile,map_alias='LR',speed=400):
+    def __init__(self,profile,map_alias='LR',speed=400,instance_context=None):
         if profile not in OPPONENTS:raise ValueError('Unknown opponent profile')
         if map_alias!='LR':raise ValueError('Observer sparring currently supports LR')
         super().__init__(1,map_alias)
         self.speed=speed_percent(speed)
         self.profile=profile;self.opponent_game=None;self.opponent=None;self.missing_since=None
         self.strategy_trace_path=None;self.strategy_trace=None
+        self.background_allowed=True
+        self.instance_context=instance_context
+        if instance_context:
+            self.instance=instance_context.instance_id
+            self.record=instance_context.record
+
+    def start(self,until=None):
+        if self.instance_context:
+            with self.instance_context.launching(until):
+                game=super().start(until=until)
+                self.settings.update(instance_id=self.instance,cohort=self.instance_context.cohort,
+                                     session_record=str(self.record))
+                return game
+        return super().start(until=until)
 
     def practice_map(self):
         builder=prepare_map
@@ -43,7 +57,7 @@ class SparringSession(HumanPracticeSession):
         self.remember(farm.start_launcher(args,farm.out_path(self.instance)))
 
     def prepare_players(self,pid):
-        with Game(pid=pid,fair=False) as setup:
+        with Game(pid=pid,fair=False) as setup, self.startup_client(setup):
             raw=setup.world.read()
             if raw is None or not raw.in_game or raw.me!=0:raise RuntimeError('Expected local observer P0')
             j=setup.jass
@@ -68,7 +82,7 @@ class SparringSession(HumanPracticeSession):
                                  opponent_profile=self.profile,verified_players=rows,native_ai_paused=not native,
                                  native_ai_paused_players=[1] if native else [1,2],camera_distance=2500,
                                  opponent_fairness='native_KFAI_unverified' if native else 'fair_python_controller',
-                                 fair=True,background_supported=False,auto_restart=False)
+                                 fair=True,background_supported=True,auto_restart=False)
 
     def start_opponent(self,log):
         self.opponent_game=Game(pid=self.game.pid,player=2,fair=True)

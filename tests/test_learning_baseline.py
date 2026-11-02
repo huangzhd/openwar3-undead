@@ -41,6 +41,36 @@ class BaselineTests(unittest.TestCase):
         self.assertIn('bot.py', checked['broken_sources'])
         self.assertFalse(checked['terminal_candidate'])
 
+    def test_external_policy_win_cannot_enter_rule_baseline_pool(self):
+        folder=self.run_folder('external')
+        path=folder/'result.json';result=json.loads(path.read_text())
+        result['policy']='external_primitives';path.write_text(json.dumps(result))
+        report=inventory([folder])
+        self.assertEqual(report['baselines'],[])
+        row=report['runs'][0]
+        self.assertEqual(row['classification'],'natural_terminal')
+        self.assertIn('not_rule_policy',row['issues'])
+        self.assertFalse(row['terminal_candidate'])
+
+    def test_raw_legacy_result_classification_does_not_trust_claimed_reward(self):
+        for name, outcome, reason, category in (
+                ('surrender', 'loss', 'manual_surrender', 'user_abort'),
+                ('stage', 'timeout', 'stage_time_limit', 'runtime_failure'),
+                ('limit', 'timeout', 'game_time_limit', 'time_limit'),
+                ('epoch', 'aborted', 'game_epoch_changed', 'epoch_changed')):
+            folder = self.run_folder(name)
+            path = folder/'result.json'
+            result = json.loads(path.read_text())
+            result.update(result=outcome, reason=reason,
+                          termination=dict(terminated=True, reward=1))
+            path.write_text(json.dumps(result))
+            before = path.read_bytes()
+            row = inspect_run(folder)
+            self.assertEqual(row['classification'], category)
+            self.assertIsNone(row['termination']['reward'])
+            self.assertFalse(row['terminal_candidate'])
+            self.assertEqual(path.read_bytes(), before)
+
     def test_receipt_and_setup_required_and_never_auto_approve(self):
         folder = self.run_folder('complete')
         self.assertTrue(inspect_run(folder)['terminal_candidate'])
@@ -62,7 +92,8 @@ class BaselineTests(unittest.TestCase):
         self.assertTrue(inventory([rifle, same])['baselines'][0]['both_opponents_recorded'])
 
     def test_trajectory_or_visibility_cleanup_failure_cannot_qualify(self):
-        for field in ('trajectory_cleanup_error', 'visibility_cleanup_error', 'runtime_guard_cleanup_error'):
+        for field in ('trajectory_cleanup_error', 'visibility_cleanup_error', 'runtime_guard_cleanup_error',
+                      'meter_cleanup_error', 'evidence_error'):
             folder = self.run_folder(field)
             result = json.loads((folder/'result.json').read_text())
             result[field] = 'failed'

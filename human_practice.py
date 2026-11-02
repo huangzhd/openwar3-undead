@@ -4,6 +4,7 @@ import importlib.util
 import json
 import subprocess
 import time
+from contextlib import nullcontext
 from pathlib import Path
 
 from bootstrap import ROOT, UPSTREAM
@@ -21,7 +22,7 @@ HELPERS = {
 
 def source_files():
     """Freeze the reviewed fork helpers too; never execute a changed helper."""
-    files = [Path(__file__),ROOT/'practice_video.py',ROOT/'practice_control.py',ROOT/'machine_start.py']
+    files = [Path(__file__),ROOT/'startup_audit.py',ROOT/'practice_video.py',ROOT/'practice_control.py',ROOT/'machine_start.py',ROOT/'attach_match.py']
     for name, expected in HELPERS.items():
         path = FORK/'sdk/python'/f'{name}.py'
         if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
@@ -46,6 +47,13 @@ class HumanPracticeSession(Session):
         super().__init__(100, human_race, 2, map_alias)
         self.instance = 73
         self.foreground = None
+        self.startup_audit = None
+        self.startup_log = lambda *args, **kwargs: None
+        self.background_allowed = False
+        self.instance_context = None
+
+    def startup_client(self, client):
+        return self.startup_audit.trace_client(client) if self.startup_audit else nullcontext()
 
     def launch(self, config):
         launcher = helper('w3fullscreen').fullscreen_launcher(farm.w3paths.LAUNCH_EXE)
@@ -64,7 +72,7 @@ class HumanPracticeSession(Session):
 
     def prepare_players(self, pid):
         """Setup-only full view; no human economy/hidden positions enter dayuan."""
-        with Game(pid=pid, fair=False) as setup:
+        with Game(pid=pid, fair=False) as setup, self.startup_client(setup):
             raw = setup.world.read()
             if raw is None or not raw.in_game or raw.me != 0:
                 raise RuntimeError('Expected local human P0')
@@ -89,32 +97,35 @@ class HumanPracticeSession(Session):
         from machine_start import active_processes
         from run_window import ensure_time
         ensure_time(until)
-        active = active_processes()
+        active = self.instance_context.foreign_processes() if self.instance_context else active_processes()
         if active:
             raise RuntimeError('An existing game/session blocks practice launch: '+repr(active))
         self.map_path, self.map_catalog = self.practice_map()
-        args = farm.parse_args(['--first','73','--count','73','--race',str(self.enemy_race),
+        args = farm.parse_args(['--first',str(self.instance),'--count',str(self.instance),'--race',str(self.enemy_race),
                                 '--enemy-race','3','--difficulty','2','--speed',str(self.speed),'--no-director',
                                 '--cam-distance','1650'])
         args.map = str(self.map_path)
         config = farm.Farm(args)
-        self.settings = farm.next_game(farm.w3paths.inst_dir(73), config.base(), config.maps_dir())
+        self.settings = farm.next_game(farm.w3paths.inst_dir(self.instance), config.base(), config.maps_dir())
         expected = (self.enemy_race, 3, 2, self.speed)
         if tuple(int(self.settings[k]) for k in ('race','enemyRace','difficulty','speed')) != expected:
             raise RuntimeError('next_game.json overrides practice player/race/speed')
         if Path(self.settings['map']).resolve() != self.map_path.resolve():
             raise RuntimeError('next_game.json overrides practice map')
         self.settings.update(map_alias=self.map_alias, map_sha256=self.map_catalog['map_sha256'])
-        from practice_video import configure_video
-        self.settings['display']=configure_video()
+        from practice_video import configure_video,verify_video
+        self.settings['display']=verify_video() if self.instance_context else configure_video()
         self.launch(config)
         deadline = time.monotonic()+120
+        from startup_audit import StartupAudit
+        self.startup_audit = StartupAudit(self, deadline, until)
         last_error = ''
         while time.monotonic() < deadline:
             ensure_time(until)
+            self.startup_audit.check_deadline()
             if not self.matches(self.owned[0]):
-                raise RuntimeError('Practice launcher exited: '+farm.read_text(farm.out_path(73))[-1600:])
-            pid = farm.war3_pid(farm.read_text(farm.out_path(73)))
+                raise RuntimeError('Practice launcher exited: '+farm.read_text(farm.out_path(self.instance))[-1600:])
+            pid = farm.war3_pid(farm.read_text(farm.out_path(self.instance)))
             if pid and not any(r['pid'] == pid for r in self.owned):
                 self.remember(pid)
             if pid and self.game is None:
@@ -126,17 +137,29 @@ class HumanPracticeSession(Session):
                 snap = self.game.snapshot(max_age=0)
                 if snap and snap.in_game and snap.clock > 1:
                     own_types = {u.type for u in self.game.my_units()}
-                    if snap.me != 1 or snap.speed_pct != self.speed or not {'unpl','uaco'} <= own_types:
-                        raise RuntimeError('Wrong practice identity/race/speed: '+repr(own_types))
+                    self.startup_log('startup_identity_sample', clock=snap.clock, player=snap.me,
+                                     speed=snap.speed_pct, expected_speed=self.speed, own_types=sorted(own_types))
+                    if snap.me != 1 or not {'unpl','uaco'} <= own_types:
+                        raise RuntimeError('Wrong practice identity/race/speed: '+repr(dict(
+                            player=snap.me,speed=snap.speed_pct,expected_speed=self.speed,own_types=sorted(own_types))))
+                    if not self.startup_audit.speed_ready(snap):
+                        time.sleep(.2)
+                        continue
                     if not snap.resources_known:
                         time.sleep(.2)
                         continue
                     if self.game.map() is None:
                         time.sleep(.2)
                         continue
-                    self.verify_map(self.game)
-                    self.prepare_players(pid)
-                    self.game.bind_player_visibility()
+                    with self.startup_audit.stage('simulation_readiness'):
+                        self.startup_audit.wait_ready()
+                    with self.startup_audit.stage('map_verification'):
+                        self.verify_map(self.game)
+                    with self.startup_audit.stage('player_verification'):
+                        self.prepare_players(pid)
+                    with self.startup_audit.stage('point_visibility_binding'):
+                        self.game.bind_player_visibility()
+                    self.settings['startup_stage'] = 'ready'
                     self.settings['point_visibility_player'] = 1
                     self.settings['own_start_sample'] = dict(clock=snap.clock,
                         own_halls=[dict(type=h.type,x=h.x,y=h.y) for h in self.game.my_units() if h.type=='unpl'],

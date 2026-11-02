@@ -118,9 +118,10 @@ class Session:
         finally:audit.close()
 
     def remember(self, pid):
+        from attach_match import atomic_json
         p = psutil.Process(pid)
         self.owned.append({'pid':pid,'created':p.create_time(),'name':p.name()})
-        self.record.write_text(json.dumps({'processes':self.owned},indent=2),encoding='utf-8')
+        atomic_json(self.record, {'processes':self.owned})
 
     @staticmethod
     def matches(row):
@@ -144,7 +145,10 @@ class Session:
         close_error=None
         if self.game:
             try:
-                self.game.end_game()
+                # Never send teardown commands to a vanished or recycled PID.
+                if any(row['pid']==getattr(self.game,'pid',None) and self.matches(row)
+                       for row in self.owned):
+                    self.game.end_game()
             except Exception as exc:
                 print('Game end request failed:',repr(exc),flush=True)
             finally:
@@ -166,7 +170,8 @@ class Session:
             remaining=remaining_owned()
             if not remaining or time.monotonic()>=deadline:break
             time.sleep(.2)
-        self.record.write_text(json.dumps({'processes':remaining,'closed':not remaining},indent=2),encoding='utf-8')
+        from attach_match import atomic_json
+        atomic_json(self.record, {'processes':remaining,'closed':not remaining})
         if remaining:raise RuntimeError('Owned process did not exit: '+repr(errors))
         self.owned = []
         if close_error is not None:raise RuntimeError('Game client cleanup failed') from close_error

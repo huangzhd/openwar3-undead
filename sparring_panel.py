@@ -82,7 +82,7 @@ class SparringPanel:
             self.table.heading(name, text=label)
             self.table.column(name, width=width, minwidth=100, anchor='w')
         self.table.pack(fill='both', expand=True)
-        self.label(body, '操作面板时游戏会失焦暂停；调整后切回游戏，等待确认生效。\n关闭面板不会停止对局。', 9, color=MUTED).pack(anchor='w', pady=(12, 0))
+        self.label(body, '新版陪练切到后台仍继续运行；调整后等待读回确认。\n关闭面板不会停止对局。', 9, color=MUTED).pack(anchor='w', pady=(12, 0))
         self.worker = threading.Thread(target=self.work, daemon=True, name='spectator-panel-io')
         self.worker.start()
         self.history = None

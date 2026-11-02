@@ -210,6 +210,14 @@ class RecorderTests(unittest.TestCase):
         self.assertFalse(receipts[0]['accepted'])
         self.assertIsNone(receipts[1]['accepted'])
 
+    def test_native_timeout_is_unknown_not_a_confirmed_rejection(self):
+        self.game.lane.commands.side_effect=lambda calls:[w3fast.Receipt.timeout(calls[0].op)]
+        recorder=TrajectoryRecorder(self.game,self.path)
+        self.game.lane.commands([w3fast.command('immediate',self.raw.units[0],code=851972)])
+        recorder.finish('timeout','game_time_limit')
+        receipt=next(r for r in self.rows() if r['event']=='action_receipt')
+        self.assertIsNone(receipt['accepted']);self.assertEqual(receipt['status'],99)
+
     def test_terminal_requires_natural_referee_confirmation(self):
         for index,(outcome,reason,confirmed,reward) in enumerate([
                 ('win','all_enemy_buildings_destroyed',True,1),
@@ -223,6 +231,23 @@ class RecorderTests(unittest.TestCase):
             terminal = json.loads(path.read_text().splitlines()[-1])
             self.assertEqual(terminal['reward'],reward)
             self.assertEqual(terminal['terminated'],reward is not None)
+
+    def test_terminal_classifies_health_failure_separately_from_cutoff_and_exit(self):
+        for index, (outcome, reason, category) in enumerate((
+                ('timeout', 'stage_time_limit', 'runtime_failure'),
+                ('timeout', 'game_time_limit', 'time_limit'),
+                ('aborted', 'human_game_closed', 'process_exit'),
+                ('aborted', 'practice_match_changed', 'epoch_changed'),
+                ('loss', 'manual_surrender', 'user_abort'),
+                ('error', 'exception with private diagnostic', 'runtime_failure'))):
+            path = self.path.with_name('category-'+str(index)+'.jsonl')
+            recorder = TrajectoryRecorder(self.game, path)
+            recorder.finish(outcome, reason, natural_confirmed=True)
+            terminal = json.loads(path.read_text().splitlines()[-1])
+            self.assertEqual(terminal['classification'], category)
+            self.assertTrue(terminal['truncated'])
+            self.assertIsNone(terminal['reward'])
+            self.assertNotIn('private diagnostic', json.dumps(terminal))
 
     def test_cross_epoch_stops_before_submitting_action_and_never_overwrites_file(self):
         original = self.game.lane.commands
@@ -252,12 +277,51 @@ class EntryTests(unittest.TestCase):
     def test_stage_cutoff_runs_normal_cleanup_and_truncates_dataset(self):
         self.run_guarded_fixture(stage_cutoff=True)
 
-    def run_guarded_fixture(self,stage_cutoff=False):
+    def test_environment_ready_precedes_orders_and_each_step_returns_safe_receipts(self):
+        self.run_guarded_fixture(step_mode=True)
+
+    def test_environment_close_before_first_tick_cleans_up_without_orders(self):
+        self.run_guarded_fixture(step_mode=True,close_ready=True)
+
+    def test_environment_resume_rechecks_epoch_before_orders(self):
+        self.run_guarded_fixture(step_mode=True,change_epoch=True)
+
+    def test_environment_idle_deadline_rechecked_before_orders(self):
+        self.run_guarded_fixture(step_mode=True,expire=True)
+
+    def test_environment_process_exit_precedes_guard_reads_and_keeps_cached_terminal(self):
+        self.run_guarded_fixture(step_mode=True,process_exit=True)
+
+    def test_primitive_runner_dispatches_external_action_without_rule_controller(self):
+        self.run_guarded_fixture(step_mode=True,primitives=True)
+
+    def test_primitive_close_before_first_action_never_sends_rule_or_native_command(self):
+        self.run_guarded_fixture(step_mode=True,primitives=True,close_ready=True)
+
+    def test_primitive_epoch_change_never_reaches_executor(self):
+        self.run_guarded_fixture(step_mode=True,primitives=True,change_epoch=True)
+
+    def test_primitive_process_exit_never_reads_stale_mapping_or_executes(self):
+        self.run_guarded_fixture(step_mode=True,primitives=True,process_exit=True)
+
+    def test_primitive_deadline_precedes_commands(self):
+        self.run_guarded_fixture(step_mode=True,primitives=True,expire=True)
+
+    def test_primitive_final_log_failure_cannot_skip_game_cleanup(self):
+        self.run_guarded_fixture(step_mode=True,primitives=True,close_ready=True,log_failure=True)
+
+    def run_guarded_fixture(self,stage_cutoff=False,step_mode=False,close_ready=False,change_epoch=False,expire=False,process_exit=False,primitives=False,log_failure=False):
         import run_match
         import run_guard
         import sparring
         import undead.game_view
         game, raw = fixture()
+        live=[True]
+        original_read=game.world.read
+        def checked_read():
+            if not live[0]:raise AssertionError('Read stale mapping after process exit')
+            return original_read()
+        game.world.read=checked_read
         game.snapshot = lambda **kw:replace(raw, me=1)
         game.clock = lambda:raw.clock
         game.events = lambda:[]
@@ -266,9 +330,19 @@ class EntryTests(unittest.TestCase):
         game.my_heroes = lambda:[]
         game.tech_many = lambda codes:{}
         game.all_production = lambda owner:[]
+        game.map = lambda:N(bounds=(-1000,1000,-1000,1000))
+        if primitives:
+            raw.units[0].has_detail=True
+            raw.units[0].items=[None]*6
+            raw.units[0].abilities=[N(code='Amov',level=1,cooldown=0)]
+            def move(unit,x,y):
+                receipt=game.lane.commands([w3fast.command('point',unit,851986,x=x,y=y)])[0]
+                raw.clock+=1;raw.publish_count+=1
+                return receipt
+            game.move=move
         client = N(pid=101, world=game.world, lane=N(), close=Mock(),
                    jass=N(Player=lambda p:100+p, IsVisibleToPlayer=lambda *args:False))
-        session = N(game=game, settings={}, start=lambda **kw:game, alive=lambda:True, active=lambda:True,
+        session = N(game=game, settings={}, start=lambda **kw:game, alive=lambda:live[0], active=lambda:True,
                     start_opponent=Mock(), tick_opponent=lambda epoch:True, stop=Mock(),
                     map_catalog=dict(camps=[],critters=[],neutral_buildings=[],name='fixture',map_sha256='a',
                                      starts=[dict(x=100,y=200,slot=2)]))
@@ -287,18 +361,79 @@ class EntryTests(unittest.TestCase):
             for name in ('session.py','run_match.py','run_guard.py','game_preferences.py','learning/trajectory.py'):
                 path = root/name;path.parent.mkdir(exist_ok=True);path.write_text('fixture')
             with patch.object(run_match,'ROOT',root), \
-                 patch.object(run_match,'Controller',return_value=controller), \
+                 patch.object(run_match,'Controller',return_value=controller) as factory, \
                  patch.object(run_match,'Referee',return_value=N(observe=lambda *args:None)), \
                  patch.object(sparring,'SparringSession',return_value=session), \
                  patch.object(sparring,'source_files',return_value=[]), \
                  patch.object(undead.game_view,'Game',return_value=client), \
                  patch.object(run_guard.time,'perf_counter',lambda:timing[0]), \
                  patch.object(run_match.time,'sleep'),contextlib.redirect_stdout(io.StringIO()):
-                result = run_match.run_match(sparring='kfai-human',trajectory=True,max_game_seconds=11)
-            self.assertEqual(result['reason'],'stage_time_limit' if stage_cutoff else 'game_time_limit')
+                if step_mode:
+                    runner=run_match._match_steps(sparring='kfai-human',trajectory=True,max_game_seconds=13,
+                                                 until=run_match.time.time()+60 if expire else None,step_mode=True,
+                                                 control='primitives' if primitives else 'rule')
+                    from learning.actions import SCHEMA
+                    command=dict(schema=SCHEMA,op='move',unit=[11,7],x=20,y=30) if primitives else 'rule_tick'
+                    ready=next(runner)
+                    original.assert_not_called()
+                    self.assertEqual(ready['observation']['resources']['gold'],101)
+                    self.assertEqual(ready['receipts'],[])
+                    self.assertNotIn('players',ready['observation'])
+                    if close_ready:
+                        failing=patch('learning.actions.PrimitiveExecutor.observe',side_effect=OSError('disk failure')) if log_failure else contextlib.nullcontext()
+                        with failing, self.assertRaises(StopIteration) as stopped:
+                            runner.throw(run_guard.RunInterrupted('environment_close',raw.clock))
+                    elif change_epoch:
+                        raw.epoch=2
+                        with self.assertRaises(StopIteration) as stopped:runner.send(command)
+                    elif expire:
+                        future=run_match.time.time()+120
+                        with patch.object(run_match.time,'time',return_value=future):
+                            with self.assertRaises(StopIteration) as stopped:runner.send(command)
+                    elif process_exit:
+                        live[0]=False
+                        with self.assertRaises(StopIteration) as stopped:runner.send(command)
+                    else:
+                        step=runner.send(command)
+                        self.assertEqual(step['event'],'step')
+                        self.assertGreater(step['observation']['clock'],ready['observation']['clock'])
+                        self.assertTrue(step['receipts'][0]['accepted'])
+                        self.assertNotIn('args',step['receipts'][0])
+                        if primitives:
+                            self.assertTrue(step['action_receipts'][0]['accepted'])
+                            self.assertEqual(step['action_receipts'][0]['native_request_ids'],[1])
+                        runner.send(command)
+                        with self.assertRaises(StopIteration) as stopped:runner.send(command)
+                    result=stopped.exception.value
+                    if close_ready or change_epoch or expire or process_exit:original.assert_not_called()
+                    if log_failure:
+                        self.assertIn('environment_frame_cleanup_error',result)
+                        self.assertIn('primitive_cleanup_error',result)
+                    else:self.assertIn('environment_final_frame',result)
+                    if process_exit:
+                        self.assertEqual(result['termination']['classification'],'process_exit')
+                        self.assertEqual(result['game_seconds'],ready['observation']['clock'])
+                        self.assertEqual(result['environment_final_frame']['observation'],ready['observation'])
+                else:
+                    result = run_match.run_match(sparring='kfai-human',trajectory=True,max_game_seconds=11)
+            expected=('human_game_closed' if process_exit else 'environment_close' if close_ready else 'game_epoch_changed' if change_epoch else
+                      'automation_deadline' if expire else 'stage_time_limit' if stage_cutoff else 'game_time_limit')
+            self.assertEqual(result['reason'],expected)
             folder = root/'artifacts'/result['id']
             rows = [json.loads(s) for s in (folder/'trajectory.jsonl').read_text().splitlines()]
-            self.assertTrue(any(r['event']=='action_request' for r in rows))
+            if primitives:
+                factory.assert_not_called();controller.tick.assert_not_called();controller.observe_events.assert_not_called()
+                self.assertEqual(result['policy'],'external_primitives')
+                self.assertEqual(rows[0]['policy'],'external_primitives')
+                contract=json.loads((folder/'interface-contract.json').read_text())
+                self.assertEqual(contract['action_version'],SCHEMA)
+                self.assertEqual(contract['policy'],'external_primitives')
+                external=[json.loads(s) for s in (folder/'primitive-actions.jsonl').read_text().splitlines()]
+                if not(close_ready or change_epoch or expire or process_exit):
+                    self.assertEqual(external[1]['action'],command)
+                    self.assertTrue(any(r['event']=='next_observation' and r['observation_id'] is not None for r in external))
+                else:self.assertEqual(len(external),1)
+            self.assertEqual(any(r['event']=='action_request' for r in rows),not(close_ready or change_epoch or expire or process_exit))
             self.assertTrue(rows[-1]['truncated'])
             self.assertIn('learning/trajectory.py',json.loads((folder/'source-manifest.json').read_text()))
             self.assertIn('run_guard.py',json.loads((folder/'source-manifest.json').read_text()))

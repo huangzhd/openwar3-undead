@@ -97,7 +97,7 @@ class SparringSessionTests(unittest.TestCase):
         with patch.object(sparring,'Game',side_effect=connect):session.prepare_players(123)
         self.assertEqual(paused,[(1,True),(2,True)])
         self.assertEqual(session.settings['observer_player'],0)
-        self.assertFalse(session.settings['background_supported'])
+        self.assertTrue(session.settings['background_supported'])
         for options in (dict(observer=False),dict(owned_observer=True),dict(shared=True)):
             connect,paused=self.setup_connection(**options)
             with patch.object(sparring,'Game',side_effect=connect),self.assertRaises(RuntimeError):session.prepare_players(123)

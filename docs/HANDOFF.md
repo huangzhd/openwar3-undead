@@ -1,5 +1,65 @@
 # 项目交接 · dayuan V1.99 / 0.1.199-dev · 2026-10-29
 
+## 2026-11-02 · 首批模型基础动作接口完成离线实现
+
+显式`RuleEnvironment(control='primitives')`支持wait/move/attack_move/attack/stop/hold，默认rule不变。外部模式不创建P1规则Controller，沿用原生命周期与token；严格schema、己方存活及能力详情、双时点P1可见目标、地图边界和8游戏秒时效检查，SDK公开接口执行单条替换订单，无原始地址/任意order/队列入口。候选preflight仅缓存预检查，不是完整合法掩码；建造/生产/施法/购物等未支持。
+
+新增primitive-actions.jsonl关联请求、决策/执行前观察、原生请求id、回执与更晚观察，accepted不等于效果，缺后续状态null。status99超时在基础动作和原生轨迹均为unknown；policy/contract明确external_primitives，stage0 baseline排除外部控制局。原规则v1动作载荷缺口保留，不伪称现成训练数据集。末帧/日志失败不跳过清理。
+
+20项新增，最终2057全量离线通过，0失败/错误/跳过，`artifacts/primitive-full-tests-verified-20261102.log`；早期SDK夹具错误保留，最后验证后未改运行Python。无新局/模型训练/提交/push，实际游戏进程为空。下一步有界单局实机验证基础动作与隔离，之后补经济技能动作及读取器。详见[LEARNING_ACTIONS](LEARNING_ACTIONS.md)，阶段2部分实现，阶段1长期看门狗等仍待完成，四实例不阻塞主线。
+
+## 2026-11-02 · 用户调整：并发后置，继续训练主线
+
+不强制4实例；当前单实例连续reset/双实例隔离与受控恢复足以继续阶段2开发。下一步优先版本化完整动作参数、执行前校验、训练读取器及样本对齐，之后单实例模型闭环；四实例/100局吞吐不再是训练前置。长期无人值守、最小化和通用watchdog仍未验，不能把后置等同已完成。
+
+本轮四实例三次失败，详情见[LEARNING_ENVIRONMENT](LEARNING_ENVIRONMENT.md)顶部。共享JSON读取冲突经7次有界重试修复，400次离线注册压力通过；实例清理按完整身份/启动器Job改进。第三次84仍连续25样本速度100，5秒只读等待未解决，未接入按PID强制设置速度，不再开局排查。各原始报告、failed复盘与不完整证据均保留；2037全量离线通过，最终无游戏残留，未提交/push。
+
+只读审计112434的训练准备：1855观察、2991请求/回执配对无缺失；2959载荷可观察，32载荷被省略。已有载荷仍缺op-specific extra/mode，不能当完整可执行标签；2991回执都有后续观察不表示效果已归因。当前环境仅rule_tick。报告`artifacts/training-readiness-audit-20261102.json`标明training_ready=false；未改原轨迹、未混入全图诊断、未开始模型训练。
+
+## 2026-11-02 · 一局异常退出后重开，伙伴连续运行已验证
+
+用户继续下一步后，修复死亡进程检查晚于guard读取：现在run_match先查存活，退出终局只使用缓存；Session.stop不向死亡/复用PID发送end_game。新增recovery_probe独立有界测试，一次故障+一次显式reset，未知清理/STOP/其他失败不续，父300秒、worker240秒/每局600game。故障注入核cohort/worker以及唯一launcher/game完整身份和父链，仅结束本局launcher，待Windows Job释放该局游戏并确认进程消失后继续；普通入口未添加无限自动重启。
+
+首次recovery-live-20261102直接终止game收到AccessDenied，两局144502仅正常environment_close、没有异常退出/reset证据；原始失败和recovery-failed-live-review完整保留。上游farm.py305–306已记录game DACL限制，334–337及inst81.out确认本局Job机制，改为owned_launcher_job_exit后复验，非同原因机械重试、未提权。
+
+recovery-job-live-20261102共69.518wall通过。81旧局20261102-144916-i81-1793602156992242300/PID22208，89step/33接受，88.205game记process_exit/null，清理确认后重开；新局20261102-144958-i81-1793602198691501700/PID25656，5.63→13.005game，8step/8接受，旧token拒绝且新token未消费。82局20261102-144917-i82-1793602157007595100/PID16988始终同绑定：fault_observed11.505→restart_seen96.24增加88step/33接受，随后到107.93再8step/7接受，总101step/46接受。新81与82按environment_close结束，无自然胜负奖励。
+
+三局97源码/72依赖同版本、局末一致，实例清理及全局最终无残留，四复盘/hero/opening/C1–C8及recovery-job-live-review/index已保存；首次失败独立引用。最终2024全量通过（recovery-job-full-tests-final-20261102.log），0失败/错误/跳过；早期定向测试因导入test_debug_console路径报1错误，改discover通过，日志保留。运行后未改Python、未提交/push、无额外续局。
+
+下一步四实例小规模有界稳定性验证，再逐步100局/吞吐。此次仅受控launcher退出引起game消失的恢复；worker自身崩溃/底层卡死、最小化、长期并发未验，不声称通用watchdog完成。具体接口见LEARNING_ENVIRONMENT。
+
+## 2026-11-02 · 两实例隔离及关闭一局后的连续性通过
+
+用户“执行下一步”后完成81/82显式环境、独立Python worker/实例锁/owner-session-STOP/唯一run_id与PID通信绑定；同cohort身份校验允许伙伴运行，未知游戏阻止。默认73号单实例接口不变。启动到ready串行以保护共享地图和启动配置，视频只由父进程开局前配置，worker只读验证。所有清理以拥有的PID/创建时间/进程名为依据，绝不全局按名称杀进程；source-audit增加owned_instance范围，父探针单独检查全机最终状态。
+
+双实例实测artifacts/parallel-live-20261102.json用时46.185墙钟秒通过：run_id分别20261102-140921-i81-1793599761342618400（PID22312、87step/36接受、85.43game）和20261102-140921-i82-1793599761350616900（PID13388、15step/9接受、20.58game）。双方ready重叠约1.125秒，两者clock实际推进；跨实例token被拒绝且当前token保持。81退出清理后，82从15.305到20.58game，6step且新增1接受。两局均environment_close，奖励null，无自然胜负。
+
+每局96源码/72依赖同版本且局末一致，session closed；父探针无残留worker/游戏，另读active_processes=[]。四复盘/C1–C8和独立核对parallel-live-review-20261102.json；最终2016项测试通过，0失败/错误/跳过，日志parallel-full-tests-final-20261102.log。初轮2015为最后审计负例前的通过。实机后未改Python、未提交/push，无第三局。
+
+详细接口/边界见LEARNING_ENVIRONMENT。启动器的render_hook.log仍全局共享，证据用逐局trajectory/events和instN.out。本次只是短时正常关闭隔离验证，下一步单实例异常退出后的清理与独立重开，再推进4实例100局/吞吐；最小化和通用独立watchdog仍待验，学习actor仍未批准。
+
+## 2026-11-02 · 阶段1：统一规则环境和两次连续重置已验证
+
+新增[单实例环境接口](LEARNING_ENVIRONMENT.md)及learning.environment.RuleEnvironment，reset/observe/step/result/close直接驱动原run_match循环。普通入口继续自动消费，未另建策略；学习动作后置，step仅rule_tick。白名单缓存与净化回执深复制，令牌含环境/episode UUID、run_id/PID/epoch/P1/观察编号/nonce，拒绝重复和跨局请求。reset必须旧局清理确认、源码/依赖实际字节不变、无活动游戏且无STOP；持单实例文件锁，未知状态阻止后续。实时引擎不因yield暂停，缓存不当实时观察，空闲调用方没有独立watchdog。
+
+learning.reset_probe显式1–10局、每局game/wall与总wall上限，失败/手停不续，必须真实规则step和时钟推进才算通过。此次2×60game秒/180wall秒/总420wall秒：115149为60.780game/34.48wall，115224为60.105game/31.95wall，总66.975wall；两局59/60规则step，各15命令接受，均截断null奖励。PID6924→14864，epoch都为1，第二局旧令牌仍明确拒绝；前局audit清理确认后下一局才启动。
+
+每局93份冻结源码与72依赖一致、session closed、无活动游戏，series见artifacts/environment-reset-live-20261102.json，四复盘/C1–C8及复核见environment-reset-live-review.json。2003全量离线通过，0失败/错误/跳过；2002为补空跑拒绝负例前的中间通过，最终日志environment-full-tests-final-20261102.log。实机后未再改Python、未提交/push、无第三局。
+
+下一步先把实例编号/目录/session与控制状态/IPC通道按实例隔离，再验证两实例；不要把逻辑token UUID或两个顺序PID称为并行。阶段1的4实例100局、吞吐、最小化与独立看门狗尚未完成；阶段2学习动作/数据管线仍后置，阶段3–6未开始。
+
+## 2026-11-02 · 阶段0限定基线验收完成，后台失焦停发已修复
+
+用户本轮先要求完成阶段0，后把后台运行提为优先。sparring失焦不再跳过控制循环，启动仅要求身份正确与时钟推进，后台同样运行观察、P1/P2控制器和裁判。焦点变化独立记录；后台时钟停滞15秒或必要快照持续缺失10秒明确报接口故障并清理。真人practice行为不变，不强制解除用户暂停。
+
+112222全后台300.705游戏秒，457帧、278接受/7拒绝，最大间隔1.455秒，限时奖励null。112434用同一冻结源码完成默认KFAI LR自然胜：970.33游戏秒/285.45墙钟秒；焦点False→True→False→True，后台时段合计685.175游戏秒/186.783墙钟秒，切换未打断控制。1855观察、2991请求回执、2887接受/104拒绝/0未知，最大间隔3.275秒；独立裁判确认全灭敌建筑，轨迹终局+1。12点规则查询/native一致、18实体一致、6个P0独有点正确被P1拒绝；仅样本验证，非全部隐身/死亡分支。
+
+两局源码清单摘要dc9170b104054d4b5ad69d5b90b7c9428bf0fb88b2f62b77cb80a2e0c801739f，各91冻结文件与72份SDK/运行时/JSON依赖局末一致，session关闭、无活动游戏。四复盘/C1–C8、界面契约、source-audit、background-live-review及视野审计齐全；总验收索引artifacts/stage0-acceptance-20261102.json。新增[阶段0接口契约](LEARNING_CONTRACT.md)，结果/轨迹/基线清单统一分类，用户投降/超时/接口故障不赋胜负奖励。阶段0仅验收此规则与环境接口基线，不批准学习actor、训练数据集或批量训练。
+
+111142在联合身份/速度校验失败；原错误缺少实际值，后来已补记录，不能猜根因。111320短局与111513旧失焦停发导致的长采样空档独立归档；111513636.75秒自然负真实，但不作连续教师数据。另一电脑002405/002500原始日志未同步，初始化超时根因未宣称解决。112434之后只追加缺失快照超时保护，其故障注入仅离线通过，不声称在该自然局运行过。最终1984项全量通过，初轮mock缺pid错误日志保留；未提交/push，不再开局。
+
+下一步：阶段1统一reset/observe/step/result/close与连续重置，再逐步多实例隔离；当前仅单实例窗口后台与切换已验，最小化、4实例/100局仍未验。阶段2已有被动采集，完整高层动作/掩码/执行器/训练读取器后续实现，阶段3–6未开始；具体建造/微操优化继续后置。
+
 ## 2026-11-02 · 实测收尾，按用户要求回到学习环境主线
 
 用户授权实局验证后002405/002500均在初始化PauseCompAI前的JASS保护查询超时（GetPlayerSlotState/GetLocalPlayer），未进入规则控制器。保留失败后改用此前成功的策略诊断配置，并加独立只读前台/时钟采样；002811完成300.005游戏秒/93.36墙钟秒，启动采样前台且时钟推进。诊断图成功不证明默认图超时根因，未绕过校验或改运行源码。

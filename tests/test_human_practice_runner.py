@@ -83,7 +83,7 @@ class HumanPracticeRunnerTests(unittest.TestCase):
                     state.human_orders.append(state.clock)
                 state.trace('attachment_commands_submitted', player=g.player, clock=state.clock)
 
-            g = N(player=1, snapshot=snapshot, events=events,
+            g = N(pid=123, player=1, snapshot=snapshot, events=events,
                   world=N(read=raw_world), clock=clock,
                   my_units=my_units, resources=lambda: {}, all_production=lambda *args: [],
                   my_heroes=lambda: [], tech_many=lambda codes: {code: 0 for code in codes},
@@ -145,18 +145,66 @@ class HumanPracticeRunnerTests(unittest.TestCase):
             console.assert_not_called()
             return result, logged, state
 
-    def test_two_bot_runner_stops_both_in_background_and_at_terminal_result(self):
+    def test_two_bot_runner_continues_in_background_and_stops_at_terminal_result(self):
         result,events,state=self.run_frames([
-            {'wall':1,'clock':1}, {'wall':10,'active':False},
-            {'wall':11,'clock':2}, {'wall':12,'clock':3,'terminal':('win','all_enemy_buildings_destroyed')},
+            {'wall':1,'clock':1}, {'wall':2,'clock':2,'active':False},
+            {'wall':3,'clock':3}, {'wall':4,'clock':4,'active':False,'terminal':('win','all_enemy_buildings_destroyed')},
         ],sparring_profile='human-rifle')
-        self.assertEqual(state.orders,[(1,73,1,1),(1,73,2,11)])
-        self.assertEqual(state.opponent_orders,[(2,73,1,1),(2,73,2,11)])
+        self.assertEqual(state.orders,[(1,73,1,1),(1,73,2,2),(1,73,3,3)])
+        self.assertEqual(state.opponent_orders,[(2,73,1,1),(2,73,2,2),(2,73,3,3)])
+        self.assertTrue(result['termination']['terminated'])
+        self.assertEqual([e['foreground'] for e in events if e['event']=='foreground_changed'],[True,False,True,False])
         self.assertEqual(result['mode'],'bot_vs_bot')
         self.assertEqual(result['observer_player'],0)
         self.assertNotIn('human_player',result)
         self.assertEqual(result['opponent']['controller'],'human-rifle')
         self.assertFalse(result['auto_restart'])
+
+    def test_background_stalled_clock_fails_without_duplicate_orders(self):
+        result,events,state=self.run_frames([
+            {'wall':1,'clock':1,'active':False,'pub':1},
+            {'wall':8,'clock':1,'active':False,'pub':2},
+            {'wall':17,'clock':1,'active':False,'pub':3},
+        ],sparring_profile='kfai-human')
+        self.assertEqual(state.orders,[(1,73,1,1)])
+        self.assertEqual(result['termination']['classification'],'runtime_failure')
+        self.assertIn('Background game clock stopped',result['reason'])
+
+    def test_background_epoch_change_cannot_issue_to_new_match(self):
+        result,_,state=self.run_frames([
+            {'wall':1,'clock':1,'active':False},
+            {'wall':2,'clock':2,'active':False,'epoch':74},
+        ],sparring_profile='kfai-human')
+        self.assertEqual(state.orders,[(1,73,1,1)])
+        self.assertEqual(result['termination']['classification'],'epoch_changed')
+
+    def test_missing_sparring_views_fail_bounded_even_when_alternating(self):
+        for missing in ({'missing':True},{'raw_missing':True}):
+            with self.subTest(missing=missing):
+                result,_,state=self.run_frames([
+                    {'wall':1,'clock':1,'active':False},
+                    {'wall':2,'clock':2,'active':False,**missing},
+                    {'wall':8,'clock':3,'active':False,'raw_missing':True},
+                    {'wall':12,'clock':4,'active':False,**missing},
+                ],sparring_profile='kfai-human')
+                self.assertEqual(state.orders,[(1,73,1,1)])
+                self.assertIn('Required sparring snapshot missing for 10s',result['reason'])
+                self.assertEqual(result['termination']['classification'],'runtime_failure')
+                self.assertIsNone(result['termination']['reward'])
+                self.assertTrue(state.stopped)
+
+    def test_recovered_sparring_views_reset_missing_timeout(self):
+        result,_,state=self.run_frames([
+            {'wall':1,'clock':1,'active':False},
+            {'wall':2,'missing':True,'active':False},
+            {'wall':3,'clock':2,'pub':2,'active':False},
+            {'wall':4,'raw_missing':True,'active':False},
+            {'wall':11,'missing':True,'active':False},
+            {'wall':12,'clock':3,'pub':3,'active':False},
+            {'wall':13,'alive':False},
+        ],sparring_profile='kfai-human')
+        self.assertEqual(state.orders,[(1,73,1,1),(1,73,2,3),(1,73,3,12)])
+        self.assertEqual(result['termination']['classification'],'process_exit')
 
     def test_missing_opponent_snapshot_does_not_give_dayuan_free_ticks(self):
         _,_,state=self.run_frames([

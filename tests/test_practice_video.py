@@ -78,5 +78,16 @@ class PracticeVideoTests(unittest.TestCase):
             self.assertEqual((values['reswidth'],values['resheight']),(800,600))
             self.assertTrue(backup.exists())
 
+    def test_parallel_read_only_verification_never_writes_shared_settings(self):
+        with self.registry() as (values,writes,backup):
+            with self.assertRaises(RuntimeError):video.verify_video()
+            self.assertEqual(writes,[])
+            video.configure_video()
+            before=dict(values);writes.clear()
+            with patch.object(machine_start,'active_processes',return_value=[dict(pid=5,name='War3-81.exe')]):
+                self.assertEqual(video.verify_video()['registry'],{name:values[name] for name in video.NAMES})
+            self.assertEqual(writes,[])
+            self.assertEqual(values,before)
+
 
 if __name__=='__main__':unittest.main()

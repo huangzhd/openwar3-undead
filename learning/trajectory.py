@@ -10,13 +10,13 @@ import math
 import struct
 from undead.player_visibility import PlayerVisibility
 from run_guard import RunInterrupted
+from learning.outcome import NATURAL, classify_outcome
 
 SCHEMA = 'dayuan-trajectory-v1'
 RESOURCE_FIELDS = ('gold', 'lumber', 'food_used', 'food_cap', 'gold_gathered', 'lumber_gathered')
 UNIT_FIELDS = ('x', 'y', 'hp', 'hp_max', 'mana', 'mana_max', 'level')
 ACTION_NAMES = ('point', 'target', 'immediate', 'build', 'learn', 'use_item',
                 'revive', 'rally', 'buy', 'item_drop')
-NATURAL = {'win': 'all_enemy_buildings_destroyed', 'loss': 'all_own_buildings_destroyed'}
 
 
 class BoundaryError(RuntimeError):
@@ -122,7 +122,8 @@ class TrajectoryRecorder:
     Eligibility below is a provenance filter, NOT full gameplay legality. Engine
     receipts remain distinct; new model execution/preconditions need an adapter.
     """
-    def __init__(self, game, path, *, visibility=None, public_points=()):
+    def __init__(self, game, path, *, visibility=None, public_points=(), capture_receipts=False, policy='rule'):
+        if policy not in ('rule','external_primitives'):raise ValueError('Unsupported trajectory policy')
         raw = game.world.read()
         self.boundary = ObservationBoundary(game.pid, getattr(raw, 'epoch', None))
         self.boundary.validate(game, raw)
@@ -138,13 +139,16 @@ class TrajectoryRecorder:
         self.last_points = -float('inf')
         self.last_observation = None
         self.closed = False
+        self.receipt_buffer = [] if capture_receipts else None
         self.original = game.lane.commands
         self.wrapper = self.commands
         try:
             self.write('header', schema=SCHEMA, player=1, epoch=raw.epoch,
-                       policy='rule', training_actor_approved=False,
+                       policy=policy, training_actor_approved=False,
                        limitations=['teacher_visibility_not_live_audited', 'no_model_action_adapter',
-                                    'receipts_do_not_prove_effects', 'ground_items_and_map_grid_omitted'])
+                                    'receipts_do_not_prove_effects', 'ground_items_and_map_grid_omitted']
+                       if policy == 'rule' else ['partial_primitive_adapter', 'receipts_do_not_prove_effects',
+                                                'ground_items_and_map_grid_omitted'])
             self.observe(raw)
         except Exception:
             self.stream.close()
@@ -154,6 +158,13 @@ class TrajectoryRecorder:
     def write(self, event, **data):
         self.stream.write(json.dumps(dict(event=event, **data), ensure_ascii=False, allow_nan=False)+'\n')
         self.stream.flush()
+        if event == 'action_receipt' and self.receipt_buffer is not None:
+            self.receipt_buffer.append(copy.deepcopy(data))
+
+    def drain_receipts(self):
+        if self.receipt_buffer is None:return []
+        receipts, self.receipt_buffer = self.receipt_buffer, []
+        return receipts
 
     def observe(self, raw=None):
         raw = self.game.world.read() if raw is None else raw
@@ -226,7 +237,7 @@ class TrajectoryRecorder:
         for index, action_id in requests:
             receipt = receipts[index] if index < len(receipts) else None
             self.write('action_receipt', id=action_id,
-                       accepted=bool(receipt.ok) if receipt is not None else None,
+                       accepted=bool(receipt.ok) if receipt is not None and receipt.status != 99 else None,
                        status=number(getattr(receipt, 'status', None)), effect='unverified')
         return receipts
 
@@ -234,15 +245,9 @@ class TrajectoryRecorder:
         if self.closed:
             return
         try:
-            natural = natural_confirmed is True and NATURAL.get(outcome) == reason
+            termination = classify_outcome(outcome, reason, natural_confirmed=natural_confirmed)
             # No raw referee state, exception strings, UI actions, or opponent labels.
-            self.write('terminal', outcome=outcome if outcome in ('win', 'loss', 'timeout', 'aborted', 'error') else 'unknown',
-                       terminated=natural, truncated=not natural,
-                       reward=(1 if outcome == 'win' else -1) if natural else None,
-                       reason=reason if reason in (*NATURAL.values(), 'game_time_limit', 'user_stop',
-                                                   'automation_deadline', 'practice_match_changed',
-                                                   'human_game_closed', 'manual_surrender', 'manual_restart',
-                                                   'stage_time_limit', 'game_epoch_changed') else 'other',
+            self.write('terminal', **termination,
                        last_observation_id=self.observation_id, training_actor_approved=False)
         finally:
             self.closed = True

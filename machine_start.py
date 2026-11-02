@@ -13,19 +13,23 @@ from undead.maps import profiles, pool, resolve_map
 
 def active_processes():
     """Read process identity, including attached games outside the owned session."""
+    from attach_match import read_atomic_json
     active = []
     for process in psutil.process_iter(['pid', 'name']):
         name = (process.info['name'] or '').lower()
         if name.startswith(('war3', 'warcraft')) and name.endswith('.exe'):
             active.append(dict(pid=process.pid, name=process.info['name']))
-    for filename in ('session.json', 'attachment.json'):
-        path = ROOT / 'artifacts' / filename
+    paths = [ROOT/'artifacts'/name for name in ('session.json','attachment.json')]
+    paths += sorted((ROOT/'artifacts'/'instances').glob('*/session.json'))
+    paths += sorted((ROOT/'artifacts'/'instances').glob('*/owner.json'))
+    for path in paths:
         if not path.exists():
             continue
-        record = json.loads(path.read_text(encoding='utf-8'))
+        record = read_atomic_json(path)
         if record.get('closed'):
             continue
         rows = list(record.get('processes', []))
+        if record.get('worker'):rows.append(record['worker'])
         if record.get('runner_pid'):
             rows.append(dict(pid=record['runner_pid'], created=record.get('runner_created')))
         for row in rows:

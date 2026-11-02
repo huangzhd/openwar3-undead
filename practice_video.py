@@ -39,6 +39,17 @@ def read_video():
         return values
 
 
+def verify_video():
+    """Concurrent instances may read shared settings, never rewrite them."""
+    display=current_display()
+    actual=read_video()
+    wanted=dict(reswidth=display['width'],resheight=display['height'],colordepth=32,texcolordepth=32)
+    if display['refresh_hz']>1:wanted['refreshrate']=display['refresh_hz']
+    if any(actual[name]!=value for name,value in wanted.items()):
+        raise RuntimeError('Configure video before launching concurrent environments')
+    return dict(**display,registry=actual,basis='read_only_current_windows_display')
+
+
 def configure_video():
     from machine_start import active_processes
     active=active_processes()
