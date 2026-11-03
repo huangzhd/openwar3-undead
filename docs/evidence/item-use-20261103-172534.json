@@ -1,0 +1,109 @@
+{
+  "run": "20261103-172534",
+  "policy": "external_primitives",
+  "map_sha256": "649c355b5d9d0c184154464c0b4a8f5d2bb9dc9fef49c75938ce065c481b36c9",
+  "source_manifest_sha256": "af650f8d81d3f02a5f693eb67c5d688dc3423358ddde2f72ca1dfbf8ba511036",
+  "game_seconds": 138.18,
+  "wall": 68.282,
+  "source_files": 109,
+  "dependencies": 78,
+  "cleanup_confirmed": true,
+  "source_unchanged": true,
+  "termination": {
+    "schema": "dayuan-outcome-v1",
+    "classification": "user_abort",
+    "outcome": "aborted",
+    "reason": "environment_close",
+    "terminated": false,
+    "truncated": true,
+    "reward": null
+  },
+  "review_exit_codes": {
+    "review_map_pool": 0,
+    "review_combat": 0,
+    "review_equipment": 0,
+    "review_dk": 0,
+    "review_hero_rules": 0,
+    "review_stability": 0
+  },
+  "error": null,
+  "observations": 219,
+  "steps": 153,
+  "native_requests": 6,
+  "native_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "rule_decisions": 0,
+  "uses": [
+    {
+      "item": "stwp",
+      "unit": [
+        17930,
+        35660
+      ],
+      "slot": 0,
+      "requested": 132.355,
+      "before_distance": 1481.153793210608,
+      "prior_bag": [
+        "stwp",
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "native": {
+        "op": "use_item",
+        "unit": [
+          17930,
+          35660
+        ],
+        "code": 0,
+        "target": null,
+        "x": -3904.0,
+        "y": -3968.0,
+        "slot": 0,
+        "mode": 1,
+        "item_at_issue": "stwp"
+      },
+      "accepted": true,
+      "first_missing": 138.18,
+      "first_returned_without_item": [
+        138.18,
+        227.40272645683032,
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      ]
+    }
+  ],
+  "export": {
+    "status": "export_integrity_verified",
+    "episodes": 1,
+    "transitions": 6,
+    "provenance_groups": 1,
+    "model_tensors": true,
+    "source_authenticity_verified": false,
+    "training_actor_approved": false
+  },
+  "model_roundtrip_count": 6,
+  "sha256": {
+    "result.json": "fc96430b77269efd705a8bd916254ba60a24ab8acbf012800d7569f47a607872",
+    "source-audit.json": "d94d525e2cfdcada6dfd823e16aa35d690c21a57524b78cce0f0081ed897848e",
+    "probe.py": "449f9aa0c1545008062a387b3ffacf4436bb8d91d7ef3aed4a3e7d73ec399d8e",
+    "probe-result.json": "62b88cfdca5ab48858e101cd7dad3149a6301a1cbc1927244a45d3f694a6b899",
+    "review.py": "b0f155f79df81193b1a0dd910d4064b867d5d3d7f708462136504f85350f0b5d",
+    "primitive-actions.jsonl": "f9928411589801ee9f3d4cdcc88175ac3d4f67bb39a8150b1c7416258a74af9b",
+    "trajectory.jsonl": "f1fdf2dbaa71833ede1ce5f4019792fcb3bed2d5cedc38552f72a334de5aedf9"
+  }
+}

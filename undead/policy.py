@@ -56,6 +56,19 @@ class ScoutMemory:
                 if u.type in {'htow','hkee','hcas'} and now-u.at <= 60
                 and hypot(u.x-enemy_main[0],u.y-enemy_main[1]) > 1800]
 
+    def guarded(self,point,now):
+        return sum(u.type in {'hgtw','hctw','hatw'} and 0<=now-u.at<=60
+                   and hypot(point.x-u.x,point.y-u.y)<850 for u in self.units.values())>=2
+
+    def scouted_human_objective(self,center,now,army_hp):
+        halls=[u for u in self.units.values() if u.type in {'htow','hkee','hcas'} and 0<=now-u.at<=60]
+        for hall in sorted(halls,key=lambda u:hypot(u.x-center[0],u.y-center[1])):
+            defenders=sum(u.hp for u in self.units.values() if u.owner==hall.owner and 0<=now-u.at<=60
+                          and hypot(u.x-hall.x,u.y-hall.y)<1000 and u.type!='hpea'
+                          and (not u.building or u.type in {'hgtw','hctw','hatw'}))
+            if army_hp>0 and defenders<=army_hp:return hall
+        return None
+
 @dataclass
 class Situation:
     now: float
@@ -80,9 +93,11 @@ class Situation:
     supplies_ready: bool = True
     pre_attack_camp_pending: bool = False
     continuous_creeping: bool = False
+    scouted_attack_target: bool = True
+    exposed_worker: bool = False
 
 def attack_ready(s):
-    return s.tier==3 and s.dk and s.lich and s.orb and s.third_hero and s.supplies_ready and not s.pre_attack_camp_pending
+    return s.tier==3 and s.dk and s.lich and s.orb and s.third_hero and s.supplies_ready and not s.pre_attack_camp_pending and s.scouted_attack_target
 
 def choose_rule(s):
     # Set only for a committed NI/TH route with no actual player interference.
@@ -98,6 +113,6 @@ def choose_rule(s):
     # Actual current composition is required; a previous commitment cannot bypass losses.
     if attack_ready(s):
         return Action.ATTACK
-    if s.expansion:
+    if s.expansion or s.exposed_worker:
         return Action.HARASS
     return Action.CREEP

@@ -1,0 +1,68 @@
+{
+  "schema": "dayuan-teacher-groups-v1",
+  "episode": "20261103-173458",
+  "dataset_use": "diagnostic_only",
+  "training_actor_approved": false,
+  "source_manifest_sha256": "1726a9278954a23d38c9b477642d8b91149863fdb39fff458c96e7b4acda7a7d",
+  "map_sha256": "649c355b5d9d0c184154464c0b4a8f5d2bb9dc9fef49c75938ce065c481b36c9",
+  "dependencies_sha256": "46b392592494ce6aa883243999b981bb9464226a586f96b085472550748bb485",
+  "termination": {
+    "schema": "dayuan-outcome-v1",
+    "classification": "time_limit",
+    "outcome": "timeout",
+    "reason": "game_time_limit",
+    "terminated": false,
+    "truncated": true,
+    "reward": null
+  },
+  "observations": 492,
+  "ticks": 283,
+  "monitored_requests": 216,
+  "batches": 216,
+  "ticks_with_labels": 157,
+  "partially_labeled_ticks": 10,
+  "empty_monitored_ticks": 117,
+  "labels": 190,
+  "operations": {
+    "gather_gold": 11,
+    "train": 7,
+    "build": 5,
+    "move": 164,
+    "learn_skill": 1,
+    "upgrade_hall": 1,
+    "stop": 1
+  },
+  "excluded": {
+    "target_not_currently_observable": 4,
+    "tick_insufficient_gold": 1,
+    "unsupported_order_or_arguments": 7,
+    "tick_ready_hall_required": 1,
+    "tick_target_not_visible_enemy_alive": 11,
+    "tick_invalid_coil_target": 2
+  },
+  "game_seconds": 300.655,
+  "wall": 100.10899999993853,
+  "groups_sha256": "98d224b079075a6c3e0d452afd3603ac0acf6682d9423385806ceb5b0729eb12",
+  "model_contract_sha256": "5d30752d392d4e58f152cbc8c3325cdb9fea126fb6cdd54efd88d93415e3162e",
+  "input_hashes": {
+    "interface-contract.json": "0ffdf648537fc035fa4cd40d151a2dc1b21b9a0b8a7194efc922b092c8a002d5",
+    "source-manifest.json": "bf51dfdf8347694b9cd8570f1637439f85207bb3bf0bc75eb339a1c7f677a2cc",
+    "source-audit.json": "d747a443a76a5e57d35b2250bc610e09920f928e88e6759de11f352042850c76",
+    "result.json": "21df1df9f9ad31b00ff4932e4d8d3b792ec31bdab81451b4efb2e6635b36df8f",
+    "trajectory.jsonl": "42f3f73efc480391fa323b0e9c11421c1c90e0c837a315706bc3e456c0b4c7b2"
+  },
+  "source_files": 111,
+  "dependencies": 78,
+  "cleanup_confirmed": true,
+  "source_unchanged": true,
+  "review_files": [
+    "combat-review.json",
+    "core-strategy-review.json",
+    "dk-review.json",
+    "equipment-review.json",
+    "hero-rules-review.json",
+    "map-review.json",
+    "opening-timing-review.json",
+    "stability-review.json"
+  ]
+}

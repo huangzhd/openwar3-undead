@@ -43,9 +43,11 @@ def freeze_contract(root, out, manifest, settings, *, rules_version, opponent, p
         'bin': sorted(p for p in (upstream / 'bin').rglob('*')
                       if p.is_file() and p.suffix.lower() in ('.dll', '.exe')),
     }
-    if control == 'primitives':
+    if control in ('primitives','teacher'):
         tree_data = upstream / 'data/game/DestructableData.slk'
         groups['tree_data'] = [tree_data] if tree_data.is_file() else []
+        groups['spell_data'] = [upstream / 'data/game/AbilityData.slk', upstream / 'data/order-ids.txt', upstream / 'data/game/UpgradeData.slk',
+                               upstream / 'data/game/ItemData.slk', upstream / 'data/game/ItemFunc.txt']
     for group, paths in groups.items():
         if not paths:
             errors.append('missing_dependency_group:' + group)
@@ -77,10 +79,16 @@ def freeze_contract(root, out, manifest, settings, *, rules_version, opponent, p
     if control == 'primitives':
         from learning.actions import SCHEMA
         report.update(policy='external_primitives', action_version=SCHEMA,
-                      observation_version='strict-p1-observation-v2', trajectory_schema='dayuan-trajectory-v2',
+                      observation_version='strict-p1-observation-v5', trajectory_schema='dayuan-trajectory-v6',
                       model_action_adapter='partial_primitives',
                       action_log='primitive-actions.jsonl', native_trajectory_action_version='rule-native-v1',
                       diagnostic_log='primitive-diagnostics.jsonl', diagnostics_excluded_from_actor=True)
+    elif control=='teacher':
+        from learning.teacher import POLICY, ACTION, TRAJECTORY
+        from learning.actions import SCHEMA
+        report.update(policy=POLICY,action_version=ACTION,trajectory_schema=TRAJECTORY,
+                      observation_version='strict-p1-observation-v5',candidate_schema=SCHEMA,
+                      decision_basis='tick_entry_p1_snapshot',joint_action_groups=True)
     elif control != 'rule':raise ValueError('Unsupported control mode')
     return write_new(out / 'interface-contract.json', report)
 

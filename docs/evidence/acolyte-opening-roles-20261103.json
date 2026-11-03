@@ -1,0 +1,829 @@
+{
+  "scope": "LR southwest UD vs KFAI Human at 4x, initial six acolytes, assigned builders and scouting",
+  "trials": [
+    {
+      "run": "20261103-194223",
+      "speed": 400,
+      "side": [
+        -3904.0,
+        -3968.0
+      ],
+      "game_limit_result": {
+        "run": "20261103-194223",
+        "outcome": "timeout",
+        "reason": "game_time_limit",
+        "clock": 100.155,
+        "remaining": []
+      },
+      "first_observation": 2.78,
+      "trajectory_sha256": "ee517d16c36a67dc8b7d7f9304c5250c832e2338ba1c965e3537300f48e27a07",
+      "source_unchanged": true,
+      "source_files": 113,
+      "cleanup_confirmed": true,
+      "native_accepted": {
+        "uaod": {
+          "batch_id": 7,
+          "clock_ms": 5505,
+          "point": [
+            -3616.0,
+            -3360.0
+          ]
+        },
+        "uzig": {
+          "batch_id": 8,
+          "clock_ms": 9830,
+          "point": [
+            -4256.0,
+            -4064.0
+          ]
+        },
+        "usep": {
+          "batch_id": 12,
+          "clock_ms": 34905,
+          "point": [
+            -3328.0,
+            -4352.0
+          ]
+        },
+        "utom": {
+          "batch_id": 17,
+          "clock_ms": 59855,
+          "point": [
+            -4416.0,
+            -3776.0
+          ]
+        },
+        "Udea": {
+          "batch_id": 24,
+          "clock_ms": 68755,
+          "point": null
+        },
+        "ugrv": {
+          "batch_id": 34,
+          "clock_ms": 78355,
+          "point": [
+            -3968.0,
+            -4416.0
+          ]
+        }
+      },
+      "review": {
+        "tolerance_ms": 1000,
+        "basis": "game_clock_samples_around_accepted_command",
+        "orders": {
+          "uaod": {
+            "target_ms": 4800,
+            "reference_point": [
+              -3616,
+              -3552
+            ],
+            "issued_point": [
+              -3616,
+              -3360
+            ],
+            "signed_window_ms": [
+              705,
+              705
+            ],
+            "within_one_second": true
+          },
+          "uzig": {
+            "target_ms": 8100,
+            "reference_point": [
+              -4256,
+              -3936
+            ],
+            "issued_point": [
+              -4256,
+              -4064
+            ],
+            "signed_window_ms": [
+              1730,
+              1730
+            ],
+            "within_one_second": false
+          },
+          "usep": {
+            "target_ms": 31320,
+            "reference_point": [
+              -3456,
+              -4416
+            ],
+            "issued_point": [
+              -3328,
+              -4352
+            ],
+            "signed_window_ms": [
+              3585,
+              3585
+            ],
+            "within_one_second": false
+          },
+          "utom": {
+            "target_ms": 55440,
+            "reference_point": [
+              -4352,
+              -3648
+            ],
+            "issued_point": [
+              -4416,
+              -3776
+            ],
+            "signed_window_ms": [
+              4415,
+              4415
+            ],
+            "within_one_second": false
+          },
+          "Udea": {
+            "target_ms": 66900,
+            "reference_point": null,
+            "issued_point": null,
+            "signed_window_ms": [
+              1855,
+              2055
+            ],
+            "within_one_second": false
+          },
+          "ugrv": {
+            "target_ms": 73860,
+            "reference_point": [
+              -4160,
+              -4416
+            ],
+            "issued_point": [
+              -3968,
+              -4416
+            ],
+            "signed_window_ms": [
+              4495,
+              4495
+            ],
+            "within_one_second": false
+          }
+        },
+        "all_within_one_second": false
+      },
+      "speed_history": [
+        {
+          "clock": 2.78,
+          "percent": 400
+        }
+      ],
+      "initial_miners": [
+        {
+          "t": 3.68,
+          "batch": 2,
+          "h": [
+            17033,
+            17039
+          ],
+          "op": "target",
+          "code": 852018,
+          "target": [
+            16890,
+            16902
+          ]
+        },
+        {
+          "t": 3.68,
+          "batch": 3,
+          "h": [
+            17075,
+            17081
+          ],
+          "op": "target",
+          "code": 852018,
+          "target": [
+            16890,
+            16902
+          ]
+        }
+      ],
+      "opening_builder": [
+        16994,
+        17000
+      ],
+      "builders": {
+        "uaod": {
+          "t": 5.505,
+          "batch": 7,
+          "h": [
+            16994,
+            17000
+          ],
+          "op": "build",
+          "code": 1969319780,
+          "target": [
+            0,
+            0
+          ]
+        },
+        "uzig": {
+          "t": 9.83,
+          "batch": 8,
+          "h": [
+            16994,
+            17000
+          ],
+          "op": "build",
+          "code": 1970956647,
+          "target": [
+            0,
+            0
+          ]
+        },
+        "usep": {
+          "t": 34.905,
+          "batch": 12,
+          "h": [
+            17298,
+            24566
+          ],
+          "op": "build",
+          "code": 1970496880,
+          "target": [
+            0,
+            0
+          ]
+        },
+        "utom": {
+          "t": 59.855,
+          "batch": 17,
+          "h": [
+            17426,
+            28146
+          ],
+          "op": "build",
+          "code": 1970564973,
+          "target": [
+            0,
+            0
+          ]
+        },
+        "ugrv": {
+          "t": 78.355,
+          "batch": 34,
+          "h": [
+            17075,
+            17081
+          ],
+          "op": "build",
+          "code": 1969713782,
+          "target": [
+            0,
+            0
+          ]
+        }
+      },
+      "foundations": {
+        "uaod": 8.355,
+        "uzig": 14.105,
+        "usep": 36.055,
+        "utom": 61.18,
+        "ugrv": 81.33
+      },
+      "first_mine_order_after_tower": {
+        "t": 14.555,
+        "batch": 10,
+        "h": [
+          16994,
+          17000
+        ],
+        "op": "target",
+        "code": 852018,
+        "target": [
+          16890,
+          16902
+        ]
+      },
+      "fourth": {
+        "handle": [
+          13542,
+          23253
+        ],
+        "clock": 19.255,
+        "order_target": [
+          16890,
+          16902
+        ],
+        "task_target": [
+          16890,
+          16902
+        ]
+      },
+      "fifth": {
+        "handle": [
+          17298,
+          24566
+        ],
+        "clock": 34.205,
+        "order_target": null,
+        "task_target": null,
+        "return_to_mine": {
+          "t": 36.28,
+          "batch": 13,
+          "h": [
+            17298,
+            24566
+          ],
+          "op": "target",
+          "code": 852018,
+          "target": [
+            16890,
+            16902
+          ]
+        }
+      },
+      "sixth": {
+        "handle": [
+          17426,
+          28146
+        ],
+        "clock": 59.655,
+        "order_target": null,
+        "task_target": null,
+        "scout_assigned": 61.455,
+        "first_scout_move": {
+          "t": 61.68,
+          "batch": 18,
+          "h": [
+            17426,
+            28146
+          ],
+          "op": "point",
+          "code": 851986,
+          "target": [
+            0,
+            0
+          ]
+        }
+      },
+      "rally_sites": [
+        {
+          "event": "acolyte_build_rally",
+          "clock": 19.955,
+          "hall": [
+            16833,
+            16833
+          ],
+          "code": "usep",
+          "point": [
+            -3328,
+            -4352
+          ],
+          "accepted": true
+        },
+        {
+          "event": "acolyte_build_rally",
+          "clock": 44.58,
+          "hall": [
+            16833,
+            16833
+          ],
+          "code": "utom",
+          "point": [
+            -4416,
+            -3776
+          ],
+          "accepted": true
+        }
+      ],
+      "graveyard_miner_snapshot_before_order": {
+        "h": [
+          17075,
+          17081
+        ],
+        "order": 852018,
+        "ot": [
+          16890,
+          16902
+        ],
+        "tt": [
+          16890,
+          16902
+        ],
+        "task": true,
+        "x": -4401.78857421875,
+        "y": -4210.19677734375
+      },
+      "first_observation_with_graveyard_gold_after_shop": [
+        78.13,
+        215
+      ],
+      "monitor_sha256": "012ead346bebb416dcfcce34182680b861578c2be6d1b1938e0e6c8dc81a89f3"
+    },
+    {
+      "run": "20261103-194452",
+      "speed": 400,
+      "side": [
+        -3904.0,
+        -3968.0
+      ],
+      "game_limit_result": {
+        "run": "20261103-194452",
+        "outcome": "timeout",
+        "reason": "game_time_limit",
+        "clock": 100.13,
+        "remaining": []
+      },
+      "first_observation": 2.63,
+      "trajectory_sha256": "12ebac0905d9dafc84ffb87e9f8c728f80527ec8b1b3783c0eb61d087260d70c",
+      "source_unchanged": true,
+      "source_files": 113,
+      "cleanup_confirmed": true,
+      "native_accepted": {
+        "uaod": {
+          "batch_id": 7,
+          "clock_ms": 5330,
+          "point": [
+            -3616.0,
+            -3360.0
+          ]
+        },
+        "uzig": {
+          "batch_id": 8,
+          "clock_ms": 8680,
+          "point": [
+            -4256.0,
+            -4064.0
+          ]
+        },
+        "usep": {
+          "batch_id": 12,
+          "clock_ms": 33805,
+          "point": [
+            -3328.0,
+            -4352.0
+          ]
+        },
+        "utom": {
+          "batch_id": 17,
+          "clock_ms": 59805,
+          "point": [
+            -4416.0,
+            -3776.0
+          ]
+        },
+        "Udea": {
+          "batch_id": 22,
+          "clock_ms": 67730,
+          "point": null
+        },
+        "ugrv": {
+          "batch_id": 31,
+          "clock_ms": 77280,
+          "point": [
+            -3968.0,
+            -4416.0
+          ]
+        }
+      },
+      "review": {
+        "tolerance_ms": 1000,
+        "basis": "game_clock_samples_around_accepted_command",
+        "orders": {
+          "uaod": {
+            "target_ms": 4800,
+            "reference_point": [
+              -3616,
+              -3552
+            ],
+            "issued_point": [
+              -3616,
+              -3360
+            ],
+            "signed_window_ms": [
+              530,
+              530
+            ],
+            "within_one_second": true
+          },
+          "uzig": {
+            "target_ms": 8100,
+            "reference_point": [
+              -4256,
+              -3936
+            ],
+            "issued_point": [
+              -4256,
+              -4064
+            ],
+            "signed_window_ms": [
+              580,
+              580
+            ],
+            "within_one_second": true
+          },
+          "usep": {
+            "target_ms": 31320,
+            "reference_point": [
+              -3456,
+              -4416
+            ],
+            "issued_point": [
+              -3328,
+              -4352
+            ],
+            "signed_window_ms": [
+              2485,
+              2685
+            ],
+            "within_one_second": false
+          },
+          "utom": {
+            "target_ms": 55440,
+            "reference_point": [
+              -4352,
+              -3648
+            ],
+            "issued_point": [
+              -4416,
+              -3776
+            ],
+            "signed_window_ms": [
+              4365,
+              4590
+            ],
+            "within_one_second": false
+          },
+          "Udea": {
+            "target_ms": 66900,
+            "reference_point": null,
+            "issued_point": null,
+            "signed_window_ms": [
+              830,
+              1055
+            ],
+            "within_one_second": false
+          },
+          "ugrv": {
+            "target_ms": 73860,
+            "reference_point": [
+              -4160,
+              -4416
+            ],
+            "issued_point": [
+              -3968,
+              -4416
+            ],
+            "signed_window_ms": [
+              3420,
+              3420
+            ],
+            "within_one_second": false
+          }
+        },
+        "all_within_one_second": false
+      },
+      "speed_history": [
+        {
+          "clock": 2.63,
+          "percent": 400
+        }
+      ],
+      "initial_miners": [
+        {
+          "t": 3.055,
+          "batch": 2,
+          "h": [
+            17033,
+            17039
+          ],
+          "op": "target",
+          "code": 852018,
+          "target": [
+            16890,
+            16902
+          ]
+        },
+        {
+          "t": 3.055,
+          "batch": 3,
+          "h": [
+            17075,
+            17081
+          ],
+          "op": "target",
+          "code": 852018,
+          "target": [
+            16890,
+            16902
+          ]
+        }
+      ],
+      "opening_builder": [
+        16994,
+        17000
+      ],
+      "builders": {
+        "uaod": {
+          "t": 5.33,
+          "batch": 7,
+          "h": [
+            16994,
+            17000
+          ],
+          "op": "build",
+          "code": 1969319780,
+          "target": [
+            0,
+            0
+          ]
+        },
+        "uzig": {
+          "t": 8.68,
+          "batch": 8,
+          "h": [
+            16994,
+            17000
+          ],
+          "op": "build",
+          "code": 1970956647,
+          "target": [
+            0,
+            0
+          ]
+        },
+        "usep": {
+          "t": 33.805,
+          "batch": 12,
+          "h": [
+            17900,
+            24534
+          ],
+          "op": "build",
+          "code": 1970496880,
+          "target": [
+            0,
+            0
+          ]
+        },
+        "utom": {
+          "t": 59.805,
+          "batch": 17,
+          "h": [
+            17989,
+            28110
+          ],
+          "op": "build",
+          "code": 1970564973,
+          "target": [
+            0,
+            0
+          ]
+        },
+        "ugrv": {
+          "t": 77.28,
+          "batch": 31,
+          "h": [
+            17075,
+            17081
+          ],
+          "op": "build",
+          "code": 1969713782,
+          "target": [
+            0,
+            0
+          ]
+        }
+      },
+      "foundations": {
+        "uaod": 8.38,
+        "uzig": 12.655,
+        "usep": 35.405,
+        "utom": 60.23,
+        "ugrv": 79.78
+      },
+      "first_mine_order_after_tower": {
+        "t": 13.805,
+        "batch": 10,
+        "h": [
+          16994,
+          17000
+        ],
+        "op": "target",
+        "code": 852018,
+        "target": [
+          16890,
+          16902
+        ]
+      },
+      "fourth": {
+        "handle": [
+          12177,
+          23210
+        ],
+        "clock": 18.705,
+        "order_target": [
+          16890,
+          16902
+        ],
+        "task_target": [
+          16890,
+          16902
+        ]
+      },
+      "fifth": {
+        "handle": [
+          17900,
+          24534
+        ],
+        "clock": 33.805,
+        "order_target": null,
+        "task_target": null,
+        "return_to_mine": {
+          "t": 35.68,
+          "batch": 13,
+          "h": [
+            17900,
+            24534
+          ],
+          "op": "target",
+          "code": 852018,
+          "target": [
+            16890,
+            16902
+          ]
+        }
+      },
+      "sixth": {
+        "handle": [
+          17989,
+          28110
+        ],
+        "clock": 59.105,
+        "order_target": null,
+        "task_target": null,
+        "scout_assigned": 61.38,
+        "first_scout_move": {
+          "t": 61.38,
+          "batch": 18,
+          "h": [
+            17989,
+            28110
+          ],
+          "op": "point",
+          "code": 851986,
+          "target": [
+            0,
+            0
+          ]
+        }
+      },
+      "rally_sites": [
+        {
+          "event": "acolyte_build_rally",
+          "clock": 19.005,
+          "hall": [
+            16833,
+            16833
+          ],
+          "code": "usep",
+          "point": [
+            -3328,
+            -4352
+          ],
+          "accepted": true
+        },
+        {
+          "event": "acolyte_build_rally",
+          "clock": 44.005,
+          "hall": [
+            16833,
+            16833
+          ],
+          "code": "utom",
+          "point": [
+            -4416,
+            -3776
+          ],
+          "accepted": true
+        }
+      ],
+      "graveyard_miner_snapshot_before_order": {
+        "h": [
+          17075,
+          17081
+        ],
+        "order": 852018,
+        "ot": [
+          16890,
+          16902
+        ],
+        "tt": [
+          16890,
+          16902
+        ],
+        "task": true,
+        "x": -4401.78857421875,
+        "y": -4210.19677734375
+      },
+      "first_observation_with_graveyard_gold_after_shop": [
+        77.055,
+        215
+      ],
+      "monitor_sha256": "4ec2ad016871c6b71b8bab5758d4ee04fde6a52e4a67922ba020f3385f69a460"
+    }
+  ]
+}

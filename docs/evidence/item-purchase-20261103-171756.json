@@ -1,0 +1,77 @@
+{
+  "run": "20261103-171756",
+  "policy": "external_primitives",
+  "map_sha256": "649c355b5d9d0c184154464c0b4a8f5d2bb9dc9fef49c75938ce065c481b36c9",
+  "source_manifest_sha256": "8d025802e4d0ac5758a9ff9762f224148540ecf61edd9e4110fab87877475915",
+  "game_seconds": 136.755,
+  "wall": 57.266,
+  "source_files": 109,
+  "dependencies": 78,
+  "cleanup_confirmed": true,
+  "source_unchanged": true,
+  "termination": {
+    "schema": "dayuan-outcome-v1",
+    "classification": "user_abort",
+    "outcome": "aborted",
+    "reason": "environment_close",
+    "terminated": false,
+    "truncated": true,
+    "reward": null
+  },
+  "review_exit_codes": {
+    "review_map_pool": 0,
+    "review_combat": 0,
+    "review_equipment": 0,
+    "review_dk": 0,
+    "review_hero_rules": 0,
+    "review_stability": 0
+  },
+  "error": "RuntimeError('Command not accepted; stop without retry')",
+  "observations": 212,
+  "steps": 156,
+  "native_requests": 7,
+  "native_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "rule_decisions": 0,
+  "purchases": [
+    {
+      "item": "rnec",
+      "shop": [
+        17378,
+        29404
+      ],
+      "shop_type": "utom",
+      "intended_hero": [
+        14352,
+        35434
+      ],
+      "requested": 135.655,
+      "accepted": false,
+      "prior_bag": [
+        "stwp",
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "observed_gain": null
+    }
+  ],
+  "sha256": {
+    "result.json": "03b3608ca3f6934d3b37b2db0bf484c87b949da0a44dab1bbb62915623a79112",
+    "source-audit.json": "d94d525e2cfdcada6dfd823e16aa35d690c21a57524b78cce0f0081ed897848e",
+    "probe.py": "71355879e6616b00d6869fcbf9fc876d5e5a5db852a2e6b0d9a7254b9e168b04",
+    "probe-result.json": "0ef5870bcd8ff5f1ff894c93373a460c891c631ad6979d1cc2d843dc5cecc889",
+    "review.py": "3d5feae8f34604b72b6a98bb29adfdc0146e2d966902d7821e3614bab8f0ff0c",
+    "primitive-actions.jsonl": "150a4722aefb3efe072e1a8a68df7d505600e8242d3de89d26c271e6e3639bd6",
+    "trajectory.jsonl": "a428923bb8548d866294edc137aaf517603107629fe1730aabaeee612f092ab4"
+  }
+}

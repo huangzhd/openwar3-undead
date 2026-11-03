@@ -8,11 +8,27 @@ import json
 import math
 import struct
 
-SCHEMA = 'dayuan-primitive-action-v2'
+SCHEMA = 'dayuan-primitive-action-v9'
+SHOP_SCHEMA = 'dayuan-primitive-action-v8'
+RESEARCH_SCHEMA = 'dayuan-primitive-action-v7'
+HALL_SCHEMA = 'dayuan-primitive-action-v6'
+SPELL_SCHEMA = 'dayuan-primitive-action-v5'
+LEARN_SCHEMA = 'dayuan-primitive-action-v4'
+HERO_SCHEMA = 'dayuan-primitive-action-v3'
+ECONOMY_SCHEMA = 'dayuan-primitive-action-v2'
 LEGACY_SCHEMA = 'dayuan-primitive-action-v1'
 BASE_OPS = ('wait', 'move', 'attack_move', 'attack', 'stop', 'hold')
-from learning import economy_actions, trees
-OPS = BASE_OPS + economy_actions.OPS + ('inspect_trees', 'gather_lumber')
+from learning import economy_actions, hero_skills, trees, unit_spells, research, items
+V2_OPS = BASE_OPS + ('gather_gold', 'build', 'train', 'inspect_trees', 'gather_lumber')
+V3_OPS = V2_OPS + ('train_hero',)
+V4_OPS = V3_OPS + ('learn_skill',)
+V5_OPS = V4_OPS + ('cast_unit',)
+V6_OPS = V5_OPS + ('upgrade_hall',)
+V7_OPS = V6_OPS + ('inspect_research','research')
+V8_OPS = V7_OPS + ('buy_item',)
+OPS = V8_OPS + ('use_item_now','use_item_point')
+SCHEMA_OPS = {LEGACY_SCHEMA: BASE_OPS, ECONOMY_SCHEMA: V2_OPS, HERO_SCHEMA: V3_OPS, LEARN_SCHEMA: V4_OPS,
+              SPELL_SCHEMA: V5_OPS, HALL_SCHEMA: V6_OPS, RESEARCH_SCHEMA: V7_OPS, SHOP_SCHEMA: V8_OPS, SCHEMA: OPS}
 MAX_AGE = 8.0  # Game seconds; the real-time engine does not pause for inference.
 
 
@@ -26,20 +42,38 @@ def identity(value):
 
 
 def validate(action):
-    if (type(action) is not dict or action.get('schema') not in (SCHEMA, LEGACY_SCHEMA)
-            or action.get('op') not in (BASE_OPS if action.get('schema') == LEGACY_SCHEMA else OPS)):
+    if (type(action) is not dict or type(action.get('schema')) is not str
+            or action.get('schema') not in SCHEMA_OPS
+            or action.get('op') not in SCHEMA_OPS[action['schema']]):
         raise ValueError('Unsupported primitive schema or operation')
     op = action['op']
     fields = {'schema', 'op'}
-    if op not in ('wait', 'inspect_trees'):fields.add('unit')
-    if op in ('move', 'attack_move', 'build', 'inspect_trees'):fields.update(('x', 'y'))
-    if op in ('attack', 'gather_gold', 'gather_lumber'):fields.add('target')
-    if op in ('build', 'train'):fields.add('code')
+    if op not in ('wait', 'inspect_trees', 'inspect_research'):fields.add('unit')
+    if op in ('move', 'attack_move', 'build', 'inspect_trees','use_item_point'):fields.update(('x', 'y'))
+    if op in ('attack', 'gather_gold', 'gather_lumber', 'cast_unit','buy_item'):fields.add('target')
+    if op=='buy_item':fields.add('item')
+    if op in ('use_item_now','use_item_point'):fields.update(('item','slot'))
+    if op in ('build', 'train', 'train_hero', 'upgrade_hall','inspect_research','research'):fields.add('code')
+    if op=='research':fields.add('level')
+    if op in ('learn_skill', 'cast_unit'):fields.add('skill')
     if set(action) != fields:
         raise ValueError('Unexpected or missing primitive fields')
-    if op in ('build', 'train') and (type(action['code']) is not str or action['code'] not in (
-            economy_actions.BUILD_CODES if op == 'build' else economy_actions.TRAIN_SOURCES)):
+    if op in ('use_item_now','use_item_point'):
+        if type(action['slot']) is not int or not 0<=action['slot']<6:raise ValueError('Invalid item slot')
+        allowed=items.NO_TARGET_ITEMS if op=='use_item_now' else ('stwp',)
+        if action['item'] not in allowed:raise ValueError('Unsupported item targeting mode')
+    if op=='buy_item' and action['item'] not in items.ITEMS:raise ValueError('Unsupported shop item')
+    if op == 'learn_skill' and action['skill'] not in hero_skills.SKILLS:
+        raise ValueError('Unsupported hero skill')
+    if op == 'cast_unit' and (type(action['skill']) is not str or action['skill'] not in unit_spells.SPELLS):
+        raise ValueError('Unsupported unit spell')
+    products = {'build':economy_actions.BUILD_CODES, 'train':economy_actions.TRAIN_SOURCES,
+                'train_hero':economy_actions.HERO_CODES, 'upgrade_hall':economy_actions.HALL_UPGRADES,
+                'research':research.PRODUCERS,'inspect_research':research.PRODUCERS}
+    if op in products and (type(action['code']) is not str or action['code'] not in products[op]):
         raise ValueError('Unsupported economic product')
+    if op=='research' and (type(action['level']) is not int or not 1<=action['level']<=research.MAX_LEVEL[action['code']]):
+        raise ValueError('Invalid target research level')
     for key in ('unit', 'target'):
         if key in action and not identity(action[key]):raise ValueError('Invalid entity handle')
     result = copy.deepcopy(action)
@@ -77,7 +111,7 @@ def preflight(action, observation, bounds, costs=None):
     action = validate(action)
     if not isinstance(observation, dict) or observation.get('player') != 1:
         return 'observation_unavailable'
-    if action['op'] == 'wait':return 'allowed'
+    if action['op'] in ('wait','inspect_research'):return 'allowed'
     if action['op'] == 'inspect_trees':
         xmin, xmax, ymin, ymax = checked_bounds(bounds)
         return 'allowed' if xmin <= action['x'] <= xmax and ymin <= action['y'] <= ymax else 'point_outside_map'
@@ -87,7 +121,17 @@ def preflight(action, observation, bounds, costs=None):
         return 'source_not_owned_alive'
     abilities = unit.get('abilities')
     if abilities is None:return 'source_capabilities_unknown'
+    if action['op'] == 'learn_skill':return hero_skills.preflight(action, observation, unit)
+    if action['op'] == 'cast_unit':
+        return unit_spells.preflight(action, observation, unit, units.get(tuple(action['target'])))
     known = {a['code'] for a in abilities if finite(a.get('level')) and a['level'] > 0}
+    if action['op'] in ('use_item_now','use_item_point'):
+        if action['op']=='use_item_point':
+            xmin,xmax,ymin,ymax=checked_bounds(bounds)
+            if not xmin<=action['x']<=xmax or not ymin<=action['y']<=ymax:return 'point_outside_map'
+        return items.use_reason(action,observation,unit)
+    if action['op']=='buy_item':return items.buy_reason(action, observation, unit, units.get(tuple(action['target'])))
+    if action['op']=='research':return research.preflight(action,observation,unit,known)
     if action['op'] == 'gather_lumber':return trees.preflight(action, observation, unit, known)
     if action['op'] in economy_actions.OPS:
         if action['op'] == 'build':
@@ -163,6 +207,8 @@ class PrimitiveExecutor:
                                   if u.owner == 1 or u.visible_to(1)])
             current.update(self.recorder.boundary.economic_state(raw,
                 {u.handle for u in raw.units if u.owner == 1}))
+            current['hero_skill_points'] = hero_skills.points(raw)
+            current['own_spell_status'] = unit_spells.statuses(raw)
             clock = decision.get('clock')
             reason = preflight(action, decision, self.bounds, self.costs)
             if not finite(clock) or not 0 <= raw.clock-clock <= MAX_AGE:
@@ -171,7 +217,7 @@ class PrimitiveExecutor:
                 reason = preflight(action, current, self.bounds, self.costs)
             # Even on the same game clock, re-project current visibility/ownership;
             # a paused/same-clock recorder intentionally retains its prior frame.
-            if reason == 'allowed' and action['op'] not in ('wait','inspect_trees'):
+            if reason == 'allowed' and action['op'] not in ('wait','inspect_trees','inspect_research'):
                 wanted = [action['unit']] + ([action['target']] if 'target' in action and action['op']!='gather_lumber' else [])
                 resolved = []
                 for handle in wanted:
@@ -192,9 +238,13 @@ class PrimitiveExecutor:
                 else:resolved.append(tree)
             if reason == 'allowed' and action['op'] == 'inspect_trees':
                 reason = self.recorder.trees.scan(action['x'], action['y'])
+            if reason=='allowed' and action['op'] in ('inspect_research','research'):
+                actual=research.read_level(self.recorder,action['code'])
+                if actual is None:reason='research_level_unknown'
+                elif action['op']=='research' and actual!=action['level']-1:reason='research_level_changed'
             if reason == 'allowed' and action['op'] == 'build':
                 reason = economy_actions.placement_reason(self.game, action, self.costs, self.bounds)
-            if reason == 'allowed' and action['op'] == 'train':
+            if reason == 'allowed' and action['op'] in ('train', 'train_hero', 'upgrade_hall','research'):
                 verdict = self.game.can_do(own, action['code'])
                 if type(verdict) is not int or verdict not in (0, 220):
                     reason = 'engine_prerequisites_unknown' if verdict is None else 'engine_prerequisites_rejected'
@@ -204,7 +254,7 @@ class PrimitiveExecutor:
                 receipt.update(accepted=False, status='preflight_rejected', reason=reason)
             elif action['op'] == 'wait':
                 receipt.update(status='no_command')
-            elif action['op'] == 'inspect_trees':
+            elif action['op'] in ('inspect_trees','inspect_research'):
                 receipt.update(status='observation_only')
             else:
                 op = action['op']
@@ -214,7 +264,12 @@ class PrimitiveExecutor:
                 elif op == 'attack':result = self.game.attack(own, resolved[1])
                 elif op in ('gather_gold','gather_lumber'):result = self.game.gather(own, resolved[1])
                 elif op == 'build':result = self.game.build(own, action['code'], action['x'], action['y'])
-                elif op == 'train':result = self.game.train(own, action['code'])
+                elif op in ('train', 'train_hero', 'upgrade_hall','research'):result = self.game.train(own, action['code'])
+                elif op=='use_item_now':result=self.game.use_item(own,action['slot'])
+                elif op=='use_item_point':result=self.game.use_item(own,action['slot'],x=action['x'],y=action['y'])
+                elif op == 'buy_item':result = self.game.buy(own,action['item'])
+                elif op == 'learn_skill':result = self.game.learn(own, action['skill'])
+                elif op == 'cast_unit':result = self.game.cast(own, unit_spells.SPELLS[action['skill']][1], target=resolved[1])
                 elif op == 'stop':result = self.game.stop(own)
                 else:result = self.game.hold(own)
                 timed_out = result is not None and result.status == 99

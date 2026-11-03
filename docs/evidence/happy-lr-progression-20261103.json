@@ -1,0 +1,162 @@
+{
+  "replay_sha256": "f5123932751472494473df18c66f165cd2d02f058478adc0178f1c3be417ea7a",
+  "player_id": 7,
+  "clock_basis": "summed_timeslot_ms",
+  "observed_until_ms": 1602300,
+  "undecoded_player_blocks": 0,
+  "covered_codes": {
+    "hero": [
+      "Udea",
+      "Ulic",
+      "Udre",
+      "Ucrl"
+    ],
+    "hall": [
+      "unp1",
+      "unp2"
+    ],
+    "skill": [
+      "AUdc",
+      "AUdp",
+      "AUau",
+      "AUan",
+      "AUfn",
+      "AUfu",
+      "AUdr",
+      "AUdd",
+      "AUav",
+      "AUsl",
+      "AUcs",
+      "AUin",
+      "AUim",
+      "AUts",
+      "AUcb",
+      "AUls"
+    ]
+  },
+  "orders": [
+    {
+      "ms": 66900,
+      "code": "Udea",
+      "category": "hero",
+      "block": 764,
+      "raw_offset": 61539,
+      "raw_hex": "10460061656455ffffffffffffffff"
+    },
+    {
+      "ms": 126480,
+      "code": "AUdc",
+      "category": "skill",
+      "block": 1376,
+      "raw_offset": 111623,
+      "raw_hex": "10420063645541ffffffffffffffff"
+    },
+    {
+      "ms": 162240,
+      "code": "unp1",
+      "category": "hall",
+      "block": 1727,
+      "raw_offset": 142411,
+      "raw_hex": "10400031706e75ffffffffffffffff"
+    },
+    {
+      "ms": 357360,
+      "code": "AUau",
+      "category": "skill",
+      "block": 3431,
+      "raw_offset": 307501,
+      "raw_hex": "10420075615541ffffffffffffffff"
+    },
+    {
+      "ms": 477060,
+      "code": "AUdc",
+      "category": "skill",
+      "block": 4209,
+      "raw_offset": 399689,
+      "raw_hex": "10420063645541ffffffffffffffff"
+    },
+    {
+      "ms": 568560,
+      "code": "unp2",
+      "category": "hall",
+      "block": 4870,
+      "raw_offset": 470968,
+      "raw_hex": "10400032706e75ffffffffffffffff"
+    },
+    {
+      "ms": 632040,
+      "code": "Ulic",
+      "category": "hero",
+      "block": 5438,
+      "raw_offset": 523883,
+      "raw_hex": "10460063696c55ffffffffffffffff"
+    },
+    {
+      "ms": 690000,
+      "code": "AUfn",
+      "category": "skill",
+      "block": 5850,
+      "raw_offset": 567870,
+      "raw_hex": "1042006e665541ffffffffffffffff"
+    },
+    {
+      "ms": 767040,
+      "code": "AUau",
+      "category": "skill",
+      "block": 6592,
+      "raw_offset": 633321,
+      "raw_hex": "10420075615541ffffffffffffffff"
+    },
+    {
+      "ms": 786720,
+      "code": "AUdr",
+      "category": "skill",
+      "block": 6781,
+      "raw_offset": 650480,
+      "raw_hex": "10420072645541ffffffffffffffff"
+    },
+    {
+      "ms": 896460,
+      "code": "AUfn",
+      "category": "skill",
+      "block": 7846,
+      "raw_offset": 751925,
+      "raw_hex": "1042006e665541ffffffffffffffff"
+    },
+    {
+      "ms": 899820,
+      "code": "Ucrl",
+      "category": "hero",
+      "block": 7875,
+      "raw_offset": 754977,
+      "raw_hex": "1046006c726355ffffffffffffffff"
+    },
+    {
+      "ms": 1046820,
+      "code": "AUdc",
+      "category": "skill",
+      "block": 9187,
+      "raw_offset": 884151,
+      "raw_hex": "10420063645541ffffffffffffffff"
+    },
+    {
+      "ms": 1143240,
+      "code": "AUfu",
+      "category": "skill",
+      "block": 10044,
+      "raw_offset": 967062,
+      "raw_hex": "10420075665541ffffffffffffffff"
+    },
+    {
+      "ms": 1527840,
+      "code": "AUfn",
+      "category": "skill",
+      "block": 13490,
+      "raw_offset": 1294600,
+      "raw_hex": "1042006e665541ffffffffffffffff"
+    }
+  ],
+  "engine_effects_verified": false,
+  "player_view_reconstructed": false,
+  "training_labels": 0
+}

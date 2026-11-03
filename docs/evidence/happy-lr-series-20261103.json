@@ -1,0 +1,151 @@
+{
+  "schema": "dayuan-human-reference-series-v1",
+  "source": "three_user_supplied_originals",
+  "use": "tactical_reference_only",
+  "identity_basis": "user_attribution_plus_replay_name_and_race",
+  "independent_match_attribution": false,
+  "training_labels": 0,
+  "player_view_reconstructed": false,
+  "engine_effects_verified": false,
+  "clock": "accumulated_game_timeslots",
+  "games": [
+    {
+      "file": "LookAround_vs_Happy__w3arena__lastrefuge__v3_126.w3g",
+      "sha256": "f5123932751472494473df18c66f165cd2d02f058478adc0178f1c3be417ea7a",
+      "slot": 7,
+      "opponent": "LookAround",
+      "recorded_player": "Happy_",
+      "user_attribution": "Happy",
+      "map": "Maps\\w3arena\\w3arena__lastrefuge__v3.w3x",
+      "map_checksum_sha1": "771a7348689ca006491ba0e3b163d93171532c19",
+      "time_delta_to_header_ms": 0,
+      "ordered_distinct_opening_buildings": [
+        "uaod",
+        "uzig",
+        "usep",
+        "utom",
+        "ugrv"
+      ],
+      "first_order_ms": {
+        "uaod": 4800,
+        "uzig": 8100,
+        "usep": 31320,
+        "utom": 55440,
+        "ugrv": 73860,
+        "Udea": 66900,
+        "AUdc": 126480,
+        "unp1": 162240,
+        "Ulic": 632040,
+        "unp2": 568560
+      },
+      "details": "happy-lr-20261103.json",
+      "progression_details": "happy-lr-progression-20261103.json"
+    },
+    {
+      "file": "Happy__vs_LookAround_(2)LastRefuge-1.3_126.w3g",
+      "sha256": "ec9657fc1f8b1fc5e165daba8cc7233a834c65d71b04a6a2f018188c4e2b9149",
+      "slot": 3,
+      "opponent": "LookAround",
+      "recorded_player": "Happy_",
+      "user_attribution": "Happy",
+      "map": "Maps\\Download\\(2)LastRefuge-1.3.w3x",
+      "map_checksum_sha1": "2bcad2fc8223474bbf0c93c6dcf3022506b80217",
+      "time_delta_to_header_ms": 21,
+      "ordered_distinct_opening_buildings": [
+        "uaod",
+        "uzig",
+        "usep",
+        "utom",
+        "ugrv"
+      ],
+      "first_order_ms": {
+        "uaod": 4300,
+        "uzig": 6800,
+        "usep": 31800,
+        "utom": 55000,
+        "ugrv": 74100,
+        "Udea": 66400,
+        "AUdc": 136100,
+        "unp1": 161100,
+        "Ulic": 302700,
+        "unp2": 361400
+      },
+      "details": "happy-lr-second-20261103.json",
+      "progression_details": "happy-lr-second-20261103.json"
+    },
+    {
+      "file": "u2.chaemiko_vs_Happy__w3arena__lastrefuge__v3_126.w3g",
+      "sha256": "e08690855f03fdf4d3a961ff6400f74ae755996c3c7ca1a7873ad89f7dea4a92",
+      "slot": 3,
+      "opponent": "u2.chaemiko",
+      "recorded_player": "Happy_",
+      "user_attribution": "Happy",
+      "map": "Maps\\w3arena\\w3arena__lastrefuge__v3.w3x",
+      "map_checksum_sha1": "771a7348689ca006491ba0e3b163d93171532c19",
+      "time_delta_to_header_ms": 10,
+      "ordered_distinct_opening_buildings": [
+        "uaod",
+        "uzig",
+        "usep",
+        "utom",
+        "ugrv"
+      ],
+      "first_order_ms": {
+        "uaod": 4620,
+        "uzig": 8400,
+        "usep": 31860,
+        "utom": 56580,
+        "ugrv": 74160,
+        "Udea": 66960,
+        "AUdc": 135420,
+        "unp1": 164340,
+        "Ulic": 310320,
+        "unp2": 367320
+      },
+      "details": "happy-lr-third-20261103.json",
+      "progression_details": "happy-lr-third-20261103.json"
+    }
+  ],
+  "ranges_first_order_ms": {
+    "uaod": [
+      4300,
+      4800
+    ],
+    "uzig": [
+      6800,
+      8400
+    ],
+    "usep": [
+      31320,
+      31860
+    ],
+    "utom": [
+      55000,
+      56580
+    ],
+    "ugrv": [
+      73860,
+      74160
+    ],
+    "Udea": [
+      66400,
+      66960
+    ],
+    "AUdc": [
+      126480,
+      136100
+    ],
+    "unp1": [
+      161100,
+      164340
+    ],
+    "Ulic": [
+      302700,
+      632040
+    ],
+    "unp2": [
+      361400,
+      568560
+    ]
+  }
+}

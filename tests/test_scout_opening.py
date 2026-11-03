@@ -71,6 +71,25 @@ class ScoutCorpseTests(unittest.TestCase):
         self.assertEqual(sum(o[0]=='rod' for o in orders),3)
         self.assertEqual(events[-1]['reason'],'attempt_limit')
 
+    def test_rejected_rod_records_engine_reply_without_claiming_corpse_availability(self):
+        b,g,dk,corpse,own,all_units,orders,events,inv,cool=self.make()
+        class Rejection:
+            status=1;verdict=64;engine_return=0;order_before=851986;order_after=0
+            def __bool__(self):return False
+        b.scout(100);dk.x=corpse.x;inv.insert(0,'stwp')
+        g.use_item=lambda hero,slot:orders.append((hero.handle,slot)) or Rejection()
+        b.use_scout_corpse([dk],dk,143)
+        first=events[-1]
+        self.assertEqual(orders[-1],(dk.handle,1))
+        self.assertEqual(first['visible_target_before_use']['alive'],False)
+        self.assertEqual(first['receipt']['verdict'],64)
+        self.assertFalse(first['accepted'])
+        corpse.visible_to=lambda _:False
+        b.use_scout_corpse([dk],dk,146)
+        self.assertIsNone(events[-1]['visible_target_before_use'])
+        self.assertEqual(events[-1]['seconds_since_death'],46)
+        self.assertFalse(b.opening_rod_finished)
+
     def test_unsafe_path_and_elapsed_budget_fall_back(self):
         for cause in ('unsafe','old','timeout'):
             with self.subTest(cause=cause):

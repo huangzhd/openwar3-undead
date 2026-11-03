@@ -1,0 +1,100 @@
+{
+  "classic": {
+    "sha256": "d3c06133501c6b83a88b116edbf449714c0e2984827e0eaf37a4497a9988d5d5",
+    "source": {
+      "kind": "local_reference",
+      "claim_verified": false,
+      "supplied_hash_matches": null,
+      "nominated_slot_in_replay": null
+    },
+    "header": {
+      "header_bytes": 68,
+      "recorded_product": "PX3W",
+      "version": 27,
+      "build": 6059,
+      "header_duration_ms": 127500,
+      "declared_data_bytes": 53668,
+      "blocks": 7
+    },
+    "map": {
+      "replay_path": "Maps\\dz\\versus\\ebd3e3e67ae653057e407b60618d3216.w3x",
+      "recorded_checksum": "b5e1c469",
+      "recorded_checksum_sha1": "d3b9ef6615595d576a265fd579ef3b781d43fe54",
+      "always_visible": false,
+      "map_explored": false
+    },
+    "participant_slots": [
+      1,
+      2
+    ],
+    "command_blocks": 374,
+    "counted_orders_by_slot": {
+      "1": 0,
+      "2": 46
+    },
+    "excluded_blocks_by_slot": {
+      "1": 0,
+      "2": 0
+    },
+    "other_slots": {
+      "blocks": 1,
+      "undecoded_blocks": 1
+    },
+    "clock_delta_ms": 12,
+    "compressed_lengths_independently_checked": true,
+    "complete_command_decoding": false,
+    "professional_identity": "unverified",
+    "player_view_reconstructed": false,
+    "training_labels": 0
+  },
+  "modern": {
+    "sha256": "fbfa9e6ed9d1e97abce0fd5e524a9a1915f949ecf632766ae729807bd8e04e29",
+    "source": {
+      "kind": "format_fixture",
+      "source_url": "https://raw.githubusercontent.com/PBug90/w3gjs/40efcfc7bdb8ccb0241823f9aa099b98a62ca0fe/test/replays/200/148249993_Edo_Leon_Tidehunters%2012.w3g",
+      "expected_sha256": "fbfa9e6ed9d1e97abce0fd5e524a9a1915f949ecf632766ae729807bd8e04e29",
+      "claim_verified": false,
+      "supplied_hash_matches": true,
+      "nominated_slot_in_replay": null
+    },
+    "header": {
+      "header_bytes": 68,
+      "recorded_product": "PX3W",
+      "version": 10100,
+      "build": 6117,
+      "header_duration_ms": 426512,
+      "declared_data_bytes": 295590,
+      "blocks": 37
+    },
+    "map": {
+      "replay_path": "maps\\W3Champions\\54_w3c_251104_0950_Tidehunters_v1.2.w3x",
+      "recorded_checksum": "ffffffff",
+      "recorded_checksum_sha1": "7b89059994f918b9b0632333fc84c60d1913eb7f",
+      "always_visible": false,
+      "map_explored": false
+    },
+    "participant_slots": [
+      1,
+      2
+    ],
+    "command_blocks": 3921,
+    "counted_orders_by_slot": {
+      "1": 549,
+      "2": 830
+    },
+    "excluded_blocks_by_slot": {
+      "1": 1,
+      "2": 1
+    },
+    "other_slots": {
+      "blocks": 0,
+      "undecoded_blocks": 0
+    },
+    "clock_delta_ms": 0,
+    "compressed_lengths_independently_checked": true,
+    "complete_command_decoding": false,
+    "professional_identity": "unverified",
+    "player_view_reconstructed": false,
+    "training_labels": 0
+  }
+}

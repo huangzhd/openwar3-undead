@@ -142,7 +142,7 @@ class CritterSearch:
         # Combat/lost-target recovery must not inherit a stale waypoint timer.
         self.job=None
 
-    def target(self,g,scout,home,now,safe_route=None):
+    def target(self,g,scout,home,now,safe_route=None,guards=None):
         if now>=self.DEADLINE or self.reported:return None
         centers=[(p['x'],p['y']) for p in self.local_spawns(g,home)]
         observed=[u for u in g.units('all') if 12<=u.owner<=15 and u.type in ground_critters()
@@ -152,7 +152,7 @@ class CritterSearch:
         visible=[u for u in observed if (g.dist(u,self.camp_focus)<=1500 if self.camp_focus else
                                         (g.dist(u,home)<=3000 or any(g.dist(u,p)<=600 for p in centers)))]
         guarded=lambda u:bool((self.camp_focus or self.reference_active(home)) and
-                             any(e.hp>0 and g.dist(e,u)<650 for e in g.creeps()))
+                             any(e.hp>0 and g.dist(e,u)<650 for e in (g.creeps() if guards is None else guards)))
         visible=[u for u in visible if not guarded(u)]
         # The camp radius selects a new target, not the continuation of a hunt.
         # A fleeing critter must not silently disappear from our own job.
@@ -297,5 +297,8 @@ class CritterSearch:
         if self.point_priority[point]==4:self.general_visits+=1
         self.job=dict(point=point,started=now,progress=now,distance=distance)
         self.log('scout_search_started',clock=now,point=point,ground_distance=distance,
+                 scout=scout.handle if hasattr(scout,'handle') else None,
+                 candidate_scope='reachable_local_critter_search',candidates=[
+                     dict(point=p,priority=k,ground_distance=r) for k,r,p in sorted(reachable)],
                  radius=round(g.dist(home,point)),search_kind='spawn_region' if self.point_priority[point]<4 else 'general')
         return point

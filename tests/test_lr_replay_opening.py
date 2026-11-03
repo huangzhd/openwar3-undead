@@ -112,6 +112,48 @@ class LRReferenceTests(unittest.TestCase):
         u.x,u.y=LR_SW_APPROACH[0]
         self.assertEqual(s.choose(g,u,h,61),LR_SW_APPROACH[1])
 
+    def test_first_194915_detour_is_removed_but_expansion_and_attackers_still_divert(self):
+        catalog=json.loads((Path(__file__).parents[1]/'data/kk_map_pool.json').read_text(encoding='utf8'))['LR']
+        for nearby in ('original','ordinary_visible','expansion_public','expansion_visible','attacking'):
+            with self.subTest(nearby=nearby):
+                b,g,_,old,own,units,orders,events,_,_=scout_fixture.ScoutCorpseTests().make()
+                units.remove(old);b.scout_critter=None
+                b.home=N(x=-3904,y=-3968);s=own[1]
+                s.x,s.y=-2990.407470703125,-4117.35205078125
+                goal=LR_SW_APPROACH[0]
+                camps=catalog['camps']
+                if nearby!='original':
+                    kind='expansion' if nearby.startswith('expansion') else 'ogre'
+                    x,y=s.x+600,s.y
+                    camps=[dict(id='test-camp',kind=kind,spawns=[dict(code='nogr',x=x,y=y)])]
+                    guard=unit('nogr',900,x);guard.y=y;guard.visible_to=lambda _:True
+                    if nearby!='expansion_public':
+                        g.creeps=lambda:[guard]
+                        b.creeping.drop_camps[guard.handle]=0
+                    g.current_target=lambda _:s if nearby=='attacking' else None
+                g.visible=lambda *p:nearby=='expansion_visible'
+                b.start_search.camps=b.creeping.catalog=camps;b.creeping.map_alias='LR'
+                b.scout(68.205)
+                if nearby in ('original','ordinary_visible'):
+                    self.assertEqual(orders[-1][2],goal)
+                    self.assertFalse(any(e['event']=='scout_neutral_detour' for e in events))
+                else:
+                    self.assertNotEqual(orders[-1][2],goal)
+                    self.assertTrue(any(e['event']=='scout_neutral_detour' for e in events))
+
+    def test_visible_critter_beside_ordinary_camp_gets_attack_order(self):
+        b,g,_,animal,own,units,orders,_,_,_=scout_fixture.ScoutCorpseTests().make()
+        b.home=N(x=3840,y=3328);b.creeping.map_alias='LR'
+        s=own[1];s.x,s.y=1300,3500
+        animal.type='npig';animal.hp=15;animal.alive=True;animal.x,animal.y=1416,3507
+        guard=unit('nogr',900,1490);guard.y=3507;guard.visible_to=lambda _:True
+        b.start_search.camps=b.creeping.catalog=[dict(id='ordinary',kind='ogre',spawns=[
+            dict(code='nogr',x=guard.x,y=guard.y)])]
+        g.creeps=lambda:[guard];g.current_target=lambda _:None
+        g.attack=lambda u,t,force=False:orders.append(('attack',u.handle,t.handle)) or True
+        b.scout(75)
+        self.assertEqual(orders[-1],('attack',s.handle,animal.handle))
+
     def test_reference_hunt_ignores_hidden_targets_and_neutral_guard(self):
         s,g,u,h,v,e,q=self.route_scene();animal=unit('npig',71,1400,15)
         animal.y=3500;animal.owner=15;animal.visible_to=lambda me:False;v.append(animal)

@@ -74,7 +74,7 @@ class TreePrimitiveTests(unittest.TestCase):
         request=next(r for r in rows if r['event']=='action_request')
         self.assertTrue(request['eligible']);self.assertEqual(request['action']['target_kind'],'tree')
         self.assertEqual(request['action']['target'],[77,7]);self.assertNotIn('100077',json.dumps(rows))
-        self.assertEqual(rows[0]['schema'],'dayuan-trajectory-v2')
+        self.assertEqual(rows[0]['schema'],'dayuan-trajectory-v6')
 
     def test_hidden_unseen_dead_stale_and_wrong_worker_targets_rejected(self):
         value=action('gather_lumber',unit=[11,7],target=[77,7])

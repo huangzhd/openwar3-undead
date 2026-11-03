@@ -9,6 +9,7 @@ import unittest
 
 from learning.dataset import load_episode,export_episodes,verify_export_integrity,DatasetError,canonical,digest,parse
 from learning.outcome import classify_outcome
+from learning.actions import SCHEMA, ECONOMY_SCHEMA, V2_OPS
 import test_learning_actions as helpers
 from test_learning_actions import action
 
@@ -26,8 +27,8 @@ class DatasetTests(unittest.TestCase):
         manifest={'policy.py':digest(b'policy-v1')}
         self.write('source-manifest.json',manifest)
         self.write('interface-contract.json',dict(schema='dayuan-interface-contract-v1',policy='external_primitives',
-            action_version='dayuan-primitive-action-v2',observation_version='strict-p1-observation-v2',
-            trajectory_schema='dayuan-trajectory-v2',source_manifest_sha256=digest(canonical(manifest)),
+            action_version=SCHEMA,observation_version='strict-p1-observation-v5',
+            trajectory_schema='dayuan-trajectory-v6',source_manifest_sha256=digest(canonical(manifest)),
             dependencies={'vendor/sdk.py':digest(b'sdk')},dependency_errors=[],binding=dict(pid=101,epoch=1),
             slots=dict(observer_player=0,controlled_player=1,opponent_player=2),map_sha256=digest(b'map'),
             rules_version='rules-v1',speed=400,opponent='kfai-human',opponent_fairness='native_KFAI_unverified'))
@@ -55,6 +56,86 @@ class DatasetTests(unittest.TestCase):
         all_steps=load_episode(self.path,include_wait=True)['samples']
         self.assertEqual(len(all_steps),2);self.assertTrue(all_steps[-1]['truncated'])
         self.assertFalse(all_steps[-1]['terminated']);self.assertIsNone(all_steps[-1]['terminal_reward'])
+
+    def test_historical_v2_remains_readable_without_gaining_hero_operations(self):
+        contract=self.read('interface-contract.json');contract.update(action_version=ECONOMY_SCHEMA,
+            observation_version='strict-p1-observation-v2',trajectory_schema='dayuan-trajectory-v2')
+        self.write('interface-contract.json',contract)
+        def old_trajectory(rs):
+            rs[0]['schema']=contract['trajectory_schema']
+            for row in rs:
+                if row['event']=='observation':
+                    for key in ('research_levels','hero_skill_points','own_spell_status'):del row['observation'][key]
+        self.mutate('trajectory.jsonl',old_trajectory)
+        rows=self.logs('primitive-actions.jsonl')
+        rows[0].update(schema=ECONOMY_SCHEMA,supported_operations=list(V2_OPS))
+        for row in rows:
+            if row['event']=='request':row['action']['schema']=ECONOMY_SCHEMA
+        self.write_logs('primitive-actions.jsonl',rows)
+        self.assertEqual(load_episode(self.path)['samples'][0]['action']['op'],'stop')
+        rows[0]['supported_operations'].append('train_hero')
+        self.write_logs('primitive-actions.jsonl',rows)
+        self.rejected('invalid_supported_operations')
+
+    def test_hero_label_export_and_native_payload_mismatch(self):
+        from learning.dataset import native_payload
+        from learning.model_codec import OPERATIONS, PRODUCTS
+        value=action('train_hero',unit=[11,7],code='Udea')
+        self.mutate('primitive-actions.jsonl',lambda rows:next(r for r in rows if r['event']=='request').update(action=value))
+        self.mutate('trajectory.jsonl',lambda rows:next(r for r in rows if r['event']=='action_request').update(action=native_payload(value)))
+        out=self.path/'hero-export';index=export_episodes([self.path],out,model_tensors=True)
+        sample=json.loads((out/index['episodes'][0]['path']).read_text())
+        self.assertEqual(OPERATIONS[sample['label']['op']],'train_hero')
+        self.assertEqual(PRODUCTS[sample['label']['product']],'Udea')
+        self.assertEqual(verify_export_integrity(out)['transitions'],1)
+        self.mutate('trajectory.jsonl',lambda rows:next(r for r in rows if r['event']=='action_request')['action'].update(code=int.from_bytes(b'Ulic','big')))
+        self.rejected('native_payload_mismatch')
+
+    def test_matching_native_research_code_cannot_hide_wrong_level(self):
+        from learning.dataset import native_payload
+        value=action('research',unit=[11,7],code='Rura',level=2)
+        self.mutate('primitive-actions.jsonl',lambda rs:next(r for r in rs if r['event']=='request').update(action=value))
+        self.mutate('trajectory.jsonl',lambda rs:next(r for r in rs if r['event']=='action_request').update(action=native_payload(value)))
+        self.rejected('research_rank_evidence_mismatch')
+
+        def setup(rs):
+            o=next(r['observation'] for r in rs if r['event']=='observation')
+            o['research_levels']['Rura']=dict(clock=o['clock'],level=1)
+            o['units'][0]['type']='ugrv'
+        self.mutate('trajectory.jsonl',setup)
+        self.assertEqual(load_episode(self.path)['samples'][0]['action']['level'],2)
+        self.mutate('primitive-actions.jsonl',lambda rs:next(r for r in rs if r['event']=='request')['action'].update(level=3))
+        self.rejected('research_rank_evidence_mismatch')
+
+
+    def test_matching_native_shop_order_does_not_authorize_an_enemy_recipient_label(self):
+        from learning.dataset import native_payload
+        value=action('buy_item',unit=[11,7],target=[22,7],item='rnec')
+        self.mutate('primitive-actions.jsonl',lambda rs:next(r for r in rs if r['event']=='request').update(action=value))
+        self.mutate('trajectory.jsonl',lambda rs:next(r for r in rs if r['event']=='action_request').update(action=native_payload(value)))
+        def shop(rs):
+            o=next(r['observation'] for r in rs if r['event']=='observation')
+            o['units'][0]['type']='utom'
+        self.mutate('trajectory.jsonl',shop)
+        self.rejected('shop_recipient_evidence_mismatch')
+
+    def test_item_label_requires_native_slot_mode_and_issue_time_item(self):
+        from learning.dataset import native_payload
+        a=action('use_item_now',unit=[11,7],item='phea',slot=1)
+        self.mutate('primitive-actions.jsonl',lambda rs:next(r for r in rs if r['event']=='request').update(action=a))
+        def prepare(rs):
+            frame=next(r['observation'] for r in rs if r['event']=='observation')
+            hero=frame['units'][0]
+            frame['hero_skill_points']=[dict(unit=hero['handle'],points=None)]
+            hero.update(type='Udea',inventory=[None,'phea',None,None,None,None],
+                        abilities=[dict(code=c,level=1,cooldown=0.) for c in ('AInv','AHer','AIh1')])
+            next(r for r in rs if r['event']=='action_request')['action']=native_payload(a)
+        self.mutate('trajectory.jsonl',prepare)
+        self.assertEqual(load_episode(self.path)['samples'][0]['action'],a)
+        for edits,reason in [({'slot':2},'native_payload_mismatch'),({'mode':1},'native_payload_mismatch'),
+                             ({'item_at_issue':'stwp'},'native_payload_mismatch'),({'slot':True},'invalid_native_item_arguments')]:
+            self.mutate('trajectory.jsonl',lambda rs:next(r for r in rs if r['event']=='action_request').update(action=native_payload(a)|edits))
+            self.rejected(reason)
 
     def test_sparse_export_does_not_forge_terminal_or_contiguous_episode(self):
         sparse=load_episode(self.path);full=load_episode(self.path,include_wait=True)

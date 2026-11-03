@@ -1,0 +1,101 @@
+{
+  "run": "20261103-170350",
+  "policy": "external_primitives",
+  "map_sha256": "649c355b5d9d0c184154464c0b4a8f5d2bb9dc9fef49c75938ce065c481b36c9",
+  "source_manifest_sha256": "6d8e85a3b46d40baedafa4702f5f075b8f30d92b56a549e46b5f534f5c016023",
+  "game_seconds": 459.48,
+  "wall": 143.5,
+  "source_files": 107,
+  "dependencies": 75,
+  "cleanup_confirmed": true,
+  "source_unchanged": true,
+  "termination": {
+    "schema": "dayuan-outcome-v1",
+    "classification": "user_abort",
+    "outcome": "aborted",
+    "reason": "environment_close",
+    "terminated": false,
+    "truncated": true,
+    "reward": null
+  },
+  "review_exit_codes": {
+    "review_map_pool": 0,
+    "review_combat": 0,
+    "review_equipment": 0,
+    "review_dk": 0,
+    "review_hero_rules": 0,
+    "review_stability": 0
+  },
+  "error": null,
+  "observations": 750,
+  "steps": 535,
+  "native_requests": 6,
+  "native_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "rule_decisions": 0,
+  "upgrades": [
+    {
+      "target": "unp1",
+      "source": [
+        16833,
+        16833
+      ],
+      "requested": 118.83,
+      "accepted": true,
+      "pre_resources": {
+        "gold": 750,
+        "lumber": 220,
+        "food_used": 5,
+        "food_cap": 10,
+        "gold_gathered": 430,
+        "lumber_gathered": 120
+      },
+      "in_progress": 119.655,
+      "completed": 259.98
+    },
+    {
+      "target": "unp2",
+      "source": [
+        16833,
+        16833
+      ],
+      "requested": 318.945,
+      "accepted": true,
+      "pre_resources": {
+        "gold": 1230,
+        "lumber": 230,
+        "food_used": 5,
+        "food_cap": 10,
+        "gold_gathered": 1230,
+        "lumber_gathered": 340
+      },
+      "in_progress": 319.855,
+      "completed": 459.48
+    }
+  ],
+  "export": {
+    "status": "export_integrity_verified",
+    "episodes": 1,
+    "transitions": 13,
+    "provenance_groups": 1,
+    "model_tensors": true,
+    "source_authenticity_verified": false,
+    "training_actor_approved": false
+  },
+  "model_roundtrip_count": 13,
+  "sha256": {
+    "result.json": "1b38a4ae1f5979229edab62fcf185db1d113993eb3acf27e72fb8f42016a50e0",
+    "source-audit.json": "eaddb82d880dc2f2fe1a62e25a8b37f26366aaa68c275aeb01399ac64e219f30",
+    "probe.py": "fcbb8529f9d2fd59fdc9ed973790691af99bbec2af905a1bd413e1d17276b381",
+    "probe-result.json": "61c4ba3a0c992ed41a36795a7f50b4260a1dc58137ede235f66b52e67b9db0aa",
+    "review.py": "08fe2823ac14c1b4000ec02dd3d0426e41d2c5dba6f23c389fb59599497b4086",
+    "primitive-actions.jsonl": "f338f9cb7fba8bd7ae80b29a5e44fb9fecc028e43492bd59946ccf33f33605ba",
+    "trajectory.jsonl": "fccf088de0bc42cbdf1ba704e7b8a9f6a0443620a7a7eec63ead92e1959617b5"
+  }
+}

@@ -59,6 +59,24 @@ class OpeningTests(unittest.TestCase):
         g,e=self.game();g.own=[u for u in g.own if u.type!='ugrv']
         e.tick(g,1);self.assertEqual(g.commands,['ugho'])
 
+    def test_new_full_hp_crypt_does_not_block_shop_while_under_construction(self):
+        g,e=self.game()
+        g.own=[u for u in g.own if u.type!='utom']
+        crypt=g.my_buildings({'usep'})[0]
+        e.home_layout.pending['usep']=dict(before=set(),point=(crypt.x,crypt.y))
+        e.tick(g,36.22)
+        self.assertNotIn('crypt_complete',e.opening_milestones)
+        crypt.hp=47
+        g.busy[crypt.handle]=N(kind='construction',queue=['usep'])
+        g.commands.clear()
+        e.tick(g,61.205)
+        self.assertIn('utom',g.commands)
+        self.assertNotIn('ugho',g.commands)
+        self.assertNotIn(crypt.handle,e.complete)
+        crypt.hp=crypt.hp_max;g.busy.pop(crypt.handle)
+        e.tick(g,96.975)
+        self.assertIn('ugho',g.commands)
+
     def test_dk_buys_rod_without_waiting_for_third_ghoul(self):
         g,e=self.game();g.own.append(g.opening_dk);g.dist=dist;g.inventory=lambda h:[None]*6
         b=Controller(g,lambda *a,**k:None);b.home=g.my_buildings({'unpl'})[0]

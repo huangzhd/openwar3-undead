@@ -1,0 +1,56 @@
+{
+  "run": "20261103-164950",
+  "scope": "first_hero_first_skill",
+  "hero": "Udea",
+  "skill": "AUdc",
+  "decision_game_seconds": 127.705,
+  "rank_one_and_zero_points_first_observed": 128.655,
+  "game_seconds": 128.655,
+  "wall": 52.0,
+  "points": [
+    1,
+    0
+  ],
+  "ranks": [
+    0,
+    1
+  ],
+  "primitive_requests": 142,
+  "native_requests": 5,
+  "observations": 199,
+  "rule_decisions": 0,
+  "p1_native_paused": true,
+  "source_files": 106,
+  "dependencies": 73,
+  "source_unchanged": true,
+  "cleanup_confirmed": true,
+  "source_manifest_sha256": "14b0e1539641b293b8fd9c27f6b084297bdcbb46bf657bc5d71a3091adb7d160",
+  "model_roundtrip_count": 5,
+  "export": {
+    "status": "export_integrity_verified",
+    "episodes": 1,
+    "transitions": 5,
+    "provenance_groups": 1,
+    "model_tensors": true,
+    "source_authenticity_verified": false,
+    "training_actor_approved": false
+  },
+  "termination": {
+    "schema": "dayuan-outcome-v1",
+    "classification": "user_abort",
+    "outcome": "aborted",
+    "reason": "environment_close",
+    "terminated": false,
+    "truncated": true,
+    "reward": null
+  },
+  "sha256": {
+    "trajectory.jsonl": "e16d05b7a545fa7832e69949a4b61013bd4ca995dae1b9957050fdbc09908435",
+    "primitive-actions.jsonl": "c1df6efed26e2c393c703df1775c138fd9dacabf43a261aaa0f6c1925196dbd9",
+    "source-audit.json": "5cf1776e6ae9c8eb8228ca3060457dfca71f7b522d4cea8804d5745d5a0842fc",
+    "result.json": "caddb7cee808bc5f7a6aeb2adfa43b97010e18a27c6ea64de129d9c5f5d2e8a7",
+    "probe.py": "d652b1910ffc28ae06d368563be53fe75f502d4f29f6f41afb8f9cc41ee9a3d0",
+    "review.py": "d12203747d13accbada477f4cdb33a56c93295a5a06e193fd9f93e7a479f51cb",
+    "index.json": "027cac8385195aab63d4365386508c17083395746355ab35acdffab7ae06b7cd"
+  }
+}

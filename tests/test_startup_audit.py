@@ -85,6 +85,35 @@ class StartupAuditTests(unittest.TestCase):
         with self.assertRaisesRegex(TimeoutError,'speed'):self.audit.check_deadline()
         self.assertFalse(any(c.args[0]=='startup_speed_ready' for c in self.session.startup_log.call_args_list))
 
+    def test_owned_speed_correction_waits_for_exact_readback_and_is_not_repeated(self):
+        self.session.speed=400
+        self.audit.deadline=120
+        seen=N(speed_pct=100,epoch=7,clock=2.)
+        correction=Mock(return_value=True)
+        self.assertFalse(self.audit.speed_ready(seen,correction))
+        self.now=.9
+        self.assertFalse(self.audit.speed_ready(seen,correction))
+        correction.assert_not_called()
+        self.now=1.1
+        self.assertFalse(self.audit.speed_ready(seen,correction))
+        self.now=2
+        self.assertFalse(self.audit.speed_ready(seen,correction))
+        correction.assert_called_once()
+        seen.speed_pct=400
+        self.assertTrue(self.audit.speed_ready(seen,correction))
+
+    def test_speed_write_rejects_unowned_or_reparented_game(self):
+        import bootstrap
+        from sparring import SparringSession
+        fake=N(owned=[dict(pid=11),dict(pid=12)],game=N(pid=12,set_speed=Mock(return_value=True)),
+               matches=lambda row:True,speed=400)
+        with patch('psutil.Process',return_value=N(ppid=lambda:55)):
+            with self.assertRaisesRegex(RuntimeError,'identity'):SparringSession.correct_launch_speed(fake)
+        fake.game.set_speed.assert_not_called()
+        with patch('psutil.Process',return_value=N(ppid=lambda:11)):
+            self.assertTrue(SparringSession.correct_launch_speed(fake))
+        fake.game.set_speed.assert_called_once_with(400)
+
     def test_speed_wait_never_extends_outer_startup_deadline(self):
         self.session.speed=400
         self.assertFalse(self.audit.speed_ready(N(speed_pct=100,epoch=7,clock=1.)))

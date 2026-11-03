@@ -58,18 +58,26 @@ class StartSearch:
         return [u for u in (g.creeps() if hasattr(g,'creeps') else [])
                 if u.hp>0 and (not hasattr(u,'visible_to') or u.visible_to(g.me()))]
 
-    def safe_step(self,g,scout,point,now,public_layout=True,step_limit=350):
+    def expansion_guard(self,g,unit,bindings):
+        camp=bindings.get(unit.handle)
+        if camp is not None:return self.camps[camp]['kind']=='expansion'
+        return any(g.dist(unit,(s['x'],s['y']))<=350 for c in self.camps if c.get('kind')=='expansion'
+                   for s in c.get('spawns',[]) if s['code']==unit.type)
+
+    def safe_step(self,g,scout,point,now,public_layout=True,step_limit=350,critter_guard=None):
         """Bounded local detour around fairly visible neutrals; never order into a camp."""
         # Retain only observed positions, not inferred current hidden units.
         # Losing vision during a detour must not send the scout back through the camp.
         for u in self.neutrals(g):
-            self.neutral_memory[u.handle]=(now,SimpleNamespace(x=u.x,y=u.y,handle=u.handle))
+            self.neutral_memory[u.handle]=(now,SimpleNamespace(x=u.x,y=u.y,handle=u.handle,type=u.type))
         self.neutral_memory={h:row for h,row in self.neutral_memory.items() if now-row[0]<60}
-        foes=[u for _,u in self.neutral_memory.values() if g.dist(u,scout)<1600]
+        foes=[u for _,u in self.neutral_memory.values() if g.dist(u,scout)<1600 and
+              (critter_guard is None or critter_guard(u))]
         # Trees can hide guards until the worker is already in acquisition range.
         # Treat unseen public placements as route risks, not scouting evidence.
         risks=[]
         for camp in self.camps if public_layout else []:
+            if critter_guard is not None and camp.get('kind')!='expansion':continue
             for i,spawn in enumerate(camp.get('spawns',[])):
                 p=(spawn['x'],spawn['y'])
                 if g.dist(scout,p)>=1600:continue

@@ -1,5 +1,7 @@
 # 阶段0规则基线接口 v1
 
+2026-11-03英雄接口更新：当前外部动作已升至dayuan-primitive-action-v3，新增祭坛四英雄生产（仅离线验证），兼容v1/v2原始动作；模型输入v2/决定v3，旧模型张量须从原始证据另目录重导出。外部观察与trajectory仍为v2。下文v2有限实测及原规则基线均为历史范围，不能作为英雄生产实机证据。详见LEARNING_ACTIONS顶部。
+
 2026-11-03最新外部接口为`dayuan-primitive-action-v2`，兼容v1六动作并扩展经济/树木查询/伐木，有限实机探针及严格读取/模型编码已完成；未训练模型，完整合法性和动作空间仍未完成。含树目击的外部观察及trajectory为v2，原规则基线与冻结历史版本不改；下表描述原规则基线。详见[LEARNING_ACTIONS](LEARNING_ACTIONS.md)和[LEARNING_DATASET](LEARNING_DATASET.md)。
 
 阶段1单实例接口与连续重置的新增契约见[LEARNING_ENVIRONMENT](LEARNING_ENVIRONMENT.md)。提前调用close使用`environment_close`归为user_abort，奖励null；不改变下方自然终局规则。

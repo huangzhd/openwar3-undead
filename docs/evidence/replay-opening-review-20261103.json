@@ -1,0 +1,100 @@
+{
+  "replay_sha256": "fbfa9e6ed9d1e97abce0fd5e524a9a1915f949ecf632766ae729807bd8e04e29",
+  "source": {
+    "kind": "format_fixture",
+    "source_url": "https://raw.githubusercontent.com/PBug90/w3gjs/40efcfc7bdb8ccb0241823f9aa099b98a62ca0fe/test/replays/200/148249993_Edo_Leon_Tidehunters%2012.w3g",
+    "expected_sha256": "fbfa9e6ed9d1e97abce0fd5e524a9a1915f949ecf632766ae729807bd8e04e29",
+    "claim_verified": false,
+    "supplied_hash_matches": true,
+    "nominated_slot_in_replay": null
+  },
+  "player_id": 1,
+  "undecoded_blocks": 1,
+  "rows": [
+    {
+      "id": "9508f66d0ee90aeda3a87d7e2feb4e3a5dd0a9b4c5298d678c840579b16e3e09",
+      "seq": 1,
+      "ms": 4969,
+      "code": "usep",
+      "point": [
+        -3456,
+        2816
+      ],
+      "signals": [],
+      "annotation": null
+    },
+    {
+      "id": "3a75dd57d13b96ea1623e282c1c650ed15b60f542223c83d34364642ddedcbd3",
+      "seq": 2,
+      "ms": 8377,
+      "code": "uaod",
+      "point": [
+        -3360,
+        3168
+      ],
+      "signals": [],
+      "annotation": null
+    },
+    {
+      "id": "213596598cd3e569f974d032a5647ba00dac93da9accdf720ab28f84dc1cd65e",
+      "seq": 3,
+      "ms": 22645,
+      "code": "uzig",
+      "point": [
+        -4128,
+        3232
+      ],
+      "signals": [],
+      "annotation": null
+    },
+    {
+      "id": "1670b33cb5e7935b02b58970c69e443c6ddc50c81dd234329a67f882fc9608ed",
+      "seq": 4,
+      "ms": 48005,
+      "code": "utom",
+      "point": [
+        -3968,
+        2368
+      ],
+      "signals": [],
+      "annotation": null
+    },
+    {
+      "id": "a670e1b0908bf50dcc907e9316200477a29d460277edd3e8c87c659e4f864fa2",
+      "seq": 5,
+      "ms": 75691,
+      "code": "uzig",
+      "point": [
+        -4064,
+        3488
+      ],
+      "signals": [
+        "different_site_from_previous_same_building"
+      ],
+      "annotation": null
+    },
+    {
+      "id": "81ba3cb326cdbf7a931c6c860866f3e9a865f7b8581787ab3800a2ee07feebc2",
+      "seq": 6,
+      "ms": 178445,
+      "code": "uzig",
+      "point": [
+        672,
+        4704
+      ],
+      "signals": [
+        "different_site_from_previous_same_building",
+        "prior_subgroup_not_acolyte"
+      ],
+      "annotation": {
+        "verdict": "undetermined",
+        "comment": "The last typed subgroup is hmil. Neither the issuing unit nor construction is confirmed."
+      }
+    }
+  ],
+  "professional_identity": "unverified",
+  "player_view_reconstructed": false,
+  "training_labels": 0,
+  "positive_demonstrations_approved": false,
+  "refused_source_reclassification": true
+}

@@ -21,8 +21,13 @@ from undead.debug_console import DebugConsole,ActionMeter
 from undead.version import VERSION, RULES_VERSION, DISPLAY_NAME
 from learning.outcome import classify_outcome
 
-def _match_steps(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty=3,restarted_from=None,map_alias=None,human_practice=False,practice_status=None,sparring=None,strategy_trace=False,trajectory=False,step_mode=False,instance_context=None,control='rule'):
+def _match_steps(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty=3,restarted_from=None,map_alias=None,human_practice=False,practice_status=None,sparring=None,strategy_trace=False,trajectory=False,step_mode=False,instance_context=None,control='rule',teacher_trajectory=False):
     """Shared lifecycle; optional decision boundaries never pause the engine."""
+    if teacher_trajectory:
+        if control!='rule' or step_mode or sparring!='kfai-human' or strategy_trace:
+            raise ValueError('Teacher capture requires standalone LR/KFAI rule sparring')
+        trajectory=True
+    policy='rule_teacher' if teacher_trajectory else 'rule' if control=='rule' else 'external_primitives'
     if step_mode and (not sparring or not trajectory):
         raise ValueError('Environment stepping requires sparring and strict trajectory recording')
     if control not in ('rule','primitives') or control != 'rule' and not step_mode:
@@ -68,7 +73,7 @@ def _match_steps(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficu
     fh=(out/'events.jsonl').open('w',encoding='utf-8')
     started=time.monotonic()
     result={'id':run_id,'version':VERSION,'rules_version':RULES_VERSION,'bot_name':DISPLAY_NAME,
-            'policy':'rule' if control == 'rule' else 'external_primitives','requested_speed':speed,
+            'policy':policy,'requested_speed':speed,
             'opponent':{'race':enemy_race,'difficulty':difficulty},'result':'unknown','reason':'not_started','until_epoch':until,'max_game_seconds':max_game_seconds}
     if restarted_from is not None:result['restarted_from']=restarted_from
     if local_practice:
@@ -106,11 +111,11 @@ def _match_steps(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficu
     def frame(event):
         extra={}
         if primitive_executor:
-            from learning.actions import SCHEMA,MAX_AGE,OPS,LEGACY_SCHEMA
+            from learning.actions import SCHEMA,MAX_AGE,OPS,SCHEMA_OPS
             from learning.trees import RADIUS,MAX_SIGHTINGS,MAX_AGE as TREE_AGE
             primitive_executor.observe()
             extra=dict(action_context=dict(schema=SCHEMA,bounds=primitive_executor.bounds,
-                                           supported_schemas=[SCHEMA,LEGACY_SCHEMA],supported_operations=OPS,
+                                           supported_schemas=list(SCHEMA_OPS),supported_operations=OPS,
                                            economic_catalog=primitive_executor.costs,
                                            tree_query=dict(radius=RADIUS,max_sightings=MAX_SIGHTINGS,
                                                            sighting_max_age=TREE_AGE,life_observed=False),
@@ -140,7 +145,7 @@ def _match_steps(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficu
             from learning.evidence import freeze_contract
             ready=g.snapshot(max_age=0)
             freeze_contract(ROOT,out,manifest,result['launch_settings'],rules_version=RULES_VERSION,
-                            opponent=sparring,pid=g.pid,epoch=ready.epoch,control=control)
+                            opponent=sparring,pid=g.pid,epoch=ready.epoch,control='teacher' if teacher_trajectory else control)
         log('match_settings',settings=result['launch_settings'])
         spawn=result['launch_settings'].get('own_start_sample')
         if spawn is not None:
@@ -170,8 +175,9 @@ def _match_steps(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficu
             public_points=[(p['x'],p['y']) for p in session.map_catalog.get('starts',[])]
             trajectory_recorder=TrajectoryRecorder(g,out/'trajectory.jsonl',visibility=point_visibility,
                                                     public_points=public_points,capture_receipts=step_mode,
-                                                    policy='rule' if control == 'rule' else 'external_primitives')
+                                                    policy=policy)
             result['trajectory']='experimental_p1_whitelist_v2' if control == 'primitives' else 'experimental_p1_whitelist_v1'
+            if teacher_trajectory:result['trajectory']='teacher_tick_p1_v1'
             if control == 'primitives':
                 from learning.actions import PrimitiveExecutor
                 primitive_executor=PrimitiveExecutor(g,trajectory_recorder,out/'primitive-actions.jsonl')
@@ -315,7 +321,7 @@ def _match_steps(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficu
                 with timed('primitive_action'):
                     primitive_executor.execute(command,decision_frame['observation'],decision_frame['observation_id'])
             else:
-                with timed('controller_tick'):bot.tick()
+                with timed('controller_tick'), (trajectory_recorder.teacher_tick() if teacher_trajectory else nullcontext()):bot.tick()
             if console:console.observe(s,bot)
             if s.clock-snapshot_at>=15:
                 snapshot_at=s.clock
@@ -326,7 +332,9 @@ def _match_steps(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficu
                         heroes=[{'type':h.type,'level':h.level,'hp':h.hp,'mana':h.mana,'inventory':g.inventory(h),'abilities':g.abilities(h)} for h in g.my_heroes()],
                         own_upgrades=g.tech_many(['Rura','Rucr','Ruwb']),
                         production=[{'type':b.type,'kind':p.kind,'queue':p.queue,'progress':p.progress} for b,p in g.all_production('me')])
-            time.sleep(.2)
+            # At 4x, the usual idle sleep alone consumes 0.8 game seconds.
+            fast_opening=sparring and bot is not None and speed>=400 and s.clock<76
+            time.sleep(.025 if fast_opening else .2)
             if step_mode:
                 with timed('environment_observation'):trajectory_recorder.observe()
                 decision_frame=frame('step')
@@ -385,7 +393,7 @@ def _match_steps(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficu
             from learning.evidence import freeze_contract,audit_sources
             try:
                 if not (out/'interface-contract.json').exists():
-                    freeze_contract(ROOT,out,manifest,result['launch_settings'],rules_version=RULES_VERSION,opponent=sparring,control=control)
+                    freeze_contract(ROOT,out,manifest,result['launch_settings'],rules_version=RULES_VERSION,opponent=sparring,control='teacher' if teacher_trajectory else control)
                 audit_sources(ROOT,out,manifest,**({'instance_context':instance_context} if instance_context else {}))
             except Exception as exc:result['evidence_error']=repr(exc)
         result['wall_seconds']=round(time.monotonic()-started,2)
@@ -395,10 +403,10 @@ def _match_steps(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficu
     return result
 
 
-def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty=3,restarted_from=None,map_alias=None,human_practice=False,practice_status=None,sparring=None,strategy_trace=False,trajectory=False):
+def run_match(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficulty=3,restarted_from=None,map_alias=None,human_practice=False,practice_status=None,sparring=None,strategy_trace=False,trajectory=False,teacher_trajectory=False):
     """Run the same lifecycle continuously for the existing CLI/panels."""
     runner=_match_steps(speed,max_game_seconds,until,enemy_race,difficulty,restarted_from,map_alias,
-                        human_practice,practice_status,sparring,strategy_trace,trajectory)
+                        human_practice,practice_status,sparring,strategy_trace,trajectory,teacher_trajectory=teacher_trajectory)
     try:
         while True:next(runner)
     except StopIteration as done:

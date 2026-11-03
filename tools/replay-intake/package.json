@@ -1,0 +1,7 @@
+{
+  "name": "dayuan-replay-intake",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": { "test": "node --test intake.test.cjs" },
+  "dependencies": { "w3gjs": "4.3.0" }
+}

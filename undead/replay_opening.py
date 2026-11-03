@@ -17,6 +17,18 @@ LR_SW_BUILDINGS={'uaod':(-3616,-3360),'uzig':(-4256,-4064),
 # Planning half-widths from the local pathing definitions; no extra generic
 # 128-unit spacing on the user's compact template. Engine placement still rules.
 LR_HALF={'uaod':160,'uzig':96,'usep':192,'utom':192,'ugrv':192}
+# Second Acolyte training order in the same SW/NE Happy recordings.
+HAPPY_SECOND_ACOLYTE_MS={LR_SW_HOME:11640,LR_NE_HOME:13500}
+# Same-side complete openings against Human, fixed before the game. The SW
+# source has a single first-tower order; no picking a different replay per row.
+HAPPY_LR={
+    LR_SW_HOME: {'uaod':(4800,(-3616,-3552)), 'uzig':(8100,(-4256,-3936)),
+                 'usep':(31320,(-3456,-4416)), 'utom':(55440,(-4352,-3648)),
+                 'Udea':(66900,None), 'ugrv':(73860,(-4160,-4416))},
+    LR_NE_HOME: {'uaod':(4300,(3872,2848)), 'uzig':(6800,(4256,3424)),
+                 'usep':(31800,(3392,3584)), 'utom':(55000,(4288,3008)),
+                 'Udea':(66400,None), 'ugrv':(74100,(3968,3776))},
+}
 # Last move destination before the long trip, then the final search destination
 # before the attack. Intermediate rapid right-clicks are not reached waypoints.
 LR_NE_APPROACH=((1347.833251953125,3575.42529296875),

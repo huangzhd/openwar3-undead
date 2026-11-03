@@ -1,0 +1,63 @@
+{
+  "run": "20261103-165647",
+  "scope": "first_lich_frost_armor_self",
+  "hero": "Ulic",
+  "skill": "AUfu",
+  "decision_game_seconds": 129.405,
+  "before": {
+    "clock": 129.405,
+    "mana": 300.0,
+    "rank": 1,
+    "cooldown": 0.0,
+    "buffs": []
+  },
+  "first_observed_buff": {
+    "clock": 131.055,
+    "mana": 260.5987548828125,
+    "rank": 1,
+    "cooldown": 1.402069091796875,
+    "buffs": [
+      "BUfa"
+    ]
+  },
+  "game_seconds": 131.055,
+  "wall": 53.313,
+  "primitive_requests": 142,
+  "native_requests": 6,
+  "observations": 213,
+  "rule_decisions": 0,
+  "p1_native_paused": true,
+  "source_files": 107,
+  "dependencies": 75,
+  "source_unchanged": true,
+  "cleanup_confirmed": true,
+  "source_manifest_sha256": "7c46466cc0db1bbe05918fb14077ed33115faed8700bcca3002c44381e551494",
+  "model_roundtrip_count": 6,
+  "export": {
+    "status": "export_integrity_verified",
+    "episodes": 1,
+    "transitions": 6,
+    "provenance_groups": 1,
+    "model_tensors": true,
+    "source_authenticity_verified": false,
+    "training_actor_approved": false
+  },
+  "termination": {
+    "schema": "dayuan-outcome-v1",
+    "classification": "user_abort",
+    "outcome": "aborted",
+    "reason": "environment_close",
+    "terminated": false,
+    "truncated": true,
+    "reward": null
+  },
+  "sha256": {
+    "trajectory.jsonl": "69b48df3e1aa5c4f73811110dca369d52c68961b672a155286b08e4784f13f0c",
+    "primitive-actions.jsonl": "1f97fff2e56b6534816aebcd84aaffe5117cbd232db94b3fd100d237a9e71602",
+    "source-audit.json": "eaddb82d880dc2f2fe1a62e25a8b37f26366aaa68c275aeb01399ac64e219f30",
+    "result.json": "f8c9370acad2831600561d025456522970dc92117267a5f6717ed2581a114acb",
+    "probe.py": "891f92100b3c52507fd2f3511682ecc870b518eb298f6e6a99e191ea6f11c0c4",
+    "review.py": "ecbf90636378ccd374931313198317b31303e8925fbb100314c3ad5807aee6fd",
+    "index.json": "fb79250e5cd5c32cec02eea8cbd0247a3920b71ebaee3ff92479581a5a50f2bb"
+  }
+}

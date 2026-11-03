@@ -1,0 +1,97 @@
+{
+  "run": "20261103-172015",
+  "policy": "external_primitives",
+  "map_sha256": "649c355b5d9d0c184154464c0b4a8f5d2bb9dc9fef49c75938ce065c481b36c9",
+  "source_manifest_sha256": "8d025802e4d0ac5758a9ff9762f224148540ecf61edd9e4110fab87877475915",
+  "game_seconds": 149.305,
+  "wall": 57.844,
+  "source_files": 109,
+  "dependencies": 78,
+  "cleanup_confirmed": true,
+  "source_unchanged": true,
+  "termination": {
+    "schema": "dayuan-outcome-v1",
+    "classification": "user_abort",
+    "outcome": "aborted",
+    "reason": "environment_close",
+    "terminated": false,
+    "truncated": true,
+    "reward": null
+  },
+  "review_exit_codes": {
+    "review_map_pool": 0,
+    "review_combat": 0,
+    "review_equipment": 0,
+    "review_dk": 0,
+    "review_hero_rules": 0,
+    "review_stability": 0
+  },
+  "error": null,
+  "observations": 231,
+  "steps": 171,
+  "native_requests": 7,
+  "native_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "rule_decisions": 0,
+  "purchases": [
+    {
+      "item": "rnec",
+      "shop": [
+        17387,
+        29498
+      ],
+      "shop_type": "utom",
+      "intended_hero": [
+        16669,
+        35566
+      ],
+      "requested": 148.1,
+      "accepted": true,
+      "prior_bag": [
+        "stwp",
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "observed_gain": [
+        149.305,
+        [
+          "stwp",
+          "rnec",
+          null,
+          null,
+          null,
+          null
+        ]
+      ]
+    }
+  ],
+  "export": {
+    "status": "export_integrity_verified",
+    "episodes": 1,
+    "transitions": 7,
+    "provenance_groups": 1,
+    "model_tensors": true,
+    "source_authenticity_verified": false,
+    "training_actor_approved": false
+  },
+  "model_roundtrip_count": 7,
+  "sha256": {
+    "result.json": "96d2ab762713a608c05de968e594be85db1009fe0385b05fc95258d29151076b",
+    "source-audit.json": "d94d525e2cfdcada6dfd823e16aa35d690c21a57524b78cce0f0081ed897848e",
+    "probe.py": "c2f0756936dc62bb65f8c3b8caabcc6bc861870a50d254b80e700ae5cdc03edb",
+    "probe-result.json": "b4724ca2cfa6c9097d78231b6d133b92e89b72cdd3fcc5fd5828a29a41202ff7",
+    "review.py": "3d5feae8f34604b72b6a98bb29adfdc0146e2d966902d7821e3614bab8f0ff0c",
+    "primitive-actions.jsonl": "f7052a0911e5faa7fa8cc243d9b193ab2fc04a59dc782b7dd096c11f12f5fbd5",
+    "trajectory.jsonl": "695049311a94b3606e624de6adde65337b7d7b641feb1f6105401b5d6b4b57fa"
+  }
+}

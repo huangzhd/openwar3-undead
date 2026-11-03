@@ -1,0 +1,139 @@
+{
+  "source": "user_supplied_w3g",
+  "file": "LookAround_vs_Happy__w3arena__lastrefuge__v3_126.w3g",
+  "sha256": "f5123932751472494473df18c66f165cd2d02f058478adc0178f1c3be417ea7a",
+  "bytes": 411326,
+  "header": {
+    "header_bytes": 68,
+    "recorded_product": "PX3W",
+    "version": 26,
+    "build": 6059,
+    "header_duration_ms": 1602300,
+    "declared_data_bytes": 1362950,
+    "blocks": 167
+  },
+  "map": {
+    "replay_path": "Maps\\w3arena\\w3arena__lastrefuge__v3.w3x",
+    "recorded_checksum": "37dd179e",
+    "recorded_checksum_sha1": "771a7348689ca006491ba0e3b163d93171532c19",
+    "always_visible": false,
+    "map_explored": false
+  },
+  "map_binary_verified": false,
+  "participants": [
+    {
+      "slot": 6,
+      "name": "LookAround",
+      "race": "human"
+    },
+    {
+      "slot": 7,
+      "name": "Happy_",
+      "race": "undead"
+    }
+  ],
+  "observer_slots": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "user_attribution": "Happy",
+  "professional_identity": "not_independently_confirmed_for_this_match",
+  "focus_slot": 7,
+  "focus_opening_ms": 180000,
+  "focus_undecoded_opening_blocks": 0,
+  "opening_build_orders": [
+    {
+      "seq": 1,
+      "timeslot_ms": 4800,
+      "code": "uaod",
+      "point": [
+        -3616,
+        -3552
+      ],
+      "player_block": 46,
+      "offset_in_decompressed_data": 5173,
+      "action_hex": "110400646f6175ffffffffffffffff000062c500005ec5",
+      "project_reference_point": [
+        -3616,
+        -3360
+      ],
+      "project_reference_timeslot_seconds": 7.819
+    },
+    {
+      "seq": 2,
+      "timeslot_ms": 8100,
+      "code": "uzig",
+      "point": [
+        -4256,
+        -3936
+      ],
+      "player_block": 80,
+      "offset_in_decompressed_data": 8106,
+      "action_hex": "11040067697a75ffffffffffffffff000085c5000076c5",
+      "project_reference_point": [
+        -4256,
+        -4064
+      ],
+      "project_reference_timeslot_seconds": 12.85
+    },
+    {
+      "seq": 3,
+      "timeslot_ms": 31320,
+      "code": "usep",
+      "point": [
+        -3456,
+        -4416
+      ],
+      "player_block": 355,
+      "offset_in_decompressed_data": 28748,
+      "action_hex": "11040070657375ffffffffffffffff000058c500008ac5",
+      "project_reference_point": [
+        -3328,
+        -4352
+      ],
+      "project_reference_timeslot_seconds": 33.382
+    },
+    {
+      "seq": 4,
+      "timeslot_ms": 55440,
+      "code": "utom",
+      "point": [
+        -4352,
+        -3648
+      ],
+      "player_block": 638,
+      "offset_in_decompressed_data": 51212,
+      "action_hex": "1104006d6f7475ffffffffffffffff000088c5000064c5",
+      "project_reference_point": [
+        -4416,
+        -3776
+      ],
+      "project_reference_timeslot_seconds": 57.647
+    },
+    {
+      "seq": 5,
+      "timeslot_ms": 73860,
+      "code": "ugrv",
+      "point": [
+        -4160,
+        -4416
+      ],
+      "player_block": 838,
+      "offset_in_decompressed_data": 67560,
+      "action_hex": "11040076726775ffffffffffffffff000082c500008ac5",
+      "project_reference_point": [
+        -3968,
+        -4416
+      ],
+      "project_reference_timeslot_seconds": 80.288
+    }
+  ],
+  "reference_fixture": "lr_sw_reference_opening.json",
+  "reference_replay_sha256": "6d220d73cfab0b94d8ce0eb62fc0ff2991b27df3f06e24a0ed73b486c190d89f",
+  "player_view_reconstructed": false,
+  "construction_verified": false,
+  "positive_demonstrations_approved": false,
+  "training_labels": 0
+}

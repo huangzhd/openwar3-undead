@@ -1,0 +1,319 @@
+{
+  "method": "verified_against_pinned_corpus_and_independent_sql_window_aggregation",
+  "episodes": [
+    {
+      "episode": "20261103-173848",
+      "trajectory_sha256": "f68d687072646df54e813eef2601ba3f9bb053272cbc0e6698474c4e23894c0c",
+      "corpus_sha256": "53900250febd10d161e2975a89b6c1a49190250a5678519c89d9da394a22945b",
+      "excluded_request_barriers": 1057,
+      "review": {
+        "barriers": "all_excluded_requests",
+        "behavior_quality": "unreviewed",
+        "clock_basis": "issue_observation_game_seconds",
+        "dataset_use": "diagnostic_only",
+        "interval_seconds_inclusive": 2,
+        "operations": {
+          "attack": {
+            "accepted_labels": 796,
+            "examples": [],
+            "max_distinct_units_in_tick": 16,
+            "multi_unit_ticks": 141,
+            "rapid_exact_reissues": 0,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 0,
+            "ticks": 220
+          },
+          "attack_move": {
+            "accepted_labels": 529,
+            "examples": [
+              {
+                "clock": 1224.955,
+                "previous_clock": 1223.175,
+                "previous_request": 5067,
+                "previous_tick": 940,
+                "request": 5085,
+                "tick": 941
+              },
+              {
+                "clock": 1224.955,
+                "previous_clock": 1223.175,
+                "previous_request": 5068,
+                "previous_tick": 940,
+                "request": 5086,
+                "tick": 941
+              },
+              {
+                "clock": 1230.4,
+                "previous_clock": 1228.55,
+                "previous_request": 5119,
+                "previous_tick": 942,
+                "request": 5139,
+                "tick": 943
+              }
+            ],
+            "max_distinct_units_in_tick": 17,
+            "multi_unit_ticks": 65,
+            "rapid_exact_reissues": 3,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 0,
+            "ticks": 81
+          },
+          "build": {
+            "accepted_labels": 9,
+            "examples": [],
+            "max_distinct_units_in_tick": 1,
+            "multi_unit_ticks": 0,
+            "rapid_exact_reissues": 0,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 0,
+            "ticks": 9
+          },
+          "cast_unit": {
+            "accepted_labels": 18,
+            "examples": [],
+            "max_distinct_units_in_tick": 1,
+            "multi_unit_ticks": 0,
+            "rapid_exact_reissues": 0,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 0,
+            "ticks": 18
+          },
+          "gather_gold": {
+            "accepted_labels": 19,
+            "examples": [],
+            "max_distinct_units_in_tick": 3,
+            "multi_unit_ticks": 1,
+            "rapid_exact_reissues": 0,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 0,
+            "ticks": 17
+          },
+          "hold": {
+            "accepted_labels": 528,
+            "examples": [
+              {
+                "clock": 648.98,
+                "previous_clock": 647.755,
+                "previous_request": 1650,
+                "previous_tick": 591,
+                "request": 1657,
+                "tick": 592
+              },
+              {
+                "clock": 1026.105,
+                "previous_clock": 1025.28,
+                "previous_request": 3892,
+                "previous_tick": 837,
+                "request": 3907,
+                "tick": 837
+              },
+              {
+                "clock": 1236.48,
+                "previous_clock": 1234.98,
+                "previous_request": 5164,
+                "previous_tick": 946,
+                "request": 5195,
+                "tick": 946
+              }
+            ],
+            "max_distinct_units_in_tick": 16,
+            "multi_unit_ticks": 84,
+            "rapid_exact_reissues": 8,
+            "rapid_exact_within_tick": 7,
+            "same_unit_extra_orders_in_tick": 26,
+            "ticks": 221
+          },
+          "learn_skill": {
+            "accepted_labels": 8,
+            "examples": [],
+            "max_distinct_units_in_tick": 1,
+            "multi_unit_ticks": 0,
+            "rapid_exact_reissues": 0,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 0,
+            "ticks": 8
+          },
+          "move": {
+            "accepted_labels": 2684,
+            "examples": [
+              {
+                "clock": 69.155,
+                "previous_clock": 67.505,
+                "previous_request": 18,
+                "previous_tick": 71,
+                "request": 19,
+                "tick": 73
+              },
+              {
+                "clock": 251.23,
+                "previous_clock": 249.43,
+                "previous_request": 156,
+                "previous_tick": 235,
+                "request": 158,
+                "tick": 237
+              },
+              {
+                "clock": 258.455,
+                "previous_clock": 256.53,
+                "previous_request": 162,
+                "previous_tick": 243,
+                "request": 164,
+                "tick": 245
+              }
+            ],
+            "max_distinct_units_in_tick": 18,
+            "multi_unit_ticks": 480,
+            "rapid_exact_reissues": 10,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 158,
+            "ticks": 692
+          },
+          "stop": {
+            "accepted_labels": 6,
+            "examples": [],
+            "max_distinct_units_in_tick": 1,
+            "multi_unit_ticks": 0,
+            "rapid_exact_reissues": 0,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 0,
+            "ticks": 6
+          },
+          "train": {
+            "accepted_labels": 23,
+            "examples": [],
+            "max_distinct_units_in_tick": 1,
+            "multi_unit_ticks": 0,
+            "rapid_exact_reissues": 0,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 0,
+            "ticks": 23
+          },
+          "upgrade_hall": {
+            "accepted_labels": 2,
+            "examples": [],
+            "max_distinct_units_in_tick": 1,
+            "multi_unit_ticks": 0,
+            "rapid_exact_reissues": 0,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 0,
+            "ticks": 2
+          }
+        },
+        "positive_demonstrations_approved": false,
+        "schema": "dayuan-rule-order-review-v1"
+      }
+    },
+    {
+      "episode": "20261103-173458",
+      "trajectory_sha256": "42f3f73efc480391fa323b0e9c11421c1c90e0c837a315706bc3e456c0b4c7b2",
+      "corpus_sha256": "c88ea77c3ea376d48a22f615d63f96fa2dfd3e2c7c00e6255bea818dcc4142ee",
+      "excluded_request_barriers": 26,
+      "review": {
+        "barriers": "all_excluded_requests",
+        "behavior_quality": "unreviewed",
+        "clock_basis": "issue_observation_game_seconds",
+        "dataset_use": "diagnostic_only",
+        "interval_seconds_inclusive": 2,
+        "operations": {
+          "build": {
+            "accepted_labels": 5,
+            "examples": [],
+            "max_distinct_units_in_tick": 1,
+            "multi_unit_ticks": 0,
+            "rapid_exact_reissues": 0,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 0,
+            "ticks": 5
+          },
+          "gather_gold": {
+            "accepted_labels": 11,
+            "examples": [],
+            "max_distinct_units_in_tick": 3,
+            "multi_unit_ticks": 1,
+            "rapid_exact_reissues": 0,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 0,
+            "ticks": 9
+          },
+          "learn_skill": {
+            "accepted_labels": 1,
+            "examples": [],
+            "max_distinct_units_in_tick": 1,
+            "multi_unit_ticks": 0,
+            "rapid_exact_reissues": 0,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 0,
+            "ticks": 1
+          },
+          "move": {
+            "accepted_labels": 164,
+            "examples": [
+              {
+                "clock": 67.43,
+                "previous_clock": 65.58,
+                "previous_request": 18,
+                "previous_tick": 68,
+                "request": 19,
+                "tick": 70
+              },
+              {
+                "clock": 147.93,
+                "previous_clock": 146.08,
+                "previous_request": 78,
+                "previous_tick": 128,
+                "request": 79,
+                "tick": 130
+              },
+              {
+                "clock": 229.955,
+                "previous_clock": 227.955,
+                "previous_request": 151,
+                "previous_tick": 205,
+                "request": 153,
+                "tick": 207
+              }
+            ],
+            "max_distinct_units_in_tick": 3,
+            "multi_unit_ticks": 19,
+            "rapid_exact_reissues": 4,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 0,
+            "ticks": 144
+          },
+          "stop": {
+            "accepted_labels": 1,
+            "examples": [],
+            "max_distinct_units_in_tick": 1,
+            "multi_unit_ticks": 0,
+            "rapid_exact_reissues": 0,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 0,
+            "ticks": 1
+          },
+          "train": {
+            "accepted_labels": 7,
+            "examples": [],
+            "max_distinct_units_in_tick": 1,
+            "multi_unit_ticks": 0,
+            "rapid_exact_reissues": 0,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 0,
+            "ticks": 7
+          },
+          "upgrade_hall": {
+            "accepted_labels": 1,
+            "examples": [],
+            "max_distinct_units_in_tick": 1,
+            "multi_unit_ticks": 0,
+            "rapid_exact_reissues": 0,
+            "rapid_exact_within_tick": 0,
+            "same_unit_extra_orders_in_tick": 0,
+            "ticks": 1
+          }
+        },
+        "positive_demonstrations_approved": false,
+        "schema": "dayuan-rule-order-review-v1"
+      }
+    }
+  ]
+}

@@ -1,0 +1,432 @@
+{
+  "schema": "dayuan-human-rule-opening-comparison-v1",
+  "use": "diagnostic_only",
+  "training_labels": 0,
+  "human_source": "happy-lr-series-20261103.json",
+  "human_clock": "accumulated W3G timeslots",
+  "bot_clock": "sampled game clock; time is not rebased to first observation",
+  "signed_distance": "below minimum is negative, inside is zero, above maximum is positive; descriptive only",
+  "human": [
+    {
+      "sha256": "f5123932751472494473df18c66f165cd2d02f058478adc0178f1c3be417ea7a",
+      "slot": 7,
+      "side": "SW",
+      "ms": {
+        "uaod": 4800,
+        "uzig": 8100,
+        "usep": 31320,
+        "utom": 55440,
+        "ugrv": 73860,
+        "Udea": 66900,
+        "AUdc": 126480,
+        "unp1": 162240,
+        "Ulic": 632040,
+        "unp2": 568560
+      }
+    },
+    {
+      "sha256": "ec9657fc1f8b1fc5e165daba8cc7233a834c65d71b04a6a2f018188c4e2b9149",
+      "slot": 3,
+      "side": "NE",
+      "ms": {
+        "uaod": 4300,
+        "uzig": 6800,
+        "usep": 31800,
+        "utom": 55000,
+        "ugrv": 74100,
+        "Udea": 66400,
+        "AUdc": 136100,
+        "unp1": 161100,
+        "Ulic": 302700,
+        "unp2": 361400
+      }
+    },
+    {
+      "sha256": "e08690855f03fdf4d3a961ff6400f74ae755996c3c7ca1a7873ad89f7dea4a92",
+      "slot": 3,
+      "side": "SW",
+      "ms": {
+        "uaod": 4620,
+        "uzig": 8400,
+        "usep": 31860,
+        "utom": 56580,
+        "ugrv": 74160,
+        "Udea": 66960,
+        "AUdc": 135420,
+        "unp1": 164340,
+        "Ulic": 310320,
+        "unp2": 367320
+      }
+    }
+  ],
+  "human_reference_ranges_ms": {
+    "all": {
+      "uaod": [
+        4300,
+        4800
+      ],
+      "uzig": [
+        6800,
+        8400
+      ],
+      "usep": [
+        31320,
+        31860
+      ],
+      "utom": [
+        55000,
+        56580
+      ],
+      "ugrv": [
+        73860,
+        74160
+      ],
+      "Udea": [
+        66400,
+        66960
+      ],
+      "AUdc": [
+        126480,
+        136100
+      ],
+      "unp1": [
+        161100,
+        164340
+      ],
+      "Ulic": [
+        302700,
+        632040
+      ],
+      "unp2": [
+        361400,
+        568560
+      ],
+      "altar_to_DK": [
+        62100,
+        62340
+      ]
+    },
+    "SW": {
+      "uaod": [
+        4620,
+        4800
+      ],
+      "uzig": [
+        8100,
+        8400
+      ],
+      "usep": [
+        31320,
+        31860
+      ],
+      "utom": [
+        55440,
+        56580
+      ],
+      "ugrv": [
+        73860,
+        74160
+      ],
+      "Udea": [
+        66900,
+        66960
+      ],
+      "AUdc": [
+        126480,
+        135420
+      ],
+      "unp1": [
+        162240,
+        164340
+      ],
+      "Ulic": [
+        310320,
+        632040
+      ],
+      "unp2": [
+        367320,
+        568560
+      ],
+      "altar_to_DK": [
+        62100,
+        62340
+      ]
+    }
+  },
+  "rule_episodes": [
+    {
+      "episode": "20261103-173848",
+      "map_sha256": "649c355b5d9d0c184154464c0b4a8f5d2bb9dc9fef49c75938ce065c481b36c9",
+      "opponent": "kfai-human",
+      "home": [
+        -3904.0,
+        -3968.0
+      ],
+      "first_observation_ms": 6480,
+      "first_tick_ms": 7180,
+      "last_observation_ms": 1281080,
+      "trajectory_sha256": "f68d687072646df54e813eef2601ba3f9bb053272cbc0e6698474c4e23894c0c",
+      "events_sha256": "965ac12fa8879892aa01d576ab11d8920831504cda98affcf40fbd501bbba078",
+      "orders": {
+        "uaod": {
+          "diagnostic_event": "home_build_order_pending",
+          "event_clock_ms": 7180,
+          "actor_request": {
+            "request": 6,
+            "issue_observation_ms": 7655,
+            "op": "build"
+          },
+          "comparison_ms": 7655,
+          "basis": "accepted_native_request_issue_observation"
+        },
+        "uzig": {
+          "diagnostic_event": "home_build_order_pending",
+          "event_clock_ms": 14155,
+          "actor_request": {
+            "request": 8,
+            "issue_observation_ms": 14430,
+            "op": "build"
+          },
+          "comparison_ms": 14430,
+          "basis": "accepted_native_request_issue_observation"
+        },
+        "usep": {
+          "diagnostic_event": "home_build_order_pending",
+          "event_clock_ms": 38005,
+          "actor_request": {
+            "request": 12,
+            "issue_observation_ms": 38005,
+            "op": "build"
+          },
+          "comparison_ms": 38005,
+          "basis": "accepted_native_request_issue_observation"
+        },
+        "utom": {
+          "diagnostic_event": "home_build_order_pending",
+          "event_clock_ms": 62655,
+          "actor_request": {
+            "request": 16,
+            "issue_observation_ms": 62655,
+            "op": "build"
+          },
+          "comparison_ms": 62655,
+          "basis": "accepted_native_request_issue_observation"
+        },
+        "ugrv": {
+          "diagnostic_event": "home_build_order_pending",
+          "event_clock_ms": 83530,
+          "actor_request": {
+            "request": 30,
+            "issue_observation_ms": 83530,
+            "op": "build"
+          },
+          "comparison_ms": 83530,
+          "basis": "accepted_native_request_issue_observation"
+        },
+        "Udea": {
+          "diagnostic_event": "purchase",
+          "event_clock_ms": 73630,
+          "actor_request": null,
+          "comparison_ms": 73630,
+          "basis": "purchase_event_clock_only"
+        },
+        "AUdc": {
+          "diagnostic_event": "hero_skill_learn_attempt",
+          "event_clock_ms": 129330,
+          "actor_request": {
+            "request": 62,
+            "issue_observation_ms": 129780,
+            "op": "learn_skill"
+          },
+          "comparison_ms": 129780,
+          "basis": "accepted_native_request_issue_observation"
+        },
+        "unp1": {
+          "diagnostic_event": "purchase",
+          "event_clock_ms": 162505,
+          "actor_request": {
+            "request": 87,
+            "issue_observation_ms": 162505,
+            "op": "upgrade_hall"
+          },
+          "comparison_ms": 162505,
+          "basis": "accepted_native_request_issue_observation"
+        },
+        "Ulic": {
+          "diagnostic_event": "purchase",
+          "event_clock_ms": 304730,
+          "actor_request": null,
+          "comparison_ms": 304730,
+          "basis": "purchase_event_clock_only"
+        },
+        "unp2": {
+          "diagnostic_event": "purchase",
+          "event_clock_ms": 303260,
+          "actor_request": {
+            "request": 217,
+            "issue_observation_ms": 303555,
+            "op": "upgrade_hall"
+          },
+          "comparison_ms": 303555,
+          "basis": "accepted_native_request_issue_observation"
+        }
+      },
+      "altar_to_DK_ms": 65975,
+      "signed_ms_outside_reference": {
+        "all": {
+          "uaod": 2855,
+          "uzig": 6030,
+          "usep": 6145,
+          "utom": 6075,
+          "ugrv": 9370,
+          "Udea": 6670,
+          "AUdc": 0,
+          "unp1": 0,
+          "Ulic": 0,
+          "unp2": -57845,
+          "altar_to_DK": 3635
+        },
+        "SW": {
+          "uaod": 2855,
+          "uzig": 6030,
+          "usep": 6145,
+          "utom": 6075,
+          "ugrv": 9370,
+          "Udea": 6670,
+          "AUdc": 0,
+          "unp1": 0,
+          "Ulic": -5590,
+          "unp2": -63765,
+          "altar_to_DK": 3635
+        }
+      }
+    },
+    {
+      "episode": "20261103-173458",
+      "map_sha256": "649c355b5d9d0c184154464c0b4a8f5d2bb9dc9fef49c75938ce065c481b36c9",
+      "opponent": "kfai-human",
+      "home": [
+        -3904.0,
+        -3968.0
+      ],
+      "first_observation_ms": 6280,
+      "first_tick_ms": 6805,
+      "last_observation_ms": 299730,
+      "trajectory_sha256": "42f3f73efc480391fa323b0e9c11421c1c90e0c837a315706bc3e456c0b4c7b2",
+      "events_sha256": "4041b14bbce0c7055b1265791ad96bdb589410e182668354fd3deb83f9b62901",
+      "orders": {
+        "uaod": {
+          "diagnostic_event": "home_build_order_pending",
+          "event_clock_ms": 6805,
+          "actor_request": {
+            "request": 6,
+            "issue_observation_ms": 7230,
+            "op": "build"
+          },
+          "comparison_ms": 7230,
+          "basis": "accepted_native_request_issue_observation"
+        },
+        "uzig": {
+          "diagnostic_event": "home_build_order_pending",
+          "event_clock_ms": 12555,
+          "actor_request": {
+            "request": 7,
+            "issue_observation_ms": 12555,
+            "op": "build"
+          },
+          "comparison_ms": 12555,
+          "basis": "accepted_native_request_issue_observation"
+        },
+        "usep": {
+          "diagnostic_event": "home_build_order_pending",
+          "event_clock_ms": 37640,
+          "actor_request": {
+            "request": 12,
+            "issue_observation_ms": 37640,
+            "op": "build"
+          },
+          "comparison_ms": 37640,
+          "basis": "accepted_native_request_issue_observation"
+        },
+        "utom": {
+          "diagnostic_event": "home_build_order_pending",
+          "event_clock_ms": 61905,
+          "actor_request": {
+            "request": 16,
+            "issue_observation_ms": 61905,
+            "op": "build"
+          },
+          "comparison_ms": 61905,
+          "basis": "accepted_native_request_issue_observation"
+        },
+        "ugrv": {
+          "diagnostic_event": "home_build_order_pending",
+          "event_clock_ms": 83230,
+          "actor_request": {
+            "request": 33,
+            "issue_observation_ms": 83230,
+            "op": "build"
+          },
+          "comparison_ms": 83230,
+          "basis": "accepted_native_request_issue_observation"
+        },
+        "Udea": {
+          "diagnostic_event": "purchase",
+          "event_clock_ms": 72855,
+          "actor_request": null,
+          "comparison_ms": 72855,
+          "basis": "purchase_event_clock_only"
+        },
+        "AUdc": {
+          "diagnostic_event": "hero_skill_learn_attempt",
+          "event_clock_ms": 128580,
+          "actor_request": {
+            "request": 61,
+            "issue_observation_ms": 128880,
+            "op": "learn_skill"
+          },
+          "comparison_ms": 128880,
+          "basis": "accepted_native_request_issue_observation"
+        },
+        "unp1": {
+          "diagnostic_event": "purchase",
+          "event_clock_ms": 162780,
+          "actor_request": {
+            "request": 89,
+            "issue_observation_ms": 162780,
+            "op": "upgrade_hall"
+          },
+          "comparison_ms": 162780,
+          "basis": "accepted_native_request_issue_observation"
+        },
+        "Ulic": null,
+        "unp2": null
+      },
+      "altar_to_DK_ms": 65625,
+      "signed_ms_outside_reference": {
+        "all": {
+          "uaod": 2430,
+          "uzig": 4155,
+          "usep": 5780,
+          "utom": 5325,
+          "ugrv": 9070,
+          "Udea": 5895,
+          "AUdc": 0,
+          "unp1": 0,
+          "altar_to_DK": 3285
+        },
+        "SW": {
+          "uaod": 2430,
+          "uzig": 4155,
+          "usep": 5780,
+          "utom": 5325,
+          "ugrv": 9070,
+          "Udea": 5895,
+          "AUdc": 0,
+          "unp1": 0,
+          "altar_to_DK": 3285
+        }
+      }
+    }
+  ]
+}

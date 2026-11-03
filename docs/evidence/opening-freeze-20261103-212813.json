@@ -1,0 +1,223 @@
+{
+  "run": "20261103-212813",
+  "game_seconds": 198.0,
+  "termination": {
+    "schema": "dayuan-outcome-v1",
+    "classification": "process_exit",
+    "outcome": "aborted",
+    "reason": "human_game_closed",
+    "terminated": false,
+    "truncated": true,
+    "reward": null
+  },
+  "speed": 400,
+  "map_sha256": "649c355b5d9d0c184154464c0b4a8f5d2bb9dc9fef49c75938ce065c481b36c9",
+  "source_manifest_sha256": "56aa67444ddb0c11314f7ecc8af7f117b7bd4aeca79f50232b56eefc50569aeb",
+  "source_audit": {
+    "files": 114,
+    "mismatches": [],
+    "frozen_mismatches": [],
+    "dependency_mismatches": [],
+    "source_unchanged": true,
+    "session_closed": true,
+    "active_processes": [],
+    "errors": [],
+    "training_actor_approved": false
+  },
+  "shop_order": [
+    {
+      "event": "reference_order",
+      "code": "utom",
+      "target_ms": 55440,
+      "clock": 60.63,
+      "after": 60.63,
+      "accepted": true
+    }
+  ],
+  "shop_builder": {
+    "event": "home_build_order_pending",
+    "clock": 60.63,
+    "code": "utom",
+    "point": [
+      -4416,
+      -3776
+    ],
+    "worker": [
+      17386,
+      28301
+    ]
+  },
+  "shop_foundation": [
+    {
+      "event": "home_foundation_observed",
+      "clock": 61.775,
+      "code": "utom",
+      "point": [
+        -4416.0,
+        -3776.0
+      ],
+      "handle": [
+        12307,
+        28449
+      ]
+    }
+  ],
+  "scout": {
+    "event": "scout_assigned",
+    "clock": 62.7,
+    "handle": [
+      17386,
+      28301
+    ],
+    "shop_foundation": true,
+    "reserved_builders": []
+  },
+  "kill": [
+    {
+      "event": "scout_corpse_observed",
+      "clock": 84.125,
+      "handle": [
+        14694,
+        14694
+      ],
+      "point": [
+        -932.72900390625,
+        -3848.124267578125
+      ],
+      "source": "fair_killed_event",
+      "killer": [
+        17386,
+        28301
+      ]
+    }
+  ],
+  "inventory": [
+    {
+      "event": "item_confirmed",
+      "hero": "Udea",
+      "code": "rnec",
+      "clock": 127.73
+    }
+  ],
+  "opening_casts": [
+    {
+      "event": "opening_rod_attempt",
+      "clock": 138.575,
+      "point": [
+        -932.72900390625,
+        -3848.124267578125
+      ],
+      "accepted": false,
+      "attempt": 1,
+      "hero": [
+        12318,
+        37166
+      ],
+      "slot": 1,
+      "mode": "immediate",
+      "corpse_handle": [
+        14694,
+        14694
+      ],
+      "seconds_since_death": 54.44999999999999,
+      "hero_distance": 165.4916687142251,
+      "visible_target_before_use": null,
+      "receipt": {
+        "native_status": 1,
+        "verdict": null,
+        "engine_return": 0,
+        "order_before": 851986,
+        "order_after": 0
+      }
+    },
+    {
+      "event": "opening_rod_attempt",
+      "clock": 142.425,
+      "point": [
+        -932.72900390625,
+        -3848.124267578125
+      ],
+      "accepted": false,
+      "attempt": 2,
+      "hero": [
+        12318,
+        37166
+      ],
+      "slot": 1,
+      "mode": "immediate",
+      "corpse_handle": [
+        14694,
+        14694
+      ],
+      "seconds_since_death": 58.30000000000001,
+      "hero_distance": 10.618385241767855,
+      "visible_target_before_use": null,
+      "receipt": {
+        "native_status": 1,
+        "verdict": null,
+        "engine_return": 0,
+        "order_before": 0,
+        "order_after": 0
+      }
+    },
+    {
+      "event": "opening_rod_attempt",
+      "clock": 145.525,
+      "point": [
+        -932.72900390625,
+        -3848.124267578125
+      ],
+      "accepted": false,
+      "attempt": 3,
+      "hero": [
+        12318,
+        37166
+      ],
+      "slot": 1,
+      "mode": "immediate",
+      "corpse_handle": [
+        14694,
+        14694
+      ],
+      "seconds_since_death": 61.400000000000006,
+      "hero_distance": 10.618385241767855,
+      "visible_target_before_use": null,
+      "receipt": {
+        "native_status": 1,
+        "verdict": null,
+        "engine_return": 0,
+        "order_before": 0,
+        "order_after": 0
+      }
+    }
+  ],
+  "graveyard_casts": [
+    {
+      "event": "opening_graveyard_rod_attempt",
+      "clock": 175.155,
+      "point": [
+        -3968.0,
+        -4416.0
+      ],
+      "accepted": false,
+      "attempt": 1,
+      "reason": "rejected",
+      "ready_at": 160.145,
+      "corpse_cycle": 15.0
+    },
+    {
+      "event": "opening_graveyard_rod_attempt",
+      "clock": 190.225,
+      "point": [
+        -3968.0,
+        -4416.0
+      ],
+      "accepted": false,
+      "attempt": 2,
+      "reason": "rejected",
+      "ready_at": 160.145,
+      "corpse_cycle": 15.0
+    }
+  ],
+  "skeleton_handles_observed": []
+}

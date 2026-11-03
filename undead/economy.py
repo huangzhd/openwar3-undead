@@ -4,8 +4,10 @@ from .expansion import Expansion
 from .building_repair import BuildingRepair
 from .hall_rebuild import HallRebuild
 from .home_layout import HomeLayout
+from .replay_opening import fixed_slot,HAPPY_SECOND_ACOLYTE_MS
 
 HALLS={'unpl','unp1','unp2'}
+OPENING_BUILDERS={'uaod':3,'uzig':3,'usep':5,'utom':6}
 
 class Economy:
     def __init__(self, log, third_hero="Nbrn"):
@@ -45,6 +47,8 @@ class Economy:
         self.repairs=BuildingRepair(log)
         self.hall_rebuild=HallRebuild(log)
         self.home_layout=HomeLayout(log)
+        self.altar_worker=None
+        self.opening_workers=None
         self.slaughter_missing_since=None
         self.mass_army=False
         self.bank_item_reserve=0
@@ -53,6 +57,8 @@ class Economy:
         self.upkeep_threat=False
         self.upkeep_log_at=-100
         self.home_handle=None
+        self.acolyte_rally=None
+        self.opening_queue_tried=False
         self.revival_state=None
         self.revival_retry=None
         self.revival_attempts=0
@@ -65,13 +71,17 @@ class Economy:
             self.opening_milestones.add(stage)
             self.log('opening_observed',clock=now,stage=stage)
 
+    def building_ready(self,g,b):
+        p=g.production(b)
+        # A new foundation can briefly publish full HP before its construction record.
+        if (not self.opening_complete and b.handle in self.home_layout.new_foundations) or (p and p.kind=='construction'):
+            self.complete.discard(b.handle)
+        elif b.hp_max>0 and b.hp>=b.hp_max*.999:
+            self.complete.add(b.handle)
+        return b.handle in self.complete
+
     def ready(self,g,code):
-        buildings=g.my_buildings({code})
-        for b in buildings:
-            p=g.production(b)
-            if b.hp >= b.hp_max*.999 and (not p or p.kind!='construction'):
-                self.complete.add(b.handle)
-        return [b for b in buildings if b.handle in self.complete]
+        return [b for b in g.my_buildings({code}) if self.building_ready(g,b)]
 
     def queued(self,g,code):
         return sum(p.queue.count(code) for _,p in g.all_production('me') if p.kind=='queue')
@@ -119,17 +129,31 @@ class Economy:
                 self.upkeep_log_at=now
                 self.log('upkeep_bank_wait',clock=now,gold=res['gold'],food=res['food_used'],blocked=code,target_gold=400)
             return False
-        if g.production(b) or now-self.last_attempt.get((b.handle,code),-100)<2:
-            return False
+        if now-self.last_attempt.get((b.handle,code),-100)<2:return False
+        production=g.production(b)
+        if production:
+            # Queue the fifth worker behind the fourth only after the initial
+            # two buildings have foundations. Do not queue other purchases.
+            if not (not self.opening_queue_tried and code=='uaco' and b.type=='unpl' and self.home_layout.opening_profile
+                    and (b.x,b.y) in HAPPY_SECOND_ACOLYTE_MS and now*1000>=HAPPY_SECOND_ACOLYTE_MS[(b.x,b.y)]-400
+                    and production.kind=='queue' and list(production.queue)==['uaco']
+                    and len(g.units('me',{'uaco'}))==3 and res['gold']>=75
+                    and g.my_buildings({'uaod'}) and g.my_buildings({'uzig'})):return False
+            self.opening_queue_tried=True
+        timed=code=='Udea' and self.home_layout.opening_profile and code not in self.home_layout.opening_issued
+        if timed and not self.home_layout.opening_due(code,now):return False
         self.last_attempt[(b.handle,code)]=now
         verdict=g.can_do(b,code)
         if verdict not in (0,220):
             return False
-        r=g.train(b,code)
-        self.log('purchase',clock=now,kind='train',code=code,accepted=bool(r),reason=r.reason)
+        r=self.home_layout.opening_order(g,code,lambda:g.train(b,code)) if timed else g.train(b,code)
+        self.log('purchase',clock=now,kind='train',code=code,accepted=bool(r),reason=getattr(r,'reason',None))
         return bool(r)
 
     def build(self,g,code,home,now):
+        profile=self.home_layout.opening_profile
+        if profile and code in profile and code not in self.home_layout.opening_issued and not self.home_layout.opening_due(code,now):
+            return False
         if (code=='uzig' and len(g.my_buildings({'uzig','uzg1','uzg2'}))>=4
                 and self.third_hero not in self.ever_heroes
                 and g.resources()['food_cap']-g.resources()['food_used']>=5):return False
@@ -142,14 +166,31 @@ class Economy:
         if not g.can_afford(code) or now-self.last_build<1:
             return False
         ws=[w for w in g.units('me',{'uaco'}) if w.handle != self.scout and w.handle not in self.home_layout.reserved and w.handle not in self.expansion.reserved and w.handle not in self.repairs.reserved and not g.is_constructing(w)]
+        if self.opening_workers and code in OPENING_BUILDERS and code not in self.home_layout.opening_foundations:
+            ordinal=OPENING_BUILDERS[code]
+            if len(self.opening_workers)<ordinal:return False
+            ws=[w for w in ws if w.handle==self.opening_workers[ordinal-1]]
+        if self.opening_workers and code=='ugrv' and code not in self.home_layout.opening_foundations:
+            ws=[w for w in ws if w.handle in self.opening_workers[:5] and g.dist(home,w)<1500]
         if not ws:
             return False
         # Prefer a released/idle worker over pulling another miner away.
-        ws.sort(key=lambda w:(bool(g.order_of(w)),hypot(w.x-home.x,w.y-home.y)))
+        if profile and code in profile and code not in self.home_layout.opening_issued:
+            x,y=fixed_slot(self.home_layout.map_alias,home,code,g.my_buildings()) or profile[code][1]
+            ws.sort(key=lambda w:(code in ('uaod','uzig') and w.handle!=self.altar_worker,hypot(w.x-x,w.y-y)))
+        else:ws.sort(key=lambda w:(bool(g.order_of(w)),hypot(w.x-home.x,w.y-home.y)))
         self.last_build=now
         spot=self.home_layout.build(g,ws[0],code,home,now)
         if spot:
             self.log('purchase',clock=now,kind='build',code=code,spot=spot)
+            if self.opening_workers and code in ('uzig','usep') and code not in self.home_layout.opening_foundations:
+                # These builders return to mining. Append once to the accepted
+                # build order, preserving both the summon and the scout's route.
+                mine=g.nearest([m for m in g.gold_mines() if m.type=='ugol' and m.owner==g.me()],home)
+                if mine:
+                    receipt=g.gather(ws[0],mine,queue='after')
+                    self.log('opening_return_queued',clock=now,code=code,worker=ws[0].handle,
+                             mine=mine.handle,accepted=bool(receipt))
         return bool(spot)
 
     def assign_scout(self,g,workers,now):
@@ -158,8 +199,13 @@ class Economy:
         if not self.opening_complete and not g.my_buildings({'utom'}):return
         reserved=self.home_layout.reserved|self.expansion.reserved|self.repairs.reserved|self.ghoul_reserved
         available=[w for w in workers if w.handle not in reserved and not g.is_constructing(w)]
-        if len(available)<6:return # Retain five free workers, in addition to builders.
-        worker=min(available,key=lambda w:(bool(g.order_of(w)),-workers.index(w)))
+        if self.opening_workers:
+            if len(self.opening_workers)<6:return
+            worker=next((w for w in available if w.handle==self.opening_workers[5]),None)
+            if worker is None:return
+        else:
+            if len(available)<6:return
+            worker=min(available,key=lambda w:(bool(g.order_of(w)),-workers.index(w)))
         self.scout=worker.handle
         self.log('scout_assigned',clock=now,handle=self.scout,shop_foundation=bool(g.my_buildings({'utom'})),
                  reserved_builders=list(reserved))
@@ -176,17 +222,32 @@ class Economy:
         if self.home_layout.observe(g,now):
             self.last_build=now
             return
-        if not self.opening_started:
+        first_tick=not self.opening_started
+        if first_tick:
             self.opening_started=True
             self.opening_complete=home.type in {"unp1","unp2"}
             self.opening_rod_allowed=True
         for b in g.my_buildings():
-            p=g.production(b)
-            if b.hp >= b.hp_max*.999 and (not p or p.kind!='construction'):
-                self.complete.add(b.handle)
+            self.building_ready(g,b)
         for h in g.my_heroes():
             self.ever_heroes.add(h.type)
         workers=g.units('me',{'uaco'})
+        profile=self.home_layout.opening_profile
+        if (profile and not threat and self.altar_worker is None and not g.my_buildings({'uaod'})
+                and (first_tick or now*1000<profile['uzig'][0]) and workers):
+            x,y=fixed_slot(self.home_layout.map_alias,home,'uaod',[]) or profile['uaod'][1]
+            worker=min(workers,key=lambda w:hypot(w.x-x,w.y-y))
+            self.altar_worker=worker.handle
+            if now*1000<profile['uaod'][0]-400:g.move(worker,x,y)
+        if first_tick and profile and len(workers)==3 and self.altar_worker is not None:
+            self.opening_workers=[w.handle for w in workers if w.handle!=self.altar_worker]+[self.altar_worker]
+        elif self.opening_workers:
+            handles={w.handle for w in workers}
+            new=handles.difference(self.opening_workers)
+            if self.opening_complete or not set(self.opening_workers)<=handles or len(new)>1:
+                # A loss or an ambiguous late observation must not renumber the workers.
+                self.opening_workers=None
+            elif len(self.opening_workers)<6 and new:self.opening_workers.extend(new)
         self.expansion.observe(g)
         self.expansion.upkeep(g,home,now)
         repair_critical=self.repairs.tick(g,self,home,now)
@@ -199,7 +260,31 @@ class Economy:
         if need_scout and self.scout is None and not self.expansion.retired_scout and len(workers)>=6:
             self.assign_scout(g,workers,now)
         mine=g.nearest([m for m in g.gold_mines() if m.type=='ugol' and m.owner==g.me()],home)
+        # Use the unit target so newborn Acolytes inherit the mine interaction.
+        # Wait until training is underway; first-worker mining and the initial
+        # production order should not wait on an extra command.
+        next_build={4:'usep',5:'utom'}.get(len(self.opening_workers)) if self.opening_workers else None
+        rally_point=fixed_slot(self.home_layout.map_alias,home,next_build,[]) if next_build else None
+        rally_key=(home.handle,next_build if rally_point else mine.handle) if mine else None
+        if mine and self.acolyte_rally!=rally_key and hasattr(g,'rally') and g.dist(home,mine)<1500:
+            production=g.production(home)
+            restore=self.acolyte_rally and self.acolyte_rally[1] in ('usep','utom') and not rally_point
+            if restore or production and production.kind=='queue' and 'uaco' in production.queue:
+                self.acolyte_rally=rally_key
+                if rally_point:
+                    receipt=g.rally(home,*rally_point)
+                    self.log('acolyte_build_rally',clock=now,hall=home.handle,code=next_build,point=rally_point,accepted=bool(receipt))
+                else:
+                    receipt=g.rally(home,target=mine)
+                    self.log('acolyte_mine_rally',clock=now,hall=home.handle,mine=mine.handle,
+                             accepted=bool(receipt),reason=getattr(receipt,'reason',None))
         for w in g.idle_workers():
+            if self.opening_workers:
+                if w.handle==self.altar_worker and 'uzig' not in self.home_layout.opening_foundations:continue
+                if w.handle in self.opening_workers[4:5] and 'usep' not in self.home_layout.opening_foundations:continue
+                if w.handle in self.opening_workers[5:6]:continue
+            if (profile and w.handle==self.altar_worker and not threat
+                    and now*1000<profile['uzig'][0]+1000 and 'uzig' not in self.home_layout.opening_issued):continue
             if mine and w.handle!=self.scout and w.handle not in self.home_layout.reserved and w.handle not in self.ghoul_reserved and w.handle not in self.expansion.reserved and w.handle not in self.repairs.reserved:
                 g.gather(w,mine)
         trees=None
@@ -261,14 +346,14 @@ class Economy:
         if self.research_web(g,now):
             return
         for code in ('uaod','uzig'):
-            if not g.my_buildings({code}):
+            if not g.my_buildings({code}) and not (self.home_layout.opening_profile and code in self.home_layout.pending):
                 self.build(g,code,home,now)
                 return
-        if not g.my_buildings({'usep'}):
+        if not g.my_buildings({'usep'}) and not (self.opening_workers and 'usep' in self.home_layout.pending):
             self.build(g,'usep',home,now)
             return
-        if need_scout and self.scout is None and not self.expansion.retired_scout and self.count(g,'uaco')<6 and self.train(g,home,'uaco',now):
-            return
+        if (need_scout and self.scout is None and not self.expansion.retired_scout and self.count(g,'uaco')<6
+                and self.train(g,home,'uaco',now)):return
         crypts=self.ready(g,'usep')
         hp=g.production(home)
         upgrading=hp is not None and hp.kind=='upgrade'
@@ -284,7 +369,7 @@ class Economy:
                 if self.count(g,'ugho')<3:
                     self.train(g,crypts[0],'ugho',now)
                     return
-            if not g.my_buildings({'utom'}):
+            if not g.my_buildings({'utom'}) and not (self.opening_workers and 'utom' in self.home_layout.pending):
                 self.build(g,'utom',home,now)
                 return
             if not g.my_buildings({'ugrv'}):

@@ -1,0 +1,81 @@
+{
+  "run": "20261103-164202",
+  "scope": "single_LR_SW_first_death_knight",
+  "policy": "external_primitives",
+  "map_sha256": "649c355b5d9d0c184154464c0b4a8f5d2bb9dc9fef49c75938ce065c481b36c9",
+  "source_manifest_sha256": "7ff8e0a8d961003d8d442e2e95c8f508b1c82c27fb15282e53ad5b75cc2da0aa",
+  "speed": 400,
+  "action_schema": "dayuan-primitive-action-v3",
+  "source_files": 105,
+  "dependencies": 73,
+  "source_unchanged": true,
+  "cleanup_confirmed": true,
+  "active_processes": [],
+  "game_seconds": 127.73,
+  "probe_wall_seconds": 54.219,
+  "termination": {
+    "schema": "dayuan-outcome-v1",
+    "classification": "user_abort",
+    "outcome": "aborted",
+    "reason": "environment_close",
+    "terminated": false,
+    "truncated": true,
+    "reward": null
+  },
+  "observations": 213,
+  "primitive_requests": 141,
+  "native_requests": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "all_native_requests_linked": true,
+  "p1_native_paused": true,
+  "rule_decisions": 0,
+  "altar_site": [
+    -3616.0,
+    -3360.0
+  ],
+  "altar_foundation_first_observed": 11.98,
+  "altar_full_hp_first_observed": 72.305,
+  "hero_request_decision_clock": 72.305,
+  "hero_queue_first_observed": 73.205,
+  "hero_first_observed": 127.73,
+  "hero_type": "Udea",
+  "hero_level": 1,
+  "hero_hp": 675.0,
+  "hero_handle": [
+    16660,
+    35467
+  ],
+  "model_roundtrip_count": 4,
+  "model_export": {
+    "status": "export_integrity_verified",
+    "episodes": 1,
+    "transitions": 4,
+    "provenance_groups": 1,
+    "model_tensors": true,
+    "source_authenticity_verified": false,
+    "training_actor_approved": false
+  },
+  "review_files": [
+    "combat-review.json",
+    "core-strategy-review.json",
+    "dk-review.json",
+    "equipment-review.json",
+    "hero-rules-review.json",
+    "map-review.json",
+    "opening-timing-review.json",
+    "stability-review.json"
+  ],
+  "hashes": {
+    "hero-production-live-20261103\\probe.py": "668394ea7d5c04a88084ddfb5069479f817e448a30d729cfaec965fe0cc07e2a",
+    "hero-production-live-20261103\\probe-result.json": "1773a738d52ea943295a43b8d00226ec082b1b6af9d4b748319a99d5302cda90",
+    "hero-production-live-20261103\\export\\index.json": "8a0cfb1338e28141107a54030de09a2f4e4bb2fdc71e4e845e779f3701297f1a",
+    "20261103-164202\\trajectory.jsonl": "e53e438d854001ed3845c2ec9889d5d5e38b7588000c4d2015435e8414ff95c2",
+    "20261103-164202\\primitive-actions.jsonl": "1806679ec81ddd8dd49ff0a991b33ca9d75dd6c2427b8a696d308a20579d6697",
+    "20261103-164202\\result.json": "dca449120cad375f47ca5b8469b1e7ae580618222d6fe46ceaa62376af1e2247",
+    "20261103-164202\\source-audit.json": "2eb4ca100abb60d408c41697b6c19c4168e012768ce45efa14973771980ce856"
+  }
+}

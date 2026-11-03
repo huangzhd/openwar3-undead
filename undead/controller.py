@@ -1,6 +1,7 @@
 """Tech-fiend controller: macro and semantic unit commands, no desktop input."""
 from math import hypot,cos,sin,pi,atan2
 from .economy import Economy,HALLS
+from .replay_opening import HAPPY_LR
 from .battle_shop import BattleShop
 from .army_recovery import ArmyRecovery
 from .home_defense import HomeDefense
@@ -473,6 +474,16 @@ class Controller(BattleTacticsMixin):
                     self.black_arrow_effects.add(e.handle)
                     self.log('black_arrow_effect_observed',clock=now,target=e.type,handle=e.handle)
         expansion=self.memory.expansions(self.enemy_main,now)
+        lr_human=self.enemy_race==1 and self.creeping.map_alias=='LR'
+        worker_target=None
+        if lr_human:
+            expansion=[site for site in expansion if not self.memory.guarded(site,now)]
+            if dk and self.enemy_main and dk.hp>=dk.hp_max*.65:
+                workers=[e for e in foes if e.type=='hpea' and g.dist(e,dk)<1600
+                         and g.dist(e,self.home)>1800 and not self.memory.guarded(e,now)
+                         and not any(f.type!='hpea' and not is_structure(f)
+                                     and g.dist(f,e)<850 for f in foes)]
+                worker_target=min(workers,key=lambda e:g.dist(e,dk),default=None)
         corpse_safe=self.safe_al_corpse_approach(dk,hostiles,now)
         self.situation=Situation(now,min((h.hp/h.hp_max for h in heroes),default=1),bool(raid),bool(expansion),
             sum(e.hp for e in hostiles if not is_structure(e) and e.type not in {'hpea','opeo','uaco','ewsp'} and (g.dist(e,center)<1000 or e in self.player_contact)
@@ -482,6 +493,10 @@ class Controller(BattleTacticsMixin):
         self.situation.base_enemy_hp=sum(e.hp for e in raid if not is_structure(e) and e.type not in {'hpea','opeo','uaco','ewsp'})
         self.situation.third_hero=self.third_hero_ready(heroes,center)
         self.situation.dk=bool(dk and dk.hp>0)
+        if lr_human:
+            self.situation.exposed_worker=worker_target is not None
+            objective=self.memory.scouted_human_objective(center,now,self.situation.army_hp)
+            self.situation.scouted_attack_target=self.attack_committed or objective is not None
         self.situation.supplies_ready=bool(not self.first_attack_all_in or self.first_attack_supply.done or self.first_attack_supply.ready(self) or self.attack_committed)
         self.situation.pre_attack_camp_pending=self.creeping.prepare_ch_center(g,local_army,self.home,now,
             self.situation.orb,self.attack_committed)
@@ -490,9 +505,13 @@ class Controller(BattleTacticsMixin):
         self.situation.pre_attack_camp_pending |= self.creeping.prepare_th_route(self.home,now,self.attack_committed)
         self.situation.pre_attack_camp_pending |= self.creeping.prepare_al_route(self.home,now,self.attack_committed)
         self.situation.continuous_creeping=self.creeping.route_continuous(self.home)
-        if not self.attack_committed and attack_ready(self.situation):
+        if not self.attack_committed and attack_ready(self.situation) and (not lr_human or choose_rule(self.situation)==Action.ATTACK):
             self.attack_committed=True
-            self.log('attack_phase_started',clock=now,reason='tier_three_orb_three_heroes_confirmed')
+            if lr_human:
+                self.attack_target=objective.handle
+                self.scouted_assault_site=objective.handle
+            self.log('attack_phase_started',clock=now,reason='scouted_human_base_and_ready_army' if lr_human
+                     else 'tier_three_orb_three_heroes_confirmed',target=self.attack_target if lr_human else None)
         self.situation.attack_committed=self.attack_committed
         if any(g.dist(e,center)<1200 for e in hostiles) and self.due('combat_state',now,2):
             self.log('combat_state',clock=now,center=center,
@@ -528,7 +547,12 @@ class Controller(BattleTacticsMixin):
         self.economy.save_for_trade=bool(self.army_recovery.reserve or self.battle_shop.pending or (self.battle_shop.rod and not self.battle_shop.rod['returning']) or not raid and choose_rule(self.situation)!=Action.RETREAT and (self.battle_shop.orb_reserve(g) or hire_ready))
         self.economy.bank_item_reserve=sum(job[3] for job in self.bank_supply_jobs(now))+self.first_attack_supply.reserve(self,tier)
         if self.ni_rod_stop.mission and not self.ni_rod_stop.mission["returning"]:self.economy.bank_item_reserve+=150
-        if self.due('economy',now,.8):
+        layout=self.economy.home_layout
+        if not self.economy.opening_started:
+            layout.opening_profile=HAPPY_LR.get((self.home.x,self.home.y)) if lr_human else None
+            if layout.opening_profile:
+                self.log('reference_opening',clock=now,home=(self.home.x,self.home.y))
+        if self.due('economy',now,.2 if layout.opening_profile and now<76 else .8):
             self.economy.home_layout.map_alias=self.creeping.map_alias
             self.economy.expansion.camps=[c for c in self.creeping.catalog if c['kind']=='expansion' and c['id'] in self.creeping.cleared]
             self.economy.expansion.safe_route=lambda start,end:self.creeping.safe_route(g,start,end)
@@ -542,7 +566,17 @@ class Controller(BattleTacticsMixin):
             self.requested=Action(forced) if forced is not None else rule
             self.action=rule if safety else self.requested
             if self.action==Action.ATTACK and not attack_ready(self.situation):self.action=Action.CREEP
+            # The scout acts independently of the army. This is the bounded
+            # pre-attack army menu; specific creep targets are ranked later.
+            options=[]
+            if rule in (Action.CREEP,Action.HARASS) and not safety and not self.situation.continuous_creeping:
+                options.append('CREEP')
+                if dk and (expansion or worker_target) and not self.creeping.al_route_stage(self.home):
+                    options.append('HARASS')
             self.log('decision',clock=now,requested=self.requested.name,actual=self.action.name,
+                selection_source='rule' if forced is None else 'external_override',
+                pre_attack_army_options=options,creep_targets_available=self.situation.creep_targets_available,
+                exposed_worker=bool(worker_target),scouted_attack_target=self.situation.scouted_attack_target,
                 expansion=bool(expansion),fiends=len(fiends),tier=tier,heroes=[(h.type,h.level,round(h.hp)) for h in heroes],
                 safety_interrupt=urgent,base_enemy_hp=self.situation.base_enemy_hp,
                 local_enemy_hp=self.situation.local_enemy_hp,army_hp=self.situation.army_hp,
@@ -730,16 +764,24 @@ class Controller(BattleTacticsMixin):
             self.fight(healthy,[e for e in foes+g.creeps() if g.dist(e,center)<650],now)
             return
         if not (self.creeping.route_continuous(self.home) and (self.creeping.active or self.creeping.map_alias=='AL')) and self.escort_tavern(healthy,hostiles,now,tier):return
-        if self.action==Action.HARASS and expansion and dk:
-            target=min(expansion,key=lambda e:g.dist(e,dk))
+        if self.action==Action.HARASS and (expansion or worker_target) and dk:
+            target=worker_target or min(expansion,key=lambda e:g.dist(e,dk))
             towers=[e for e in foes if is_structure(e) and e.type in {'hgtw','hctw','hatw'} and g.dist(e,target)<850]
             if len(towers)>=2:
                 self.action=Action.CREEP
                 self.log('harass_aborted',reason='defended_expansion',clock=now)
             else:
-                self.set_intent("骚扰敌方分矿")
+                self.set_intent("骚扰暴露的农民" if worker_target else "骚扰敌方分矿")
                 raiders=healthy
                 peasants=[e for e in foes if e.type in {'hpea','hmil'} and g.dist(e,target)<1000]
+                key=(target.handle,tuple(u.handle for u in raiders))
+                last_key,last_clock=getattr(self,'last_harass_dispatch',(None,now))
+                if last_key!=key or now-last_clock>=5:
+                    self.last_harass_dispatch=(key,now)
+                    self.log('harass_dispatch',clock=now,target=target.handle,point=(target.x,target.y),
+                             squad=[u.handle for u in raiders],candidate_scope='scouted_economy_targets_before_final_tower_check',
+                             candidates=[dict(target=v.handle,point=(v.x,v.y),last_seen=getattr(v,'at',now))
+                                         for v in ([worker_target] if worker_target else [])+list(expansion)])
                 self.go(raiders,(target.x,target.y),now,attack=True)
                 self.fight(raiders,peasants,now)
                 return
@@ -1057,6 +1099,11 @@ class Controller(BattleTacticsMixin):
         expansion=self.known_expansion(center)
         if expansion is not None:
             preferred=[expansion];self.attacking_main=False
+        if self.attack_target is not None and self.attack_target==getattr(self,'scouted_assault_site',None):
+            scouted=next((e for e in buildings if e.handle==self.attack_target),None)
+            if scouted is not None:
+                preferred=[scouted]
+                if expansion is not None and expansion.handle!=scouted.handle:expansion=None
         # Keep an observed structure until it is removed by fair evidence.
         # New foundations and a moving army must not flip the destination each tick.
         target=next((e for e in preferred if e.handle==self.attack_target),None)
@@ -1550,11 +1597,15 @@ class Controller(BattleTacticsMixin):
         if not scout:
             return
         if scout.handle in self.economy.home_layout.reserved:return
-        def move(point):
+        critter_guard=None
+        def move(point,critter_trip=False):
             th_search=bool(now<150 and self.scout_corpse is None and self.creeping.th_route(self.home)
                            and not self.critter_search.reported)
-            target=self.start_search.safe_step(g,scout,point,now,
-                        **({'public_layout':False,'step_limit':None} if th_search else {}))
+            if critter_trip and critter_guard is not None:
+                target=self.start_search.safe_step(g,scout,point,now,step_limit=None,critter_guard=critter_guard)
+            else:
+                target=self.start_search.safe_step(g,scout,point,now,
+                            **({'public_layout':False,'step_limit':None} if th_search else {}))
             # In TH's short opening task, follow actual terrain turns toward
             # the selected region, without 350-unit stop points or speculative
             # detours around unseen camps. Visible/remembered threats remain.
@@ -1583,16 +1634,30 @@ class Controller(BattleTacticsMixin):
             return
         # Enemy start is public map geometry. Mine locations enter this list only after observation.
         if now<150 and self.scout_corpse is None:
+            guards=None
+            if self.start_search.camps:
+                visible=self.start_search.neutrals(g)
+                attackers={u.handle for u in visible if g.dist(u,scout)<1600 and hasattr(g,'current_target')
+                           and (target:=g.current_target(u)) is not None and target.handle==scout.handle}
+                def critter_guard(unit):
+                    return unit.handle in attackers or self.start_search.expansion_guard(g,unit,self.creeping.drop_camps)
+                guards=[u for u in visible if critter_guard(u)]
             route=self.creeping.th_route(self.home)
             if route and self.critter_search.camp_focus is None:
                 camp=next(c for c in self.creeping.catalog if c['id']==route[0])
                 self.critter_search.focus_camp(camp,now)
-            target=self.critter_search.target(g,scout,self.home,now,safe_route=lambda a,b:self.creeping.safe_route(g,a,b))
+            target=self.critter_search.target(g,scout,self.home,now,safe_route=lambda a,b:self.creeping.safe_route(g,a,b),guards=guards)
             if target is not None:
                 if target.handle!=self.scout_critter:
                     self.scout_critter=target.handle
                     self.log('scout_critter_target',clock=now,handle=target.handle,point=(target.x,target.y))
                 self.scout_critter_point=(target.x,target.y);self.scout_critter_seen=now
+                if critter_guard is not None:
+                    destination=(target.x,target.y)
+                    approach=self.start_search.safe_step(g,scout,destination,now,step_limit=None,critter_guard=critter_guard)
+                    if g.dist(approach,destination)>1:
+                        self.go([scout],approach,now)
+                        return
                 if self.critter_search.camp_focus or self.critter_search.reference_active(self.home):
                     distance=g.dist(scout,target)
                     # Once visible, issue an actual attack at any safe reachable
@@ -1606,11 +1671,11 @@ class Controller(BattleTacticsMixin):
                 else:self.fight([scout],[target],now)
                 return
             if self.scout_critter_point and self.scout_critter not in self.critter_search.hunt_failed and now-self.scout_critter_seen<6:
-                move(self.scout_critter_point)
+                move(self.scout_critter_point,critter_trip=True)
             else:
                 point=self.critter_search.choose(g,scout,self.home,now,safe_route=lambda a,b:self.creeping.safe_route(g,a,b))
                 if point is not None:
-                    move(point)
+                    move(point,critter_trip=True)
                     return
                 if not self.critter_search.reported:
                     move((self.home.x,self.home.y))
@@ -1628,6 +1693,9 @@ class Controller(BattleTacticsMixin):
         if not targets:
             move((self.home.x,self.home.y));return
         idx=int(now//25)%len(targets)
+        if self.due('scout_enemy_dispatch_trace',now,5):
+            self.log('scout_enemy_dispatch',clock=now,scout=scout.handle,point=targets[idx],
+                     candidate_scope='remembered_sites_after_guard_check',candidates=[dict(point=p) for p in targets])
         move(targets[idx])
 
     def observe_race(self,foes,now):
@@ -2815,9 +2883,18 @@ class Controller(BattleTacticsMixin):
         if g.dist(dk,point)>(600 if self.creeping.map_alias=='AL' else 400):
             self.go(army,point,now)
         elif now-self.opening_rod_at>=3 and self.opening_rod_attempts<3 and g.cooldown(dk,'AIrd')==0:
+            from learning.actions import receipt_diagnostics
+            slot=inv.index('rnec')
+            seen=g.unit(corpse['handle'])
+            observed=None
+            if seen is not None and seen.visible_to(g.me()):
+                observed=dict(code=seen.type,alive=seen.alive,hp=seen.hp,point=(seen.x,seen.y))
             self.opening_rod_at=now;self.opening_rod_attempts+=1
-            accepted=bool(self.use_rod(dk,inv.index('rnec'),now))
-            self.log('opening_rod_attempt',clock=now,point=point,accepted=accepted,attempt=self.opening_rod_attempts)
+            result=self.use_rod(dk,slot,now)
+            self.log('opening_rod_attempt',clock=now,point=point,accepted=bool(result),attempt=self.opening_rod_attempts,
+                     hero=dk.handle,slot=slot,mode='immediate',corpse_handle=corpse['handle'],
+                     seconds_since_death=now-corpse['clock'],hero_distance=g.dist(dk,point),
+                     visible_target_before_use=observed,receipt=receipt_diagnostics(result))
         return True
 
     def creep(self,army,center,now):

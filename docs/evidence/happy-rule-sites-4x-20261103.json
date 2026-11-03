@@ -1,0 +1,595 @@
+{
+  "scope": "LR southwest vs KFAI human; 400 percent throughout; five rule-template sites and same-side Happy first order times",
+  "maps": {
+    "local_same_filename_as_second_replay": {
+      "name": "(2)LastRefuge-1.3.w3x",
+      "sha256": "67c05cfdf0220d6bc71f80caa9f4e4f538160877cc59c29c847ebe09adffaff8",
+      "members": {
+        "war3map.w3e": "b726f9183eb3185a44de9c6c9a07bd11a57ce0decf5aa8d70bae9209999484fa",
+        "war3map.wpm": "b5181512b4c8f974720c933aa1e73ff206ae192530bb431bc2e04ae1ad24d75e",
+        "war3map.doo": "7ccb5b8d7905ca133d54351c146ae8768a28d38e98037f642b2f0f44dbc464ba",
+        "war3mapUnits.doo": "a34fda0c518891d935598d863595c4da51cfeac9fb65398c6ef9b3947d028fb9"
+      }
+    },
+    "test_map": {
+      "name": "LR-kfai-observer-649c355b5d9d0c18.w3x",
+      "sha256": "649c355b5d9d0c184154464c0b4a8f5d2bb9dc9fef49c75938ce065c481b36c9",
+      "members": {
+        "war3map.w3e": "f79863f459a791ecb1447527842e39826078213fb0325a7f932df3e04e0bc93a",
+        "war3map.wpm": "c0bcaa752b7f2ed87061d5c80e3810b355b27ef9f1db8757105d78ad9ecc8bfc",
+        "war3map.doo": "958c50f45ccfcacda771899ff14047c6edb616af773de02476f8189685c11b47",
+        "war3mapUnits.doo": "0b6f2b84159aea5a1f708a7419064923507474e647ed0db7fab98f218c2e3b23"
+      }
+    }
+  },
+  "trials": [
+    {
+      "run": "20261103-191444",
+      "speed": 400,
+      "side": [
+        -3904.0,
+        -3968.0
+      ],
+      "game_limit_result": {
+        "run": "20261103-191444",
+        "outcome": "timeout",
+        "reason": "game_time_limit",
+        "clock": 100.355,
+        "remaining": []
+      },
+      "first_observation": 5.18,
+      "trajectory_sha256": "56ca4c593f052e5525c5ccb70ec639cfa3d709580ee92b6bfa536ad92f49bf32",
+      "source_unchanged": true,
+      "source_files": 113,
+      "cleanup_confirmed": true,
+      "native_accepted": {
+        "uaod": {
+          "batch_id": 6,
+          "clock_ms": 6255,
+          "point": [
+            -3616.0,
+            -3360.0
+          ],
+          "request_to_next_observation_delta_ms": [
+            1455,
+            1730
+          ]
+        },
+        "uzig": {
+          "batch_id": 7,
+          "clock_ms": 7905,
+          "point": [
+            -4256.0,
+            -4064.0
+          ],
+          "request_to_next_observation_delta_ms": [
+            -195,
+            5
+          ]
+        },
+        "usep": {
+          "batch_id": 13,
+          "clock_ms": 36750,
+          "point": [
+            -3328.0,
+            -4352.0
+          ],
+          "request_to_next_observation_delta_ms": [
+            5610,
+            5885
+          ]
+        },
+        "utom": {
+          "batch_id": 16,
+          "clock_ms": 60380,
+          "point": [
+            -4416.0,
+            -3776.0
+          ],
+          "request_to_next_observation_delta_ms": [
+            4940,
+            5840
+          ]
+        },
+        "Udea": {
+          "batch_id": 23,
+          "clock_ms": 71180,
+          "point": null,
+          "request_to_next_observation_delta_ms": [
+            4280,
+            4480
+          ]
+        },
+        "ugrv": {
+          "batch_id": 33,
+          "clock_ms": 82005,
+          "point": [
+            -3968.0,
+            -4416.0
+          ],
+          "request_to_next_observation_delta_ms": [
+            8145,
+            8645
+          ]
+        }
+      },
+      "review": {
+        "tolerance_ms": 1000,
+        "basis": "game_clock_samples_around_accepted_command",
+        "orders": {
+          "uaod": {
+            "target_ms": 4800,
+            "reference_point": [
+              -3616,
+              -3552
+            ],
+            "issued_point": [
+              -3616,
+              -3360
+            ],
+            "signed_window_ms": [
+              1455,
+              1455
+            ],
+            "within_one_second": false
+          },
+          "uzig": {
+            "target_ms": 8100,
+            "reference_point": [
+              -4256,
+              -3936
+            ],
+            "issued_point": [
+              -4256,
+              -4064
+            ],
+            "signed_window_ms": [
+              -195,
+              5
+            ],
+            "within_one_second": true
+          },
+          "usep": {
+            "target_ms": 31320,
+            "reference_point": [
+              -3456,
+              -4416
+            ],
+            "issued_point": [
+              -3328,
+              -4352
+            ],
+            "signed_window_ms": [
+              5430,
+              5430
+            ],
+            "within_one_second": false,
+            "first_frame_at_or_after_target": [
+              31.33,
+              150,
+              70
+            ]
+          },
+          "utom": {
+            "target_ms": 55440,
+            "reference_point": [
+              -4352,
+              -3648
+            ],
+            "issued_point": [
+              -4416,
+              -3776
+            ],
+            "signed_window_ms": [
+              4940,
+              4940
+            ],
+            "within_one_second": false,
+            "first_frame_at_or_after_target": [
+              56.23,
+              95,
+              60
+            ]
+          },
+          "Udea": {
+            "target_ms": 66900,
+            "reference_point": null,
+            "issued_point": null,
+            "signed_window_ms": [
+              4280,
+              4280
+            ],
+            "within_one_second": false
+          },
+          "ugrv": {
+            "target_ms": 73860,
+            "reference_point": [
+              -4160,
+              -4416
+            ],
+            "issued_point": [
+              -3968,
+              -4416
+            ],
+            "signed_window_ms": [
+              8145,
+              8145
+            ],
+            "within_one_second": false,
+            "first_frame_at_or_after_target": [
+              74.155,
+              135,
+              50
+            ]
+          }
+        },
+        "all_within_one_second": false
+      },
+      "speed_history": [
+        {
+          "clock": 5.38,
+          "percent": 400
+        }
+      ],
+      "first_economy_tick": 5.83,
+      "acolyte_orders": [
+        5.83,
+        21.38,
+        48.03
+      ],
+      "first_six_acolytes_observed": 63.555,
+      "scout_assigned": 63.555,
+      "first_five_foundations": {
+        "uaod": {
+          "event": "home_foundation_observed",
+          "clock": 11.755,
+          "code": "uaod",
+          "point": [
+            -3616.0,
+            -3360.0
+          ],
+          "handle": [
+            14051,
+            22308
+          ]
+        },
+        "uzig": {
+          "event": "home_foundation_observed",
+          "clock": 9.305,
+          "code": "uzig",
+          "point": [
+            -4256.0,
+            -4064.0
+          ],
+          "handle": [
+            16753,
+            22057
+          ]
+        },
+        "usep": {
+          "event": "home_foundation_observed",
+          "clock": 41.08,
+          "code": "usep",
+          "point": [
+            -3328.0,
+            -4352.0
+          ],
+          "handle": [
+            11661,
+            26084
+          ]
+        },
+        "utom": {
+          "event": "home_foundation_observed",
+          "clock": 62.655,
+          "code": "utom",
+          "point": [
+            -4416.0,
+            -3776.0
+          ],
+          "handle": [
+            17832,
+            28505
+          ]
+        },
+        "ugrv": {
+          "event": "home_foundation_observed",
+          "clock": 85.005,
+          "code": "ugrv",
+          "point": [
+            -3968.0,
+            -4416.0
+          ],
+          "handle": [
+            17184,
+            31350
+          ]
+        }
+      }
+    },
+    {
+      "run": "20261103-191744",
+      "speed": 400,
+      "side": [
+        -3904.0,
+        -3968.0
+      ],
+      "game_limit_result": {
+        "run": "20261103-191744",
+        "outcome": "timeout",
+        "reason": "game_time_limit",
+        "clock": 100.3,
+        "remaining": []
+      },
+      "first_observation": 3.105,
+      "trajectory_sha256": "327640f355241d5e7af7d2d059d8cbad4d5a2b4a614a77107544de92bb118515",
+      "source_unchanged": true,
+      "source_files": 113,
+      "cleanup_confirmed": true,
+      "native_accepted": {
+        "uaod": {
+          "batch_id": 6,
+          "clock_ms": 5030,
+          "point": [
+            -3616.0,
+            -3360.0
+          ],
+          "request_to_next_observation_delta_ms": [
+            230,
+            480
+          ]
+        },
+        "uzig": {
+          "batch_id": 7,
+          "clock_ms": 8250,
+          "point": [
+            -4256.0,
+            -4064.0
+          ],
+          "request_to_next_observation_delta_ms": [
+            150,
+            375
+          ]
+        },
+        "usep": {
+          "batch_id": 12,
+          "clock_ms": 34175,
+          "point": [
+            -3328.0,
+            -4352.0
+          ],
+          "request_to_next_observation_delta_ms": [
+            2855,
+            3110
+          ]
+        },
+        "utom": {
+          "batch_id": 16,
+          "clock_ms": 57880,
+          "point": [
+            -4416.0,
+            -3776.0
+          ],
+          "request_to_next_observation_delta_ms": [
+            2440,
+            2615
+          ]
+        },
+        "Udea": {
+          "batch_id": 26,
+          "clock_ms": 68650,
+          "point": null,
+          "request_to_next_observation_delta_ms": [
+            1750,
+            2025
+          ]
+        },
+        "ugrv": {
+          "batch_id": 37,
+          "clock_ms": 80200,
+          "point": [
+            -3968.0,
+            -4416.0
+          ],
+          "request_to_next_observation_delta_ms": [
+            6340,
+            6740
+          ]
+        }
+      },
+      "review": {
+        "tolerance_ms": 1000,
+        "basis": "game_clock_samples_around_accepted_command",
+        "orders": {
+          "uaod": {
+            "target_ms": 4800,
+            "reference_point": [
+              -3616,
+              -3552
+            ],
+            "issued_point": [
+              -3616,
+              -3360
+            ],
+            "signed_window_ms": [
+              230,
+              230
+            ],
+            "within_one_second": true
+          },
+          "uzig": {
+            "target_ms": 8100,
+            "reference_point": [
+              -4256,
+              -3936
+            ],
+            "issued_point": [
+              -4256,
+              -4064
+            ],
+            "signed_window_ms": [
+              150,
+              150
+            ],
+            "within_one_second": true
+          },
+          "usep": {
+            "target_ms": 31320,
+            "reference_point": [
+              -3456,
+              -4416
+            ],
+            "issued_point": [
+              -3328,
+              -4352
+            ],
+            "signed_window_ms": [
+              2855,
+              3110
+            ],
+            "within_one_second": false,
+            "first_frame_at_or_after_target": [
+              31.825,
+              180,
+              70
+            ]
+          },
+          "utom": {
+            "target_ms": 55440,
+            "reference_point": [
+              -4352,
+              -3648
+            ],
+            "issued_point": [
+              -4416,
+              -3776
+            ],
+            "signed_window_ms": [
+              2440,
+              2440
+            ],
+            "within_one_second": false,
+            "first_frame_at_or_after_target": [
+              55.655,
+              105,
+              60
+            ]
+          },
+          "Udea": {
+            "target_ms": 66900,
+            "reference_point": null,
+            "issued_point": null,
+            "signed_window_ms": [
+              1750,
+              1750
+            ],
+            "within_one_second": false
+          },
+          "ugrv": {
+            "target_ms": 73860,
+            "reference_point": [
+              -4160,
+              -4416
+            ],
+            "issued_point": [
+              -3968,
+              -4416
+            ],
+            "signed_window_ms": [
+              6340,
+              6540
+            ],
+            "within_one_second": false,
+            "first_frame_at_or_after_target": [
+              74.275,
+              155,
+              50
+            ]
+          }
+        },
+        "all_within_one_second": false
+      },
+      "speed_history": [
+        {
+          "clock": 3.105,
+          "percent": 400
+        }
+      ],
+      "first_economy_tick": 3.68,
+      "acolyte_orders": [
+        3.68,
+        19.3,
+        45.8
+      ],
+      "first_six_acolytes_observed": 61.155,
+      "scout_assigned": 61.155,
+      "first_five_foundations": {
+        "uaod": {
+          "event": "home_foundation_observed",
+          "clock": 8.475,
+          "code": "uaod",
+          "point": [
+            -3616.0,
+            -3360.0
+          ],
+          "handle": [
+            16689,
+            21976
+          ]
+        },
+        "uzig": {
+          "event": "home_foundation_observed",
+          "clock": 9.58,
+          "code": "uzig",
+          "point": [
+            -4256.0,
+            -4064.0
+          ],
+          "handle": [
+            14055,
+            22104
+          ]
+        },
+        "usep": {
+          "event": "home_foundation_observed",
+          "clock": 39.275,
+          "code": "usep",
+          "point": [
+            -3328.0,
+            -4352.0
+          ],
+          "handle": [
+            18003,
+            25972
+          ]
+        },
+        "utom": {
+          "event": "home_foundation_observed",
+          "clock": 59.955,
+          "code": "utom",
+          "point": [
+            -4416.0,
+            -3776.0
+          ],
+          "handle": [
+            14457,
+            28127
+          ]
+        },
+        "ugrv": {
+          "event": "home_foundation_observed",
+          "clock": 82.875,
+          "code": "ugrv",
+          "point": [
+            -3968.0,
+            -4416.0
+          ],
+          "handle": [
+            17060,
+            31094
+          ]
+        }
+      }
+    }
+  ]
+}

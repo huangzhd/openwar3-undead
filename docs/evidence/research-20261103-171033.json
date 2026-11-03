@@ -1,0 +1,113 @@
+{
+  "run": "20261103-171033",
+  "policy": "external_primitives",
+  "map_sha256": "649c355b5d9d0c184154464c0b4a8f5d2bb9dc9fef49c75938ce065c481b36c9",
+  "source_manifest_sha256": "8da86c7ae22cc2c3834e4ce7cd860e4184071d0f43387a18afc7ae7ad700f6cf",
+  "game_seconds": 456.53,
+  "wall": 142.53200000000652,
+  "source_files": 108,
+  "dependencies": 76,
+  "cleanup_confirmed": true,
+  "source_unchanged": true,
+  "termination": {
+    "schema": "dayuan-outcome-v1",
+    "classification": "user_abort",
+    "outcome": "aborted",
+    "reason": "environment_close",
+    "terminated": false,
+    "truncated": true,
+    "reward": null
+  },
+  "review_exit_codes": {
+    "review_map_pool": 0,
+    "review_combat": 0,
+    "review_equipment": 0,
+    "review_dk": 0,
+    "review_hero_rules": 0,
+    "review_stability": 0
+  },
+  "error": null,
+  "observations": 747,
+  "steps": 529,
+  "native_requests": 8,
+  "native_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "rule_decisions": 0,
+  "research": [
+    {
+      "code": "Rura",
+      "level": 1,
+      "source": [
+        13343,
+        21900
+      ],
+      "previous": {
+        "level": 0,
+        "clock": 89.28
+      },
+      "requested": 90.23,
+      "accepted": true,
+      "queued": 91.13,
+      "done": 152.295
+    },
+    {
+      "code": "Rura",
+      "level": 2,
+      "source": [
+        13343,
+        21900
+      ],
+      "previous": {
+        "level": 1,
+        "clock": 345.905
+      },
+      "requested": 346.855,
+      "accepted": true,
+      "queued": 347.48,
+      "done": 423.4
+    },
+    {
+      "code": "Ruwb",
+      "level": 1,
+      "source": [
+        17977,
+        22386
+      ],
+      "previous": {
+        "level": 0,
+        "clock": 424.4
+      },
+      "requested": 425.255,
+      "accepted": true,
+      "queued": 426.0,
+      "done": 456.53
+    }
+  ],
+  "export": {
+    "status": "export_integrity_verified",
+    "episodes": 1,
+    "transitions": 21,
+    "provenance_groups": 1,
+    "model_tensors": true,
+    "source_authenticity_verified": false,
+    "training_actor_approved": false
+  },
+  "model_roundtrip_count": 21,
+  "sha256": {
+    "result.json": "88fc608f5c2d9df71112c23178bad9468c49396466fcee388615d8a480afc874",
+    "source-audit.json": "a31faf30ec8657a3720eef09412b379909371deb8c3564be2a710082c4c48b74",
+    "probe.py": "56e979c7efb978d11f862a017abcc09449cf79a1c63fb06eb5a99d0f0e09abca",
+    "probe-result.json": "16a5115f42e9ea3075acb03b123ca9621bda6d0437282bef5a7ce1b16482181e",
+    "review.py": "dd771d439ba1c768905810055071057a5c60b82bfcd30b17ce0f62e7a6b35bc3",
+    "primitive-actions.jsonl": "e067b6a73b5ac90cecd56e6b4600b6eba1a4122a9cf950b1bd685306a73c50cb",
+    "trajectory.jsonl": "6e4929f18dda593421db101a202164f540910a3c845fad0fe2efdb06b3f80495"
+  }
+}

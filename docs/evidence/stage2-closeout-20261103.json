@@ -1,0 +1,169 @@
+{
+  "schema": "dayuan-stage2-closeout-v1",
+  "checked_at": "2026-11-03T18:26:49+08:00",
+  "deadline_epoch": 1793701800,
+  "stage2_status": "partial",
+  "approved_training_demonstrations": 0,
+  "human_reference_originals": [
+    {
+      "file": "LookAround_vs_Happy__w3arena__lastrefuge__v3_126.w3g",
+      "sha256": "f5123932751472494473df18c66f165cd2d02f058478adc0178f1c3be417ea7a",
+      "local_copy": "artifacts\\replay-intake-20261103\\user-happy-lr.w3g",
+      "slot": 7
+    },
+    {
+      "file": "Happy__vs_LookAround_(2)LastRefuge-1.3_126.w3g",
+      "sha256": "ec9657fc1f8b1fc5e165daba8cc7233a834c65d71b04a6a2f018188c4e2b9149",
+      "local_copy": "artifacts\\replay-intake-20261103\\user-happy-lr-second.w3g",
+      "slot": 3
+    },
+    {
+      "file": "u2.chaemiko_vs_Happy__w3arena__lastrefuge__v3_126.w3g",
+      "sha256": "e08690855f03fdf4d3a961ff6400f74ae755996c3c7ca1a7873ad89f7dea4a92",
+      "local_copy": "artifacts\\replay-intake-20261103\\user-happy-lr-third.w3g",
+      "slot": 3
+    }
+  ],
+  "retained_evidence_sha256": {
+    "frost-armor-20261103.json": "edb8504aba4805e4bfe21e2be9c1f7078289492355a2fff0d88f27d0bd252f55",
+    "hall-upgrade-20261103-170058.json": "f03c5393f8026e319454563ac84995bb18d12ea3e1ac9e2398802fa67de2b9f1",
+    "hall-upgrade-20261103-170350.json": "99752623619a2d236b89d69d2ade2313e499e5728559afa130438b3843e0e24f",
+    "happy-lr-20261103.json": "0855fef71266a8e51174538933942281de67887422714bbefb42e37b2af60280",
+    "happy-lr-progression-20261103.json": "8d0c7d1d80050ecc58a9de323c44b25a18a6c13f359d54dc65dacdabf503c923",
+    "happy-lr-second-20261103.json": "e3def39d62cc195890f6d634a3321e8f081307bc1570ca6c520328327b257dca",
+    "happy-lr-series-20261103.json": "f35a02eb52463f3815dfeb4d55c286efafc244c98e3e74d7d35a51cebd7ab584",
+    "happy-lr-third-20261103.json": "fa2cc51839d557bb8330d4e9cdbe9465f487fab0f0197105e76b54133c518141",
+    "happy-rule-opening-comparison-20261103.json": "b484b49fb1475ea725eb225fc76996abd0f9dbaa52bb28eab9058f1149d681e5",
+    "hero-production-20261103.json": "954d7c87597ea5d7b7d6ec716142b51df27226563c94eb2c4268784e43d7eb62",
+    "item-purchase-20261103-171756.json": "6f304399b7e4d49546b01198dbf18b3e2bc7cf2e944174ceb9e2f11b17c4a923",
+    "item-purchase-20261103-172015.json": "30a900ea676708e172d9d2e5137c2d8cd0403d7fa1d5fb6415e52f43bfabbf08",
+    "item-use-20261103-172534.json": "f87a6af978c6dcfeb8296f5b2f4e11acbf03d9dbf3674d178fa5e3923a42b0fa",
+    "replay-intake-20261103.json": "ef497711ffc6eb78387beb0c433e13dcdd011ff03f28d5f3a29b139d13f0192d",
+    "replay-opening-orders-20261103.json": "fb966e69c04d022e79c32b7ecc8f527a2ad5c386e525f93a652738137c67934e",
+    "replay-opening-review-20261103.json": "1034d1b9612b7d781a37b613d29c9041d4a45005ab6ef3b9161e0fb90441443a",
+    "research-20261103-171033.json": "d1d07fadebce4ce81e522c89acce00036e7bd30bae40b7e190d971c8b09eeef1",
+    "rule-corpus-20261103.json": "5de180252a6b8380defadaf6c72f14aeeab93cc5896e0165d3ec7c52a877b2e3",
+    "rule-order-review-20261103.json": "d90f7b45a5442d47f4ef62c96e3c159008dcf15ea46cf75b1dbc424953daa9bf",
+    "skill-learning-20261103.json": "a144f0ef9ca094db652142dd1c6cdc1931afcef6c80daa6a5b3278e635a0c897",
+    "teacher-20261103-173458.json": "fee5b9e0c2dd8f4133b43ce7186cb196c17d4ada07c779ce92f4b320f75dc6b2",
+    "teacher-20261103-173848.json": "7589935964d8dcd8843c2518c0ee27cd1b319a9a0467c17978f3af2d98349004"
+  },
+  "tests": [
+    {
+      "suite": "Python",
+      "passed": 2174,
+      "log": "artifacts\\teacher-holdout-live-20261103\\order-review-full.log",
+      "sha256": "4de0b5e4f5e549f721d9607879717aa407257ab16553d04ec035a2cec4c89d1f"
+    },
+    {
+      "suite": "Node replay intake",
+      "passed": 12,
+      "log": "artifacts\\replay-intake-20261103\\happy-progression-tests.log",
+      "sha256": "4c56bc45248abbcc6e92dff32bb578e19bc3a3f459cf347817d147f92a03d3a1"
+    }
+  ],
+  "session_audits": [
+    {
+      "episode": "20261103-164202",
+      "source_audit_sha256": "2eb4ca100abb60d408c41697b6c19c4168e012768ce45efa14973771980ce856",
+      "frozen_files": 105,
+      "trajectory_present": true,
+      "closed": true
+    },
+    {
+      "episode": "20261103-164804",
+      "source_audit_sha256": "5cf1776e6ae9c8eb8228ca3060457dfca71f7b522d4cea8804d5745d5a0842fc",
+      "frozen_files": 106,
+      "trajectory_present": true,
+      "closed": true
+    },
+    {
+      "episode": "20261103-164950",
+      "source_audit_sha256": "5cf1776e6ae9c8eb8228ca3060457dfca71f7b522d4cea8804d5745d5a0842fc",
+      "frozen_files": 106,
+      "trajectory_present": true,
+      "closed": true
+    },
+    {
+      "episode": "20261103-165408",
+      "source_audit_sha256": "eaddb82d880dc2f2fe1a62e25a8b37f26366aaa68c275aeb01399ac64e219f30",
+      "frozen_files": 107,
+      "trajectory_present": false,
+      "closed": true
+    },
+    {
+      "episode": "20261103-165647",
+      "source_audit_sha256": "eaddb82d880dc2f2fe1a62e25a8b37f26366aaa68c275aeb01399ac64e219f30",
+      "frozen_files": 107,
+      "trajectory_present": true,
+      "closed": true
+    },
+    {
+      "episode": "20261103-170058",
+      "source_audit_sha256": "eaddb82d880dc2f2fe1a62e25a8b37f26366aaa68c275aeb01399ac64e219f30",
+      "frozen_files": 107,
+      "trajectory_present": true,
+      "closed": true
+    },
+    {
+      "episode": "20261103-170350",
+      "source_audit_sha256": "eaddb82d880dc2f2fe1a62e25a8b37f26366aaa68c275aeb01399ac64e219f30",
+      "frozen_files": 107,
+      "trajectory_present": true,
+      "closed": true
+    },
+    {
+      "episode": "20261103-171033",
+      "source_audit_sha256": "a31faf30ec8657a3720eef09412b379909371deb8c3564be2a710082c4c48b74",
+      "frozen_files": 108,
+      "trajectory_present": true,
+      "closed": true
+    },
+    {
+      "episode": "20261103-171756",
+      "source_audit_sha256": "d94d525e2cfdcada6dfd823e16aa35d690c21a57524b78cce0f0081ed897848e",
+      "frozen_files": 109,
+      "trajectory_present": true,
+      "closed": true
+    },
+    {
+      "episode": "20261103-172015",
+      "source_audit_sha256": "d94d525e2cfdcada6dfd823e16aa35d690c21a57524b78cce0f0081ed897848e",
+      "frozen_files": 109,
+      "trajectory_present": true,
+      "closed": true
+    },
+    {
+      "episode": "20261103-172534",
+      "source_audit_sha256": "d94d525e2cfdcada6dfd823e16aa35d690c21a57524b78cce0f0081ed897848e",
+      "frozen_files": 109,
+      "trajectory_present": true,
+      "closed": true
+    },
+    {
+      "episode": "20261103-173458",
+      "source_audit_sha256": "d747a443a76a5e57d35b2250bc610e09920f928e88e6759de11f352042850c76",
+      "frozen_files": 111,
+      "trajectory_present": true,
+      "closed": true
+    },
+    {
+      "episode": "20261103-173848",
+      "source_audit_sha256": "d747a443a76a5e57d35b2250bc610e09920f928e88e6759de11f352042850c76",
+      "frozen_files": 111,
+      "trajectory_present": true,
+      "closed": true
+    }
+  ],
+  "retained_failures": {
+    "164804": "hero details incomplete at first observation",
+    "165408": "speed check failed before ready; no trajectory",
+    "170058": "tier three prerequisite missing",
+    "171756": "shop purchase rejected with code 64"
+  },
+  "pending": [
+    "independent match attribution and player-view reconstruction",
+    "explain midgame resource and battle state differences before tactical labels",
+    "complete legal action coverage and review demonstrations before imitation training"
+  ]
+}

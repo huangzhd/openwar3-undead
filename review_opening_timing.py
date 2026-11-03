@@ -6,6 +6,26 @@ from pathlib import Path
 BASELINE=Path(__file__).resolve().parent/'data/opening_timing_baseline.json'
 
 
+def reference_orders(rows):
+    from undead.replay_opening import HAPPY_LR
+    chosen=next((r for r in rows if r['event']=='reference_opening'),None)
+    if chosen is None:return None
+    targets=HAPPY_LR[tuple(chosen['home'])]
+    orders={}
+    for code,(target,point) in targets.items():
+        row=next((r for r in rows if r['event']=='reference_order' and r['code']==code and r['accepted']),None)
+        window=None
+        ok=False
+        if row and row.get('after') is not None and row['after']>=row['clock'] and row['target_ms']==target:
+            window=[round(row[k]*1000)-target for k in ('clock','after')]
+            ok=all(abs(delta)<=1000 for delta in window)
+        placed=next((r['point'] for r in rows if r['event']=='home_build_order_pending' and r['code']==code),None)
+        orders[code]=dict(target_ms=target,reference_point=point,issued_point=placed,
+                          signed_window_ms=window,within_one_second=ok)
+    return dict(tolerance_ms=1000,basis='game_clock_samples_around_accepted_command',orders=orders,
+                all_within_one_second=all(r['within_one_second'] for r in orders.values()))
+
+
 def analyze(rows, baseline, version):
     milestones={};ordered=Counter();founded=Counter();interference=None
     for row in rows:
@@ -67,6 +87,8 @@ def review(run):
     if result.get('policy') == 'external_primitives':
         baseline={'status':'not_applicable_external_primitives'}
     report=analyze(rows,baseline,result['version']);report['run']=run.name;report['version']=result['version']
+    reference=reference_orders(rows)
+    if reference:report['professional_opening']=reference
     (run/'opening-timing-review.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     lines=['# 开局时点复盘', '',f'对局：{run.name}；版本：{result["version"]}；参考状态：{report["baseline_status"]}。',
            '下单、地基和完成观察分开；明显偏差优先排查敌方干扰、资源／人口、工人采集、选址耗时和科技预算。', '',
@@ -76,6 +98,10 @@ def review(run):
     lines += [f'- {r["milestone"]}：参考{r["reference"]:.1f}秒，本局{r["actual"]:.1f}秒，差{r["delta"]:+.1f}秒；此前干扰={r["interference_before_actual"]}。' for r in report['deviations']]
     lines += [f'- 参考应出现但本局尚未记录：{key}（需检查观察缺失或实际延误）。' for key in report['unreached_reference_milestones']]
     lines += [f'- {r["clock"]:.3f}秒 {r["code"]} 地基未确认，检查工人／落点／资源：{r.get("point")}。' for r in report['placement_failures']]
+    if reference:
+        lines+=['','## 职业开局逐单误差（毫秒）','按已接受下令前后的游戏时钟采样，缺单或超窗均不通过。']
+        lines += [f"- {code} 目标 {item['target_ms']}，偏差 {item['signed_window_ms']}，通过 {item['within_one_second']}"
+                  for code,item in reference['orders'].items()]
     (run/'opening-timing-review.md').write_text('\n'.join(lines)+'\n',encoding='utf-8')
     return report
 

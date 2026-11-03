@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 import re
 
-from learning.actions import validate as validate_action, checked_bounds, OPS, SCHEMA, LEGACY_SCHEMA
+from learning.actions import validate as validate_action, checked_bounds, OPS, SCHEMA, SHOP_SCHEMA, RESEARCH_SCHEMA, HALL_SCHEMA, SPELL_SCHEMA, LEARN_SCHEMA, LEGACY_SCHEMA, SCHEMA_OPS
 from learning.effects import transition_facts
 from learning.evidence import safe_path
 from learning.observation_schema import validate as validate_observation, ObservationError
@@ -99,7 +99,17 @@ def native_payload(action):
     mapping={'move':('point',851986),'attack_move':('point',851983),'attack':('target',851971),
              'stop':('immediate',851972),'hold':('immediate',851993),
              'gather_gold':('target',852018),'gather_lumber':('target',852018)}
-    if op in ('build','train'):
+    if op in ('use_item_now','use_item_point'):
+        return dict(op='use_item',unit=action['unit'],target=None,code=0,x=action.get('x',0.),y=action.get('y',0.),
+                    slot=action['slot'],mode=int(op=='use_item_point'),item_at_issue=action['item'])
+    if op=='buy_item':
+        return dict(op='buy',code=int.from_bytes(action['item'].encode('ascii'),'big'),unit=action['unit'],target=None)
+    if op == 'cast_unit':
+        from learning.unit_spells import SPELLS
+        native,code='target',SPELLS[action['skill']][2]
+    elif op == 'learn_skill':
+        native,code='learn',int.from_bytes(action['skill'].encode('ascii'),'big')
+    elif op in ('build','train','train_hero','upgrade_hall','research'):
         native,code=('build' if op=='build' else 'immediate'),int.from_bytes(action['code'].encode('ascii'),'big')
     else:native,code=mapping[op]
     payload=dict(op=native,code=code,unit=action['unit'],target=action.get('target'))
@@ -108,17 +118,7 @@ def native_payload(action):
     return payload
 
 
-def load_episode(folder, *, include_wait=False):
-    folder=Path(folder).resolve()
-    blobs={name:load_bytes(folder,name) for name in FILES[:4]}
-    contract=parse(blobs['interface-contract.json']);manifest=parse(blobs['source-manifest.json'])
-    audit=parse(blobs['source-audit.json']);result=parse(blobs['result.json'])
-    require(contract.get('policy')=='external_primitives','legacy_rule_native_labels_not_replayable')
-    require(contract.get('schema')=='dayuan-interface-contract-v1','unsupported_contract')
-    require(contract.get('action_version') in (SCHEMA,LEGACY_SCHEMA),'unsupported_action_version')
-    versions=(contract.get('observation_version'),contract.get('trajectory_schema'))
-    require(versions in (('strict-p1-observation-v1','dayuan-trajectory-v1'),
-                        ('strict-p1-observation-v2','dayuan-trajectory-v2')),'unsupported_observation_trajectory_pair')
+def verify_frozen_run(folder,contract,manifest,audit,result):
     require(type(manifest) is dict and bool(manifest),'missing_source_manifest')
     require(digest(canonical(manifest))==contract.get('source_manifest_sha256'),'manifest_digest_mismatch')
     for name,expected in manifest.items():
@@ -134,13 +134,42 @@ def load_episode(folder, *, include_wait=False):
             and audit.get('active_processes')==[] and audit.get('errors')==[], 'source_or_cleanup_audit_failed')
     require(all(audit.get(key)==[] for key in ('mismatches','frozen_mismatches','dependency_mismatches')),
             'source_or_dependency_mismatch')
-    require(result.get('policy')=='external_primitives','result_policy_mismatch')
+    require(result.get('policy')==contract.get('policy'),'result_policy_mismatch')
     require(not any(result.get(k) for k in ('cleanup_error','evidence_error','trajectory_cleanup_error',
             'primitive_cleanup_error','environment_frame_cleanup_error','command_trace_error')), 'runtime_evidence_error')
     require(result.get('id')==folder.name,'episode_directory_mismatch')
     binding=contract.get('binding',{})
     require(all(type(binding.get(k)) is int and binding[k]>0 for k in ('pid','epoch')),'invalid_episode_binding')
     require(contract.get('slots')==dict(observer_player=0,controlled_player=1,opponent_player=2),'invalid_player_slots')
+    return binding
+
+
+def load_episode(folder, *, include_wait=False):
+    folder=Path(folder).resolve()
+    blobs={name:load_bytes(folder,name) for name in FILES[:4]}
+    contract=parse(blobs['interface-contract.json']);manifest=parse(blobs['source-manifest.json'])
+    audit=parse(blobs['source-audit.json']);result=parse(blobs['result.json'])
+    require(contract.get('policy')=='external_primitives','legacy_rule_native_labels_not_replayable')
+    require(contract.get('schema')=='dayuan-interface-contract-v1','unsupported_contract')
+    require(contract.get('action_version') in SCHEMA_OPS,'unsupported_action_version')
+    versions=(contract.get('observation_version'),contract.get('trajectory_schema'))
+    require(versions in (('strict-p1-observation-v1','dayuan-trajectory-v1'),
+                        ('strict-p1-observation-v2','dayuan-trajectory-v2'),
+                        ('strict-p1-observation-v3','dayuan-trajectory-v3'),
+                        ('strict-p1-observation-v4','dayuan-trajectory-v4'),
+                        ('strict-p1-observation-v5','dayuan-trajectory-v5'),
+                        ('strict-p1-observation-v5','dayuan-trajectory-v6')),'unsupported_observation_trajectory_pair')
+    if contract['action_version']==LEARN_SCHEMA:
+        require(versions[0]=='strict-p1-observation-v3','skill_observation_required')
+    if contract['action_version'] in (SPELL_SCHEMA,HALL_SCHEMA):
+        require(versions[0]=='strict-p1-observation-v4','spell_observation_required')
+    if contract['action_version'] in (RESEARCH_SCHEMA,SHOP_SCHEMA):
+        require(versions==('strict-p1-observation-v5','dayuan-trajectory-v5'),'research_observation_required')
+    if contract['action_version']==SCHEMA:
+        require(versions==('strict-p1-observation-v5','dayuan-trajectory-v6'),'slot_trajectory_required')
+    elif versions[1]=='dayuan-trajectory-v6':
+        raise DatasetError('slot_trajectory_action_version_mismatch')
+    binding=verify_frozen_run(folder,contract,manifest,audit,result)
     for name in FILES[4:]:blobs[name]=load_bytes(folder,name)
     trajectory=rows(blobs['trajectory.jsonl']);actions=rows(blobs['primitive-actions.jsonl'])
     for records,version in ((trajectory,contract['trajectory_schema']),(actions,contract['action_version'])):
@@ -178,14 +207,14 @@ def load_episode(folder, *, include_wait=False):
     linked=[];samples=[];excluded=Counter();previous_decision=0
     supported=actions[0].get('supported_operations')
     require(supported is None or type(supported) is list and len(supported)==len(set(supported))
-            and all(type(op) is str and op in OPS for op in supported),'invalid_supported_operations')
+            and all(type(op) is str and op in SCHEMA_OPS[contract['action_version']] for op in supported),'invalid_supported_operations')
     try:bounds=checked_bounds(actions[0].get('bounds'))
     except ValueError as exc:raise DatasetError('invalid_public_bounds') from exc
     for ident,request in req.items():
         try:action=validate_action(request['action'])
         except (ValueError,TypeError,KeyError) as exc:raise DatasetError('invalid_action_payload') from exc
         require(action==request['action'],'unnormalized_action_payload')
-        require(action['schema'] in (contract['action_version'],LEGACY_SCHEMA),'action_schema_mismatch')
+        require(set(SCHEMA_OPS[action['schema']]) <= set(SCHEMA_OPS[contract['action_version']]),'action_schema_mismatch')
         if supported is not None:require(action['op'] in supported,'undeclared_action_operation')
         decision=request.get('observation_id')
         require(type(decision) is int and decision in observations and decision>previous_decision,'invalid_decision_link')
@@ -205,8 +234,12 @@ def load_episode(folder, *, include_wait=False):
         if ids:
             n=native[ids[0]];nr=native_rec[ids[0]]
             require(n.get('observation_id') in observations and n['observation_id']>=decision,'invalid_native_observation')
-            require(action['op'] not in ('wait','inspect_trees'),'query_sent_native_command')
-            if n.get('eligible') is True:require(n.get('action')==native_payload(action),'native_payload_mismatch')
+            require(action['op'] not in ('wait','inspect_trees','inspect_research'),'query_sent_native_command')
+            if n.get('eligible') is True:
+                payload=n.get('action')
+                require(payload==native_payload(action),'native_payload_mismatch')
+                if action['op'] in ('use_item_now','use_item_point'):
+                    require(type(payload['slot']) is int and type(payload['mode']) is int,'invalid_native_item_arguments')
             else:require(n.get('action') is None,'ineligible_native_payload')
             require(nr.get('effect')=='unverified','fabricated_native_effect')
             if receipt.get('status')=='returned':
@@ -218,11 +251,33 @@ def load_episode(folder, *, include_wait=False):
         if receipt.get('accepted') is True:
             require(len(ids)==1 and gate is not None and gate['allowed'] is True
                     and receipt.get('status')=='returned' and receipt.get('native_status')==0,'accepted_without_command')
+            if action['op'] in ('use_item_now','use_item_point'):
+                from learning.items import use_reason
+                frame=observations[decision]['observation']
+                hero=next((u for u in frame['units'] if u['handle']==action['unit']),None)
+                require(hero is not None and use_reason(action,frame,hero)=='allowed','item_slot_evidence_mismatch')
+            if action['op']=='buy_item':
+                from learning.items import recipient_reason
+                frame=observations[decision]['observation']
+                units={tuple(u['handle']):u for u in frame['units']}
+                shop=units.get(tuple(action['unit']));hero=units.get(tuple(action['target']))
+                require(shop is not None and recipient_reason(shop,hero,frame)=='allowed','shop_recipient_evidence_mismatch')
+            if action['op']=='research':
+                # The engine order encodes only the technology, not its desired
+                # rank. The label must also agree with the P1 decision evidence.
+                from learning.research import MAX_AGE, PRODUCERS
+                frame=observations[decision]['observation']
+                prior=frame['research_levels'].get(action['code'])
+                require(prior is not None and prior['level']==action['level']-1
+                        and 0<=frame['clock']-prior['clock']<=MAX_AGE,'research_rank_evidence_mismatch')
+                require(any(u['handle']==action['unit'] and u['owner']==1 and u['alive']
+                            and u['type']==PRODUCERS[action['code']] for u in frame['units']),
+                        'research_producer_evidence_mismatch')
         status=receipt.get('status')
         if status=='preflight_rejected':
             require(receipt.get('accepted') is False and not ids and gate is not None and gate['allowed'] is False,
                     'invalid_preflight_rejection')
-        if action['op'] in ('wait','inspect_trees') and gate is not None and gate['allowed']:
+        if action['op'] in ('wait','inspect_trees','inspect_research') and gate is not None and gate['allowed']:
             require(receipt.get('accepted') is None and not ids and status==('no_command' if action['op']=='wait' else 'observation_only'),
                     'invalid_observation_only_receipt')
         nxt=link.get('observation_id')

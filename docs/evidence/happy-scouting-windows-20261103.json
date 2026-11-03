@@ -1,0 +1,347 @@
+{
+  "schema": "dayuan-happy-strategy-review-v1",
+  "use": "manual_review_only",
+  "training_labels": 0,
+  "player_view_reconstructed": false,
+  "strategic_intent_verified": false,
+  "basis": "Only the nominated slot provides orders, group recalls and earlier type hints. Candidate destinations use approximate LR areas. A selection is not proof of issuer, arrival, kill, level gain or strategic intent.",
+  "camp_threshold": 450,
+  "enemy_start_threshold": 1500,
+  "recent_group_or_subgroup_ms": 5000,
+  "camp_map": "project LR 1.5 catalog; not the original replay map",
+  "games": [
+    {
+      "file": "LookAround_vs_Happy__w3arena__lastrefuge__v3_126.w3g",
+      "sha256": "f5123932751472494473df18c66f165cd2d02f058478adc0178f1c3be417ea7a",
+      "slot": 7,
+      "samples": {
+        "camp_area_order_with_hero_context_after_first_skill": {
+          "ms": 219420,
+          "block": 1144,
+          "index": 3,
+          "order": 851971,
+          "action": 18,
+          "point": [
+            -2121.765869140625,
+            3255.836669921875
+          ],
+          "prior_target_type": null,
+          "prior_target_ms": null,
+          "group_size": 0,
+          "hero_in_recalled_group": false,
+          "recent_hero_subgroup": true,
+          "distance_enemy_start": 5962,
+          "nearest_project_camp": "lr-2",
+          "distance_project_camp": 325,
+          "uncompressed_offset": 189738,
+          "order_bytes_hex": "12180003000d00ffffffffffffffff419c04c5637d4b45ffffffffffffffff"
+        },
+        "enemy_start_area_order_with_hero_context_after_first_skill": {
+          "ms": 582660,
+          "block": 2701,
+          "index": 0,
+          "order": 851971,
+          "action": 18,
+          "point": [
+            2722.0947265625,
+            2480.028076171875
+          ],
+          "prior_target_type": null,
+          "prior_target_ms": null,
+          "group_size": 0,
+          "hero_in_recalled_group": false,
+          "recent_hero_subgroup": true,
+          "distance_enemy_start": 1403,
+          "nearest_project_camp": "lr-13",
+          "distance_project_camp": 1337,
+          "uncompressed_offset": 482644,
+          "order_bytes_hex": "12180003000d00ffffffffffffffff84212a4573001b45ffffffffffffffff"
+        },
+        "recalled_group_attack_near_enemy_start": {
+          "ms": 889680,
+          "block": 4283,
+          "index": 0,
+          "order": 851983,
+          "action": 18,
+          "point": [
+            2661.24609375,
+            2459.098388671875
+          ],
+          "prior_target_type": null,
+          "prior_target_ms": null,
+          "group_size": 10,
+          "hero_in_recalled_group": true,
+          "recent_hero_subgroup": false,
+          "distance_enemy_start": 1464,
+          "nearest_project_camp": "lr-13",
+          "distance_project_camp": 1278,
+          "uncompressed_offset": 745607,
+          "order_bytes_hex": "1218000f000d00fffffffffffffffff053264593b11945ed7f000080ca0300"
+        },
+        "explicit_attack_on_prior_typed_human_hero": {
+          "ms": 671340,
+          "block": 3123,
+          "index": 0,
+          "order": 851983,
+          "action": 18,
+          "point": [
+            -3610.356689453125,
+            -3900.200927734375
+          ],
+          "prior_target_type": "Hmkg",
+          "prior_target_ms": 624240,
+          "group_size": 6,
+          "hero_in_recalled_group": true,
+          "recent_hero_subgroup": false,
+          "distance_enemy_start": 10380,
+          "nearest_project_camp": "lr-4",
+          "distance_project_camp": 1851,
+          "uncompressed_offset": 553178,
+          "order_bytes_hex": "1218000f000d00ffffffffffffffffb5a561c537c373c505420000d27f0000"
+        },
+        "context_order_on_prior_typed_human_hero": {
+          "ms": 585840,
+          "block": 2721,
+          "index": 0,
+          "order": 851971,
+          "action": 18,
+          "point": [
+            2620.744140625,
+            3326.9716796875
+          ],
+          "prior_target_type": "Hmkg",
+          "prior_target_ms": 569520,
+          "group_size": 0,
+          "hero_in_recalled_group": false,
+          "recent_hero_subgroup": true,
+          "distance_enemy_start": 1219,
+          "nearest_project_camp": "lr-13",
+          "distance_project_camp": 1449,
+          "uncompressed_offset": 485513,
+          "order_bytes_hex": "12180003000d00ffffffffffffffffe8cb23458cef4f4505420000d27f0000"
+        }
+      },
+      "first_typed_enemy_hero": {
+        "ms": 154020,
+        "type": "Hmkg"
+      },
+      "selected_slot_blocks": 7823,
+      "context_or_attack_targets_without_prior_type": 419
+    },
+    {
+      "file": "Happy__vs_LookAround_(2)LastRefuge-1.3_126.w3g",
+      "sha256": "ec9657fc1f8b1fc5e165daba8cc7233a834c65d71b04a6a2f018188c4e2b9149",
+      "slot": 3,
+      "samples": {
+        "camp_area_order_with_hero_context_after_first_skill": {
+          "ms": 151100,
+          "block": 826,
+          "index": 0,
+          "order": 851971,
+          "action": 18,
+          "point": [
+            -1610.7379150390625,
+            -4534.22119140625
+          ],
+          "prior_target_type": null,
+          "prior_target_ms": null,
+          "group_size": 0,
+          "hero_in_recalled_group": false,
+          "recent_hero_subgroup": true,
+          "distance_enemy_start": 2362,
+          "nearest_project_camp": "lr-6",
+          "distance_project_camp": 449,
+          "uncompressed_offset": 84074,
+          "order_bytes_hex": "12000003000d00ffffffffffffffff9d57c9c4c5b18dc5ffffffffffffffff"
+        },
+        "enemy_start_area_order_with_hero_context_after_first_skill": {
+          "ms": 158700,
+          "block": 865,
+          "index": 0,
+          "order": 851971,
+          "action": 18,
+          "point": [
+            -2853.34521484375,
+            -3629.0634765625
+          ],
+          "prior_target_type": null,
+          "prior_target_ms": null,
+          "group_size": 0,
+          "hero_in_recalled_group": false,
+          "recent_hero_subgroup": true,
+          "distance_enemy_start": 1104,
+          "nearest_project_camp": "lr-4",
+          "distance_project_camp": 1048,
+          "uncompressed_offset": 88165,
+          "order_bytes_hex": "12000003000d00ffffffffffffffff865532c504d162c5ffffffffffffffff"
+        },
+        "recalled_group_attack_near_enemy_start": {
+          "ms": 200700,
+          "block": 1073,
+          "index": 0,
+          "order": 851983,
+          "action": 18,
+          "point": [
+            -2705.051025390625,
+            -3284.94775390625
+          ],
+          "prior_target_type": null,
+          "prior_target_ms": null,
+          "group_size": 5,
+          "hero_in_recalled_group": true,
+          "recent_hero_subgroup": false,
+          "distance_enemy_start": 1380,
+          "nearest_project_camp": "lr-4",
+          "distance_project_camp": 814,
+          "uncompressed_offset": 108449,
+          "order_bytes_hex": "1219000f000d00ffffffffffffffffd11029c52a4f4dc5ffffffffffffffff"
+        },
+        "explicit_attack_on_prior_typed_human_hero": {
+          "ms": 283100,
+          "block": 1486,
+          "index": 0,
+          "order": 851983,
+          "action": 18,
+          "point": [
+            2783.691650390625,
+            -64.955322265625
+          ],
+          "prior_target_type": "Hamg",
+          "prior_target_ms": 225300,
+          "group_size": 0,
+          "hero_in_recalled_group": false,
+          "recent_hero_subgroup": true,
+          "distance_enemy_start": 7743,
+          "nearest_project_camp": "lr-16",
+          "distance_project_camp": 943,
+          "uncompressed_offset": 150811,
+          "order_bytes_hex": "1219000f000d00ffffffffffffffff11fb2d4520e981c2ef2f0000206a0000"
+        },
+        "context_order_on_prior_typed_human_hero": {
+          "ms": 309400,
+          "block": 1610,
+          "index": 0,
+          "order": 851971,
+          "action": 18,
+          "point": [
+            772.3544921875,
+            -3131.326171875
+          ],
+          "prior_target_type": "Hamg",
+          "prior_target_ms": 285400,
+          "group_size": 0,
+          "hero_in_recalled_group": false,
+          "recent_hero_subgroup": true,
+          "distance_enemy_start": 4751,
+          "nearest_project_camp": "lr-7",
+          "distance_project_camp": 1477,
+          "uncompressed_offset": 162979,
+          "order_bytes_hex": "12000003000d00ffffffffffffffffb016414438b543c5ef2f0000206a0000"
+        }
+      },
+      "first_typed_enemy_hero": {
+        "ms": 225300,
+        "type": "Hamg"
+      },
+      "selected_slot_blocks": 3127,
+      "context_or_attack_targets_without_prior_type": 193
+    },
+    {
+      "file": "u2.chaemiko_vs_Happy__w3arena__lastrefuge__v3_126.w3g",
+      "sha256": "e08690855f03fdf4d3a961ff6400f74ae755996c3c7ca1a7873ad89f7dea4a92",
+      "slot": 3,
+      "samples": {
+        "camp_area_order_with_hero_context_after_first_skill": {
+          "ms": 207720,
+          "block": 1111,
+          "index": 1,
+          "order": 851971,
+          "action": 18,
+          "point": [
+            -1480.385498046875,
+            881.9326782226562
+          ],
+          "prior_target_type": null,
+          "prior_target_ms": null,
+          "group_size": 4,
+          "hero_in_recalled_group": true,
+          "recent_hero_subgroup": false,
+          "distance_enemy_start": 5856,
+          "nearest_project_camp": "lr-5",
+          "distance_project_camp": 364,
+          "uncompressed_offset": 176672,
+          "order_bytes_hex": "12180003000d00ffffffffffffffff560cb9c4b17b5c44ffffffffffffffff"
+        },
+        "enemy_start_area_order_with_hero_context_after_first_skill": {
+          "ms": 162120,
+          "block": 875,
+          "index": 0,
+          "order": 851971,
+          "action": 18,
+          "point": [
+            3051.08544921875,
+            3404.53271484375
+          ],
+          "prior_target_type": null,
+          "prior_target_ms": null,
+          "group_size": 0,
+          "hero_in_recalled_group": false,
+          "recent_hero_subgroup": true,
+          "distance_enemy_start": 793,
+          "nearest_project_camp": "lr-15",
+          "distance_project_camp": 1725,
+          "uncompressed_offset": 138067,
+          "order_bytes_hex": "12000003000d00ffffffffffffffff5eb13e4586c85445ffffffffffffffff"
+        },
+        "explicit_attack_on_prior_typed_human_hero": {
+          "ms": 248820,
+          "block": 1304,
+          "index": 0,
+          "order": 851983,
+          "action": 18,
+          "point": [
+            -2165.93310546875,
+            3139.669921875
+          ],
+          "prior_target_type": "Hamg",
+          "prior_target_ms": 214500,
+          "group_size": 0,
+          "hero_in_recalled_group": false,
+          "recent_hero_subgroup": false,
+          "distance_enemy_start": 6009,
+          "nearest_project_camp": "lr-2",
+          "distance_project_camp": 406,
+          "uncompressed_offset": 211159,
+          "order_bytes_hex": "1200000f000d00ffffffffffffffffee5e07c5b83a444594410000e3840000"
+        },
+        "context_order_on_prior_typed_human_hero": {
+          "ms": 158220,
+          "block": 857,
+          "index": 0,
+          "order": 851971,
+          "action": 18,
+          "point": [
+            2257.41015625,
+            3718.2783203125
+          ],
+          "prior_target_type": "Hamg",
+          "prior_target_ms": 154740,
+          "group_size": 0,
+          "hero_in_recalled_group": false,
+          "recent_hero_subgroup": true,
+          "distance_enemy_start": 1630,
+          "nearest_project_camp": "lr-15",
+          "distance_project_camp": 962,
+          "uncompressed_offset": 134958,
+          "order_bytes_hex": "12000003000d00ffffffffffffffff90160d457464684594410000e3840000"
+        }
+      },
+      "first_typed_enemy_hero": {
+        "ms": 154680,
+        "type": "Hamg"
+      },
+      "selected_slot_blocks": 5273,
+      "context_or_attack_targets_without_prior_type": 285
+    }
+  ]
+}

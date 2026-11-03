@@ -1,0 +1,90 @@
+{
+  "run": "20261103-170058",
+  "policy": "external_primitives",
+  "map_sha256": "649c355b5d9d0c184154464c0b4a8f5d2bb9dc9fef49c75938ce065c481b36c9",
+  "source_manifest_sha256": "655ddce02d0a1217fc16197b6b1b294a4de3d9457a3f330c7d4772c5dd038570",
+  "game_seconds": 283.48,
+  "wall": 95.43799999996554,
+  "source_files": 107,
+  "dependencies": 75,
+  "cleanup_confirmed": true,
+  "source_unchanged": true,
+  "termination": {
+    "schema": "dayuan-outcome-v1",
+    "classification": "user_abort",
+    "outcome": "aborted",
+    "reason": "environment_close",
+    "terminated": false,
+    "truncated": true,
+    "reward": null
+  },
+  "review_exit_codes": {
+    "review_map_pool": 0,
+    "review_combat": 0,
+    "review_equipment": 0,
+    "review_dk": 0,
+    "review_hero_rules": 0,
+    "review_stability": 0
+  },
+  "error": "RuntimeError('Write rejected or unknown')",
+  "observations": 449,
+  "steps": 325,
+  "native_requests": 5,
+  "native_ids": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "rule_decisions": 0,
+  "upgrades": [
+    {
+      "target": "unp1",
+      "source": [
+        16833,
+        16833
+      ],
+      "requested": 68.055,
+      "accepted": true,
+      "pre_resources": {
+        "gold": 850,
+        "lumber": 210,
+        "food_used": 5,
+        "food_cap": 10,
+        "gold_gathered": 350,
+        "lumber_gathered": 60
+      },
+      "in_progress": 69.105,
+      "completed": 209.03
+    },
+    {
+      "target": "unp2",
+      "source": [
+        16833,
+        16833
+      ],
+      "requested": 282.555,
+      "accepted": false,
+      "pre_resources": {
+        "gold": 1820,
+        "lumber": 240,
+        "food_used": 5,
+        "food_cap": 10,
+        "gold_gathered": 1640,
+        "lumber_gathered": 300
+      },
+      "in_progress": null,
+      "completed": null
+    }
+  ],
+  "sha256": {
+    "result.json": "2c1990f260667efe82ad68b7a107823dfabd3ab631a72d8983f9ceab991f8b5f",
+    "source-audit.json": "eaddb82d880dc2f2fe1a62e25a8b37f26366aaa68c275aeb01399ac64e219f30",
+    "probe.py": "95ea51b2b16d8957bfae43a3557afa37d3904a9234daf48b08fd40ee3acbac16",
+    "probe-result.json": "49a3b6c1fb7bb49da01e40e720ada2ffef84788a6a5cee336f547bf16d51e44c",
+    "review.py": "08fe2823ac14c1b4000ec02dd3d0426e41d2c5dba6f23c389fb59599497b4086",
+    "primitive-actions.jsonl": "68a9189011f05b3aa91da8ec38546d9299ca7b50de2a3346a7decbd8f67b23aa",
+    "trajectory.jsonl": "b234720eb030657f56646dd6b2c47310a28919dfd9f76f51d8b635622b0e5d22"
+  }
+}

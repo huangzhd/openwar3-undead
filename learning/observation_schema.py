@@ -1,6 +1,9 @@
 """Closed observation schema for offline inputs; unknown fields fail closed."""
 import math
 from learning.actions import identity
+from learning.hero_skills import KITS
+from learning.unit_spells import BUFFS
+from learning.research import MAX_LEVEL
 from learning.trajectory import RESOURCE_FIELDS, UNIT_FIELDS
 
 
@@ -47,12 +50,24 @@ def unit(value):
 
 
 def validate(observation, version):
-    require(version in ('strict-p1-observation-v1','strict-p1-observation-v2'), 'unsupported_observation_version')
+    require(version in ('strict-p1-observation-v1','strict-p1-observation-v2','strict-p1-observation-v3','strict-p1-observation-v4','strict-p1-observation-v5'), 'unsupported_observation_version')
     expected=('player','clock','resources','units','production','last_seen')
-    if version.endswith('v2'):expected+=('tree_sightings',)
+    if not version.endswith('v1'):expected+=('tree_sightings',)
+    if version.endswith(('v3','v4','v5')):expected+=('hero_skill_points',)
+    if version.endswith(('v4','v5')):expected+=('own_spell_status',)
+    if version.endswith('v5'):expected+=('research_levels',)
     fields(observation,expected)
     require(type(observation['player']) is int and observation['player']==1, 'non_p1_observation')
     number(observation['clock'],nullable=False,minimum=0)
+    if version.endswith('v5'):
+        levels=observation['research_levels']
+        require(type(levels) is dict and set(levels)<=set(MAX_LEVEL),'invalid_research_set')
+        for key,sample in levels.items():
+            fields(sample,('level','clock'))
+            v=sample['level']
+            require(v is None or type(v) is int and 0<=v<=MAX_LEVEL[key],'invalid_research_level')
+            number(sample['clock'],nullable=False,minimum=0)
+            require(sample['clock']<=observation['clock'],'future_research_sample')
     resources=observation['resources']
     if resources is not None:
         fields(resources,RESOURCE_FIELDS)
@@ -79,7 +94,27 @@ def validate(observation, version):
         number(row['last_seen_clock'],nullable=False,minimum=0)
         require(row['last_seen_clock']<=observation['clock'],'future_enemy_memory')
         h=tuple(row['unit']['handle']);require(h not in seen,'duplicate_enemy_memory');seen.add(h)
-    if version.endswith('v2'):
+    if version.endswith(('v4','v5')):
+        expected_own=set(own)
+        status=observation['own_spell_status']
+        require(type(status) is list and len(status)==len(own),'invalid_spell_status_count')
+        for row in status:
+            fields(row,('unit','buffs'))
+            require(identity(row['unit']) and tuple(row['unit']) in expected_own,'invalid_spell_status_owner')
+            expected_own.remove(tuple(row['unit']))
+            values=row['buffs']
+            require(values is None or type(values) is list and all(type(v) is str and v in BUFFS for v in values)
+                    and values==sorted(set(values)),'invalid_spell_buffs')
+    if version.endswith(('v3','v4','v5')):
+        expected_heroes={tuple(u['handle']) for u in units if u['owner']==1 and u['type'] in KITS}
+        points=observation['hero_skill_points']
+        require(type(points) is list and len(points)==len(expected_heroes),'invalid_skill_point_count')
+        for row in points:
+            fields(row,('unit','points'))
+            require(identity(row['unit']) and tuple(row['unit']) in expected_heroes,'invalid_skill_point_owner')
+            expected_heroes.remove(tuple(row['unit']))
+            require(row['points'] is None or type(row['points']) is int and 0<=row['points']<=10,'invalid_skill_points')
+    if not version.endswith('v1'):
         trees=observation['tree_sightings'];require(type(trees) is list and len(trees)<=64,'invalid_tree_sightings');seen=set()
         for row in trees:
             fields(row,('handle','type','x','y','seen_clock'))

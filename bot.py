@@ -45,6 +45,7 @@ def main():
     spar.add_argument('--speed',type=speed_percent,choices=SPEEDS,default=400)
     spar.add_argument('--check',action='store_true',help='Build and verify scenario without launching a game')
     spar.add_argument('--strategy-trace',action='store_true',help='Experimental KFAI observer strategy diagnostics (separate map/log)')
+    spar.add_argument('--teacher-trajectory',action='store_true',help='Record bounded P1 rule-teacher tick groups for diagnostic conversion')
     spar.add_argument('--trajectory',action='store_true',help='Record experimental P1 whitelist demonstrations; no learning actor')
     spar.add_argument('--minutes',type=positive_minutes,default=None,help='Optional diagnostic limit; default no time limit')
     sub.add_parser('stop',help='Request graceful stop of the project match')
@@ -100,6 +101,8 @@ def main():
         (ROOT/'artifacts/STOP').write_text('user requested stop',encoding='utf-8')
         print('Stop requested for the local match only. For an attached game use attach-release; it leaves the game running.')
         return 0
+    if args.command=='sparring' and args.teacher_trajectory and (args.opponent!='kfai-human' or args.strategy_trace):
+        parser.error('--teacher-trajectory requires kfai-human without strategy trace')
     if args.command=='sparring' and args.check:
         from sparring import source_files
         from sparring_map import prepare_map
@@ -108,7 +111,7 @@ def main():
         path,catalog=prepare_map(args.map_alias,**({'strategy_trace':True} if args.strategy_trace else {}))
         print(json.dumps(dict(opponent=args.opponent,map=str(path),map_sha256=catalog['map_sha256'],
                               strategy_trace=args.strategy_trace,
-                              trajectory=args.trajectory,
+                              trajectory=args.trajectory or args.teacher_trajectory,teacher_trajectory=args.teacher_trajectory,
                               source_files=len(source_files()),observer_player=0,dayuan_player=1,human_bot_player=2,
                               background_supported=True,game_launched=False,live_verified=False),ensure_ascii=False,indent=2))
         return 0
@@ -123,7 +126,7 @@ def main():
         from run_match import run_match
         r=run_match(speed=args.speed,map_alias=args.map_alias,sparring=args.opponent,
                     max_game_seconds=args.minutes*60 if args.minutes is not None else None,strategy_trace=args.strategy_trace,
-                    trajectory=args.trajectory)
+                    trajectory=args.trajectory,teacher_trajectory=args.teacher_trajectory)
         return 1 if r['result']=='error' else 0
     from run_match import play_matches
     r=play_matches(args.speed,args.minutes*60 if args.minutes is not None else None,args.until,args.enemy_race,args.difficulty,map_alias=args.map_alias)

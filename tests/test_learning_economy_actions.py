@@ -123,5 +123,48 @@ class EconomicPrimitiveTests(unittest.TestCase):
         self.assertEqual(costs['usep']['gold'],200)
         self.assertNotIn('reserve',str(costs))
 
+    def test_hall_upgrade_charges_increment_and_checks_current_form(self):
+        from learning.actions import SPELL_SCHEMA
+        from learning.dataset import native_payload
+        from learning.model_codec import encode_observation,encode_action,decode_decision
+        self.hall.abilities.append(N(code='Aupg',level=1,cooldown=0))
+        altar=unit(1,66,type='uaod')
+        self.raw.units.append(altar)
+        for before,after,gold,wood in [('unpl','unp1',320,210),('unp1','unp2',325,230)]:
+            self.hall.type=before
+            self.raw.players[1].gold=gold
+            self.raw.players[1].lumber=wood
+            self.refresh()
+            cmd=action('upgrade_hall',unit=[44,7],code=after)
+            self.assertTrue(self.run_action(cmd)['accepted'])
+            self.assertEqual(self.native.call_args.args[0][0].args[3],native_payload(cmd)['code'])
+            encoded=encode_observation(self.decision,dict(schema=cmd['schema'],bounds=self.executor.bounds),
+                                       'strict-p1-observation-v5')
+            self.assertEqual(decode_decision(encoded,encode_action(encoded,cmd)),cmd)
+            if after=='unp2':
+                altar.owner=2
+                self.assertEqual(self.run_action(cmd)['reason'],'ready_altar_required')
+                altar.owner=1
+            with self.assertRaises(ValueError):validate(dict(cmd,schema=SPELL_SCHEMA))
+            self.raw.players[1].lumber-=1
+            self.assertEqual(self.run_action(cmd)['reason'],'insufficient_lumber')
+            self.raw.players[1].lumber=wood
+            self.hall.type=after
+            self.assertEqual(self.run_action(cmd)['reason'],'wrong_hall_upgrade_source')
+
+    def test_hall_busy_or_infeasible_cannot_replace_production(self):
+        self.raw.players[1].lumber=250
+        self.hall.abilities.append(N(code='Aupg',level=1,cooldown=0))
+        self.refresh()
+        cmd=action('upgrade_hall',unit=[44,7],code='unp1')
+        for kind,queue,reason in [('queue',['uaco'],'hall_production_busy'),('upgrade',['unp1'],'hall_not_ready'),
+                                  (None,[],'hall_production_busy')]:
+            self.raw.production=[N(building=self.hall.handle,kind=kind,queue=queue,progress=.1)]
+            self.assertEqual(self.run_action(cmd)['reason'],reason)
+        self.raw.production=[]
+        self.game.can_do=lambda *args:183
+        self.assertEqual(self.run_action(cmd)['reason'],'engine_prerequisites_rejected')
+        self.native.assert_not_called()
+
 
 if __name__=='__main__':unittest.main()

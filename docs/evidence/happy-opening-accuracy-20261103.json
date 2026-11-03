@@ -1,0 +1,701 @@
+{
+  "scope": "LR UD vs Human, preselected same-side first five buildings and DK, accepted command timing",
+  "trials": [
+    {
+      "run": "20261103-184603",
+      "speed": 100,
+      "side": [
+        -3904.0,
+        -3968.0
+      ],
+      "game_limit_result": {
+        "run": "20261103-184603",
+        "outcome": "timeout",
+        "reason": "game_time_limit",
+        "clock": 95.03,
+        "remaining": []
+      },
+      "first_observation": 3.2,
+      "trajectory_sha256": "4667b79bf9a5b358566b20b2c7a42dbd4b6fb3f57c24b8c749747db9c12b2ba2",
+      "source_unchanged": true,
+      "source_files": 113,
+      "cleanup_confirmed": true,
+      "native_accepted": {
+        "uaod": {
+          "batch_id": 6,
+          "clock_ms": 4580,
+          "point": [
+            -3616.0,
+            -3552.0
+          ],
+          "trajectory_request": 6,
+          "first_later_observation_ms": 4755,
+          "strict_delta_ms": [
+            -220,
+            -45
+          ]
+        },
+        "uzig": {
+          "batch_id": 7,
+          "clock_ms": 8100,
+          "point": [
+            -4256.0,
+            -3936.0
+          ],
+          "trajectory_request": 7,
+          "first_later_observation_ms": 8325,
+          "strict_delta_ms": [
+            0,
+            225
+          ]
+        },
+        "usep": {
+          "batch_id": 13,
+          "clock_ms": 33980,
+          "point": [
+            -3456.0,
+            -4416.0
+          ],
+          "trajectory_request": 13,
+          "first_later_observation_ms": 34275,
+          "strict_delta_ms": [
+            2660,
+            2955
+          ]
+        },
+        "Udea": {
+          "batch_id": 50,
+          "clock_ms": 69330,
+          "point": null,
+          "trajectory_request": 50,
+          "first_later_observation_ms": 69600,
+          "strict_delta_ms": [
+            2430,
+            2700
+          ]
+        }
+      },
+      "review": {
+        "tolerance_ms": 1000,
+        "basis": "game_clock_samples_around_accepted_command",
+        "orders": {
+          "uaod": {
+            "target_ms": 4800,
+            "reference_point": [
+              -3616,
+              -3552
+            ],
+            "issued_point": [
+              -3616,
+              -3552
+            ],
+            "signed_window_ms": [
+              -220,
+              -220
+            ],
+            "within_one_second": true
+          },
+          "uzig": {
+            "target_ms": 8100,
+            "reference_point": [
+              -4256,
+              -3936
+            ],
+            "issued_point": [
+              -4256,
+              -3936
+            ],
+            "signed_window_ms": [
+              0,
+              0
+            ],
+            "within_one_second": true
+          },
+          "usep": {
+            "target_ms": 31320,
+            "reference_point": [
+              -3456,
+              -4416
+            ],
+            "issued_point": [
+              -3456,
+              -4416
+            ],
+            "signed_window_ms": [
+              2660,
+              2755
+            ],
+            "within_one_second": false
+          },
+          "utom": {
+            "target_ms": 55440,
+            "reference_point": [
+              -4352,
+              -3648
+            ],
+            "issued_point": null,
+            "signed_window_ms": null,
+            "within_one_second": false
+          },
+          "Udea": {
+            "target_ms": 66900,
+            "reference_point": null,
+            "issued_point": null,
+            "signed_window_ms": [
+              2430,
+              2505
+            ],
+            "within_one_second": false
+          },
+          "ugrv": {
+            "target_ms": 73860,
+            "reference_point": [
+              -4160,
+              -4416
+            ],
+            "issued_point": null,
+            "signed_window_ms": null,
+            "within_one_second": false
+          }
+        },
+        "all_within_one_second": false
+      },
+      "sixth_worker_orders": [
+        45.43
+      ],
+      "scout_assigned_ms": null,
+      "foundations": {
+        "uaod": [
+          -3616.0,
+          -3552.0
+        ],
+        "uzig": [
+          -4256.0,
+          -3936.0
+        ],
+        "usep": [
+          -3456.0,
+          -4416.0
+        ],
+        "utom": null,
+        "ugrv": null
+      },
+      "strict_all_six": false
+    },
+    {
+      "run": "20261103-185151",
+      "speed": 25,
+      "side": [
+        -3904.0,
+        -3968.0
+      ],
+      "game_limit_result": {
+        "run": "20261103-185151",
+        "outcome": "timeout",
+        "reason": "game_time_limit",
+        "clock": 85.025,
+        "remaining": []
+      },
+      "first_observation": 1.6,
+      "trajectory_sha256": "4838499db695e8b1e93e738427646a9f2b81f317e5546d975f6b709b86b0aafd",
+      "source_unchanged": true,
+      "source_files": 113,
+      "cleanup_confirmed": true,
+      "native_accepted": {
+        "uaod": {
+          "batch_id": 6,
+          "clock_ms": 4500,
+          "point": [
+            -3616.0,
+            -3552.0
+          ],
+          "trajectory_request": 6,
+          "first_later_observation_ms": 4575,
+          "strict_delta_ms": [
+            -300,
+            -225
+          ]
+        },
+        "uzig": {
+          "batch_id": 7,
+          "clock_ms": 7875,
+          "point": [
+            -4256.0,
+            -3936.0
+          ],
+          "trajectory_request": 7,
+          "first_later_observation_ms": 7930,
+          "strict_delta_ms": [
+            -225,
+            -170
+          ]
+        },
+        "usep": {
+          "batch_id": 11,
+          "clock_ms": 31450,
+          "point": [
+            -3456.0,
+            -4416.0
+          ],
+          "trajectory_request": 11,
+          "first_later_observation_ms": 31525,
+          "strict_delta_ms": [
+            130,
+            205
+          ]
+        },
+        "Udea": {
+          "batch_id": 55,
+          "clock_ms": 66605,
+          "point": null,
+          "trajectory_request": 55,
+          "first_later_observation_ms": 66675,
+          "strict_delta_ms": [
+            -295,
+            -225
+          ]
+        }
+      },
+      "review": {
+        "tolerance_ms": 1000,
+        "basis": "game_clock_samples_around_accepted_command",
+        "orders": {
+          "uaod": {
+            "target_ms": 4800,
+            "reference_point": [
+              -3616,
+              -3552
+            ],
+            "issued_point": [
+              -3616,
+              -3552
+            ],
+            "signed_window_ms": [
+              -300,
+              -300
+            ],
+            "within_one_second": true
+          },
+          "uzig": {
+            "target_ms": 8100,
+            "reference_point": [
+              -4256,
+              -3936
+            ],
+            "issued_point": [
+              -4256,
+              -3936
+            ],
+            "signed_window_ms": [
+              -225,
+              -220
+            ],
+            "within_one_second": true
+          },
+          "usep": {
+            "target_ms": 31320,
+            "reference_point": [
+              -3456,
+              -4416
+            ],
+            "issued_point": [
+              -3456,
+              -4416
+            ],
+            "signed_window_ms": [
+              130,
+              135
+            ],
+            "within_one_second": true
+          },
+          "utom": {
+            "target_ms": 55440,
+            "reference_point": [
+              -4352,
+              -3648
+            ],
+            "issued_point": null,
+            "signed_window_ms": null,
+            "within_one_second": false
+          },
+          "Udea": {
+            "target_ms": 66900,
+            "reference_point": null,
+            "issued_point": null,
+            "signed_window_ms": [
+              -295,
+              -295
+            ],
+            "within_one_second": true
+          },
+          "ugrv": {
+            "target_ms": 73860,
+            "reference_point": [
+              -4160,
+              -4416
+            ],
+            "issued_point": null,
+            "signed_window_ms": null,
+            "within_one_second": false
+          }
+        },
+        "all_within_one_second": false
+      },
+      "sixth_worker_orders": [
+        42.425
+      ],
+      "scout_assigned_ms": null,
+      "foundations": {
+        "uaod": [
+          -3616.0,
+          -3552.0
+        ],
+        "uzig": [
+          -4256.0,
+          -3936.0
+        ],
+        "usep": [
+          -3456.0,
+          -4416.0
+        ],
+        "utom": null,
+        "ugrv": null
+      },
+      "strict_all_six": false
+    },
+    {
+      "run": "20261103-190235",
+      "speed": 25,
+      "side": [
+        -3904.0,
+        -3968.0
+      ],
+      "game_limit_result": {
+        "run": "20261103-190235",
+        "outcome": "timeout",
+        "reason": "game_time_limit",
+        "clock": 85.505,
+        "remaining": []
+      },
+      "first_observation": 1.6,
+      "trajectory_sha256": "a2e9d5afd86890ed7b837397a0b978f36ea3832963b1f3cd5a7b6f55e1e9c645",
+      "source_unchanged": true,
+      "source_files": 113,
+      "cleanup_confirmed": true,
+      "native_accepted": {
+        "uaod": {
+          "batch_id": 6,
+          "clock_ms": 4525,
+          "point": [
+            -3616.0,
+            -3552.0
+          ],
+          "trajectory_request": 6,
+          "first_later_observation_ms": 4580,
+          "strict_delta_ms": [
+            -275,
+            -220
+          ]
+        },
+        "uzig": {
+          "batch_id": 7,
+          "clock_ms": 7875,
+          "point": [
+            -4256.0,
+            -3936.0
+          ],
+          "trajectory_request": 7,
+          "first_later_observation_ms": 7905,
+          "strict_delta_ms": [
+            -225,
+            -195
+          ]
+        },
+        "usep": {
+          "batch_id": 11,
+          "clock_ms": 31400,
+          "point": [
+            -3456.0,
+            -4416.0
+          ],
+          "trajectory_request": 11,
+          "first_later_observation_ms": 31450,
+          "strict_delta_ms": [
+            80,
+            130
+          ]
+        },
+        "Udea": {
+          "batch_id": 14,
+          "clock_ms": 66625,
+          "point": null,
+          "trajectory_request": 14,
+          "first_later_observation_ms": 66680,
+          "strict_delta_ms": [
+            -275,
+            -220
+          ]
+        }
+      },
+      "review": {
+        "tolerance_ms": 1000,
+        "basis": "game_clock_samples_around_accepted_command",
+        "orders": {
+          "uaod": {
+            "target_ms": 4800,
+            "reference_point": [
+              -3616,
+              -3552
+            ],
+            "issued_point": [
+              -3616,
+              -3552
+            ],
+            "signed_window_ms": [
+              -275,
+              -270
+            ],
+            "within_one_second": true
+          },
+          "uzig": {
+            "target_ms": 8100,
+            "reference_point": [
+              -4256,
+              -3936
+            ],
+            "issued_point": [
+              -4256,
+              -3936
+            ],
+            "signed_window_ms": [
+              -225,
+              -225
+            ],
+            "within_one_second": true
+          },
+          "usep": {
+            "target_ms": 31320,
+            "reference_point": [
+              -3456,
+              -4416
+            ],
+            "issued_point": [
+              -3456,
+              -4416
+            ],
+            "signed_window_ms": [
+              80,
+              80
+            ],
+            "within_one_second": true
+          },
+          "utom": {
+            "target_ms": 55440,
+            "reference_point": [
+              -4352,
+              -3648
+            ],
+            "issued_point": null,
+            "signed_window_ms": null,
+            "within_one_second": false
+          },
+          "Udea": {
+            "target_ms": 66900,
+            "reference_point": null,
+            "issued_point": null,
+            "signed_window_ms": [
+              -275,
+              -275
+            ],
+            "within_one_second": true
+          },
+          "ugrv": {
+            "target_ms": 73860,
+            "reference_point": [
+              -4160,
+              -4416
+            ],
+            "issued_point": null,
+            "signed_window_ms": null,
+            "within_one_second": false
+          }
+        },
+        "all_within_one_second": false
+      },
+      "sixth_worker_orders": [
+        76.15
+      ],
+      "scout_assigned_ms": null,
+      "foundations": {
+        "uaod": [
+          -3616.0,
+          -3552.0
+        ],
+        "uzig": [
+          -4256.0,
+          -3936.0
+        ],
+        "usep": [
+          -3456.0,
+          -4416.0
+        ],
+        "utom": null,
+        "ugrv": null
+      },
+      "strict_all_six": false
+    }
+  ],
+  "shop_site_sample": {
+    "clock": 80.225,
+    "epoch": 1,
+    "side": "SW",
+    "locations": {
+      "utom": [
+        {
+          "point": [
+            -4352,
+            -3648
+          ],
+          "obstacle": [
+            -4480.0,
+            -3520.0
+          ]
+        },
+        {
+          "point": [
+            -4416,
+            -3648
+          ],
+          "obstacle": [
+            -4480.0,
+            -3520.0
+          ]
+        },
+        {
+          "point": [
+            -4352,
+            -3584
+          ],
+          "obstacle": [
+            -4480.0,
+            -3520.0
+          ]
+        },
+        {
+          "point": [
+            -4288,
+            -3648
+          ],
+          "obstacle": [
+            -4480.0,
+            -3520.0
+          ]
+        },
+        {
+          "point": [
+            -4416,
+            -3584
+          ],
+          "obstacle": [
+            -4480.0,
+            -3520.0
+          ]
+        },
+        {
+          "point": [
+            -4288,
+            -3584
+          ],
+          "obstacle": [
+            -4480.0,
+            -3520.0
+          ]
+        },
+        {
+          "point": [
+            -4480,
+            -3648
+          ],
+          "obstacle": [
+            -4480.0,
+            -3520.0
+          ]
+        },
+        {
+          "point": [
+            -4352,
+            -3520
+          ],
+          "obstacle": [
+            -4480.0,
+            -3520.0
+          ]
+        },
+        {
+          "point": [
+            -4480,
+            -3584
+          ],
+          "obstacle": [
+            -4480.0,
+            -3520.0
+          ]
+        },
+        {
+          "point": [
+            -4416,
+            -3520
+          ],
+          "obstacle": [
+            -4480.0,
+            -3520.0
+          ]
+        },
+        {
+          "point": [
+            -4288,
+            -3520
+          ],
+          "obstacle": [
+            -4480.0,
+            -3520.0
+          ]
+        },
+        {
+          "point": [
+            -4224,
+            -3584
+          ],
+          "obstacle": null
+        }
+      ],
+      "ugrv": [
+        {
+          "point": [
+            -4160,
+            -4416
+          ],
+          "obstacle": null
+        }
+      ]
+    }
+  },
+  "strategy_full_game_verified": false,
+  "post_receipt_check": "Independent native batch and accepted receipt plus first strictly later P1 observation bound for each recorded order.",
+  "last_trial_speed_changes": [
+    {
+      "kind": "speed",
+      "value": 400,
+      "status": "accepted",
+      "clock": 72.125,
+      "actual": 25
+    },
+    {
+      "kind": "speed",
+      "value": 400,
+      "status": "confirmed",
+      "clock": 72.35,
+      "actual": 400
+    }
+  ]
+}

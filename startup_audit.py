@@ -9,6 +9,7 @@ class StartupAudit:
         self.session, self.deadline, self.until = session, deadline, until
         self.epoch = None
         self.speed_wait_started = None
+        self.speed_request_sent = False
 
     def emit(self, event, **data):
         self.session.startup_log(event, **data)
@@ -20,8 +21,8 @@ class StartupAudit:
         if self.speed_wait_started is not None and time.monotonic()-self.speed_wait_started>=5:
             raise TimeoutError('Startup speed did not reach requested value within 5s')
 
-    def speed_ready(self, snapshot):
-        """Launcher configuration is asynchronous; never write speed or accept a mismatch."""
+    def speed_ready(self, snapshot, correct_speed=None):
+        """Wait for readback. Owned sparring may correct a persistent mismatch once."""
         self.check_deadline()
         if self.epoch is None:self.epoch=snapshot.epoch
         if snapshot.epoch!=self.epoch:raise RuntimeError('Startup epoch changed')
@@ -30,6 +31,14 @@ class StartupAudit:
                 self.speed_wait_started=time.monotonic()
                 self.emit('startup_speed_wait',actual=snapshot.speed_pct,expected=self.session.speed,
                           clock=snapshot.clock,max_wall_seconds=5)
+            elif correct_speed is not None and not self.speed_request_sent and time.monotonic()-self.speed_wait_started>=1:
+                self.speed_request_sent=True
+                self.emit('startup_speed_request',actual=snapshot.speed_pct,expected=self.session.speed)
+                accepted=correct_speed()
+                self.emit('startup_speed_receipt',accepted=accepted,expected=self.session.speed)
+                if accepted is not True:
+                    raise RuntimeError('Owned sparring speed request rejected or unknown')
+                self.check_deadline()
             return False
         if self.speed_wait_started is not None:
             self.emit('startup_speed_ready',actual=snapshot.speed_pct,clock=snapshot.clock,
@@ -60,7 +69,7 @@ class StartupAudit:
                 self.emit('startup_wait', **state)
                 waiting = True
             previous = state['clock'] if can_run else None
-            time.sleep(.2)
+            time.sleep(.05 if can_run and getattr(self.session,'background_allowed',False) else .2)
 
     @contextmanager
     def stage(self, name):

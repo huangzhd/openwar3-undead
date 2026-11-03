@@ -4,6 +4,7 @@ Never serialize SDK objects, event dictionaries, addresses, or raw command args.
 Queries and diagnostic lanes are excluded. Effects are subsequent observations,
 not successful command receipts. Only an explicit natural referee result rewards.
 """
+from contextlib import contextmanager
 import copy
 import json
 import math
@@ -13,7 +14,7 @@ from run_guard import RunInterrupted
 from learning.outcome import NATURAL, classify_outcome
 
 SCHEMA = 'dayuan-trajectory-v1'
-PRIMITIVE_SCHEMA = 'dayuan-trajectory-v2'
+PRIMITIVE_SCHEMA = 'dayuan-trajectory-v6'
 RESOURCE_FIELDS = ('gold', 'lumber', 'food_used', 'food_cap', 'gold_gathered', 'lumber_gathered')
 UNIT_FIELDS = ('x', 'y', 'hp', 'hp_max', 'mana', 'mana_max', 'level')
 ACTION_NAMES = ('point', 'target', 'immediate', 'build', 'learn', 'use_item',
@@ -127,11 +128,15 @@ class TrajectoryRecorder:
     receipts remain distinct; new model execution/preconditions need an adapter.
     """
     def __init__(self, game, path, *, visibility=None, public_points=(), capture_receipts=False, policy='rule'):
-        if policy not in ('rule','external_primitives'):raise ValueError('Unsupported trajectory policy')
+        self.teacher = policy=='rule_teacher'
+        self.tick_id=self.teacher_batch=0
+        self.teacher_input=None
+        if policy not in ('rule','external_primitives','rule_teacher'):raise ValueError('Unsupported trajectory policy')
         raw = game.world.read()
         self.boundary = ObservationBoundary(game.pid, getattr(raw, 'epoch', None))
         self.boundary.validate(game, raw)
         self.game, self.visibility = game, visibility
+        self.research_levels = {}
         self.trees = None
         if policy == 'external_primitives':
             from learning.trees import TreeSightings
@@ -151,7 +156,15 @@ class TrajectoryRecorder:
         self.original = game.lane.commands
         self.wrapper = self.commands
         try:
-            self.write('header', schema=PRIMITIVE_SCHEMA if self.trees else SCHEMA, player=1, epoch=raw.epoch,
+            schema=PRIMITIVE_SCHEMA if self.trees else SCHEMA
+            extra={}
+            if self.teacher:
+                from learning.actions import checked_bounds
+                from learning.teacher import TRAJECTORY
+                schema=TRAJECTORY
+                self.teacher_bounds=checked_bounds(game.map().bounds)
+                extra=dict(bounds=self.teacher_bounds,decision_basis='tick_entry_p1_snapshot',grouping='controller_tick_and_native_batch')
+            self.write('header', **extra,schema=schema, player=1, epoch=raw.epoch,
                        policy=policy, training_actor_approved=False,
                        limitations=['teacher_visibility_not_live_audited', 'no_model_action_adapter',
                                     'receipts_do_not_prove_effects', 'ground_items_and_map_grid_omitted']
@@ -178,7 +191,13 @@ class TrajectoryRecorder:
         raw = self.game.world.read() if raw is None else raw
         observation = self.boundary.project(self.game, raw)
         if observation is not None:
-            if self.trees is not None:observation['tree_sightings'] = self.trees.rows()
+            if self.trees is not None or self.teacher:
+                from learning.hero_skills import points
+                from learning.unit_spells import statuses
+                observation['tree_sightings'] = self.trees.rows() if self.trees else []
+                observation['hero_skill_points'] = points(raw)
+                observation['own_spell_status'] = statuses(raw)
+                observation['research_levels'] = copy.deepcopy(self.research_levels)
             self.observation_id += 1
             self.last_observation = copy.deepcopy(observation)
             self.write('observation', id=self.observation_id, observation=observation)
@@ -231,8 +250,30 @@ class TrajectoryRecorder:
             if number(x) is None or number(y) is None:
                 return None, 'invalid_coordinates'
             data.update(x=x, y=y)
-        # extra/mode can have op-specific meanings; omitted until an action adapter exists.
+        if (self.trees is not None or self.teacher) and op=='use_item':
+            slot,mode=args[9:11]
+            if (not 0<=slot<6 or mode not in (0,1) or target is not None or args[3]!=0
+                    or mode==0 and any(args[7:9])):
+                return None,'unsupported_item_arguments'
+            held=code(unit.items[slot]) if unit.has_detail and len(unit.items)==6 else None
+            if held is None:return None,'item_slot_not_observable'
+            data.update(slot=slot,mode=mode,item_at_issue=held)
         return data, 'observable_owned_request'
+
+    @contextmanager
+    def teacher_tick(self):
+        if self.teacher_input is not None:raise RuntimeError('Nested teacher tick')
+        self.observe()
+        self.tick_id+=1
+        self.teacher_input=self.last_observation
+        self.write('tick_begin',tick=self.tick_id,observation_id=self.observation_id)
+        complete=False
+        try:
+            yield
+            complete=True
+        finally:
+            self.teacher_input=None
+            self.write('tick_end',tick=self.tick_id,complete=complete)
 
     def commands(self, calls, *args, **kwargs):
         calls = list(calls)
@@ -241,12 +282,24 @@ class TrajectoryRecorder:
             return self.original(calls, *args, **kwargs)
         raw = self.observe()
         requests = []
-        for index, call in selected:
+        if self.teacher:self.teacher_batch+=1
+        for ordinal,(index, call) in enumerate(selected):
             payload, reason = self.request(call, raw)
+            extra={}
+            if self.teacher:
+                from learning.teacher import capture
+                candidate=None
+                if payload is not None:
+                    candidate,reason=capture(call,payload,self.teacher_input,self.last_observation,self.teacher_bounds)
+                if candidate is None:payload=None
+                extra=dict(tick=self.tick_id if self.teacher_input is not None else None,batch=self.teacher_batch,
+                           batch_index=ordinal,batch_count=len(selected),candidate=candidate)
+                if candidate is not None:
+                    extra['arguments']=dict(extra=call.args[9],mode=call.args[10])
             self.action_id += 1
             requests.append((index, self.action_id))
             self.write('action_request', id=self.action_id, observation_id=self.observation_id,
-                       clock=raw.clock, eligible=payload is not None, eligibility=reason, action=payload)
+                       clock=raw.clock, eligible=payload is not None, eligibility=reason, action=payload,**extra)
         try:
             receipts = self.original(calls, *args, **kwargs)
         except BaseException as exc:

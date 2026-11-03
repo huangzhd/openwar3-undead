@@ -1,0 +1,207 @@
+{
+  "source": "user_supplied_w3g",
+  "file": "Happy__vs_LookAround_(2)LastRefuge-1.3_126.w3g",
+  "sha256": "ec9657fc1f8b1fc5e165daba8cc7233a834c65d71b04a6a2f018188c4e2b9149",
+  "bytes": 115395,
+  "header": {
+    "header_bytes": 68,
+    "recorded_product": "PX3W",
+    "version": 26,
+    "build": 6059,
+    "header_duration_ms": 612375,
+    "declared_data_bytes": 323794,
+    "blocks": 40
+  },
+  "map": {
+    "replay_path": "Maps\\Download\\(2)LastRefuge-1.3.w3x",
+    "recorded_checksum": "96215b65",
+    "recorded_checksum_sha1": "2bcad2fc8223474bbf0c93c6dcf3022506b80217",
+    "always_visible": false,
+    "map_explored": false
+  },
+  "participants": [
+    {
+      "slot": 3,
+      "name": "Happy_",
+      "race": "undead"
+    },
+    {
+      "slot": 6,
+      "name": "LookAround",
+      "race": "human"
+    }
+  ],
+  "observers": [
+    2,
+    4
+  ],
+  "summed_timeslot_ms": 612396,
+  "delta_to_header_ms": 21,
+  "focus_slot": 3,
+  "focus_opening_ms": 180000,
+  "focus_undecoded_blocks": 0,
+  "orders": [
+    {
+      "ms": 4300,
+      "category": "build",
+      "code": "uaod",
+      "block": 38,
+      "raw_offset": 2601,
+      "raw_hex": "110400646f6175ffffffffffffffff0000724500003245",
+      "point": [
+        3872,
+        2848
+      ]
+    },
+    {
+      "ms": 6800,
+      "category": "build",
+      "code": "uzig",
+      "block": 58,
+      "raw_offset": 3744,
+      "raw_hex": "11040067697a75ffffffffffffffff0000854500005645",
+      "point": [
+        4256,
+        3424
+      ]
+    },
+    {
+      "ms": 31800,
+      "category": "build",
+      "code": "usep",
+      "block": 439,
+      "raw_offset": 18963,
+      "raw_hex": "11040070657375ffffffffffffffff0000544500006045",
+      "point": [
+        3392,
+        3584
+      ]
+    },
+    {
+      "ms": 55000,
+      "category": "build",
+      "code": "utom",
+      "block": 686,
+      "raw_offset": 32161,
+      "raw_hex": "1104006d6f7475ffffffffffffffff0000864500003c45",
+      "point": [
+        4288,
+        3008
+      ]
+    },
+    {
+      "ms": 66400,
+      "category": "hero",
+      "code": "Udea",
+      "block": 798,
+      "raw_offset": 38804,
+      "raw_hex": "10460061656455ffffffffffffffff"
+    },
+    {
+      "ms": 66500,
+      "category": "hero",
+      "code": "Udea",
+      "block": 799,
+      "raw_offset": 38844,
+      "raw_hex": "10460061656455ffffffffffffffff"
+    },
+    {
+      "ms": 74100,
+      "category": "build",
+      "code": "ugrv",
+      "block": 868,
+      "raw_offset": 42914,
+      "raw_hex": "11040076726775ffffffffffffffff0000784500006c45",
+      "point": [
+        3968,
+        3776
+      ]
+    },
+    {
+      "ms": 136100,
+      "category": "skill",
+      "code": "AUdc",
+      "block": 1493,
+      "raw_offset": 77034,
+      "raw_hex": "10420063645541ffffffffffffffff"
+    },
+    {
+      "ms": 161100,
+      "category": "hall",
+      "code": "unp1",
+      "block": 1727,
+      "raw_offset": 89269,
+      "raw_hex": "10400031706e75ffffffffffffffff"
+    },
+    {
+      "ms": 177700,
+      "category": "build",
+      "code": "uzig",
+      "block": 1872,
+      "raw_offset": 97353,
+      "raw_hex": "11040067697a75ffffffffffffffff0000854500006645",
+      "point": [
+        4256,
+        3680
+      ]
+    },
+    {
+      "ms": 178600,
+      "category": "build",
+      "code": "uzig",
+      "block": 1880,
+      "raw_offset": 97774,
+      "raw_hex": "11040067697a75ffffffffffffffff0000854500006a45",
+      "point": [
+        4256,
+        3744
+      ]
+    },
+    {
+      "ms": 252800,
+      "category": "skill",
+      "code": "AUau",
+      "block": 2530,
+      "raw_offset": 135385,
+      "raw_hex": "10420075615541ffffffffffffffff"
+    },
+    {
+      "ms": 302700,
+      "category": "hero",
+      "code": "Ulic",
+      "block": 2947,
+      "raw_offset": 159368,
+      "raw_hex": "10460063696c55ffffffffffffffff"
+    },
+    {
+      "ms": 359600,
+      "category": "skill",
+      "code": "AUfn",
+      "block": 3454,
+      "raw_offset": 188761,
+      "raw_hex": "1042006e665541ffffffffffffffff"
+    },
+    {
+      "ms": 361400,
+      "category": "hall",
+      "code": "unp2",
+      "block": 3465,
+      "raw_offset": 189501,
+      "raw_hex": "10400032706e75ffffffffffffffff"
+    },
+    {
+      "ms": 604700,
+      "category": "skill",
+      "code": "AUdr",
+      "block": 5581,
+      "raw_offset": 320048,
+      "raw_hex": "10420072645541ffffffffffffffff"
+    }
+  ],
+  "professional_identity": "not_independently_confirmed_for_this_match",
+  "construction_verified": false,
+  "player_view_reconstructed": false,
+  "engine_effects_verified": false,
+  "map_binary_verified": false,
+  "training_labels": 0
+}

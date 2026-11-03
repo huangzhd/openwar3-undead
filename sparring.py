@@ -61,19 +61,20 @@ class SparringSession(HumanPracticeSession):
             raw=setup.world.read()
             if raw is None or not raw.in_game or raw.me!=0:raise RuntimeError('Expected local observer P0')
             j=setup.jass
-            active={i for i in range(12) if j.GetPlayerSlotState(j.Player(i))==1}
+            players=[j.Player(i) for i in range(12)]
+            active={i for i,p in enumerate(players) if j.GetPlayerSlotState(p)==1}
             self.settings['active_player_slots']=sorted(active)
             if not {1,2}<=active or active-{0,1,2}:raise RuntimeError('Unexpected observer scenario player slots: '+repr(sorted(active)))
-            rows=[dict(slot=i,controller=j.GetPlayerController(j.Player(i)),race=j.GetPlayerRace(j.Player(i))) for i in (1,2)]
+            rows=[dict(slot=i,controller=j.GetPlayerController(players[i]),race=j.GetPlayerRace(players[i])) for i in (1,2)]
             native=self.profile=='kfai-human'
             if [(r['controller'],r['race']) for r in rows]!=[(1,3),(1,1)]:raise RuntimeError('Wrong bot races/controllers: '+repr(rows))
-            if not j.IsPlayerObserver(j.Player(0)) or any(u.alive and u.owner==0 for u in raw.units):
+            if not j.IsPlayerObserver(players[0]) or any(u.alive and u.owner==0 for u in raw.units):
                 raise RuntimeError('P0 is not an empty observer: refuse participant-view fallback')
             for a,b in ((1,2),(2,1)):
-                if not j.IsPlayerEnemy(j.Player(a),j.Player(b)):raise RuntimeError('Bot players are not enemies')
-                if any(j.GetPlayerAlliance(j.Player(a),j.Player(b),kind) for kind in (5,6,7,9)):
+                if not j.IsPlayerEnemy(players[a],players[b]):raise RuntimeError('Bot players are not enemies')
+                if any(j.GetPlayerAlliance(players[a],players[b],kind) for kind in (5,6,7,9)):
                     raise RuntimeError('Bot players share vision/control')
-            for i in ((1,) if native else (1,2)):j.PauseCompAI(j.Player(i),True)
+            for i in ((1,) if native else (1,2)):j.PauseCompAI(players[i],True)
             w=setup._w3fast
             receipts=setup.lane.commands([w.command('cam_field',code=0,x=2500.0,y=0.0),
                                           w.command('cam_field',code=1,x=10000.0,y=0.0)])
@@ -83,6 +84,17 @@ class SparringSession(HumanPracticeSession):
                                  native_ai_paused_players=[1] if native else [1,2],camera_distance=2500,
                                  opponent_fairness='native_KFAI_unverified' if native else 'fair_python_controller',
                                  fair=True,background_supported=True,auto_restart=False)
+
+    def correct_launch_speed(self):
+        """Only the child game launched by this still-live launcher may be changed."""
+        import psutil
+        if len(self.owned)!=2 or self.game is None:
+            raise RuntimeError('Unconfirmed sparring process ownership')
+        launcher,game=self.owned
+        if (game['pid']!=self.game.pid or not self.matches(launcher) or not self.matches(game)
+                or psutil.Process(game['pid']).ppid()!=launcher['pid']):
+            raise RuntimeError('Sparring process identity changed before speed request')
+        return self.game.set_speed(self.speed)
 
     def start_opponent(self,log):
         self.opponent_game=Game(pid=self.game.pid,player=2,fair=True)

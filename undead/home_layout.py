@@ -25,18 +25,40 @@ class HomeLayout:
     def __init__(self,log=lambda *a,**k:None):
         self.cursors={};self.pending={};self.log=log;self.failed_spots={}
         self.map_alias=None
+        self.opening_profile=None
+        self.opening_issued=set()
+        self.opening_foundations=set()
+        self.new_foundations=set()
+
+    def opening_due(self,code,now):
+        # Graveyard uses the normal affordability check as soon as the shop is underway.
+        return code=='ugrv' or now*1000>=self.opening_profile[code][0]-400
+
+    def opening_order(self,g,code,issue):
+        target=self.opening_profile[code][0]
+        before=g.snapshot(max_age=0)
+        if not before or not self.opening_due(code,before.clock):return False
+        result=issue()
+        after=g.snapshot(max_age=0)
+        self.log('reference_order',code=code,target_ms=target,clock=before.clock,
+                 after=after.clock if after and after.epoch==before.epoch else None,accepted=bool(result))
+        if result:self.opening_issued.add(code)
+        return result
 
     @property
     def reserved(self):
         return {p['worker'] for p in self.pending.values()}
 
     def observe(self,g,now):
+        self.new_foundations.clear()
         buildings=g.my_buildings()
         for code,p in list(self.pending.items()):
             foundation=next((u for u in buildings if u.type==code and u.handle not in p['before']
                              and max(abs(u.x-p['point'][0]),abs(u.y-p['point'][1]))<128),None)
             if foundation:
                 self.pending.pop(code,None)
+                self.new_foundations.add(foundation.handle)
+                if self.opening_profile and code in self.opening_profile:self.opening_foundations.add(code)
                 self.log('home_foundation_observed',clock=now,code=code,point=(foundation.x,foundation.y),handle=foundation.handle)
                 continue
             worker=next((u for u in g.units('me',{'uaco'}) if u.handle==p['worker']),None)
@@ -53,7 +75,7 @@ class HomeLayout:
                     if order>=0x20202020:g.hold(worker)
                     self.pending.pop(code,None)
                     fixed=fixed_slot(self.map_alias,p.get('home'),code,buildings) if p.get('home') is not None else None
-                    self.failed_spots[(code,p['point'])]=now+(3 if fixed==p['point'] else 45)
+                    self.failed_spots[(code,p['point'])]=now+(3 if fixed==p['point'] or fixed and self.opening_profile else 45)
                     self.log('home_foundation_unconfirmed',clock=now,code=code,point=p['point'],
                              worker=p['worker'],order=order,reason='order_lost' if order<0x20202020 else 'no_worker_progress')
                     home=p.get('home')
@@ -67,9 +89,17 @@ class HomeLayout:
     def candidates(self,code,home,buildings):
         fixed=fixed_slot(self.map_alias,home,code,buildings)
         if fixed is not None:
-            # The user asked for this exact location, including on retries.
-            # An occupied slot waits; it must not silently search a different site.
+            # Use the same-side rule layout as a set; mixing towers from one
+            # layout with the shop from another can obstruct the shop.
             if clear_of_buildings(fixed,buildings,0,LR_HALF[code]):yield fixed
+            if self.opening_profile:
+                alternatives={self.opening_profile[code][1]}
+                if code=='utom':
+                    x,y=fixed
+                    alternatives.update((x+dx,y+dy) for dx in range(-384,385,64) for dy in range(-384,385,64)
+                                        if dx*dx+dy*dy<=384*384)
+                for nearby in sorted(alternatives-{fixed},key=lambda p:((p[0]-fixed[0])**2+(p[1]-fixed[1])**2,p)):
+                    if clear_of_buildings(nearby,buildings,0,LR_HALF[code]):yield nearby
             return
         half=ENVELOPES.get(code,160)
         length=hypot(home.x,home.y)
@@ -157,12 +187,18 @@ class HomeLayout:
             if blocked:continue
             attempts+=1
             if fixed is not None:
-                spot=point if g.can_afford(code) and g.build(worker,code,*point) else None
+                if not g.can_afford(code):return finish(None)
+                if self.opening_profile and code not in self.opening_issued:
+                    if now is not None and not self.opening_due(code,now):return finish(None)
+                    issued=self.opening_order(g,code,lambda:g.build(worker,code,*point))
+                else:issued=g.build(worker,code,*point)
+                spot=point if issued else None
             else:
                 spot=g.build_near(worker,code,*point,min_r=0,max_r=0,max_tries=1)
             if fixed is not None and not spot and now is not None:
                 self.failed_spots[(code,point)]=now+3
                 self.log('home_fixed_slot_retry',clock=now,code=code,point=point,retry_at=now+3)
+                return finish(None)
             if spot and now is not None and now<self.failed_spots.get((code,tuple(spot)),-1):
                 return finish(None) # Wait for SDK to observe the cancellation, not another 24s hold.
             # An existing SDK walking order returns its earlier point. Keep it

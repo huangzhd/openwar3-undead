@@ -120,6 +120,7 @@ class HumanPracticeSession(Session):
         from startup_audit import StartupAudit
         self.startup_audit = StartupAudit(self, deadline, until)
         last_error = ''
+        fast_attach=getattr(self,'background_allowed',False) and self.speed>=400
         while time.monotonic() < deadline:
             ensure_time(until)
             self.startup_audit.check_deadline()
@@ -135,14 +136,19 @@ class HumanPracticeSession(Session):
                     last_error = repr(exc)
             if self.game:
                 snap = self.game.snapshot(max_age=0)
-                if snap and snap.in_game and snap.clock > 1:
+                if snap and snap.in_game and snap.clock > (0 if fast_attach else 1):
                     own_types = {u.type for u in self.game.my_units()}
+                    # Early frames can precede melee unit creation. Keep the
+                    # original identity check once initialization has advanced.
+                    if snap.clock<=1 and not {'unpl','uaco'}<=own_types:
+                        time.sleep(.025)
+                        continue
                     self.startup_log('startup_identity_sample', clock=snap.clock, player=snap.me,
                                      speed=snap.speed_pct, expected_speed=self.speed, own_types=sorted(own_types))
                     if snap.me != 1 or not {'unpl','uaco'} <= own_types:
                         raise RuntimeError('Wrong practice identity/race/speed: '+repr(dict(
                             player=snap.me,speed=snap.speed_pct,expected_speed=self.speed,own_types=sorted(own_types))))
-                    if not self.startup_audit.speed_ready(snap):
+                    if not self.startup_audit.speed_ready(snap, getattr(self,'correct_launch_speed',None)):
                         time.sleep(.2)
                         continue
                     if not snap.resources_known:
@@ -167,7 +173,7 @@ class HumanPracticeSession(Session):
                     print(json.dumps(dict(event='human_practice_ready',pid=pid,clock=snap.clock,
                                           settings=self.settings),ensure_ascii=False),flush=True)
                     return self.game
-            time.sleep(.2)
+            time.sleep(.025 if fast_attach and pid else .2)
         raise TimeoutError('Practice did not become ready in 120s: '+last_error)
 
     def alive(self):

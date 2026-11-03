@@ -1,0 +1,208 @@
+{
+  "replay_sha256": "fbfa9e6ed9d1e97abce0fd5e524a9a1915f949ecf632766ae729807bd8e04e29",
+  "source": {
+    "kind": "format_fixture",
+    "source_url": "https://raw.githubusercontent.com/PBug90/w3gjs/40efcfc7bdb8ccb0241823f9aa099b98a62ca0fe/test/replays/200/148249993_Edo_Leon_Tidehunters%2012.w3g",
+    "expected_sha256": "fbfa9e6ed9d1e97abce0fd5e524a9a1915f949ecf632766ae729807bd8e04e29",
+    "claim_verified": false,
+    "supplied_hash_matches": true,
+    "nominated_slot_in_replay": null
+  },
+  "profile": {
+    "header_bytes": 68,
+    "recorded_product": "PX3W",
+    "version": 10100,
+    "build": 6117,
+    "header_duration_ms": 426512,
+    "declared_data_bytes": 295590,
+    "blocks": 37
+  },
+  "reported_map": {
+    "replay_path": "maps\\W3Champions\\54_w3c_251104_0950_Tidehunters_v1.2.w3x",
+    "recorded_checksum": "ffffffff",
+    "recorded_checksum_sha1": "7b89059994f918b9b0632333fc84c60d1913eb7f",
+    "always_visible": false,
+    "map_explored": false
+  },
+  "player": 1,
+  "window_ms": 180000,
+  "observed_orders": [
+    {
+      "seq": 1,
+      "timeslot_ms": 4969,
+      "block": 50,
+      "payload_offset": 3553,
+      "payload_bytes": 23,
+      "decoded_index": 0,
+      "code": "usep",
+      "recorded_point": [
+        -3456,
+        2816
+      ],
+      "flags": 4,
+      "prior_subgroup": {
+        "timeslot_ms": 3656,
+        "block": 33,
+        "payload_offset": 2588,
+        "payload_bytes": 48,
+        "decoded_index": 4,
+        "type": "uaco",
+        "replay_scoped_object": "8cb68624cf4a2db48c81f788",
+        "age_timeslot_ms": 1313
+      },
+      "issue_actor_confirmed": false,
+      "prior_observed_same_code": null,
+      "prior_observed_exact_point": null
+    },
+    {
+      "seq": 2,
+      "timeslot_ms": 8377,
+      "block": 91,
+      "payload_offset": 5875,
+      "payload_bytes": 23,
+      "decoded_index": 0,
+      "code": "uaod",
+      "recorded_point": [
+        -3360,
+        3168
+      ],
+      "flags": 4,
+      "prior_subgroup": {
+        "timeslot_ms": 3656,
+        "block": 33,
+        "payload_offset": 2588,
+        "payload_bytes": 48,
+        "decoded_index": 4,
+        "type": "uaco",
+        "replay_scoped_object": "8cb68624cf4a2db48c81f788",
+        "age_timeslot_ms": 4721
+      },
+      "issue_actor_confirmed": false,
+      "prior_observed_same_code": null,
+      "prior_observed_exact_point": null
+    },
+    {
+      "seq": 3,
+      "timeslot_ms": 22645,
+      "block": 238,
+      "payload_offset": 15405,
+      "payload_bytes": 23,
+      "decoded_index": 0,
+      "code": "uzig",
+      "recorded_point": [
+        -4128,
+        3232
+      ],
+      "flags": 4,
+      "prior_subgroup": {
+        "timeslot_ms": 19481,
+        "block": 193,
+        "payload_offset": 12949,
+        "payload_bytes": 48,
+        "decoded_index": 4,
+        "type": "uaco",
+        "replay_scoped_object": "8cb68624cf4a2db48c81f788",
+        "age_timeslot_ms": 3164
+      },
+      "issue_actor_confirmed": false,
+      "prior_observed_same_code": null,
+      "prior_observed_exact_point": null
+    },
+    {
+      "seq": 4,
+      "timeslot_ms": 48005,
+      "block": 567,
+      "payload_offset": 35331,
+      "payload_bytes": 23,
+      "decoded_index": 0,
+      "code": "utom",
+      "recorded_point": [
+        -3968,
+        2368
+      ],
+      "flags": 4,
+      "prior_subgroup": {
+        "timeslot_ms": 46909,
+        "block": 554,
+        "payload_offset": 34564,
+        "payload_bytes": 48,
+        "decoded_index": 4,
+        "type": "uaco",
+        "replay_scoped_object": "d9a33830423ba1c34e022281",
+        "age_timeslot_ms": 1096
+      },
+      "issue_actor_confirmed": false,
+      "prior_observed_same_code": null,
+      "prior_observed_exact_point": null
+    },
+    {
+      "seq": 5,
+      "timeslot_ms": 75691,
+      "block": 895,
+      "payload_offset": 55941,
+      "payload_bytes": 23,
+      "decoded_index": 0,
+      "code": "uzig",
+      "recorded_point": [
+        -4064,
+        3488
+      ],
+      "flags": 4,
+      "prior_subgroup": {
+        "timeslot_ms": 73772,
+        "block": 874,
+        "payload_offset": 54647,
+        "payload_bytes": 48,
+        "decoded_index": 4,
+        "type": "uaco",
+        "replay_scoped_object": "56fec9ab5ef673d543bfd4d9",
+        "age_timeslot_ms": 1919
+      },
+      "issue_actor_confirmed": false,
+      "prior_observed_same_code": 3,
+      "prior_observed_exact_point": null
+    },
+    {
+      "seq": 6,
+      "timeslot_ms": 178445,
+      "block": 1995,
+      "payload_offset": 134431,
+      "payload_bytes": 23,
+      "decoded_index": 0,
+      "code": "uzig",
+      "recorded_point": [
+        672,
+        4704
+      ],
+      "flags": 4,
+      "prior_subgroup": {
+        "timeslot_ms": 177445,
+        "block": 1983,
+        "payload_offset": 133632,
+        "payload_bytes": 14,
+        "decoded_index": 1,
+        "type": "hmil",
+        "replay_scoped_object": "97a810f386e9c6977b8730ba",
+        "age_timeslot_ms": 1000
+      },
+      "issue_actor_confirmed": false,
+      "prior_observed_same_code": 5,
+      "prior_observed_exact_point": null
+    }
+  ],
+  "undecoded_blocks": [
+    {
+      "timeslot_ms": 913,
+      "block": 4,
+      "payload_offset": 344,
+      "payload_bytes": 21
+    }
+  ],
+  "independent_check": "all reported build points matched unique raw order signatures in their player block; no inference about excluded bytes",
+  "professional_identity": "unverified",
+  "selection_and_visibility_verified": false,
+  "construction_verified": false,
+  "training_labels": 0,
+  "schema": "dayuan-opening-orders-v2",
+  "prior_context_check": "6 subgroup records matched unique earlier raw signatures and replay-scoped object hashes; actual issuer unknown"
+}

@@ -588,7 +588,8 @@ class Creeping:
                 return (
                         int(self.opening_gnoll and not entrance_turtle),
                         int(self.opening_gnoll and not own_gnoll),score(c))
-            for c in sorted(self.candidates(g,army,home,now),key=opening_score):
+            ranked=sorted(self.candidates(g,army,home,now),key=opening_score)
+            for c in ranked:
                 point=(c['x'],c['y'])
                 if g.path_distance(center,point) is None:
                     self.active=c
@@ -600,6 +601,8 @@ class Creeping:
                     continue
                 self.active=c;self.progress_at=now;self.best_distance=g.path_distance(center,point);self.last_hp=None
                 self.log('creep_goal',clock=now,point=point,camp=c['id'],kind=c['kind'],
+                         candidate_scope='rule_candidates_before_route_check',
+                         candidates=[dict(camp=v['id'],point=(v['x'],v['y'])) for v in ranked],
                          level_sum=c.get('level_sum'),poison_units=c.get('poison_units'),
                          difficulty=c.get('difficulty'),army_strength=round(self.strength(army),2),
                          tier=self.tier,statue_present=any(u.type=='uobs' for u in army),
