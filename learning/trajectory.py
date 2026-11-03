@@ -13,6 +13,7 @@ from run_guard import RunInterrupted
 from learning.outcome import NATURAL, classify_outcome
 
 SCHEMA = 'dayuan-trajectory-v1'
+PRIMITIVE_SCHEMA = 'dayuan-trajectory-v2'
 RESOURCE_FIELDS = ('gold', 'lumber', 'food_used', 'food_cap', 'gold_gathered', 'lumber_gathered')
 UNIT_FIELDS = ('x', 'y', 'hp', 'hp_max', 'mana', 'mana_max', 'level')
 ACTION_NAMES = ('point', 'target', 'immediate', 'build', 'learn', 'use_item',
@@ -73,6 +74,20 @@ class ObservationBoundary:
                                        cooldown=number(a.cooldown)) for a in unit.abilities] if detailed else None)
         return data
 
+    @staticmethod
+    def economic_state(raw, own_handles):
+        player = next((p for p in raw.players if p.id == 1), None)
+        resources = ({k: number(getattr(player, k, None)) for k in RESOURCE_FIELDS}
+                     if player is not None and player.known else None)
+        production = []
+        for row in raw.production:
+            if tuple(row.building) not in own_handles:
+                continue
+            production.append(dict(building=list(row.building),
+                                   kind=row.kind if row.kind in ('queue', 'construction', 'upgrade') else None,
+                                   queue=[code(v) for v in row.queue], progress=number(row.progress)))
+        return dict(resources=resources, production=sorted(production, key=lambda p: p['building']))
+
     def project(self, game, raw):
         self.validate(game, raw)
         if self.clock == raw.clock:
@@ -88,20 +103,9 @@ class ObservationBoundary:
                 own_handles.add(handle(unit))
             else:
                 self.memory[handle(unit)] = dict(last_seen_clock=raw.clock, unit=copy.deepcopy(data))
-        player = next((p for p in raw.players if p.id == 1), None)
-        resources = ({k: number(getattr(player, k, None)) for k in RESOURCE_FIELDS}
-                     if player is not None and player.known else None)
-        production = []
-        for row in raw.production:
-            if tuple(row.building) not in own_handles:
-                continue
-            production.append(dict(building=list(row.building),
-                                   kind=row.kind if row.kind in ('queue', 'construction', 'upgrade') else None,
-                                   queue=[code(v) for v in row.queue], progress=number(row.progress)))
         self.clock, self.publication = raw.clock, raw.publish_count
-        return dict(player=1, clock=raw.clock, resources=resources,
+        return dict(player=1, clock=raw.clock, **self.economic_state(raw, own_handles),
                     units=sorted(units, key=lambda u: u['handle']),
-                    production=sorted(production, key=lambda p: p['building']),
                     last_seen=[copy.deepcopy(self.memory[h]) for h in sorted(self.memory)])
 
 
@@ -128,6 +132,10 @@ class TrajectoryRecorder:
         self.boundary = ObservationBoundary(game.pid, getattr(raw, 'epoch', None))
         self.boundary.validate(game, raw)
         self.game, self.visibility = game, visibility
+        self.trees = None
+        if policy == 'external_primitives':
+            from learning.trees import TreeSightings
+            self.trees = TreeSightings(game, self.boundary)
         self.points = tuple(sorted(set(tuple(p) for p in public_points)))
         if len(self.points) > 16 or any(len(p) != 2 or any(number(v) is None for v in p) for p in self.points):
             raise BoundaryError('Expected at most 16 public coordinates without slot identities')
@@ -143,7 +151,7 @@ class TrajectoryRecorder:
         self.original = game.lane.commands
         self.wrapper = self.commands
         try:
-            self.write('header', schema=SCHEMA, player=1, epoch=raw.epoch,
+            self.write('header', schema=PRIMITIVE_SCHEMA if self.trees else SCHEMA, player=1, epoch=raw.epoch,
                        policy=policy, training_actor_approved=False,
                        limitations=['teacher_visibility_not_live_audited', 'no_model_action_adapter',
                                     'receipts_do_not_prove_effects', 'ground_items_and_map_grid_omitted']
@@ -170,6 +178,7 @@ class TrajectoryRecorder:
         raw = self.game.world.read() if raw is None else raw
         observation = self.boundary.project(self.game, raw)
         if observation is not None:
+            if self.trees is not None:observation['tree_sightings'] = self.trees.rows()
             self.observation_id += 1
             self.last_observation = copy.deepcopy(observation)
             self.write('observation', id=self.observation_id, observation=observation)
@@ -197,15 +206,26 @@ class TrajectoryRecorder:
         if unit is None or unit.owner != 1 or not unit.alive:
             return None, 'source_not_owned_alive'  # Neutral shop purchases omitted in v1.
         target = None
+        target_kind = 'unit'
         if any(args[4:7]):
             target = resolve(4)
-            if target is None or target.owner != 1 and not target.visible_to(1):
+            if target is None and self.trees is not None:
+                target = self.trees.resolve_visible(list(args[5:7]))
+                if target is not None and target.addr != args[4]:target = None
+                if target is not None:target_kind = 'tree'
+            if target is None or target_kind == 'unit' and target.owner != 1 and not target.visible_to(1):
                 return None, 'target_not_currently_observable'
         observable = {tuple(u['handle']) for u in self.last_observation['units']}
-        if unit.handle not in observable or target is not None and target.handle not in observable:
+        if self.trees is not None:observable.update(tuple(t['handle']) for t in self.last_observation['tree_sightings'])
+        target_handle = None
+        if target is not None:
+            from learning.trees import identity as tree_identity
+            target_handle = tree_identity(target) if target_kind == 'tree' else target.handle
+        if unit.handle not in observable or target_handle is not None and target_handle not in observable:
             return None, 'not_in_recorded_observation'
         data = dict(op=op, unit=list(unit.handle), code=args[3],
-                    target=list(target.handle) if target is not None else None)
+                    target=list(target_handle) if target_handle is not None else None)
+        if target_kind == 'tree':data['target_kind'] = 'tree'
         if op in ('point', 'build', 'rally', 'use_item', 'item_drop'):
             x, y = (struct.unpack('<f', struct.pack('<I', v))[0] for v in args[7:9])
             if number(x) is None or number(y) is None:

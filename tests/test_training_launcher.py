@@ -60,6 +60,20 @@ class PortableLauncherTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError,'generator failed'):launch.prepare(self.root,lambda _:None)
         self.assertFalse((self.upstream/'data/game/dayuan-prepared.json').exists())
 
+    def test_old_cache_and_generated_files_cannot_hide_failed_regeneration(self):
+        signature=launch.game_signature(self.game);signature.pop('extractor')
+        folder=self.upstream/'data/game';folder.mkdir(parents=True)
+        launch.atomic_json(folder/'dayuan-prepared.json',signature)
+        for name in launch.TABLES:(folder/name).write_text('old table')
+        for name in launch.GENERATED:(folder/name).write_text('{"old":1}')
+        self.assertFalse(launch.data_ready(self.upstream,launch.game_signature(self.game)))
+        with patch.object(launch,'locate_game',return_value=self.game),patch.object(launch,'active_games',return_value=[]),\
+             patch.object(launch,'install_runtime'),patch.object(launch,'run_tool') as run:
+            with self.assertRaisesRegex(RuntimeError,'游戏数据不完整'):launch.prepare(self.root,lambda _:None)
+        self.assertEqual(run.call_args_list[0].args[0][0],self.root/'portable_game_data.py')
+        self.assertFalse((folder/'dayuan-prepared.json').exists())
+        self.assertFalse(any((folder/name).exists() for name in launch.GENERATED))
+
     @unittest.skipUnless(__import__('sys').platform=='win32','Windows file lock')
     def test_duplicate_start_is_blocked_and_lock_recovers_after_exit(self):
         with launch.LauncherLock(self.root):

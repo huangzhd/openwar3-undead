@@ -10,9 +10,10 @@ def analyze(rows, baseline, version):
     milestones={};ordered=Counter();founded=Counter();interference=None
     for row in rows:
         event=row['event'];clock=row.get('clock')
+        situation=row.get('situation') or {}
         if clock is None:continue
         if (event=='player_contact_interrupt' or row.get('base_enemy_hp',0)>0
-                or event=='summary' and row.get('situation',{}).get('base_enemy_hp',0)>0):
+                or event=='summary' and situation.get('base_enemy_hp',0)>0):
             interference=clock if interference is None else min(clock,interference)
         if event=='purchase':
             code=row['code']
@@ -26,7 +27,7 @@ def analyze(rows, baseline, version):
             code=row['code'];founded[code]+=1;milestones[f'build:{code}:{founded[code]}:foundation']=clock
         elif event=='opening_observed':milestones.setdefault('opening:'+row['stage'],clock)
         elif event in {'decision','summary'}:
-            tier=row.get('tier',row.get('situation',{}).get('tier',1))
+            tier=row.get('tier',situation.get('tier',1))
             for level in (2,3):
                 if tier>=level:milestones.setdefault(f'tier:{level}:observed',clock)
             for hero in row.get('heroes',[]):
@@ -63,6 +64,8 @@ def review(run):
     rows=[json.loads(s) for s in (run/'events.jsonl').read_text(encoding='utf-8').splitlines()]
     result=json.loads((run/'result.json').read_text(encoding='utf-8'))
     baseline=json.loads(BASELINE.read_text(encoding='utf-8')) if BASELINE.exists() else {}
+    if result.get('policy') == 'external_primitives':
+        baseline={'status':'not_applicable_external_primitives'}
     report=analyze(rows,baseline,result['version']);report['run']=run.name;report['version']=result['version']
     (run/'opening-timing-review.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     lines=['# 开局时点复盘', '',f'对局：{run.name}；版本：{result["version"]}；参考状态：{report["baseline_status"]}。',

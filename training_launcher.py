@@ -12,6 +12,7 @@ import subprocess
 import sys
 import threading
 import traceback
+from portable_game_data import EXTRACTOR_VERSION, TABLES
 
 ROOT = Path(__file__).resolve().parent
 UPSTREAM_NAME = 'OpenWar3AI-ffd7dd25a3c2478f457b74bde89d23e605b24243'
@@ -22,11 +23,6 @@ RUNTIME = {
     'war3_ui_command.exe': 'fd63df069d017ba68977823a609799235e5b9e96c7124eb5540906f8ade667d0',
 }
 GENERATED = ('units.json', 'names.json', 'skills.json', 'items.json', 'heroes.json', 'buffs.json')
-TABLES = ('UnitBalance.slk', 'UnitWeapons.slk', 'UnitData.slk', 'UnitUI.slk',
-          'UnitAbilities.slk', 'AbilityData.slk', 'UpgradeData.slk', 'ItemData.slk',
-          'DestructableData.slk', 'ItemFunc.txt', 'ItemStrings.txt', 'ItemAbilityFunc.txt',
-          'ItemAbilityStrings.txt', 'HumanAbilityStrings.txt', 'MiscData.txt',
-          'MiscGame.txt', 'MiscUI.txt', 'UI_MiscData.txt')
 
 
 def digest(path):
@@ -100,7 +96,7 @@ def install_runtime(upstream):
 
 def game_signature(game):
     # Relocation and replaced MPQs invalidate preparation, without hashing GBs each launch.
-    return dict(game_dir=str(game.resolve()), files={name: [p.stat().st_size, p.stat().st_mtime_ns]
+    return dict(extractor=EXTRACTOR_VERSION, game_dir=str(game.resolve()), files={name: [p.stat().st_size, p.stat().st_mtime_ns]
                 for name in ('Game.dll', 'War3Patch.mpq', 'War3xLocal.mpq', 'War3x.mpq', 'war3.mpq')
                 if (p := game / name).is_file()})
 
@@ -109,6 +105,13 @@ def data_ready(upstream, signature):
     try:
         folder = upstream / 'data' / 'game'
         if json.loads((folder / 'dayuan-prepared.json').read_text(encoding='utf-8')) != signature:return False
+        return data_files_ready(upstream)
+    except (OSError, ValueError):return False
+
+
+def data_files_ready(upstream):
+    try:
+        folder = upstream / 'data' / 'game'
         if not all((folder / name).is_file() and (folder / name).stat().st_size for name in TABLES):return False
         return all(isinstance(value := json.loads((folder / name).read_text(encoding='utf-8')), dict)
                    and bool(value) for name in GENERATED)
@@ -143,12 +146,15 @@ def prepare(root=ROOT, progress=print):
             progress('首次准备：从你的游戏中提取数据，请稍候…')
             env = dict(os.environ, WAR3_GAME_DIR=str(game), PYTHONIOENCODING='utf-8')
             tool_dir = upstream / 'data' / 'tools'
+            folder = upstream / 'data' / 'game'
+            (folder / 'dayuan-prepared.json').unlink(missing_ok=True)
+            for name in GENERATED:(folder / name).unlink(missing_ok=True)
             # Upstream's wrapper does not propagate generator failures; run each explicitly.
-            run_tool([tool_dir / 'extract_game_data.py', '--no-generate'], upstream, env, log)
+            run_tool([root / 'portable_game_data.py', '--game-dir', game, '--out', folder], upstream, env, log)
             for name in ('parse_slk.py', 'extract_names.py', 'make_skills.py', 'make_items.py', 'make_buffs.py'):
                 run_tool([tool_dir / name], upstream, env, log)
+            if not data_files_ready(upstream):raise RuntimeError('游戏数据不完整，请查看 portable-setup.log。')
             atomic_json(upstream / 'data' / 'game' / 'dayuan-prepared.json', signature)
-            if not data_ready(upstream, signature):raise RuntimeError('游戏数据不完整，请查看 portable-setup.log。')
         progress('检查训练地图和面板…')
         # New subprocess loads paths only after this machine's config/data is ready.
         run_tool([root / 'training_launcher.py', '--verify-assets'], root, os.environ.copy(), log)

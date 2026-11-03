@@ -1,6 +1,6 @@
 # 阶段0规则基线接口 v1
 
-2026-11-02新增独立、显式基础动作接口`dayuan-primitive-action-v1`（[LEARNING_ACTIONS](LEARNING_ACTIONS.md)），外部控制模式在新局契约记录policy/action_version；原规则基线和冻结历史版本不改。该入口只有离线验证，支持六种基础动作，不表示完整合法动作掩码、训练模型或学习actor已验收。
+2026-11-03最新外部接口为`dayuan-primitive-action-v2`，兼容v1六动作并扩展经济/树木查询/伐木，有限实机探针及严格读取/模型编码已完成；未训练模型，完整合法性和动作空间仍未完成。含树目击的外部观察及trajectory为v2，原规则基线与冻结历史版本不改；下表描述原规则基线。详见[LEARNING_ACTIONS](LEARNING_ACTIONS.md)和[LEARNING_DATASET](LEARNING_DATASET.md)。
 
 阶段1单实例接口与连续重置的新增契约见[LEARNING_ENVIRONMENT](LEARNING_ENVIRONMENT.md)。提前调用close使用`environment_close`归为user_abort，奖励null；不改变下方自然终局规则。
 

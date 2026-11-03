@@ -20,6 +20,15 @@ class TimingReviewTests(unittest.TestCase):
         self.assertEqual(d['delta'],90);self.assertTrue(d['interference_before_actual'])
         self.assertFalse(d['comparable_version']);self.assertEqual(d['priority'],'investigate')
 
+    def test_external_summary_without_rule_situation_is_not_a_rule_milestone(self):
+        rows=[dict(event='summary',clock=15,situation=None,heroes=[]),
+              dict(event='summary',clock=30,situation=None,heroes=[])]
+        report=analyze(rows,{'status':'not_applicable_external_primitives'},'v1')
+        self.assertEqual(report['milestones'],{})
+        self.assertIsNone(report['first_player_interference'])
+        self.assertFalse(report['comparable_version'])
+        self.assertFalse(report['deviations'])
+
     def test_failed_placement_retry_is_not_an_extra_actual_tower(self):
         rows=[dict(event='purchase',clock=404,kind='build',code='uzig'),
               dict(event='home_foundation_unconfirmed',clock=429,code='uzig'),

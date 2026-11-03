@@ -43,6 +43,9 @@ def freeze_contract(root, out, manifest, settings, *, rules_version, opponent, p
         'bin': sorted(p for p in (upstream / 'bin').rglob('*')
                       if p.is_file() and p.suffix.lower() in ('.dll', '.exe')),
     }
+    if control == 'primitives':
+        tree_data = upstream / 'data/game/DestructableData.slk'
+        groups['tree_data'] = [tree_data] if tree_data.is_file() else []
     for group, paths in groups.items():
         if not paths:
             errors.append('missing_dependency_group:' + group)
@@ -74,8 +77,10 @@ def freeze_contract(root, out, manifest, settings, *, rules_version, opponent, p
     if control == 'primitives':
         from learning.actions import SCHEMA
         report.update(policy='external_primitives', action_version=SCHEMA,
-                      model_action_adapter='partial_primitives_offline_only',
-                      action_log='primitive-actions.jsonl', native_trajectory_action_version='rule-native-v1')
+                      observation_version='strict-p1-observation-v2', trajectory_schema='dayuan-trajectory-v2',
+                      model_action_adapter='partial_primitives',
+                      action_log='primitive-actions.jsonl', native_trajectory_action_version='rule-native-v1',
+                      diagnostic_log='primitive-diagnostics.jsonl', diagnostics_excluded_from_actor=True)
     elif control != 'rule':raise ValueError('Unsupported control mode')
     return write_new(out / 'interface-contract.json', report)
 

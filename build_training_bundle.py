@@ -65,10 +65,10 @@ def build(output):
     for name in tracked:
         path=Path(name)
         if ((len(path.parts)==1 and path.suffix=='.py') or
-                (path.parts and path.parts[0]=='undead' and path.suffix=='.py') or
+                (path.parts and path.parts[0] in ('undead','learning') and path.suffix=='.py') or
                 (path.parts and path.parts[0]=='data' and path.suffix=='.json' and path.name!='machine_profiles.json')):
             included.add(path)
-    included.update(map(Path,('training_launcher.py','start-training.cmd','requirements-p0.lock')))
+    included.update(map(Path,('training_launcher.py','portable_game_data.py','start-training.cmd','requirements-p0.lock')))
     # New source modules are explicit; untracked personal files are never swept into a release.
     for relative in sorted(included):
         target=destination/relative;target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(ROOT/relative,target)

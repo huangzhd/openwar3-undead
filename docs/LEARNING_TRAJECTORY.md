@@ -1,6 +1,6 @@
 # 阶段0训练轨迹白名单 v1
 
-最新实现（2026-11-02）：显式外部基础动作模式新增`primitive-actions.jsonl`，六种动作参数完整记录并关联决策观察、预检查、原生请求id和后续观察；仅离线通过，未批准训练。原生trajectory仍v1，规则示范的完整extra/mode缺口仍存在；外部模式标记external_primitives，不伪称规则教师。SDK回执status99改记accepted=null，旧文件不回写。详见[LEARNING_ACTIONS](LEARNING_ACTIONS.md)。
+最新实现（2026-11-03）：外部primitive v2支持六基础动作、采金、建造、生产、树木查询和伐木，已完成有限实机探针。含树目击的外部观察/trajectory为v2，默认规则轨迹仍v1；规则原生标签缺少完整extra/mode，读取器明确拒绝其作为可重放训练标签。新增严格读取器、效果事实、模型数值/指针编码与诊断导出校验，尚未训练模型或批准数据集。详见[LEARNING_ACTIONS](LEARNING_ACTIONS.md)和[LEARNING_DATASET](LEARNING_DATASET.md)。以下为历史演进记录。
 
 ## 2026-11-02 · 转回训练数据与动作接口
 

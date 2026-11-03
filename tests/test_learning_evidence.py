@@ -24,7 +24,7 @@ class EvidenceTests(unittest.TestCase):
         self.session.write_text(json.dumps(dict(closed=True, processes=[])), encoding='utf-8')
         self.upstream = self.root / 'vendor' / UPSTREAM.name
         for name in ('sdk/python/game.py', 'sdk/python/openwar3/jass_signatures.json',
-                     'data/game/units.json', 'data/game/skills.json',
+                     'data/game/units.json', 'data/game/skills.json', 'data/game/DestructableData.slk',
                      'runtime/farm.py', 'bin/render_hook.dll',
                      'bin/war3_launch.exe', 'bin/war3_ui_command.exe'):
             path = self.upstream / name

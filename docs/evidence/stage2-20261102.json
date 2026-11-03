@@ -1,0 +1,1009 @@
+{
+  "scope": "stage2_partial_interface_evidence",
+  "training_actor_approved": false,
+  "model_trained": false,
+  "episodes": [
+    {
+      "run": "20261102-220637",
+      "review": {
+        "run": "20261102-220637",
+        "status": "six_action_live_smoke_passed",
+        "six_action_smoke_passed": true,
+        "full_engine_legality_passed": false,
+        "observations": 120,
+        "primitive_requests": 85,
+        "native_requests": 12,
+        "primitive_status_counts": {
+          "no_command": 71,
+          "preflight_rejected": 2,
+          "returned": 12
+        },
+        "native_accepted": 9,
+        "native_rejected": 3,
+        "max_observation_gap": 0.9749999999999996,
+        "control_isolation": "all captured P1 native requests belong one-to-one to primitives; no rule decisions; native P1 paused",
+        "request_receipt_next_observation_alignment": true,
+        "policy_isolation": true,
+        "api_rejections": {
+          "rule_tick_rejected": true,
+          "extra_field_rejected": true,
+          "used_token_rejected": true
+        },
+        "source_files": 99,
+        "dependencies": 70,
+        "sources_and_dependencies_unchanged": true,
+        "game_seconds": 75.63,
+        "wall_seconds": 34.14,
+        "cleanup_confirmed": true,
+        "effects": [
+          {
+            "op": "move",
+            "start": 8.63,
+            "end": 12.58,
+            "samples": 6,
+            "max_displacement": 250.923,
+            "after_receipt_drift": 101.229,
+            "first": {
+              "clock": 8.63,
+              "x": -4166.25,
+              "y": -4087.25,
+              "hp": 340.0
+            },
+            "last": {
+              "clock": 12.58,
+              "x": -4051.94970703125,
+              "y": -3863.87158203125,
+              "hp": 340.0
+            },
+            "receipt": [
+              {
+                "id": 4,
+                "accepted": true,
+                "status": "returned",
+                "effect": "unverified",
+                "native_status": 0,
+                "native_request_ids": [
+                  1
+                ]
+              }
+            ]
+          },
+          {
+            "op": "stop",
+            "start": 12.58,
+            "end": 15.98,
+            "samples": 7,
+            "max_displacement": 0.0,
+            "after_receipt_drift": 0.0,
+            "first": {
+              "clock": 12.58,
+              "x": -4051.94970703125,
+              "y": -3863.87158203125,
+              "hp": 340.0
+            },
+            "last": {
+              "clock": 15.98,
+              "x": -4051.94970703125,
+              "y": -3863.87158203125,
+              "hp": 340.0
+            },
+            "receipt": [
+              {
+                "id": 9,
+                "accepted": true,
+                "status": "returned",
+                "effect": "unverified",
+                "native_status": 0,
+                "native_request_ids": [
+                  2
+                ]
+              }
+            ]
+          },
+          {
+            "op": "hold",
+            "start": 15.98,
+            "end": 19.425,
+            "samples": 7,
+            "max_displacement": 0.0,
+            "after_receipt_drift": 0.0,
+            "first": {
+              "clock": 15.98,
+              "x": -4051.94970703125,
+              "y": -3863.87158203125,
+              "hp": 340.0
+            },
+            "last": {
+              "clock": 19.425,
+              "x": -4051.94970703125,
+              "y": -3863.87158203125,
+              "hp": 340.0
+            },
+            "receipt": [
+              {
+                "id": 13,
+                "accepted": true,
+                "status": "returned",
+                "effect": "unverified",
+                "native_status": 0,
+                "native_request_ids": [
+                  3
+                ]
+              }
+            ]
+          },
+          {
+            "op": "attack_move",
+            "start": 19.425,
+            "end": 23.43,
+            "samples": 7,
+            "max_displacement": 335.067,
+            "after_receipt_drift": 201.469,
+            "first": {
+              "clock": 19.425,
+              "x": -4051.94970703125,
+              "y": -3863.87158203125,
+              "hp": 340.0
+            },
+            "last": {
+              "clock": 23.43,
+              "x": -3805.2978515625,
+              "y": -3637.0830078125,
+              "hp": 340.0
+            },
+            "receipt": [
+              {
+                "id": 17,
+                "accepted": true,
+                "status": "returned",
+                "effect": "unverified",
+                "native_status": 0,
+                "native_request_ids": [
+                  4
+                ]
+              }
+            ]
+          },
+          {
+            "op": "scout_public_start",
+            "start": 23.43,
+            "end": 28.33,
+            "samples": 10,
+            "max_displacement": 1271.932,
+            "after_receipt_drift": 1118.136,
+            "first": {
+              "clock": 23.43,
+              "x": -3805.2978515625,
+              "y": -3637.0830078125,
+              "hp": 340.0
+            },
+            "last": {
+              "clock": 28.33,
+              "x": -2950.59765625,
+              "y": -2695.1171875,
+              "hp": 340.0
+            },
+            "receipt": [
+              {
+                "id": 22,
+                "accepted": true,
+                "status": "returned",
+                "effect": "unverified",
+                "native_status": 0,
+                "native_request_ids": [
+                  5
+                ]
+              }
+            ]
+          },
+          {
+            "op": "attack",
+            "start": 28.33,
+            "end": 30.155,
+            "samples": 5,
+            "max_displacement": 482.276,
+            "after_receipt_drift": 288.017,
+            "first": {
+              "clock": 28.33,
+              "x": -2950.59765625,
+              "y": -2695.1171875,
+              "hp": 340.0
+            },
+            "last": {
+              "clock": 30.155,
+              "x": -2643.64990234375,
+              "y": -2323.13232421875,
+              "hp": 340.0
+            },
+            "receipt": [
+              {
+                "id": 28,
+                "accepted": false,
+                "status": "returned",
+                "effect": "unverified",
+                "native_status": 1,
+                "native_request_ids": [
+                  6
+                ]
+              }
+            ]
+          },
+          {
+            "op": "attack",
+            "start": 46.13,
+            "end": 48.105,
+            "samples": 6,
+            "max_displacement": 532.068,
+            "after_receipt_drift": 289.225,
+            "first": {
+              "clock": 46.13,
+              "x": 602.0400390625,
+              "y": 270.134765625,
+              "hp": 340.0
+            },
+            "last": {
+              "clock": 48.105,
+              "x": 1052.96826171875,
+              "y": 552.55322265625,
+              "hp": 340.0
+            },
+            "receipt": [
+              {
+                "id": 50,
+                "accepted": false,
+                "status": "returned",
+                "effect": "unverified",
+                "native_status": 1,
+                "native_request_ids": [
+                  8
+                ]
+              }
+            ]
+          },
+          {
+            "op": "attack",
+            "start": 59.205,
+            "end": 60.805,
+            "samples": 4,
+            "max_displacement": 422.216,
+            "after_receipt_drift": 247.066,
+            "first": {
+              "clock": 59.205,
+              "x": 2908.6943359375,
+              "y": 2837.2431640625,
+              "hp": 340.0
+            },
+            "last": {
+              "clock": 60.805,
+              "x": 3174.7666015625,
+              "y": 3165.072265625,
+              "hp": 340.0
+            },
+            "receipt": [
+              {
+                "id": 66,
+                "accepted": false,
+                "status": "returned",
+                "effect": "unverified",
+                "native_status": 1,
+                "native_request_ids": [
+                  10
+                ]
+              }
+            ]
+          },
+          {
+            "op": "attack",
+            "start": 62.48,
+            "end": 75.63,
+            "samples": 25,
+            "max_displacement": 76.065,
+            "after_receipt_drift": 0.0,
+            "first": {
+              "clock": 62.48,
+              "x": 3509.732421875,
+              "y": 3457.740234375,
+              "hp": 340.0
+            },
+            "last": {
+              "clock": 75.63,
+              "x": 3584.1982421875,
+              "y": 3473.25390625,
+              "hp": 0.0
+            },
+            "receipt": [
+              {
+                "id": 70,
+                "accepted": true,
+                "status": "returned",
+                "effect": "unverified",
+                "native_status": 0,
+                "native_request_ids": [
+                  12
+                ]
+              }
+            ]
+          }
+        ],
+        "attack_attempts": [
+          {
+            "target": {
+              "clock": 28.33,
+              "unit": {
+                "handle": [
+                  12928,
+                  21543
+                ],
+                "type": "ewsp",
+                "owner": 2,
+                "alive": true,
+                "x": -2779.62060546875,
+                "y": -2370.722412109375,
+                "hp": 120.0,
+                "hp_max": 120.0,
+                "mana": 0.0,
+                "mana_max": 0.0,
+                "level": 0
+              }
+            },
+            "receipts": [
+              {
+                "id": 28,
+                "accepted": false,
+                "status": "returned",
+                "effect": "unverified",
+                "native_status": 1,
+                "native_request_ids": [
+                  6
+                ]
+              }
+            ]
+          },
+          {
+            "target": {
+              "clock": 46.13,
+              "unit": {
+                "handle": [
+                  17640,
+                  25092
+                ],
+                "type": "ewsp",
+                "owner": 2,
+                "alive": true,
+                "x": 860.4892578125,
+                "y": 348.48828125,
+                "hp": 120.0,
+                "hp_max": 120.0,
+                "mana": 0.0,
+                "mana_max": 0.0,
+                "level": 0
+              }
+            },
+            "receipts": [
+              {
+                "id": 50,
+                "accepted": false,
+                "status": "returned",
+                "effect": "unverified",
+                "native_status": 1,
+                "native_request_ids": [
+                  8
+                ]
+              }
+            ]
+          },
+          {
+            "target": {
+              "clock": 59.205,
+              "unit": {
+                "handle": [
+                  18521,
+                  22195
+                ],
+                "type": "halt",
+                "owner": 2,
+                "alive": true,
+                "x": 3424.0,
+                "y": 2720.0,
+                "hp": 724.92822265625,
+                "hp_max": 900.0,
+                "mana": 0.0,
+                "mana_max": 0.0,
+                "level": 0
+              }
+            },
+            "receipts": [
+              {
+                "id": 66,
+                "accepted": false,
+                "status": "returned",
+                "effect": "unverified",
+                "native_status": 1,
+                "native_request_ids": [
+                  10
+                ]
+              }
+            ]
+          },
+          {
+            "target": {
+              "clock": 62.48,
+              "unit": {
+                "handle": [
+                  17125,
+                  17131
+                ],
+                "type": "htow",
+                "owner": 2,
+                "alive": true,
+                "x": 3840.0,
+                "y": 3328.0,
+                "hp": 1500.0,
+                "hp_max": 1500.0,
+                "mana": 0.0,
+                "mana_max": 0.0,
+                "level": 0
+              }
+            },
+            "receipts": [
+              {
+                "id": 70,
+                "accepted": true,
+                "status": "returned",
+                "effect": "unverified",
+                "native_status": 0,
+                "native_request_ids": [
+                  12
+                ]
+              }
+            ]
+          }
+        ],
+        "limitations": [
+          "Basic six-action smoke only; full legality masks and long-run reliability remain incomplete.",
+          "Target HP changes are subsequent evidence, not exact per-attack causal attribution.",
+          "Two ewsp were observed hidden with Avul; the altar rejection remains unexplained.",
+          "The former 215049 failure remains separate; current diagnostics do not backfill it.",
+          "External test policy is not a rule teacher baseline or trained model."
+        ],
+        "diagnostic_sidecar_isolated": true,
+        "diagnostic_receipts": 85,
+        "target_diagnostics": [
+          {
+            "selected_handle": [
+              12928,
+              21543
+            ],
+            "excluded_from_actor": true,
+            "clock": 29.05,
+            "own_order": 851986,
+            "own_order_target_matches_selected": false,
+            "own_task_target_matches_selected": false,
+            "native_visible_p1": true,
+            "native_hidden": true,
+            "native_enemy_p1": true,
+            "locust_level": 0,
+            "invulnerability_ability_level": 1,
+            "native_hp": 120.0,
+            "end_clock": 29.305
+          },
+          {
+            "selected_handle": [
+              17640,
+              25092
+            ],
+            "excluded_from_actor": true,
+            "clock": 47.03,
+            "own_order": 851986,
+            "own_order_target_matches_selected": false,
+            "own_task_target_matches_selected": false,
+            "native_visible_p1": true,
+            "native_hidden": true,
+            "native_enemy_p1": true,
+            "locust_level": 0,
+            "invulnerability_ability_level": 1,
+            "native_hp": 120.0,
+            "end_clock": 47.25
+          },
+          {
+            "selected_handle": [
+              18521,
+              22195
+            ],
+            "excluded_from_actor": true,
+            "clock": 60.1,
+            "own_order": 851986,
+            "own_order_target_matches_selected": false,
+            "own_task_target_matches_selected": false,
+            "native_visible_p1": true,
+            "native_hidden": false,
+            "native_enemy_p1": true,
+            "locust_level": 0,
+            "invulnerability_ability_level": 0,
+            "native_hp": 738.7581176757812,
+            "end_clock": 60.1
+          },
+          {
+            "selected_handle": [
+              17125,
+              17131
+            ],
+            "excluded_from_actor": true,
+            "clock": 63.165,
+            "own_order": 851971,
+            "own_order_target_matches_selected": true,
+            "own_task_target_matches_selected": true,
+            "native_visible_p1": true,
+            "native_hidden": false,
+            "native_enemy_p1": true,
+            "locust_level": 0,
+            "invulnerability_ability_level": 0,
+            "native_hp": 1493.5384521484375,
+            "end_clock": 63.38
+          },
+          {
+            "selected_handle": [
+              17125,
+              17131
+            ],
+            "excluded_from_actor": true,
+            "clock": 75.63,
+            "own_order": 0,
+            "own_order_target_matches_selected": false,
+            "own_task_target_matches_selected": false
+          }
+        ],
+        "successful_attack_hp_samples": [
+          {
+            "clock": 62.48,
+            "hp": 1500.0
+          },
+          {
+            "clock": 63.165,
+            "hp": 1500.0
+          },
+          {
+            "clock": 63.38,
+            "hp": 1500.0
+          },
+          {
+            "clock": 64.13,
+            "hp": 1493.5384521484375
+          },
+          {
+            "clock": 64.855,
+            "hp": 1486.5384521484375
+          },
+          {
+            "clock": 65.055,
+            "hp": 1486.5384521484375
+          },
+          {
+            "clock": 65.78,
+            "hp": 1486.5384521484375
+          },
+          {
+            "clock": 66.43,
+            "hp": 1479.5384521484375
+          },
+          {
+            "clock": 66.68,
+            "hp": 1480.5101318359375
+          },
+          {
+            "clock": 67.355,
+            "hp": 1477.258056640625
+          },
+          {
+            "clock": 68.03,
+            "hp": 1481.0059814453125
+          },
+          {
+            "clock": 68.305,
+            "hp": 1482.5328369140625
+          },
+          {
+            "clock": 68.955,
+            "hp": 1478.603271484375
+          },
+          {
+            "clock": 69.705,
+            "hp": 1482.7677001953125
+          },
+          {
+            "clock": 69.955,
+            "hp": 1477.15576171875
+          },
+          {
+            "clock": 70.63,
+            "hp": 1480.9036865234375
+          },
+          {
+            "clock": 71.33,
+            "hp": 1477.251708984375
+          },
+          {
+            "clock": 71.58,
+            "hp": 1478.639892578125
+          },
+          {
+            "clock": 72.23,
+            "hp": 1482.2489013671875
+          },
+          {
+            "clock": 72.48,
+            "hp": 1483.6370849609375
+          },
+          {
+            "clock": 73.205,
+            "hp": 1480.1240234375
+          },
+          {
+            "clock": 73.955,
+            "hp": 1484.288330078125
+          },
+          {
+            "clock": 74.655,
+            "hp": 1488.175048828125
+          }
+        ],
+        "successful_attack_pre_hp": 1500.0,
+        "successful_attack_min_hp": 1477.15576171875,
+        "rejected_native_diagnostics": [
+          {
+            "event": "receipt",
+            "id": 28,
+            "native_status": 1,
+            "verdict": null,
+            "engine_return": 0,
+            "order_before": 851986,
+            "order_after": 851986
+          },
+          {
+            "event": "receipt",
+            "id": 50,
+            "native_status": 1,
+            "verdict": null,
+            "engine_return": 0,
+            "order_before": 851986,
+            "order_after": 851986
+          },
+          {
+            "event": "receipt",
+            "id": 66,
+            "native_status": 1,
+            "verdict": null,
+            "engine_return": 0,
+            "order_before": 851986,
+            "order_after": 851986
+          }
+        ]
+      },
+      "source_manifest_sha256": "947410963d270f9db6fb5b855eede783fa8bdfd10bf014527353c980c5d6811d",
+      "evidence_sha256": {
+        "interface-contract.json": "6d97e9c0bea70e27f00b124add60d0e06fd5d26cf64c6c1a233361aa4e1da210",
+        "source-manifest.json": "978820167774032c7993656ac6957fcec093c605112f7099bfed5b38a6f7bbbf",
+        "source-audit.json": "c96935b13268f8197da2b85436f1108148477c9d6bfae3b5e04541b12e5be271",
+        "trajectory.jsonl": "3354f31d20ff7782c7b6da377e294aa5798e53ccaa8b8776d8a79876392f315a",
+        "primitive-actions.jsonl": "16e20193a5fd432492bb1f69f135edbfcc70456808afa559f94271f8ada5444e",
+        "result.json": "2a22ef51d54d6707e49f2ceeb6323a27d1c692465c3a6b06805a11654cc2d4d7",
+        "primitive-live-review.json": "8194f05215eeed65e652d2a5e4316d3fbedb8dd8e63e8988c2d8f929beda5abb"
+      },
+      "cleanup_confirmed": true
+    },
+    {
+      "run": "20261102-222548",
+      "review": {
+        "run": "20261102-222548",
+        "status": "economic_subset_live_smoke_passed",
+        "full_action_space_passed": false,
+        "observations": 142,
+        "primitive_requests": 109,
+        "native_requests": 6,
+        "primitive_status_counts": {
+          "preflight_rejected": 2,
+          "returned": 6,
+          "no_command": 101
+        },
+        "native_accepted": 6,
+        "effects_observed": {
+          "foundation": {
+            "clock": 15.905,
+            "handle": [
+              16559,
+              22641
+            ],
+            "type": "usep",
+            "hp": 142.86782836914062
+          },
+          "acolyte_created": {
+            "clock": 24.705,
+            "handle": [
+              12281,
+              23500
+            ],
+            "type": "uaco",
+            "hp": 220.0
+          },
+          "crypt_completed": {
+            "clock": 75.955,
+            "handle": [
+              16559,
+              22641
+            ],
+            "type": "usep",
+            "hp": 1300.0
+          },
+          "ghoul_created": {
+            "clock": 94.58,
+            "handle": [
+              17969,
+              31597
+            ],
+            "type": "ugho",
+            "hp": 340.0
+          }
+        },
+        "gold_gathered_delta": 480,
+        "effects_causally_attributed": false,
+        "source_files": 100,
+        "dependency_files": 70,
+        "source_unchanged": true,
+        "cleanup_confirmed": true,
+        "diagnostics_excluded_from_actor": true,
+        "training_actor_approved": false
+      },
+      "source_manifest_sha256": "b67b66f875027e45503728746fce613ac952920e39a8403caa29c63f597e46de",
+      "evidence_sha256": {
+        "interface-contract.json": "4f0f54ba3a16f25bd206d56a5076e59f0d7501237945590ff9a8e99b1a5b61da",
+        "source-manifest.json": "bce9b5a575f71e5555665ba340be5a72770be7936f394895073fec6c55a1125f",
+        "source-audit.json": "10f6027322c0401e5fdc4a51475f3ed30f0b03ddbff129462e0a950298562187",
+        "trajectory.jsonl": "165c05d291584f9898ead78fcc329490bca6cdfa168976354e0c25f0155cf9c5",
+        "primitive-actions.jsonl": "046a58b1c07ceec7c7fc1d18b09d06cd13fcfb0e65637f84b5539bbcafd6c5d8",
+        "result.json": "cf88f180d9a90d06fc34c3de87892f7631600ab386636eac6a0acf5d1a86184f",
+        "primitive-live-review.json": "1a66aac15d12c6f0b288475b813e43b95e06ac753f7d3c7a4edfda2c9f5a9c33"
+      },
+      "cleanup_confirmed": true
+    },
+    {
+      "run": "20261102-224133",
+      "review": {
+        "run": "20261102-224133",
+        "status": "failed_before_harvest",
+        "cause": "SDK Tree lacks unit-style handle property",
+        "source_files": 101,
+        "dependency_files": 71,
+        "source_unchanged": true,
+        "cleanup_confirmed": true,
+        "training_actor_approved": false
+      },
+      "source_manifest_sha256": "d7880a3fdccc3c11fb07b8f3f863caeb35df96bca1abdfeb3eb8657d684b6e79",
+      "evidence_sha256": {
+        "interface-contract.json": "23f8e358be34083c2b583ceb402764d918626c61b0bf280bcb6c13be669cf596",
+        "source-manifest.json": "116f8a218f1a010aef24177b6aeeba1437a342f38c330c986a96753400a8d5ef",
+        "source-audit.json": "662a98d5a14706ea136040417aae287ea64ec21bc7dc9adbf7bdb757c4b404d1",
+        "trajectory.jsonl": "df1ebae3ad82596f8c7a44690e2a2c3357b29fead90b390b74b28211709b0e03",
+        "primitive-actions.jsonl": "bcc9ec8e5e4310dd1c1a2e553dcada63b1ccf6dfec1511c3fc4be460c791d5c4",
+        "result.json": "2c12b792ef79492bfdf9f1eface41eac6a83c8f54ee226f5f79817e7d27599ae",
+        "primitive-live-review.json": "d7164f93f9bc7fd373259561d13c2718bf85ec787d426a2521aa6a7917f99fe3"
+      },
+      "cleanup_confirmed": true
+    },
+    {
+      "run": "20261102-224602",
+      "review": {
+        "run": "20261102-224602",
+        "status": "visible_tree_harvest_live_smoke_passed",
+        "training_actor_approved": false,
+        "observations": 42,
+        "primitive_requests": 28,
+        "native_requests": 1,
+        "native_accepted": 1,
+        "primitive_status_counts": {
+          "preflight_rejected": 1,
+          "observation_only": 1,
+          "returned": 1,
+          "no_command": 25
+        },
+        "query_requests": 1,
+        "selected_tree": {
+          "handle": [
+            3710,
+            3710
+          ],
+          "type": "LTlt",
+          "x": -5056.0,
+          "y": -4416.0,
+          "seen_clock": 7.58
+        },
+        "lumber_gathered_delta": 20,
+        "max_primitive_stage_seconds": 0.03885649982839823,
+        "effects_causally_attributed": false,
+        "source_files": 101,
+        "dependency_files": 71,
+        "source_unchanged": true,
+        "cleanup_confirmed": true,
+        "failed_predecessor": "20261102-224133",
+        "full_action_space_passed": false
+      },
+      "source_manifest_sha256": "f71ae55dca7cf9fe941c9c43cf507953652c3b219f7ae0db1855496f897b5966",
+      "evidence_sha256": {
+        "interface-contract.json": "4b3f0514b50926416685ecb30cf92d6c52b22afd77c5f8d1a9d7cb3798959912",
+        "source-manifest.json": "d561389e80da59d58b2fa9a3c6c6e69442dd1eb9394f43f16e99a04322c03015",
+        "source-audit.json": "662a98d5a14706ea136040417aae287ea64ec21bc7dc9adbf7bdb757c4b404d1",
+        "trajectory.jsonl": "ca4311a3e35dda33dc1733af4c36031a55a2be1849a36598f1af0b51a22b0532",
+        "primitive-actions.jsonl": "680cb87d9e0a60802abaa725398344817e870c8899d0dde06c0ed081b31233eb",
+        "result.json": "53191276b886e2d7898c656d4fa21e7d655b264f908e7353a3d256e8da2c1012",
+        "primitive-live-review.json": "e7dfba3a606cb5d8b7540366dec8b941959c6ae122ded990cc9b3a6a61bfe19e"
+      },
+      "cleanup_confirmed": true
+    }
+  ],
+  "model_roundtrip": {
+    "status": "passed",
+    "episodes": [
+      {
+        "episode": "20261102-220637",
+        "roundtrips": 9,
+        "exact": true,
+        "excluded": {
+          "wait_filtered": 71,
+          "preflight_rejected": 2,
+          "native_rejected": 3
+        }
+      },
+      {
+        "episode": "20261102-222548",
+        "roundtrips": 6,
+        "exact": true,
+        "excluded": {
+          "preflight_rejected": 2,
+          "wait_filtered": 101
+        }
+      },
+      {
+        "episode": "20261102-224133",
+        "roundtrips": 0,
+        "exact": true,
+        "excluded": {
+          "failed_episode": 2
+        }
+      },
+      {
+        "episode": "20261102-224602",
+        "roundtrips": 2,
+        "exact": true,
+        "excluded": {
+          "preflight_rejected": 1,
+          "wait_filtered": 25
+        }
+      }
+    ],
+    "total_roundtrips": 17,
+    "training_actor_approved": false
+  },
+  "limitations": [
+    "Partial actions and conservative legality only",
+    "Probe decisions are scripted, no learned model loaded",
+    "Observed effects are not causally attributed per command",
+    "Full local logs remain in ignored artifacts directories"
+  ],
+  "final_delivery_validation": {
+    "tests": 2127,
+    "failures": 0,
+    "errors": 0,
+    "test_seconds": 17.683,
+    "test_log_sha256": "e7469e9b16aa7b36ddcffdc06da89d29eb4e52b74c44f5d97ac4285553dc3281",
+    "model_contract": {
+      "input_schema": "dayuan-model-input-v1",
+      "decision_schema": "dayuan-model-decision-v2",
+      "operations": [
+        "wait",
+        "move",
+        "attack_move",
+        "attack",
+        "stop",
+        "hold",
+        "gather_gold",
+        "build",
+        "train",
+        "inspect_trees",
+        "gather_lumber"
+      ],
+      "products": [
+        "uaco",
+        "uaod",
+        "ucry",
+        "ugho",
+        "ugrv",
+        "usep",
+        "utom",
+        "uzig"
+      ],
+      "resource_fields": [
+        "gold",
+        "lumber",
+        "food_used",
+        "food_cap",
+        "gold_gathered",
+        "lumber_gathered"
+      ],
+      "unit_fields": [
+        "x",
+        "y",
+        "hp",
+        "hp_max",
+        "mana",
+        "mana_max",
+        "level"
+      ],
+      "coordinates": "normalized_public_bounds",
+      "unknowns": "values_and_known",
+      "resource_scales": [
+        1000,
+        1000,
+        100,
+        100,
+        1000,
+        1000
+      ],
+      "unit_scales": [
+        1,
+        1,
+        2000,
+        2000,
+        1000,
+        1000,
+        10
+      ],
+      "code_encoding": "four_ascii_bytes_divided_by_255",
+      "sha256": "a190d840eafb0109652899be6a0ae8a27bb8d2da9df2ae2e03fb8b00067002e3"
+    },
+    "exact_roundtrips": [
+      {
+        "episode": "20261102-220637",
+        "exact_roundtrips": 9,
+        "excluded": {
+          "wait_filtered": 71,
+          "preflight_rejected": 2,
+          "native_rejected": 3
+        }
+      },
+      {
+        "episode": "20261102-222548",
+        "exact_roundtrips": 6,
+        "excluded": {
+          "preflight_rejected": 2,
+          "wait_filtered": 101
+        }
+      },
+      {
+        "episode": "20261102-224133",
+        "exact_roundtrips": 0,
+        "excluded": {
+          "failed_episode": 2
+        }
+      },
+      {
+        "episode": "20261102-224602",
+        "exact_roundtrips": 2,
+        "excluded": {
+          "preflight_rejected": 1,
+          "wait_filtered": 25
+        }
+      }
+    ],
+    "export_integrity": {
+      "status": "export_integrity_verified",
+      "episodes": 4,
+      "transitions": 17,
+      "provenance_groups": 4,
+      "model_tensors": true,
+      "source_authenticity_verified": false,
+      "training_actor_approved": false
+    },
+    "active_game_processes": [],
+    "development_cutoff": "2026-11-03T00:00:00+08:00",
+    "delivery_check": "2026-11-03T08:18:00+08:00"
+  }
+}

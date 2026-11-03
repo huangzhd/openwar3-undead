@@ -1,5 +1,45 @@
 # 项目交接 · dayuan V1.99 / 0.1.199-dev · 2026-10-29
 
+## 2026-11-03 · 截止后最终交付检查
+
+新增开发已结束。最后开发记录为11月2日23:38附近，本次恢复时为11月3日08:18，未声称午夜已上传；按用户最新授权完成截止后收口与GitHub交付。最终2127项测试全部通过（17.683秒），17条真实样本在模型决定v2契约下编码往返一致，4局诊断导出完整性检查通过，无残留游戏进程。技能/英雄/升级物品、完整合法性与真正模型训练仍未完成，阶段2保持部分完成。最终证据见docs/evidence/stage2-20261102.json，完整原始失败与实测日志保留在本机artifacts；新代码含MPQ提取修复及learning打包修复。此记录覆盖下方历史“继续开发”或“不推送”状态。
+
+## 2026-11-02 · 23:25开发进度及午夜GitHub交付授权
+
+用户追加“到12点后把最终代码上传到github”，覆盖此前不提交/push限制。继续开发至北京时间2026-11-03 00:00，届时停止新开发/新局，完成最终测试、清理、提交并推送origin/main，不提前推送、不强推。午夜heartbeat id2已更新。23:22 fetch确认origin/main仍f31f6d1，未提交或推送。MPQ修复与新增学习代码均待最终交付。
+
+经济222548通过；伐木224133首测因真实SDK Tree只有handle_lo/hi而失败，已用真实SDK类型回归修复，224602复验观察到采木+20。各局四复盘/C1–C8、源码依赖冻结和清理完整，失败原件保留。最新全部2119测试通过，随后新增打包回归1项独立通过；打包修复将learning目录纳入已跟踪源文件，避免run_match依赖丢失，不包含私人未跟踪文件。
+
+新增dataset/effects/observation_schema/model_codec：按冻结版本验证和隔离样本，严检白名单、日志顺序、请求/回执/后续观察、实际SDK编码及终局语义；原规则v1拒作完整训练标签。4局导出9+6+0+2=17条非wait诊断样本，4独立分组；失败局0条保留在index。模型特征含资源、实体、生产、技能物品、历史记忆与树目击，未知掩码与实体指针分离，无句柄/PID/诊断/未来数据进入当前输入；17条真实动作编码往返完全一致。未训练模型、未自动规则回退，完整动作空间/技能/英雄等仍缺。详见LEARNING_DATASET，摘要与证据哈希docs/evidence/stage2-20261102.json；完整日志仍在artifacts。接下来继续审查数据与交付边界，午夜后执行最终Git提交推送并确认远端。
+
+## 2026-11-02 · 持续开发窗口及经济动作验收
+
+用户要求不停开发到12点，按北京时间2026-11-03 00:00截止，epoch1793635200；本次heartbeat只负责截止，必要单局允许但逐局源码冻结/清理/四复盘与C1–C8保持，不启动批量训练或提交push。经济接口v2新增采金、五种早期建筑与三种基础兵生产，v1六动作兼容；222548有限实测6原生命令全接受，地穴地基/完工、侍僧和食尸鬼出生、采金+480均在P1观察中确认，未做逐动作因果归因。142观察/109请求，100源码70依赖一致、清理确认。证据artifacts/20261102-222548/primitive-live-review.json；探针economic-probe-20261102。最初复盘CLI误用artifacts前缀导致路径错误日志保留，修正run_id后四复盘全部完成，不是游戏失败。
+
+2076全量测试通过。随后主动树木查询/伐木已离线实现：小区域P1点可见性筛选，只记录geometry与seen_clock，不把全图树生命值交给actor；新primitive轨迹/观察v2，规则v1不变。先有界实测，再训练读取器；历史源码自然不同不得重写旧审计。
+
+## 2026-11-02 · 220637基础动作有限验收与后续接口
+
+用户“ok，继续下一步”授权诊断及一次有界实测。learning/actions.py新增独立primitive-diagnostics.jsonl，仅有限uint32回执status/verdict/engine_return/order_before/order_after；缺失/timeout/held等合成回复不把占位0记作真实状态，异常文本/values/data/note不写入。learning/evidence.py契约标记diagnostics_excluded_from_actor，frame/action_receipts/trajectory不加这些字段；日志失败不重发，收尾关闭双流。13项动作测试/2068项全量18.030秒通过，实机后未改运行Python。
+
+artifacts/primitive-diagnostic-20261102/probe.py：一局300游戏秒/180墙钟秒，P1白名单选目标，公开出生点侦察，每目标一次/最多6个，明确拒绝继续、未知即停；独立P0只读诊断只检查已选对象，结果不进入选择。220637用75.630游戏秒/34.14墙钟秒结束，探针总34.414；六动作有限样本通过。62.480秒攻击htow接受，63.165秒己方订单目标/任务目标都匹配，后续可见HP1500→1477.156，不作逐击因果保证。食尸鬼73.205秒观察死亡，非保命/策略验收。
+
+28.330/46.130两只ewsp被拒且独立native检查visibleP1=true、hidden=true、Avul1、Aloc0；59.205祭坛halt被拒但hiddenfalse/Avul0。三条均status1/engine_return0/verdictnull，订单仍move，不能将祭坛或旧215049根因按精灵状态定性。完整合法性仍待补，探针未改执行器规则或忽略拒绝。
+
+120观察/85基础请求回执后续观察/12原生命令（9接受3拒绝）关联通过，71wait无命令、2预检查拒绝和3API负例通过；无规则decision、P1 native暂停。99源码/70依赖一致、session关闭/无残留、rewardnull。四复盘/hero/opening/stability/C1–C8及primitive-live-review.json保存；probe源码/hash、frames、live.log、target-diagnostics、独立review及测试在诊断目录，旧失败不回写。下一步扩展经济动作（采集/建造/生产）的完整参数/前置检查/效果记录，再技能与训练读取器；隐藏/不可交互目标及祭坛拒绝并行保留为合法性缺口。无模型训练、无新局或批量授权、无提交push；P0完成/P1部分完成/P2–P4未开始，学习阶段0限定验收、阶段1/2部分完成。
+
+## 2026-11-02 · 拉取后上游基础动作单局验证
+
+最终2065项全量离线通过（19.172秒），动作专项10项、开局复盘4项通过；日志artifacts/primitive-probe-20261102/full-tests.log。复盘初次错误独立记录review-first-error.txt，失败实测不改为通过。
+
+Git已通过仓库级GitHub代理127.0.0.1:1080拉取f31f6d1；原朋友包MPQ未提交修复保留，stash b7b48432ef6918ff5b5e19ba2cb94d4e550b3b4d备份仍在。用户“执行下一步”授权有界单局：artifacts/primitive-probe-20261102/probe.py仅从P1白名单和公开出生候选决策，外部模式不创建规则Controller，无新模型。
+
+215049默认649c355b图/400%，29.305游戏秒/27.32墙钟秒，探针总28.066秒。5条原生命令接受（move/stop/hold/attack_move/侦察move），20等待无命令；负例2个预检查拒绝、3个API拒绝。移动/攻击移动有实际位移，stop/hold之后位置不变；不据此宣称完整攻击移动自动选敌/待命战斗语义通过。28.575看到P2 ewsp handle12928/21543后攻击，preflight允许、SDK status1拒绝，原订单仍move。协议1只表通用拒绝；日志缺verdict细分，根因未知，不据类型判无敌或特殊辅助单位。探针立即失败收尾，没有第二局。
+
+34观察/28基础请求回执/后续观察关联；6原生请求全属于基础动作、5接受/1拒绝，规则decision为0、summary.situation为null、P1 native暂停。99冻结源码/70本机依赖一致，session关闭、无进程残留，rewardnull。四复盘/hero/opening/stability/C1–C8及primitive-live-review.json保存；原始probe/report/frames/live.log未改。
+
+旧review_map_pool调用opening_timing遇situation=None报错，保存失败后局后修复离线报告（review_opening_timing.py）两处None处理，external_primitives不与规则基线比较；新增回归。此非局中运行代码改动。下一步先补充攻击拒绝的受限诊断信息，查目标/命令条件，再有界验证成功目标攻击；之后经济/技能动作与读取器。不自动续局或模型训练，P0完成/P1部分完成/P2–P4未开始；学习阶段0限定验收保持、阶段1/2部分完成。
+
 ## 2026-11-02 · 首批模型基础动作接口完成离线实现
 
 显式`RuleEnvironment(control='primitives')`支持wait/move/attack_move/attack/stop/hold，默认rule不变。外部模式不创建P1规则Controller，沿用原生命周期与token；严格schema、己方存活及能力详情、双时点P1可见目标、地图边界和8游戏秒时效检查，SDK公开接口执行单条替换订单，无原始地址/任意order/队列入口。候选preflight仅缓存预检查，不是完整合法掩码；建造/生产/施法/购物等未支持。
@@ -59,6 +99,14 @@ learning.reset_probe显式1–10局、每局game/wall与总wall上限，失败/�
 111142在联合身份/速度校验失败；原错误缺少实际值，后来已补记录，不能猜根因。111320短局与111513旧失焦停发导致的长采样空档独立归档；111513636.75秒自然负真实，但不作连续教师数据。另一电脑002405/002500原始日志未同步，初始化超时根因未宣称解决。112434之后只追加缺失快照超时保护，其故障注入仅离线通过，不声称在该自然局运行过。最终1984项全量通过，初轮mock缺pid错误日志保留；未提交/push，不再开局。
 
 下一步：阶段1统一reset/observe/step/result/close与连续重置，再逐步多实例隔离；当前仅单实例窗口后台与切换已验，最小化、4实例/100局仍未验。阶段2已有被动采集，完整高层动作/掩码/执行器/训练读取器后续实现，阶段3–6未开始；具体建造/微操优化继续后置。
+
+## 2026-11-02 · 朋友包MPQ修复交付
+
+用户先要求只确认原因，后明确开始修复。旧上游extract_game_data.py在mpyq.MPQArchive默认(listfile)读取时退出，缺失→None.splitlines，加密→NotImplemented；日志中18表没找到是未提取结果，不能据此让朋友搬目录/补文件。新增独立portable_game_data.py，使用已随包分发的StormLib 9.40固定DLL哈希，READ_ONLY/NO_LISTFILE/NO_ATTRIBUTES按已知路径读取，句柄finally关闭，尺寸/实际读取量检查，保留补丁顺序；只有ERROR_FILE_NOT_FOUND才查下一包，损坏/空数据拒绝，避免悄悄读取过期基础表。DLL接口依据https://raw.githubusercontent.com/ladislav-zezula/StormLib/v9.40/src/StormLib.h。
+
+training_launcher.py改调新提取器，缓存纳入版本，生成前移除旧标记与6JSON，全部非空合法后才写成功标记；build_training_bundle.py显式包含新模块，兼容未提交时构建。16专项与1970全量通过；首轮两个夹具检查失败是StormLib默认创建加密listfile，改用CreateArchive2显式控制listfile后分别覆盖缺失/加密情形，未把夹具问题当朋友安装缺陷。
+
+原47MB朋友ZIP隔离解压到中文带空格目录，只覆盖两脚本，包内Python完成18表和6JSON（837单位/89英雄/273物品/158技能/158buff），--check地图与面板导入通过，无启动游戏；原游戏MPQ只读。16专项/1970全量和smoke/来源JSON证据见artifacts/portable-mpq-fix-*。补丁目录artifacts/releases/friend-training-mpq-fix-20261102，仅分发两脚本、说明和补丁哈希清单，不含Blizzard表/游戏文件。朋友退出面板与游戏，将ZIP内dayuan-training合并覆盖到D:\\Warcraft III同名目录后双击原入口。朋友实机仍待验证，本轮未提交/push；下一步保持学习阶段0技术验收/阶段1环境主线，不自动开局。
 
 ## 2026-11-02 · 实测收尾，按用户要求回到学习环境主线
 

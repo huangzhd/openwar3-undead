@@ -106,9 +106,14 @@ def _match_steps(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficu
     def frame(event):
         extra={}
         if primitive_executor:
-            from learning.actions import SCHEMA,MAX_AGE
+            from learning.actions import SCHEMA,MAX_AGE,OPS,LEGACY_SCHEMA
+            from learning.trees import RADIUS,MAX_SIGHTINGS,MAX_AGE as TREE_AGE
             primitive_executor.observe()
             extra=dict(action_context=dict(schema=SCHEMA,bounds=primitive_executor.bounds,
+                                           supported_schemas=[SCHEMA,LEGACY_SCHEMA],supported_operations=OPS,
+                                           economic_catalog=primitive_executor.costs,
+                                           tree_query=dict(radius=RADIUS,max_sightings=MAX_SIGHTINGS,
+                                                           sighting_max_age=TREE_AGE,life_observed=False),
                                            max_decision_age_game_seconds=MAX_AGE),
                        action_receipts=primitive_executor.drain_receipts())
         return dict(event=event,run_id=run_id,pid=g.pid,epoch=practice_epoch,player=1,
@@ -166,7 +171,7 @@ def _match_steps(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficu
             trajectory_recorder=TrajectoryRecorder(g,out/'trajectory.jsonl',visibility=point_visibility,
                                                     public_points=public_points,capture_receipts=step_mode,
                                                     policy='rule' if control == 'rule' else 'external_primitives')
-            result['trajectory']='experimental_p1_whitelist_v1'
+            result['trajectory']='experimental_p1_whitelist_v2' if control == 'primitives' else 'experimental_p1_whitelist_v1'
             if control == 'primitives':
                 from learning.actions import PrimitiveExecutor
                 primitive_executor=PrimitiveExecutor(g,trajectory_recorder,out/'primitive-actions.jsonl')

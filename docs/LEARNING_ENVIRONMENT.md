@@ -1,8 +1,8 @@
 # 阶段1：规则环境、连续重置与实例隔离
 
-## 2026-11-02 · 阶段2基础动作入口已离线接入
+## 2026-11-03 · 阶段2外部动作与数据接口
 
-新增显式`RuleEnvironment(control='primitives')`，支持等待、移动、攻击移动、攻击可见P2、停止、原地待命；默认rule模式不变。外部模式停用P1规则Controller，沿用原环境生命周期/裁判/隔离与token，新增候选预检查和独立完整基础动作日志。尚未开实机或训练模型，不是完整学习执行器；详细字段、8游戏秒过期检查和局限见[LEARNING_ACTIONS](LEARNING_ACTIONS.md)。下方旧“仅rule_tick”适用于默认规则模式。
+`RuleEnvironment(control='primitives')`现支持六基础动作及经济/树木查询/伐木，有限实机验证已完成；默认rule模式不变，外部模式停用P1规则Controller。读取器与模型编码已离线实现，仍未训练模型，也不是完整合法动作掩码。生命周期、裁判、实例隔离和token继续复用；字段与局限见[LEARNING_ACTIONS](LEARNING_ACTIONS.md)，数据接口见[LEARNING_DATASET](LEARNING_DATASET.md)。下方旧“仅rule_tick”适用于默认规则模式。
 
 ## 2026-11-02 · 并发为可选提速，优先完成单实例训练接口
 

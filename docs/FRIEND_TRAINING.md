@@ -43,6 +43,9 @@
 - **运行组件缺失或损坏**：重新完整解压，不要混用其他版本的 DLL 或脚本。
 - **权限不足**：游戏和训练包都要能写入文件；把整个游戏目录放在你可写的位置，例如 `D:/Games/War3`，保留上述结构。
 - **已经打开**：使用已有面板，不要重复双击。游戏还在运行时先退出游戏。
+- **旧包报 `splitlines` / `Encryption is not supported yet`**：这是旧 MPQ 提取器的兼容性问题，不能据此判断安装目录错误或缺少 SLK。使用 2026-11-02 MPQ 修复补丁，将其中的 `dayuan-training` 文件夹合并覆盖到游戏目录的同名文件夹，再双击原来的启动入口。需要同时更新 `training_launcher.py` 和 `portable_game_data.py`；包内原有 StormLib DLL 保持不变。首次重开会重新提取并生成数据，无需手工复制 SLK/TXT。
 - **其他错误**：保留 `dayuan-training/artifacts/portable-launcher.log`、`portable-setup.log` 和最近的 `training-panel-start-*.log`，发给提供训练包的人排查。
 
 训练包包含运行环境、dayuan 源码及训练地图，不包含魔兽游戏安装文件；游戏数据在首次启动时从你的安装目录生成。第三方说明见 THIRD_PARTY.txt。
+
+修复版用包内固定哈希的 StormLib 按已知路径只读提取，不依赖 MPQ 内部文件清单。沿用 War3Patch → War3xLocal → War3x → war3 的优先级；只有内部文件确实不存在才查询下一包，损坏/读取失败不会静默降级为旧数据。原始游戏 MPQ 不修改；来源和数据哈希写在本机 `vendor/OpenWar3AI-ffd7dd25a3c2478f457b74bde89d23e605b24243/data/game/dayuan-data-sources.json`。
