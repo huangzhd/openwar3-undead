@@ -62,26 +62,35 @@ class SparringSession(HumanPracticeSession):
             if raw is None or not raw.in_game or raw.me!=0:raise RuntimeError('Expected local observer P0')
             j=setup.jass
             players=[j.Player(i) for i in range(12)]
-            active={i for i,p in enumerate(players) if j.GetPlayerSlotState(p)==1}
+            states=[j.GetPlayerSlotState(p) for p in players]
+            active={i for i,state in enumerate(states) if state==1}
             self.settings['active_player_slots']=sorted(active)
-            if not {1,2}<=active or active-{0,1,2}:raise RuntimeError('Unexpected observer scenario player slots: '+repr(sorted(active)))
-            rows=[dict(slot=i,controller=j.GetPlayerController(players[i]),race=j.GetPlayerRace(players[i])) for i in (1,2)]
             native=self.profile=='kfai-human'
-            if [(r['controller'],r['race']) for r in rows]!=[(1,3),(1,1)]:raise RuntimeError('Wrong bot races/controllers: '+repr(rows))
+            # A non-local USER actor is EMPTY in this single-client layout.
+            # Its starting units and fair P1 snapshot are checked by start().
+            if (native and (active!={0,2} or states[1]!=0)) or (not native and (not {1,2}<=active or active-{0,1,2})):
+                raise RuntimeError('Unexpected observer scenario player slots: '+repr(states))
+            self.settings['player_slot_states']=states[:3]
+            rows=[dict(slot=i,controller=j.GetPlayerController(players[i]),race=j.GetPlayerRace(players[i])) for i in (1,2)]
+            # Computer-owned DK cannot use the passive critter corpse in the
+            # matched 1.27a fixtures. KFAI maps give the SDK actor a USER slot;
+            # P2 alone remains a native computer. The fair P1 lane is unchanged.
+            if [(r['controller'],r['race']) for r in rows]!=[(0 if native else 1,3),(1,1)]:raise RuntimeError('Wrong bot races/controllers: '+repr(rows))
             if not j.IsPlayerObserver(players[0]) or any(u.alive and u.owner==0 for u in raw.units):
                 raise RuntimeError('P0 is not an empty observer: refuse participant-view fallback')
             for a,b in ((1,2),(2,1)):
                 if not j.IsPlayerEnemy(players[a],players[b]):raise RuntimeError('Bot players are not enemies')
                 if any(j.GetPlayerAlliance(players[a],players[b],kind) for kind in (5,6,7,9)):
                     raise RuntimeError('Bot players share vision/control')
-            for i in ((1,) if native else (1,2)):j.PauseCompAI(players[i],True)
+            paused_players=[] if native else [1,2]
+            for i in paused_players:j.PauseCompAI(players[i],True)
             w=setup._w3fast
             receipts=setup.lane.commands([w.command('cam_field',code=0,x=2500.0,y=0.0),
                                           w.command('cam_field',code=1,x=10000.0,y=0.0)])
             if not all(r.ok for r in receipts):raise RuntimeError('Observer camera setup rejected')
             self.settings.update(mode='bot_vs_bot',observer_player=0,controlled_player=1,opponent_player=2,
                                  opponent_profile=self.profile,verified_players=rows,native_ai_paused=not native,
-                                 native_ai_paused_players=[1] if native else [1,2],camera_distance=2500,
+                                 native_ai_paused_players=paused_players,camera_distance=2500,
                                  opponent_fairness='native_KFAI_unverified' if native else 'fair_python_controller',
                                  fair=True,background_supported=True,auto_restart=False)
 

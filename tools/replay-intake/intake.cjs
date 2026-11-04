@@ -83,7 +83,7 @@ function recordBuild(opening,action,where,lastCode,lastPoint,subgroup) {
   lastCode.set(code,seq);lastPoint.set(key,seq);
 }
 
-async function inventory(gameData, humanIds, post202=false, openingPlayer=null,replayHash=null,progressionRequested=false) {
+async function inventory(gameData, humanIds, post202=false, openingPlayer=null,replayHash=null,progressionRequested=false,pressureRequested=false) {
   const { ActionParser }=require('w3gjs');
   const parser=new ActionParser(), players={}, other={blocks:0,undecoded_blocks:0};
   for (const id of humanIds) players[id]={blocks:0,decoded_blocks:0,undecoded_blocks:0,
@@ -91,6 +91,7 @@ async function inventory(gameData, humanIds, post202=false, openingPlayer=null,r
   let pos=0, clock=0, timeslots=0, blocks=0;
   const lastCode=new Map(),lastPoint=new Map();
   let subgroup=null;
+  const pressure=pressureRequested?require('./pressure.cjs').pressureCollector(openingPlayer,replayHash):null;
   const progression=progressionRequested?{schema:'dayuan-undead-progression-orders-v1',
     player_id:openingPlayer,covered_codes:PROGRESSION_CODES,orders:[],omitted_over_limit:0,
     engine_effects_verified:false}:null;
@@ -113,6 +114,7 @@ async function inventory(gameData, humanIds, post202=false, openingPlayer=null,r
         const track=opening!==null && id===openingPlayer && clock<=OPENING_MS;
         if (parsed.warnings || parser.getOffset()!==length) {
           player.undecoded_blocks++;
+          if(pressure && id===openingPlayer)pressure.gap({timeslot_ms:clock,block:blocks,payload_offset:payloadOffset,payload_bytes:length});
           if (track) {
             subgroup=null;
             opening.undecoded_blocks++;
@@ -124,6 +126,8 @@ async function inventory(gameData, humanIds, post202=false, openingPlayer=null,r
         if (player===other) continue;
         player.decoded_blocks++; player.decoded_actions+=parsed.value.length;
         for (const [decodedIndex,action] of parsed.value.entries()) {
+          if(pressure && id===openingPlayer)pressure.action(action,{timeslot_ms:clock,block:blocks,
+            payload_offset:payloadOffset,payload_bytes:length,decoded_index:decodedIndex});
           if (progression && id===openingPlayer && action.id===0x10 && action.orderId?.length===4) {
             const code=Buffer.from(action.orderId).reverse().toString('latin1');
             const category=Object.keys(PROGRESSION_CODES).find(k=>PROGRESSION_CODES[k].includes(code));
@@ -183,11 +187,12 @@ async function inventory(gameData, humanIds, post202=false, openingPlayer=null,r
     progression.undecoded_player_blocks=players[openingPlayer].undecoded_blocks;
   }
   return { timeslots, summed_timeslot_ms:clock,command_blocks:blocks,players,other_slots:other,
-    ...(opening?{opening}:{}),...(progression?{progression}:{}) };
+    ...(opening?{opening}:{}),...(progression?{progression}:{}),...(pressure?{pressure:pressure.report}:{}) };
 }
 
-async function inspect(bytes,includeNames=false,openingPlayer=null,progression=false) {
+async function inspect(bytes,includeNames=false,openingPlayer=null,progression=false,pressure=false) {
   check(!progression || openingPlayer!==null,'progression_requires_player');
+  check(!pressure || openingPlayer!==null,'pressure_requires_player');
   const h=header(bytes), sha=hash(bytes);
   const result={schema:'dayuan-human-replay-intake-v1',sha256:sha,bytes:bytes.length,header:h,
     professional_identity:'unverified',map_binary_verified:false,player_view_reconstructed:false,
@@ -221,7 +226,7 @@ async function inspect(bytes,includeNames=false,openingPlayer=null,progression=f
     recorded_checksum_sha1:m.map.mapChecksumSha1,always_visible:m.map.alwaysVisible,map_explored:m.map.mapExplored};
   if (openingPlayer!==null) check(result.human_slots.some(s=>s.id===openingPlayer && s.role==='participant'),
     'opening_player_not_a_participant');
-  result.commands=await inventory(m.gameData,humanSlots.map(s=>s.playerId),m.isPost202ReplayFormat,openingPlayer,sha,progression);
+  result.commands=await inventory(m.gameData,humanSlots.map(s=>s.playerId),m.isPost202ReplayFormat,openingPlayer,sha,progression,pressure);
   result.status=classic?'classic_command_inventory':'modern_command_inventory';
   result.post_202_action_format=m.isPost202ReplayFormat;
   result.command_scope='orders_in_fully_consumed_warning_free_player_blocks';
@@ -277,21 +282,22 @@ function readBounded(path,max) {
 async function main(argv) {
   if (argv[0]==='--worker') {
     const bytes=fs.readFileSync(0);
-    process.stdout.write(JSON.stringify(await inspect(bytes,argv[1]==='names',argv[2]?Number(argv[2]):null,argv[3]==='progression')));
+    process.stdout.write(JSON.stringify(await inspect(bytes,argv[1]==='names',argv[2]?Number(argv[2]):null,argv[3]==='progression',argv[4]==='pressure')));
     return;
   }
   const {parseArgs}=require('node:util');
   const {values,positionals}=parseArgs({args:argv,allowPositionals:true,
     options:{out:{type:'string'},source:{type:'string'},names:{type:'boolean'},'opening-player':{type:'string'},
-      'opening-review':{type:'boolean'},'review-notes':{type:'string'},progression:{type:'boolean'}}});
+      'opening-review':{type:'boolean'},'review-notes':{type:'string'},progression:{type:'boolean'},pressure:{type:'boolean'}}});
   check(positionals.length===1 && values.out,'usage: node intake.cjs replay.w3g --out report.json [--source source.json] [--names] [--opening-player ID]');
   const openingPlayer=values['opening-player'];
+  check(!values.pressure || (openingPlayer!==undefined && !values['opening-review']),'pressure_requires_player_inventory');
   check(!values.progression || (openingPlayer!==undefined && !values['opening-review']),'progression_requires_player_inventory');
   check(!values['opening-review'] || openingPlayer!==undefined,'review_requires_opening_player');
   check(values['review-notes']===undefined || values['opening-review'],'notes_require_opening_review');
   if (openingPlayer!==undefined) check(/^[1-9][0-9]{0,2}$/.test(openingPlayer) && Number(openingPlayer)<=255,'invalid_opening_player');
   const bytes=readBounded(positionals[0],MAX_FILE);
-  const child=spawnSync(process.execPath,['--max-old-space-size=384',__filename,'--worker',values.names?'names':'private',openingPlayer??'',values.progression?'progression':''],{
+  const child=spawnSync(process.execPath,['--max-old-space-size=384',__filename,'--worker',values.names?'names':'private',openingPlayer??'',values.progression?'progression':'',values.pressure?'pressure':''],{
     input:bytes,encoding:'utf8',timeout:30000,maxBuffer:2*1024*1024,windowsHide:true});
   if (child.error) throw child.error;
   check(child.status===0,'replay_worker_failed: '+(child.stderr||'').slice(0,256));

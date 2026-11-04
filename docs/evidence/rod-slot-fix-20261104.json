@@ -1,0 +1,1432 @@
+{
+  "schema": "dayuan-rod-slot-fix-delivery-v1",
+  "date": "2026-11-04",
+  "status": "normal_opening_rod_effect_verified",
+  "head": "857adb84ec6009e53b6762d82808ceb86721562c",
+  "committed": false,
+  "pushed": false,
+  "training_labels": 0,
+  "model_training": false,
+  "diagnosis": {
+    "attribution": "environment_actor_slot_configuration",
+    "paired_computer_corpse_age": 4.075,
+    "paired_user_corpse_age": 4.17,
+    "computer_rejected": true,
+    "user_effect_confirmed": true,
+    "user_charges": [
+      4,
+      3
+    ],
+    "controller_and_slot_state_changed_together": true,
+    "engine_internal_mechanism": "unresolved",
+    "manual_click": "immediate_without_target"
+  },
+  "production_scope": {
+    "map_sha256": "d90622d9bf4d250c7fcc69e78d8c5ed5360608c90bd54006ac8c1d1319141883",
+    "source_manifest_sha256": "152f4b87ac02c561ffe9297a0d2a5a9046f0aabf6ed2cdd77a908c050acd5390",
+    "controlled_player": 1,
+    "observer_player": 0,
+    "verified_players": [
+      {
+        "slot": 1,
+        "controller": 0,
+        "race": 3
+      },
+      {
+        "slot": 2,
+        "controller": 1,
+        "race": 1
+      }
+    ],
+    "active_player_slots": [
+      0,
+      2
+    ],
+    "player_slot_states": [
+      1,
+      0,
+      1
+    ],
+    "native_ai_paused_players": [],
+    "pooled_with_old_computer_actor_or_zero_resource_runs": false
+  },
+  "initialization": {
+    "first_observation": {
+      "source": {
+        "path": "artifacts/20261104-160516/trajectory.jsonl",
+        "line": 2
+      },
+      "observation_id": 1,
+      "clock": 3.58,
+      "resources": {
+        "gold": 500,
+        "lumber": 150,
+        "food_used": 5,
+        "food_cap": 10,
+        "gold_gathered": 0,
+        "lumber_gathered": 0
+      }
+    },
+    "first_DK": {
+      "source": {
+        "path": "artifacts/20261104-160516/trajectory.jsonl",
+        "line": 443
+      },
+      "observation_id": 227,
+      "clock": 126.63,
+      "DK": {
+        "handle": [
+          14379,
+          36907
+        ],
+        "inventory": [
+          "stwp",
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "AIrd_cooldown": null,
+        "hp": 675.0,
+        "mana": 255.0,
+        "level": 1
+      },
+      "skeletons": []
+    },
+    "five_foundations": [
+      {
+        "event": {
+          "source": {
+            "path": "artifacts/20261104-160516/events.jsonl",
+            "line": 130
+          },
+          "record": {
+            "event": "home_foundation_observed",
+            "clock": 11.23,
+            "code": "uaod",
+            "point": [
+              -3616.0,
+              -3360.0
+            ],
+            "handle": [
+              17198,
+              22054
+            ]
+          }
+        },
+        "first_trajectory_observation": {
+          "source": {
+            "path": "artifacts/20261104-160516/trajectory.jsonl",
+            "line": 39
+          },
+          "observation_id": 21,
+          "clock": 10.085,
+          "unit": {
+            "handle": [
+              17198,
+              22054
+            ],
+            "type": "uaod",
+            "owner": 1,
+            "x": -3616.0,
+            "y": -3360.0,
+            "hp": 900.0,
+            "hp_max": 900.0
+          }
+        }
+      },
+      {
+        "event": {
+          "source": {
+            "path": "artifacts/20261104-160516/events.jsonl",
+            "line": 141
+          },
+          "record": {
+            "event": "home_foundation_observed",
+            "clock": 15.555,
+            "code": "uzig",
+            "point": [
+              -4256.0,
+              -4064.0
+            ],
+            "handle": [
+              17857,
+              22512
+            ]
+          }
+        },
+        "first_trajectory_observation": {
+          "source": {
+            "path": "artifacts/20261104-160516/trajectory.jsonl",
+            "line": 57
+          },
+          "observation_id": 32,
+          "clock": 15.325,
+          "unit": {
+            "handle": [
+              17857,
+              22512
+            ],
+            "type": "uzig",
+            "owner": 1,
+            "x": -4256.0,
+            "y": -4064.0,
+            "hp": 59.70170974731445,
+            "hp_max": 550.0
+          }
+        }
+      },
+      {
+        "event": {
+          "source": {
+            "path": "artifacts/20261104-160516/events.jsonl",
+            "line": 172
+          },
+          "record": {
+            "event": "home_foundation_observed",
+            "clock": 36.505,
+            "code": "usep",
+            "point": [
+              -3328.0,
+              -4352.0
+            ],
+            "handle": [
+              17589,
+              24706
+            ]
+          }
+        },
+        "first_trajectory_observation": {
+          "source": {
+            "path": "artifacts/20261104-160516/trajectory.jsonl",
+            "line": 121
+          },
+          "observation_id": 72,
+          "clock": 36.505,
+          "unit": {
+            "handle": [
+              17589,
+              24706
+            ],
+            "type": "usep",
+            "owner": 1,
+            "x": -3328.0,
+            "y": -4352.0,
+            "hp": 130.87701416015625,
+            "hp_max": 1300.0
+          }
+        }
+      },
+      {
+        "event": {
+          "source": {
+            "path": "artifacts/20261104-160516/events.jsonl",
+            "line": 196
+          },
+          "record": {
+            "event": "home_foundation_observed",
+            "clock": 62.705,
+            "code": "utom",
+            "point": [
+              -4416.0,
+              -3776.0
+            ],
+            "handle": [
+              17863,
+              28288
+            ]
+          }
+        },
+        "first_trajectory_observation": {
+          "source": {
+            "path": "artifacts/20261104-160516/trajectory.jsonl",
+            "line": 195
+          },
+          "observation_id": 120,
+          "clock": 62.705,
+          "unit": {
+            "handle": [
+              17863,
+              28288
+            ],
+            "type": "utom",
+            "owner": 1,
+            "x": -4416.0,
+            "y": -3776.0,
+            "hp": 53.16126251220703,
+            "hp_max": 475.0
+          }
+        }
+      },
+      {
+        "event": {
+          "source": {
+            "path": "artifacts/20261104-160516/events.jsonl",
+            "line": 238
+          },
+          "record": {
+            "event": "home_foundation_observed",
+            "clock": 81.73,
+            "code": "ugrv",
+            "point": [
+              -3968.0,
+              -4416.0
+            ],
+            "handle": [
+              14639,
+              30484
+            ]
+          }
+        },
+        "first_trajectory_observation": {
+          "source": {
+            "path": "artifacts/20261104-160516/trajectory.jsonl",
+            "line": 261
+          },
+          "observation_id": 153,
+          "clock": 81.53,
+          "unit": {
+            "handle": [
+              14639,
+              30484
+            ],
+            "type": "ugrv",
+            "owner": 1,
+            "x": -3968.0,
+            "y": -4416.0,
+            "hp": 94.75613403320312,
+            "hp_max": 900.0
+          }
+        }
+      }
+    ],
+    "reference_order_events": [
+      {
+        "source": {
+          "path": "artifacts/20261104-160516/events.jsonl",
+          "line": 118
+        },
+        "record": {
+          "event": "reference_order",
+          "code": "uaod",
+          "target_ms": 4800,
+          "clock": 5.295,
+          "after": 5.295,
+          "accepted": true
+        }
+      },
+      {
+        "source": {
+          "path": "artifacts/20261104-160516/events.jsonl",
+          "line": 133
+        },
+        "record": {
+          "event": "reference_order",
+          "code": "uzig",
+          "target_ms": 8100,
+          "clock": 11.23,
+          "after": 11.23,
+          "accepted": true
+        }
+      },
+      {
+        "source": {
+          "path": "artifacts/20261104-160516/events.jsonl",
+          "line": 164
+        },
+        "record": {
+          "event": "reference_order",
+          "code": "usep",
+          "target_ms": 31320,
+          "clock": 36.23,
+          "after": 36.23,
+          "accepted": true
+        }
+      },
+      {
+        "source": {
+          "path": "artifacts/20261104-160516/events.jsonl",
+          "line": 190
+        },
+        "record": {
+          "event": "reference_order",
+          "code": "utom",
+          "target_ms": 55440,
+          "clock": 61.33,
+          "after": 61.33,
+          "accepted": true
+        }
+      },
+      {
+        "source": {
+          "path": "artifacts/20261104-160516/events.jsonl",
+          "line": 212
+        },
+        "record": {
+          "event": "reference_order",
+          "code": "Udea",
+          "target_ms": 66900,
+          "clock": 71.08,
+          "after": 71.08,
+          "accepted": true
+        }
+      },
+      {
+        "source": {
+          "path": "artifacts/20261104-160516/events.jsonl",
+          "line": 227
+        },
+        "record": {
+          "event": "reference_order",
+          "code": "ugrv",
+          "target_ms": 73860,
+          "clock": 79.18,
+          "after": 79.18,
+          "accepted": true
+        }
+      }
+    ],
+    "claim": "500 gold / 150 lumber, five foundations, and first DK with stwp are directly observed. This is not six-order +/-1 second timing acceptance."
+  },
+  "rod_attempts": [
+    {
+      "request_id": 84,
+      "request_clock": 140.805,
+      "cached_clock": 140.605,
+      "accepted": true,
+      "native_args": {
+        "slot_zero_based": 1,
+        "mode": 0,
+        "mode_name": "immediate",
+        "target_handle": null
+      },
+      "before": {
+        "source": {
+          "path": "artifacts/20261104-160516/trajectory.jsonl",
+          "line": 514
+        },
+        "observation_id": 251,
+        "clock": 140.605,
+        "DK": {
+          "handle": [
+            14379,
+            36907
+          ],
+          "inventory": [
+            "stwp",
+            "rnec",
+            null,
+            null,
+            null,
+            null
+          ],
+          "AIrd_cooldown": 0.0,
+          "hp": 675.0,
+          "mana": 255.0,
+          "level": 1
+        },
+        "skeletons": []
+      },
+      "after": {
+        "source": {
+          "path": "artifacts/20261104-160516/trajectory.jsonl",
+          "line": 520
+        },
+        "observation_id": 253,
+        "clock": 141.58,
+        "DK": {
+          "handle": [
+            14379,
+            36907
+          ],
+          "inventory": [
+            "stwp",
+            "rnec",
+            null,
+            null,
+            null,
+            null
+          ],
+          "AIrd_cooldown": 21.354995727539062,
+          "hp": 675.0,
+          "mana": 255.0,
+          "level": 1
+        },
+        "skeletons": [
+          {
+            "handle": [
+              12316,
+              39227
+            ],
+            "alive": true,
+            "hp": 180.0,
+            "x": -976.0,
+            "y": -3781.5
+          },
+          {
+            "handle": [
+              12478,
+              39244
+            ],
+            "alive": true,
+            "hp": 180.0,
+            "x": -976.0,
+            "y": -3856.0
+          }
+        ]
+      },
+      "observed_result": "accepted_cooldown_started_and_two_new_skeletons"
+    },
+    {
+      "request_id": 117,
+      "request_clock": 163.555,
+      "cached_clock": 163.305,
+      "accepted": false,
+      "native_args": {
+        "slot_zero_based": 1,
+        "mode": 0,
+        "mode_name": "immediate",
+        "target_handle": null
+      },
+      "before": {
+        "source": {
+          "path": "artifacts/20261104-160516/trajectory.jsonl",
+          "line": 630
+        },
+        "observation_id": 286,
+        "clock": 163.305,
+        "DK": {
+          "handle": [
+            14379,
+            36907
+          ],
+          "inventory": [
+            "stwp",
+            "rnec",
+            "rat6",
+            null,
+            null,
+            null
+          ],
+          "AIrd_cooldown": 0.0,
+          "hp": 612.8508911132812,
+          "mana": 114.16093444824219,
+          "level": 1
+        },
+        "skeletons": [
+          {
+            "handle": [
+              12316,
+              39227
+            ],
+            "alive": false,
+            "hp": 0.0,
+            "x": -1586.74072265625,
+            "y": -4854.373046875
+          }
+        ]
+      },
+      "after": {
+        "source": {
+          "path": "artifacts/20261104-160516/trajectory.jsonl",
+          "line": 634
+        },
+        "observation_id": 288,
+        "clock": 164.28,
+        "DK": {
+          "handle": [
+            14379,
+            36907
+          ],
+          "inventory": [
+            "stwp",
+            "rnec",
+            "rat6",
+            null,
+            null,
+            null
+          ],
+          "AIrd_cooldown": 0.0,
+          "hp": 594.0734252929688,
+          "mana": 114.98796844482422,
+          "level": 1
+        },
+        "skeletons": [
+          {
+            "handle": [
+              12316,
+              39227
+            ],
+            "alive": false,
+            "hp": 0.0,
+            "x": -1586.74072265625,
+            "y": -4854.373046875
+          }
+        ]
+      },
+      "observed_result": "rejected_no_cooldown_start_or_new_skeletons_before_next_attempt"
+    },
+    {
+      "request_id": 118,
+      "request_clock": 166.555,
+      "cached_clock": 166.555,
+      "accepted": true,
+      "native_args": {
+        "slot_zero_based": 1,
+        "mode": 0,
+        "mode_name": "immediate",
+        "target_handle": null
+      },
+      "before": {
+        "source": {
+          "path": "artifacts/20261104-160516/trajectory.jsonl",
+          "line": 639
+        },
+        "observation_id": 291,
+        "clock": 166.555,
+        "DK": {
+          "handle": [
+            14379,
+            36907
+          ],
+          "inventory": [
+            "stwp",
+            "rnec",
+            "rat6",
+            null,
+            null,
+            null
+          ],
+          "AIrd_cooldown": 0.0,
+          "hp": 577.220458984375,
+          "mana": 116.9177017211914,
+          "level": 1
+        },
+        "skeletons": []
+      },
+      "after": {
+        "source": {
+          "path": "artifacts/20261104-160516/trajectory.jsonl",
+          "line": 642
+        },
+        "observation_id": 292,
+        "clock": 167.455,
+        "DK": {
+          "handle": [
+            14379,
+            36907
+          ],
+          "inventory": [
+            "stwp",
+            "rnec",
+            "rat6",
+            null,
+            null,
+            null
+          ],
+          "AIrd_cooldown": 21.482635498046875,
+          "hp": 557.9244384765625,
+          "mana": 117.68111419677734,
+          "level": 1
+        },
+        "skeletons": [
+          {
+            "handle": [
+              12350,
+              44782
+            ],
+            "alive": true,
+            "hp": 180.0,
+            "x": -1648.0,
+            "y": -4976.0
+          },
+          {
+            "handle": [
+              13502,
+              44765
+            ],
+            "alive": true,
+            "hp": 180.0,
+            "x": -1712.0,
+            "y": -4976.0
+          }
+        ]
+      },
+      "observed_result": "accepted_cooldown_started_and_two_new_skeletons"
+    }
+  ],
+  "clock_semantics": [
+    "Native event clock is the cached snapshot at command submission; trajectory request clock is a separate observation collected at the request boundary. They differ by 0.200 / 0.250 / 0.000 game seconds here.",
+    "No exact engine spell-effect time is recorded; effects are bounded by pre/post observation times. First success is observed by 141.580; second success by 167.455."
+  ],
+  "runtime": {
+    "startup_speed_events": [
+      {
+        "source": {
+          "path": "artifacts/20261104-160516/events.jsonl",
+          "line": 2
+        },
+        "record": {
+          "event": "startup_speed_wait",
+          "actual": 100,
+          "expected": 400,
+          "clock": 0.045,
+          "max_wall_seconds": 5
+        }
+      },
+      {
+        "source": {
+          "path": "artifacts/20261104-160516/events.jsonl",
+          "line": 8
+        },
+        "record": {
+          "event": "startup_speed_request",
+          "actual": 100,
+          "expected": 400
+        }
+      },
+      {
+        "source": {
+          "path": "artifacts/20261104-160516/events.jsonl",
+          "line": 9
+        },
+        "record": {
+          "event": "startup_speed_receipt",
+          "accepted": true,
+          "expected": 400
+        }
+      },
+      {
+        "source": {
+          "path": "artifacts/20261104-160516/events.jsonl",
+          "line": 11
+        },
+        "record": {
+          "event": "startup_speed_ready",
+          "actual": 400,
+          "clock": 1.65,
+          "waited_wall_seconds": 1.422000000020489
+        }
+      }
+    ],
+    "speed_history": [
+      {
+        "clock": 3.58,
+        "percent": 400
+      }
+    ],
+    "claim": "Startup initially read 100% at 0.045 game seconds; the bounded startup correction read back 400% at 1.650, before startup_ready 1.855. Rule observation interval began at 3.580 with 400%, and no later speed change was logged.",
+    "game_seconds": 180.205,
+    "wall_seconds": 74.7,
+    "termination": {
+      "schema": "dayuan-outcome-v1",
+      "classification": "time_limit",
+      "outcome": "timeout",
+      "reason": "game_time_limit",
+      "terminated": false,
+      "truncated": true,
+      "reward": null
+    }
+  },
+  "integrity": {
+    "source_audit": {
+      "files": 114,
+      "mismatches": [],
+      "frozen_mismatches": [],
+      "dependency_mismatches": [],
+      "source_unchanged": true,
+      "session_closed": true,
+      "active_processes": [],
+      "errors": [],
+      "training_actor_approved": false
+    },
+    "independently_rehashed_frozen_source_count": 114,
+    "frozen_mismatches": [],
+    "current_source_mismatches": [],
+    "independently_rehashed_dependency_count": 72,
+    "dependency_mismatches": [],
+    "staged_map_hash_matches": true,
+    "cleanup_basis": "Recorded source-audit session_closed=true, active_processes=[], errors=[]; this report does not rewrite raw audit."
+  },
+  "resource_regression": {
+    "run": "20261104-155555",
+    "first_resources": {
+      "gold": 0,
+      "lumber": 0
+    },
+    "rod_attempted": false,
+    "retained": true,
+    "fix": "Use the original game-version resources and spawn clearance for the non-playing USER actor; existing hero limits/tokens/item triggers retained"
+  },
+  "tests": {
+    "python": 2195,
+    "seconds": 29.471,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "map_tests": 4,
+    "pjass_lines": 22214,
+    "sandbox_baseline_failure": "PermissionError in sandbox temporary directory; raw failure retained, final full suite passed outside sandbox"
+  },
+  "artifacts_sha256": {
+    "artifacts/rod-slot-review-20261104.json": "5bbf0293386797d6ff2a7f4df0ab27b5b4e36d403e857f2c8b81539635079589",
+    "artifacts/rod-slot-comparison-raw-20261104.json": "53d166dbc5665a75044f166210f26a4943048c2520dc05258d194dfffb45f570",
+    "artifacts/actor-user-init-20261104/review.json": "ada0aac66acc04efa7bb358f0e97e3727e794fe1fb87750d907b9d327e6d94f4",
+    "artifacts/actor-user-init-20261104/pjass.log": "00dbb701f1efea68dd87f4f4cfd2264f8395d505f2c5f53b37777bfc119a42a7",
+    "artifacts/actor-user-init-20261104/map-tests.log": "3b0f61cd44a281fd70574efa24f0a20a213e26b7f502d15eefeb312d02c9b0ce",
+    "artifacts/rod-fix-20261104/baseline-tests.log": "fce3cd9b847b504f9658ad0893081fdeb69345ecee41d43609249864adb9d627",
+    "artifacts/rod-fix-20261104/full-final.log": "238c4412dc53697a4bfb8b346d91e28c57251e67abbbec10a08fb87691b37cf7",
+    "artifacts/rod-manual-fixture-20261104/replay-analysis.json": "927f148a1f89e0421248987f3ede67ce4a085cd05c728d4186f6c08d235a899a",
+    "artifacts/20261104-155555/user-slot-initialization-review.json": "d97d08374bc9cadc20a9071183dc32a459eaca89392df2cc8e950aa2fd93ff2a",
+    "artifacts/20261104-155555/core-strategy-review.json": "9318ec0e1481d4bca0211e0430ce0213a93e2d03890be162c01c0ddd0793f244",
+    "artifacts/20261104-160516/rod-live-review.json": "bbf655a36c56f1d0326874d78c188076050ba65688460c28d725f86073b70d87",
+    "artifacts/20261104-160516/core-strategy-review.json": "7fd30a16fe2062b5d87f59fbfc580395b1b62cacb18cfc629995cb1b419b66f4",
+    "artifacts/20261104-160516/combat-review.json": "b37085687cf1e64157f2d1ad7c6fc61bb5c8e4bce0a7fc6109356417b87e25df",
+    "artifacts/20261104-160516/equipment-review.json": "424c511d012bd13d43d49d4f335c19e62ddb1744a9d835272797c8b8da528241",
+    "artifacts/20261104-160516/dk-review.json": "5ebc093a079f37fbdd37c166c4b1af647c0205126100583da0cf088a2462640b",
+    "artifacts/20261104-160516/map-review.json": "6339f3207c2ffa2f1f1c388eee3cfbb7723cee06ef8570389ec8b4707b95c077",
+    "artifacts/20261104-160516/hero-rules-review.json": "3e13100555953fa27145395fc2ccc252108b9b84cf565943a641940372bf2c07",
+    "artifacts/20261104-160516/stability-review.json": "50bff7d40ec4c6ce420efa6c92c51cb3dcc48c3715f9505e6ef2f0da09ff643f",
+    "artifacts/20261104-160516/tactical-review.json": "895430fa1747b3bc0eb88b7914c848b7ee13dce79cd33ebc4be55735a05fab07"
+  },
+  "experiments": [
+    {
+      "report": "artifacts/rod-computer-slot-fixture-20261104/report.json",
+      "sha256": "8f8908f41a65aa82cec27646c7f92970e37df889bef1864b042ea79fb0b05c1e",
+      "error": null,
+      "result": "diagnostic_complete",
+      "remaining": [],
+      "source_unchanged": true,
+      "cleaned": true
+    },
+    {
+      "report": "artifacts/rod-creep-fixture-20261104/report.json",
+      "sha256": "f8fb7686783fb9d06b3d999bca4f5d4818c50fb64fbb75693c7f552a9430fedd",
+      "error": null,
+      "result": "diagnostic_complete",
+      "remaining": [],
+      "source_unchanged": true,
+      "cleaned": true
+    },
+    {
+      "report": "artifacts/rod-diagnosis-20261104/report.json",
+      "sha256": "ee20460ad4fb81174358a236b4a55183a6be677a9bf26f78fa38e1732fa8c739",
+      "error": null,
+      "result": {
+        "id": "20261104-145112",
+        "version": "0.1.199-dev",
+        "rules_version": "0.1.199",
+        "bot_name": "dayuan V1.99",
+        "policy": "rule",
+        "requested_speed": 400,
+        "opponent": {
+          "race": 1,
+          "controller": "kfai-human"
+        },
+        "result": "error",
+        "reason": "ValueError('未知模块 rod-readonly-diagnostic，先在 MODULES 里登记')",
+        "until_epoch": 1793775282.6444454,
+        "max_game_seconds": 205,
+        "mode": "bot_vs_bot",
+        "controlled_player": 1,
+        "fair": true,
+        "auto_restart": false,
+        "observer_player": 0,
+        "opponent_player": 2,
+        "background_supported": true,
+        "launch_settings": {
+          "map": "D:\\War3_1.27a\\Warcraft III Frozen Throne 1.27a publish\\Maps\\dayuan\\sp-649c355b5d9d.w3x",
+          "race": 1,
+          "enemyRace": 3,
+          "difficulty": 2,
+          "speed": 400,
+          "map_alias": "LR",
+          "map_sha256": "649c355b5d9d0c184154464c0b4a8f5d2bb9dc9fef49c75938ce065c481b36c9",
+          "display": {
+            "width": 2560,
+            "height": 1440,
+            "refresh_hz": 59,
+            "color_depth": 32,
+            "registry": {
+              "reswidth": 2560,
+              "resheight": 1440,
+              "colordepth": 32,
+              "texcolordepth": 32,
+              "refreshrate": 59
+            },
+            "basis": "current_windows_display"
+          },
+          "window_mode": "windowed",
+          "client_rectangle": "30,30,1280,720",
+          "startup_stage": "ready",
+          "verified_map_starts": [
+            [
+              -3904.0,
+              -3968.0
+            ],
+            [
+              3840.0,
+              3328.0
+            ]
+          ],
+          "active_player_slots": [
+            0,
+            1,
+            2
+          ],
+          "mode": "bot_vs_bot",
+          "observer_player": 0,
+          "controlled_player": 1,
+          "opponent_player": 2,
+          "opponent_profile": "kfai-human",
+          "verified_players": [
+            {
+              "slot": 1,
+              "controller": 1,
+              "race": 3
+            },
+            {
+              "slot": 2,
+              "controller": 1,
+              "race": 1
+            }
+          ],
+          "native_ai_paused": false,
+          "native_ai_paused_players": [
+            1
+          ],
+          "camera_distance": 2500,
+          "opponent_fairness": "native_KFAI_unverified",
+          "fair": true,
+          "background_supported": true,
+          "auto_restart": false,
+          "point_visibility_player": 1,
+          "own_start_sample": {
+            "clock": 0.345,
+            "own_halls": [
+              {
+                "type": "unpl",
+                "x": -3904.0,
+                "y": -3968.0
+              }
+            ],
+            "basis": "first_ready_fair_P1_buildings"
+          }
+        },
+        "termination": {
+          "schema": "dayuan-outcome-v1",
+          "classification": "runtime_failure",
+          "outcome": "error",
+          "reason": "other",
+          "terminated": false,
+          "truncated": true,
+          "reward": null
+        },
+        "wall_seconds": 21.72
+      },
+      "remaining": [],
+      "source_unchanged": true,
+      "cleaned": null
+    },
+    {
+      "report": "artifacts/rod-diagnosis-retry-20261104/report.json",
+      "sha256": "3972dba40acfb71bdba86f94f98432db9640ffd520e45b556cf465555776cf53",
+      "error": null,
+      "result": {
+        "id": "20261104-145335",
+        "version": "0.1.199-dev",
+        "rules_version": "0.1.199",
+        "bot_name": "dayuan V1.99",
+        "policy": "rule",
+        "requested_speed": 400,
+        "opponent": {
+          "race": 1,
+          "controller": "kfai-human"
+        },
+        "result": "timeout",
+        "reason": "game_time_limit",
+        "until_epoch": 1793775425.2485485,
+        "max_game_seconds": 205,
+        "mode": "bot_vs_bot",
+        "controlled_player": 1,
+        "fair": true,
+        "auto_restart": false,
+        "observer_player": 0,
+        "opponent_player": 2,
+        "background_supported": true,
+        "launch_settings": {
+          "map": "D:\\War3_1.27a\\Warcraft III Frozen Throne 1.27a publish\\Maps\\dayuan\\sp-649c355b5d9d.w3x",
+          "race": 1,
+          "enemyRace": 3,
+          "difficulty": 2,
+          "speed": 400,
+          "map_alias": "LR",
+          "map_sha256": "649c355b5d9d0c184154464c0b4a8f5d2bb9dc9fef49c75938ce065c481b36c9",
+          "display": {
+            "width": 2560,
+            "height": 1440,
+            "refresh_hz": 59,
+            "color_depth": 32,
+            "registry": {
+              "reswidth": 2560,
+              "resheight": 1440,
+              "colordepth": 32,
+              "texcolordepth": 32,
+              "refreshrate": 59
+            },
+            "basis": "current_windows_display"
+          },
+          "window_mode": "windowed",
+          "client_rectangle": "30,30,1280,720",
+          "startup_stage": "ready",
+          "verified_map_starts": [
+            [
+              -3904.0,
+              -3968.0
+            ],
+            [
+              3840.0,
+              3328.0
+            ]
+          ],
+          "active_player_slots": [
+            0,
+            1,
+            2
+          ],
+          "mode": "bot_vs_bot",
+          "observer_player": 0,
+          "controlled_player": 1,
+          "opponent_player": 2,
+          "opponent_profile": "kfai-human",
+          "verified_players": [
+            {
+              "slot": 1,
+              "controller": 1,
+              "race": 3
+            },
+            {
+              "slot": 2,
+              "controller": 1,
+              "race": 1
+            }
+          ],
+          "native_ai_paused": false,
+          "native_ai_paused_players": [
+            1
+          ],
+          "camera_distance": 2500,
+          "opponent_fairness": "native_KFAI_unverified",
+          "fair": true,
+          "background_supported": true,
+          "auto_restart": false,
+          "point_visibility_player": 1,
+          "own_start_sample": {
+            "clock": 0.005,
+            "own_halls": [
+              {
+                "type": "unpl",
+                "x": -3904.0,
+                "y": -3968.0
+              }
+            ],
+            "basis": "first_ready_fair_P1_buildings"
+          }
+        },
+        "trajectory": "experimental_p1_whitelist_v1",
+        "runtime_guard": "cooperative_stages_world_reads_native_wait_cap_v1",
+        "speed_history": [
+          {
+            "clock": 1.205,
+            "percent": 400
+          }
+        ],
+        "game_seconds": 205.105,
+        "accepted_actions": 119,
+        "apm_game_seconds": 204.2,
+        "average_apm": 35.0,
+        "apm": 41,
+        "apm_basis": "accepted_unit_commands_game_time_v2",
+        "command_trace_error": null,
+        "termination": {
+          "schema": "dayuan-outcome-v1",
+          "classification": "time_limit",
+          "outcome": "timeout",
+          "reason": "game_time_limit",
+          "terminated": false,
+          "truncated": true,
+          "reward": null
+        },
+        "wall_seconds": 77.09
+      },
+      "remaining": [],
+      "source_unchanged": true,
+      "cleaned": null
+    },
+    {
+      "report": "artifacts/rod-fixture-20261104/report.json",
+      "sha256": "ba32fa283379c50864be297bf79026e21bcd2a2667b3558e9e631f6594d51dec",
+      "error": null,
+      "result": "diagnostic_complete",
+      "remaining": [],
+      "source_unchanged": true,
+      "cleaned": true
+    },
+    {
+      "report": "artifacts/rod-human-slot-fixture-20261104/report.json",
+      "sha256": "e108dba2faa4588e0f539ba609ef10c0be421f7a5544ae16bb9ac83e6d9af126",
+      "error": null,
+      "result": "diagnostic_complete",
+      "remaining": [],
+      "source_unchanged": true,
+      "cleaned": true
+    },
+    {
+      "report": "artifacts/rod-local-fixture-20261104/report.json",
+      "sha256": "facad7c49e111fbcc41316b7f3211cefe81a04228e12522dd4e390a4fa276a7f",
+      "error": null,
+      "result": "diagnostic_complete",
+      "remaining": [],
+      "source_unchanged": true,
+      "cleaned": true
+    },
+    {
+      "report": "artifacts/rod-manual-fixture-20261104/report.json",
+      "sha256": "7aff94c134ea4d48622fc62f2b99283952817ceee85bcdbf946b9309ad0173d7",
+      "error": "JassError('UnitItemInSlot 没调成：timeout')",
+      "result": null,
+      "remaining": [],
+      "source_unchanged": true,
+      "cleaned": null
+    },
+    {
+      "report": "artifacts/rod-native-control-20261104/report.json",
+      "sha256": "906a68ce8b7b6f10ea5e35ae2152dcc787362e9fc736dd1122485de1c22d50d9",
+      "error": null,
+      "result": {
+        "id": "20261104-145939",
+        "version": "0.1.199-dev",
+        "rules_version": "0.1.199",
+        "bot_name": "dayuan V1.99",
+        "policy": "rule",
+        "requested_speed": 400,
+        "opponent": {
+          "race": 1,
+          "controller": "kfai-human"
+        },
+        "result": "timeout",
+        "reason": "game_time_limit",
+        "until_epoch": 1793775789.583528,
+        "max_game_seconds": 180,
+        "mode": "bot_vs_bot",
+        "controlled_player": 1,
+        "fair": true,
+        "auto_restart": false,
+        "observer_player": 0,
+        "opponent_player": 2,
+        "background_supported": true,
+        "launch_settings": {
+          "map": "D:\\War3_1.27a\\Warcraft III Frozen Throne 1.27a publish\\Maps\\dayuan\\sp-649c355b5d9d.w3x",
+          "race": 1,
+          "enemyRace": 3,
+          "difficulty": 2,
+          "speed": 400,
+          "map_alias": "LR",
+          "map_sha256": "649c355b5d9d0c184154464c0b4a8f5d2bb9dc9fef49c75938ce065c481b36c9",
+          "display": {
+            "width": 2560,
+            "height": 1440,
+            "refresh_hz": 59,
+            "color_depth": 32,
+            "registry": {
+              "reswidth": 2560,
+              "resheight": 1440,
+              "colordepth": 32,
+              "texcolordepth": 32,
+              "refreshrate": 59
+            },
+            "basis": "current_windows_display"
+          },
+          "window_mode": "windowed",
+          "client_rectangle": "30,30,1280,720",
+          "startup_stage": "ready",
+          "verified_map_starts": [
+            [
+              -3904.0,
+              -3968.0
+            ],
+            [
+              3840.0,
+              3328.0
+            ]
+          ],
+          "active_player_slots": [
+            0,
+            1,
+            2
+          ],
+          "mode": "bot_vs_bot",
+          "observer_player": 0,
+          "controlled_player": 1,
+          "opponent_player": 2,
+          "opponent_profile": "kfai-human",
+          "verified_players": [
+            {
+              "slot": 1,
+              "controller": 1,
+              "race": 3
+            },
+            {
+              "slot": 2,
+              "controller": 1,
+              "race": 1
+            }
+          ],
+          "native_ai_paused": false,
+          "native_ai_paused_players": [
+            1
+          ],
+          "camera_distance": 2500,
+          "opponent_fairness": "native_KFAI_unverified",
+          "fair": true,
+          "background_supported": true,
+          "auto_restart": false,
+          "point_visibility_player": 1,
+          "own_start_sample": {
+            "clock": 0.005,
+            "own_halls": [
+              {
+                "type": "unpl",
+                "x": -3904.0,
+                "y": -3968.0
+              }
+            ],
+            "basis": "first_ready_fair_P1_buildings"
+          }
+        },
+        "trajectory": "experimental_p1_whitelist_v1",
+        "runtime_guard": "cooperative_stages_world_reads_native_wait_cap_v1",
+        "speed_history": [
+          {
+            "clock": 2.43,
+            "percent": 400
+          }
+        ],
+        "game_seconds": 180.105,
+        "accepted_actions": 97,
+        "apm_game_seconds": 177.875,
+        "average_apm": 32.7,
+        "apm": 38,
+        "apm_basis": "accepted_unit_commands_game_time_v2",
+        "command_trace_error": null,
+        "termination": {
+          "schema": "dayuan-outcome-v1",
+          "classification": "time_limit",
+          "outcome": "timeout",
+          "reason": "game_time_limit",
+          "terminated": false,
+          "truncated": true,
+          "reward": null
+        },
+        "wall_seconds": 69.45
+      },
+      "remaining": [],
+      "source_unchanged": true,
+      "cleaned": null
+    },
+    {
+      "report": "artifacts/rod-owner-fixture-20261104/report.json",
+      "sha256": "42513249f080129585e503337e29a0255a2ba51903415c705fdacc04192d19a9",
+      "error": "RuntimeError('No actual DK killed event within 15 game seconds')",
+      "result": "error",
+      "remaining": [],
+      "source_unchanged": true,
+      "cleaned": true
+    },
+    {
+      "report": "artifacts/rod-point-control-20261104/report.json",
+      "sha256": "6b0fd2f20d4d5800b5439850f62565ab50a8508a06d02a432efc55a2af2c7e38",
+      "error": null,
+      "result": {
+        "id": "20261104-145651",
+        "version": "0.1.199-dev",
+        "rules_version": "0.1.199",
+        "bot_name": "dayuan V1.99",
+        "policy": "rule",
+        "requested_speed": 400,
+        "opponent": {
+          "race": 1,
+          "controller": "kfai-human"
+        },
+        "result": "timeout",
+        "reason": "game_time_limit",
+        "until_epoch": 1793775621.898258,
+        "max_game_seconds": 180,
+        "mode": "bot_vs_bot",
+        "controlled_player": 1,
+        "fair": true,
+        "auto_restart": false,
+        "observer_player": 0,
+        "opponent_player": 2,
+        "background_supported": true,
+        "launch_settings": {
+          "map": "D:\\War3_1.27a\\Warcraft III Frozen Throne 1.27a publish\\Maps\\dayuan\\sp-649c355b5d9d.w3x",
+          "race": 1,
+          "enemyRace": 3,
+          "difficulty": 2,
+          "speed": 400,
+          "map_alias": "LR",
+          "map_sha256": "649c355b5d9d0c184154464c0b4a8f5d2bb9dc9fef49c75938ce065c481b36c9",
+          "display": {
+            "width": 2560,
+            "height": 1440,
+            "refresh_hz": 59,
+            "color_depth": 32,
+            "registry": {
+              "reswidth": 2560,
+              "resheight": 1440,
+              "colordepth": 32,
+              "texcolordepth": 32,
+              "refreshrate": 59
+            },
+            "basis": "current_windows_display"
+          },
+          "window_mode": "windowed",
+          "client_rectangle": "30,30,1280,720",
+          "startup_stage": "ready",
+          "verified_map_starts": [
+            [
+              -3904.0,
+              -3968.0
+            ],
+            [
+              3840.0,
+              3328.0
+            ]
+          ],
+          "active_player_slots": [
+            0,
+            1,
+            2
+          ],
+          "mode": "bot_vs_bot",
+          "observer_player": 0,
+          "controlled_player": 1,
+          "opponent_player": 2,
+          "opponent_profile": "kfai-human",
+          "verified_players": [
+            {
+              "slot": 1,
+              "controller": 1,
+              "race": 3
+            },
+            {
+              "slot": 2,
+              "controller": 1,
+              "race": 1
+            }
+          ],
+          "native_ai_paused": false,
+          "native_ai_paused_players": [
+            1
+          ],
+          "camera_distance": 2500,
+          "opponent_fairness": "native_KFAI_unverified",
+          "fair": true,
+          "background_supported": true,
+          "auto_restart": false,
+          "point_visibility_player": 1,
+          "own_start_sample": {
+            "clock": 0.005,
+            "own_halls": [
+              {
+                "type": "unpl",
+                "x": -3904.0,
+                "y": -3968.0
+              }
+            ],
+            "basis": "first_ready_fair_P1_buildings"
+          }
+        },
+        "trajectory": "experimental_p1_whitelist_v1",
+        "runtime_guard": "cooperative_stages_world_reads_native_wait_cap_v1",
+        "speed_history": [
+          {
+            "clock": 1.055,
+            "percent": 400
+          }
+        ],
+        "game_seconds": 180.755,
+        "accepted_actions": 104,
+        "apm_game_seconds": 179.7,
+        "average_apm": 34.7,
+        "apm": 52,
+        "apm_basis": "accepted_unit_commands_game_time_v2",
+        "command_trace_error": null,
+        "termination": {
+          "schema": "dayuan-outcome-v1",
+          "classification": "time_limit",
+          "outcome": "timeout",
+          "reason": "game_time_limit",
+          "terminated": false,
+          "truncated": true,
+          "reward": null
+        },
+        "wall_seconds": 71.12
+      },
+      "remaining": [],
+      "source_unchanged": true,
+      "cleaned": null
+    },
+    {
+      "report": "artifacts/rod-target-fixture-20261104/report.json",
+      "sha256": "c66592220a691476307b31db39a24b3686bb1d495ee3fac622bbab033737778e",
+      "error": null,
+      "result": "diagnostic_complete",
+      "remaining": [],
+      "source_unchanged": true,
+      "cleaned": true
+    }
+  ],
+  "raw_live_sources": {
+    "events.jsonl": {
+      "path": "C:\\Users\\huangzhiduo\\Documents\\Codex\\openwar3-undead\\artifacts\\20261104-160516\\events.jsonl",
+      "sha256": "926b18a567aeb5f1cebb7a7d63a86d89ab6c7a17cb223ae8c30c13213338e292"
+    },
+    "trajectory.jsonl": {
+      "path": "C:\\Users\\huangzhiduo\\Documents\\Codex\\openwar3-undead\\artifacts\\20261104-160516\\trajectory.jsonl",
+      "sha256": "ebb55f5f085355700343f91b46dfac75cbfebee61b6cabd9a54fa359e7978e43"
+    },
+    "result.json": {
+      "path": "C:\\Users\\huangzhiduo\\Documents\\Codex\\openwar3-undead\\artifacts\\20261104-160516\\result.json",
+      "sha256": "55daef6a816550e6b6b0eeaa8d3b66264a87947286d28057455f597a13185842"
+    },
+    "source-audit.json": {
+      "path": "C:\\Users\\huangzhiduo\\Documents\\Codex\\openwar3-undead\\artifacts\\20261104-160516\\source-audit.json",
+      "sha256": "e855e8f92a590fb7f25c13de1609852ba0434b62755e7511be42e52c5c5a8ab8"
+    },
+    "source-manifest.json": {
+      "path": "C:\\Users\\huangzhiduo\\Documents\\Codex\\openwar3-undead\\artifacts\\20261104-160516\\source-manifest.json",
+      "sha256": "152f4b87ac02c561ffe9297a0d2a5a9046f0aabf6ed2cdd77a908c050acd5390"
+    },
+    "interface-contract.json": {
+      "path": "C:\\Users\\huangzhiduo\\Documents\\Codex\\openwar3-undead\\artifacts\\20261104-160516\\interface-contract.json",
+      "sha256": "093e1faddec1903ddfc3772687f22e572603e68f8fa72d5aa7afa203209253c9"
+    }
+  },
+  "current_processes": [],
+  "limitations": [
+    "Two successes and one rejection are retained separately; not all rod requests passed.",
+    "Trajectory v1 does not store item charges; 4-to-3 or 3-to-2 charge changes are not claimed for this run. Slot/mode are proved by native command args, not filled into the original trajectory.",
+    "Receipt acceptance alone is not effect evidence. Success is supported by later AIrd cooldown and newly observed uske handles.",
+    "180.205 game-second truncated diagnostic, no win/loss or complete-game strategy acceptance.",
+    "One map/source/environment sample; old COMPUTER actor runs, manual/isolated fixtures and USER/EMPTY zero-resource failure remain separate.",
+    "No model made the recorded decisions. This run cannot diagnose model-decision errors.",
+    "Only the KFAI LR actor configuration was changed; other sparring/practice modes are not newly validated.",
+    "New fixtures and diagnostic interventions are not training demonstrations. The manual recording has a monitor timeout and one incomplete replay block, retained in the source reports.",
+    "The failed zero-resource run and historical COMPUTER runs are not pooled with the new map/source/speed baseline.",
+    "Opening roles and previously accepted timing errors were not optimized; this short run does not revalidate all six Happy timing targets.",
+    "The rejected post-kill rod request remains unresolved; death-animation timing is a hypothesis, not a confirmed cause."
+  ]
+}

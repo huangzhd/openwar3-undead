@@ -1,6 +1,79 @@
 import unittest
+from copy import deepcopy
 
-from learning.tactical_review import annotate, cases_from_events
+from learning.tactical_review import annotate, cases_from_events, execution_chains
+from learning.trajectory import UNIT_FIELDS
+
+
+class ExecutionChainTests(unittest.TestCase):
+    def fixture(self):
+        unit = dict(handle=[1,2], type='Udea', owner=1, alive=True,
+                    inventory=['rnec',None,None,None,None,None],
+                    abilities=[dict(code='AIrd',level=1,cooldown=0)],
+                    **{k:0 for k in UNIT_FIELDS})
+        obs = dict(player=1, clock=10, resources=None, units=[unit], production=[], last_seen=[])
+        later = deepcopy(obs); later['clock']=11
+        later['units'][0]['abilities'][0]['cooldown']=21
+        skel=deepcopy(unit);skel.update(handle=[3,4],type='uske')
+        later['units'].append(skel)
+        return [dict(event='observation',id=1,observation=obs),
+                dict(event='action_request',id=7,observation_id=1,clock=10,
+                     action=dict(op='use_item',unit=[1,2],target=None)),
+                dict(event='action_receipt',id=7,accepted=True,status=0),
+                dict(event='observation',id=2,observation=later)]
+
+    def chains(self, rows, fingerprint='hash'):
+        return execution_chains(rows,'episode',fingerprint,'strict-p1-observation-v1')
+
+    def test_observed_summon_is_not_causal_label_or_reconstructed_action(self):
+        chain, = self.chains(self.fixture())
+        self.assertEqual(chain['observable_changes']['newly_observed_own_units'][0]['handle'],[3,4])
+        self.assertEqual(chain['observable_changes']['source_after']['abilities'][0]['cooldown'],21)
+        self.assertFalse(chain['observable_changes']['causally_attributed'])
+        self.assertEqual(chain['effect'],'unverified')
+        self.assertIsNone(chain['selection_link'])
+        self.assertNotIn('slot',chain['action'])
+
+    def test_missing_receipt_and_timeout_remain_unknown(self):
+        rows=self.fixture();del rows[2]
+        chain,=self.chains(rows)
+        self.assertEqual(chain['receipt_state'],'unknown')
+        self.assertIsNone(chain['observable_changes'])
+        rows=self.fixture();rows[2]['status']=99
+        self.assertEqual(self.chains(rows)[0]['receipt_state'],'unknown')
+
+    def test_rejection_and_no_later_observation_remain_reviewable(self):
+        rows=self.fixture();rows[2]['accepted']=False
+        chain,=self.chains(rows[:-1])
+        self.assertEqual(chain['receipt_state'],'rejected')
+        self.assertTrue(chain['needs_review'])
+        self.assertIsNone(chain['after_clock'])
+        rows[-1]['observation']['clock']=13
+        self.assertIsNone(self.chains(rows)[0]['observable_changes'])
+
+    def test_duplicates_future_references_and_non_p1_rejected(self):
+        for mutation in ('duplicate','future','player','clock'):
+            rows=self.fixture()
+            if mutation=='duplicate':rows.insert(3,deepcopy(rows[2]))
+            if mutation=='future':rows[1]['observation_id']=2
+            if mutation=='player':rows[-1]['observation']['player']=0
+            if mutation=='clock':rows[-1]['observation']['clock']=9
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):self.chains(rows)
+
+    def test_intervening_requests_are_exposed(self):
+        rows=self.fixture(); req=deepcopy(rows[1]);req['id']=8
+        rows.insert(3,req)
+        self.assertEqual(self.chains(rows)[0]['intervening_request_ids'],[8])
+
+    def test_environment_note_is_bound_to_trajectory_and_stays_separate(self):
+        chain,=self.chains(self.fixture())
+        report=dict(cases=[],execution_chains=[chain])
+        note=dict(id=chain['id'],judgment='environment',explanation='matched slot experiment')
+        annotate(report,[note])
+        self.assertEqual(chain['human_review']['judgment'],'environment')
+        self.assertEqual(chain['attribution'],'undetermined')
+        changed,=self.chains(self.fixture(),'changed')
+        with self.assertRaises(ValueError):annotate(dict(cases=[],execution_chains=[changed]),[note])
 
 
 class TacticalReviewTests(unittest.TestCase):

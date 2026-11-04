@@ -74,9 +74,10 @@ class ObserverMapTests(unittest.TestCase):
 
 
 class SparringSessionTests(unittest.TestCase):
-    def setup_connection(self,observer=True,owned_observer=False,shared=False,native=False):
+    def setup_connection(self,observer=True,owned_observer=False,shared=False,native=False,active=None):
         paused=[]
-        j=N(Player=lambda i:i,GetPlayerSlotState=lambda i:int(i in (0,1,2)),
+        if active is None:active=(0,2) if native else (0,1,2)
+        j=N(Player=lambda i:i,GetPlayerSlotState=lambda i:int(i in active),
             GetPlayerController=lambda i:int(i!=0 and not (native and i==1)),GetPlayerRace=lambda i:3 if i==1 else 1,
             IsPlayerObserver=lambda i:observer if i==0 else False,
             IsPlayerEnemy=lambda a,b:{a,b}=={1,2},GetPlayerAlliance=lambda a,b,k:shared,
@@ -104,10 +105,15 @@ class SparringSessionTests(unittest.TestCase):
             self.assertFalse(paused)
 
     def test_native_kfai_keeps_opponent_running_and_only_observes_it(self):
-        connect,paused=self.setup_connection()
+        connect,paused=self.setup_connection(native=True)
         session=sparring.SparringSession('kfai-human')
         with patch.object(sparring,'Game',side_effect=connect):session.prepare_players(123)
-        self.assertEqual(paused,[(1,True)])
+        self.assertEqual(paused,[])
+        self.assertEqual(session.settings['native_ai_paused_players'],[])
+        self.assertEqual(session.settings['active_player_slots'],[0,2])
+        self.assertEqual(session.settings['player_slot_states'],[1,0,1])
+        self.assertEqual(session.settings['verified_players'],[
+            dict(slot=1,controller=0,race=3),dict(slot=2,controller=1,race=1)])
         self.assertEqual(session.settings['opponent_fairness'],'native_KFAI_unverified')
         snap=N(resources_known=True,epoch=73,me=2,in_game=True,clock=40)
         session.opponent_game=N(snapshot=lambda **kw:snap,resources=lambda:dict(lumber_gathered=20),
@@ -115,6 +121,15 @@ class SparringSessionTests(unittest.TestCase):
         session.opponent_log=Mock();session.opponent_summary_at=-100
         self.assertTrue(session.tick_opponent(73))
         self.assertEqual(session.opponent_log.call_args.kwargs['resources']['lumber_gathered'],20)
+
+    def test_kfai_rejects_old_computer_actor_or_shared_opponent_view_before_setup(self):
+        for options in (dict(),dict(native=True,shared=True),dict(native=True,observer=False),
+                        dict(native=True,active=(0,1,2)),dict(native=True,active=(0,2,3))):
+            connect,paused=self.setup_connection(**options)
+            session=sparring.SparringSession('kfai-human')
+            with patch.object(sparring,'Game',side_effect=connect),self.assertRaises(RuntimeError):
+                session.prepare_players(123)
+            self.assertFalse(paused)
 
     def test_epoch_and_player_guard_prevent_orders_after_new_match(self):
         for override in ({'epoch':74},{'me':0},{'in_game':False}):

@@ -5,6 +5,7 @@ const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawnSync}=require('node:child_process');
 const {inspect,inventory,sourceRecord}=require('./intake.cjs');
 const {openingReview}=require('./opening-review.cjs');
+const {pressureCollector}=require('./pressure.cjs');
 
 function envelope(raw,{build=6059,declared=raw.length,padding=0}={}) {
   const block=Buffer.alloc(8192,padding); raw.copy(block);
@@ -34,6 +35,47 @@ function buildOrder(code,x,y) {
   order.writeFloatLE(x,15);order.writeFloatLE(y,19);
   return order;
 }
+
+function immediate(code) {
+  const b=Buffer.alloc(15);b[0]=0x10;Buffer.from(code).reverse().copy(b,3);return b;
+}
+function typedObject(code,lo=44,hi=7) {
+  const b=Buffer.alloc(13);b[0]=0x19;Buffer.from(code).reverse().copy(b,1);
+  b.writeUInt32LE(lo,5);b.writeUInt32LE(hi,9);return b;
+}
+function targeted(lo=44,hi=7) {
+  const b=Buffer.alloc(31);b[0]=0x12;b.writeUInt32LE(851971,3);
+  b.writeFloatLE(32,15);b.writeFloatLE(64,19);b.writeUInt32LE(lo,23);b.writeUInt32LE(hi,27);return b;
+}
+
+test('pressure keeps later production repeats but rejects wrong command form and damaged blocks',async()=>{
+  const data=Buffer.concat([timeslot([],60000),timeslot([],60000),timeslot([],60000),
+    timeslot([[2,immediate('uobs')],[1,Buffer.concat([buildOrder('uslh',32,64),immediate('Ulic'),immediate('uobs'),immediate('uobs'),buildOrder('uobs',1,2),immediate('uslh')])]],60000),
+    timeslot([[1,Buffer.concat([immediate('uobs'),Buffer.from([255])])]])]);
+  const p=(await inventory(data,[1,2],false,1,'hash',false,true)).pressure;
+  assert.deepEqual(p.production_orders.map(r=>[r.timeslot_ms,r.code]),[[240000,'uslh'],[240000,'Ulic'],[240000,'uobs'],[240000,'uobs']]);
+  assert.deepEqual(p.production_orders[0].point,[32,64]);assert.equal(p.undecoded_blocks,1);
+});
+
+test('pressure target hints are prior and player-local and invalidated by decoding gaps',async()=>{
+  const data=Buffer.concat([timeslot([],60000),timeslot([],60000),
+    timeslot([[2,typedObject('Hamg')],[1,targeted()],[1,typedObject('Hamg')],[1,targeted()]]),
+    timeslot([[1,[255]],[1,targeted()],[1,typedObject('hpea')],[1,targeted()]])]);
+  const p=(await inventory(data,[1,2],false,1,'hash',false,true)).pressure;
+  assert.equal(p.unknown_target_orders,2);
+  assert.deepEqual(p.typed_target_orders.map(r=>r.prior_type_hint.type),['Hamg','hpea']);
+  assert.ok(p.typed_target_orders.every(r=>r.prior_type_hint.block<r.block && !r.issue_actor_confirmed));
+  assert.equal(p.player_view_reconstructed,false);assert.equal(p.engine_effects_verified,false);
+});
+
+test('pressure target window is inclusive and outputs are bounded without losing omitted counts',()=>{
+  const c=pressureCollector(3,'hash'),a={id:0x12,orderId:[3,0,13,0],object:[44,7],target:[1,2]};
+  c.action({id:0x19,itemId:[103,109,97,72],object:[44,7]},{timeslot_ms:100});
+  for(const ms of [119999,120000,480000,480001])c.action(a,{timeslot_ms:ms});
+  assert.deepEqual(c.report.typed_target_orders.map(r=>r.timeslot_ms),[120000,480000]);
+  for(let i=0;i<512;i++)c.action(a,{timeslot_ms:240000});
+  assert.equal(c.report.typed_target_orders.length,512);assert.equal(c.report.omitted.targets,2);
+});
 
 test('opening chronology keeps same-point repeats, changed sites and missing blocks for only the selected slot',async()=>{
   const a=buildOrder('uaod',-3616,-3360),b=buildOrder('uaod',-3552,-3296);

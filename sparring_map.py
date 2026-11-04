@@ -42,7 +42,7 @@ def replace_members(blob,members):
     return result
 
 
-def lobby_metadata(blob,starts):
+def lobby_metadata(blob,starts,actor_user=False):
     data=bytearray(blob);pos=12
     if struct.unpack_from('<I',data)[0]!=25:raise ValueError('Only reviewed W3I v25 maps are supported')
     def string():
@@ -65,7 +65,7 @@ def lobby_metadata(blob,starts):
     for _ in range(force_count):pos+=8;string()
     tail=data[pos:]
     rows=bytearray(struct.pack('<I',3))
-    for slot,kind,race,label,start in [(0,1,1,'Observer',starts[0]),(1,2,3,'dayuan',starts[1]),(2,2,1,'Human opponent',starts[0])]:
+    for slot,kind,race,label,start in [(0,1,1,'Observer',starts[0]),(1,1 if actor_user else 2,3,'dayuan',starts[1]),(2,2,1,'Human opponent',starts[0])]:
         rows.extend(struct.pack('<4I',slot,kind,race,1)+label.encode()+b'\0')
         rows.extend(struct.pack('<ffII',start['x'],start['y'],0,0))
     rows.extend(struct.pack('<I',3))
@@ -101,10 +101,25 @@ def stage_map(source,game_dir):
     return target
 
 
-def scenario_script(script,starts):
+def scenario_script(script,starts,actor_user=False):
     # Restrict transformation to the standard melee initialization functions.
     # The original KK Lua entry can initialize the old participant layout again.
     script=re.sub(r'\s*call Cheat\("exec-lua:war3map"\)', '', script)
+    actor_controller='MAP_CONTROL_USER' if actor_user else 'MAP_CONTROL_COMPUTER'
+    # Blizzard.j skips resources and start-site cleanup for an EMPTY user slot.
+    # Hero limits/items cover every player; the explicit undead start grants
+    # its normal free-hero token, so those paths must not be duplicated.
+    actor_setup='''    if (GetPlayerSlotState(Player(1)) != PLAYER_SLOT_STATE_PLAYING) then
+        if (VersionGet() == VERSION_REIGN_OF_CHAOS) then
+            call SetPlayerState(Player(1), PLAYER_STATE_RESOURCE_GOLD, bj_MELEE_STARTING_GOLD_V0)
+            call SetPlayerState(Player(1), PLAYER_STATE_RESOURCE_LUMBER, bj_MELEE_STARTING_LUMBER_V0)
+        else
+            call SetPlayerState(Player(1), PLAYER_STATE_RESOURCE_GOLD, bj_MELEE_STARTING_GOLD_V1)
+            call SetPlayerState(Player(1), PLAYER_STATE_RESOURCE_LUMBER, bj_MELEE_STARTING_LUMBER_V1)
+        endif
+        call MeleeClearNearbyUnits(GetStartLocationX(GetPlayerStartLocation(Player(1))), GetStartLocationY(GetPlayerStartLocation(Player(1))), bj_MELEE_CLEAR_UNITS_RADIUS)
+    endif
+''' if actor_user else ''
     def function(name,body):
         nonlocal script
         pattern=r'function '+name+r' takes nothing returns nothing\b.*?endfunction'
@@ -119,7 +134,7 @@ def scenario_script(script,starts):
         f'    call SetPlayerController(Player({slot}), {controller})\n'
         f'    call SetPlayerTeam(Player({slot}), {slot})'
         for slot,start,race,controller in [(0,0,'RACE_PREF_HUMAN','MAP_CONTROL_USER'),
-                                         (1,1,'RACE_PREF_UNDEAD','MAP_CONTROL_COMPUTER'),
+                                         (1,1,'RACE_PREF_UNDEAD',actor_controller),
                                          (2,0,'RACE_PREF_HUMAN','MAP_CONTROL_COMPUTER')]))
     function('config','    call SetMapName("dayuan sparring - LR")\n'
              '    call SetMapDescription("P0 observer; P1 dayuan; P2 human opponent")\n'
@@ -127,13 +142,14 @@ def scenario_script(script,starts):
              '    call SetGamePlacement(MAP_PLACEMENT_FIXED)\n'+
              '\n'.join(f'    call DefineStartLocation({i}, {s["x"]}.0, {s["y"]}.0)' for i,s in enumerate(starts))+
              '\n    call InitCustomPlayerSlots()\n'+
-             '\n'.join(f'    call SetPlayerSlotAvailable(Player({i}), {"MAP_CONTROL_USER" if i==0 else "MAP_CONTROL_COMPUTER"})' for i in range(3)))
+             '\n'.join(f'    call SetPlayerSlotAvailable(Player({i}), {controller})' for i,controller in
+                       enumerate(('MAP_CONTROL_USER',actor_controller,'MAP_CONTROL_COMPUTER'))))
     function('Trig_Melee_Initialization_Actions','''    call MeleeStartingVisibility()
     call MeleeStartingHeroLimit()
     call MeleeGrantHeroItems()
     call MeleeStartingResources()
     call MeleeClearExcessUnits()
-    call MeleeStartingUnitsUndead(Player(1), GetStartLocationLoc(1), true, true, false)
+'''+actor_setup+'''    call MeleeStartingUnitsUndead(Player(1), GetStartLocationLoc(1), true, true, false)
     call MeleeStartingUnitsHuman(Player(2), GetStartLocationLoc(0), true, true, false)
     call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_GOLD, 0)
     call SetPlayerState(Player(0), PLAYER_STATE_RESOURCE_LUMBER, 0)

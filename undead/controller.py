@@ -1,5 +1,6 @@
 """Tech-fiend controller: macro and semantic unit commands, no desktop input."""
 from math import hypot,cos,sin,pi,atan2
+from contextlib import contextmanager
 from .economy import Economy,HALLS
 from .replay_opening import HAPPY_LR
 from .battle_shop import BattleShop
@@ -356,7 +357,21 @@ class Controller(BattleTacticsMixin):
                     held=self.g.hold(u,queue='after')
                     self.log('battle_dk_move_hold_attempt',clock=now,handle=u.handle,point=point,accepted=bool(held))
 
+    def record_execution_scope(self, scope):
+        recorder=getattr(self,'teacher_recorder',None)
+        if recorder is not None:recorder.teacher_scope(scope)
+
+    @contextmanager
+    def execution_task(self, scope):
+        recorder=getattr(self,'teacher_recorder',None)
+        previous=recorder.execution_scope if recorder is not None else None
+        self.record_execution_scope(scope)
+        try:yield
+        finally:
+            if recorder is not None:recorder.teacher_scope(previous)
+
     def tick(self,forced=None):
+        self.record_execution_scope('pre_selection')
         g=self.g
         snap=g.snapshot(max_age=0)
         if not snap or not snap.in_game:
@@ -587,6 +602,13 @@ class Controller(BattleTacticsMixin):
             self.action=Action.CREEP
         if self.action==Action.HARASS and self.creeping.al_route_stage(self.home):
             self.action=Action.CREEP
+        recorder=getattr(self,'teacher_recorder',None)
+        if recorder is not None:
+            recorder.teacher_selection(clock=now,choice_clock=self.last_decide,
+                source='rule' if forced is None else 'external_override',
+                requested=self.requested.name,rule=rule.name,resolved=self.action.name,
+                safety=bool(safety),continuous_creeping=bool(self.situation.continuous_creeping))
+        self.record_execution_scope('support')
         self.set_intent({Action.CREEP:"准备练级",Action.ATTACK:"准备进攻",Action.HARASS:"准备骚扰分矿",
                          Action.DEFEND:"回防基地",Action.RETREAT:"撤退回家"}[self.action])
         if (self.player_contact or self.battle_enemies or self.action in (Action.DEFEND,Action.RETREAT)
@@ -596,7 +618,8 @@ class Controller(BattleTacticsMixin):
             self.suspend_tavern_escort(now)
         if self.action==Action.RETREAT or self.teleport:
             self.sleep_wake.cancel(g,now,self.cast_until,'safety_priority')
-        self.defense_shopping=self.battle_shop.defend_tick(self,hostiles,now,tier) if raid else set()
+        with self.execution_task('shopping'):
+            self.defense_shopping=self.battle_shop.defend_tick(self,hostiles,now,tier) if raid else set()
         self.illusion_front.tick(self,army,foes,now)
         self.consumables.tick(g,army,hostiles,now,self.cast_until,
                               (self.teleport['hero'],) if self.teleport else (),self.coil_needed(dk),self.action==Action.ATTACK,
@@ -607,12 +630,16 @@ class Controller(BattleTacticsMixin):
             self.creeping.defer(now,'emergency_portal')
             self.protect_portal_allies(army,pulls,now)
             return
+        self.record_execution_scope('scout')
         self.scout(now)
+        self.record_execution_scope('skills')
         self.skills(now)
+        self.record_execution_scope('items')
         self.shopping=set(self.defense_shopping)
         self.shop_goal=None
         self.shop_code=None
         if not self.army_recovery.active:self.items(now,tier)
+        self.record_execution_scope('army')
         if self.action in (Action.RETREAT,Action.DEFEND) and self.skeleton_scouts.assignments:
             scouts=[u for u in g.units('me',SKELETONS) if u.handle in self.skeleton_scouts.assignments]
             self.go_raw(scouts,(self.home.x,self.home.y),now)
@@ -656,7 +683,8 @@ class Controller(BattleTacticsMixin):
         # before camp/recovery movement, so those orders cannot recall him.
         if self.battle_shop.orb or (self.creeping.map_alias=='AL' and self.creeping.active
                                    and self.creeping.active['kind']=='mercenary'):
-            courier=self.battle_shop.orb_tick(self,fighters,hostiles,now,tier)
+            with self.execution_task('shopping'):
+                courier=self.battle_shop.orb_tick(self,fighters,hostiles,now,tier)
             self.shopping.update(courier)
             for handle in courier:pulls.pop(handle,None)
         pulls.update(self.hero_support_pullbacks(fighters,foes,now,set(pulls)|set(self.shield_moves)))
@@ -734,10 +762,11 @@ class Controller(BattleTacticsMixin):
         if (self.creeping.al_route(self.home) and self.creeping.al_route_stage(self.home)==self.creeping.al_route(self.home)[2]
                 and not (self.ni_rod_stop.done or self.ni_rod_stop.failed)):
             if self.ni_rod_stop.tick(self,healthy,now):return
-        courier=self.battle_shop.bone_chime_tick(self,healthy,hostiles,now)
-        if not courier:courier=self.battle_shop.rod_tick(self,hostiles,now,tier)
-        if not courier:courier=self.battle_shop.orb_tick(self,healthy,hostiles,now,tier)
-        if not courier:courier=self.first_attack_supply.tick(self,healthy,hostiles,now,tier)
+        with self.execution_task('shopping'):
+            courier=self.battle_shop.bone_chime_tick(self,healthy,hostiles,now)
+            if not courier:courier=self.battle_shop.rod_tick(self,hostiles,now,tier)
+            if not courier:courier=self.battle_shop.orb_tick(self,healthy,hostiles,now,tier)
+            if not courier:courier=self.first_attack_supply.tick(self,healthy,hostiles,now,tier)
         if courier:
             self.shopping.update(courier)
             self.shop_goal=None;self.shop_code=None
@@ -1122,7 +1151,8 @@ class Controller(BattleTacticsMixin):
             reserved=set(self.tavern_joiners)
             if self.tavern_mission:reserved.add(self.tavern_mission['courier'])
             orders=self.skeleton_scouts.plan(g,center,(self.home.x,self.home.y),self.enemy_main,sites,foes,now,self.attacking_main,reserved=reserved)
-            for scout,goal in orders:self.go_raw([scout],goal,now)
+            with self.execution_task('skeleton_scout'):
+                for scout,goal in orders:self.go_raw([scout],goal,now)
             army=[u for u in army if u.handle not in self.skeleton_scouts.assignments]
         travelling_to_expansion=expansion is not None and g.dist(center,point)>1200
         if not travelling_to_expansion and self.focus_siege(army,foes,now):return

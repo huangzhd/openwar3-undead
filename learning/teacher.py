@@ -4,8 +4,11 @@ from learning.dataset import native_payload
 from learning import economy_actions, hero_skills, unit_spells
 
 POLICY='rule_teacher'
-TRAJECTORY='dayuan-teacher-trajectory-v1'
+LEGACY_TRAJECTORY='dayuan-teacher-trajectory-v1'
+TRAJECTORY='dayuan-teacher-trajectory-v2'
 ACTION='dayuan-teacher-orders-v1'
+SCOPES=('pre_selection','support','scout','skills','items','army','shopping','skeleton_scout')
+TACTICS=('CREEP','HARASS','ATTACK','DEFEND','RETREAT')
 
 
 def translate(native):

@@ -177,7 +177,10 @@ def _match_steps(speed=400,max_game_seconds=None,until=None,enemy_race=3,difficu
                                                     public_points=public_points,capture_receipts=step_mode,
                                                     policy=policy)
             result['trajectory']='experimental_p1_whitelist_v2' if control == 'primitives' else 'experimental_p1_whitelist_v1'
-            if teacher_trajectory:result['trajectory']='teacher_tick_p1_v1'
+            if teacher_trajectory:
+                result['trajectory']='teacher_tick_p1_v2'
+                bot.teacher_recorder=trajectory_recorder
+                trajectory_recorder.execution_state=lambda:bot.action.name
             if control == 'primitives':
                 from learning.actions import PrimitiveExecutor
                 primitive_executor=PrimitiveExecutor(g,trajectory_recorder,out/'primitive-actions.jsonl')

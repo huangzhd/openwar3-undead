@@ -1,0 +1,521 @@
+{
+  "schema": "dayuan-execution-chain-review-evidence-v1",
+  "episode": "20261104-160516",
+  "report": "artifacts\\stage2-chain-160516-final-20261104.json",
+  "report_sha256": "5984fbee72eafbe30e6c2acfee4814f5b94aa50955d005ac343a897dd2292871",
+  "recomputed_equal": true,
+  "raw_original_hash_checks": {
+    "events.jsonl": true,
+    "trajectory.jsonl": true,
+    "result.json": true,
+    "source-audit.json": true,
+    "source-manifest.json": true,
+    "interface-contract.json": true
+  },
+  "baseline_context": {
+    "source_manifest_sha256": "9a81bdbf13ca8023a198c494296403d3e2d2b5fe76063217a86f6ca4c9a88da3",
+    "map_sha256": "d90622d9bf4d250c7fcc69e78d8c5ed5360608c90bd54006ac8c1d1319141883",
+    "speed": 400
+  },
+  "cases": 47,
+  "execution_chains": 130,
+  "receipts": {
+    "accepted": 129,
+    "rejected": 1
+  },
+  "review_queue": [
+    {
+      "request_id": 3,
+      "clock": 5.105,
+      "receipt_state": "accepted",
+      "after_clock": 5.295
+    },
+    {
+      "request_id": 55,
+      "clock": 115.775,
+      "receipt_state": "accepted",
+      "after_clock": 116.03
+    },
+    {
+      "request_id": 76,
+      "clock": 134.505,
+      "receipt_state": "accepted",
+      "after_clock": 134.75
+    },
+    {
+      "request_id": 115,
+      "clock": 161.655,
+      "receipt_state": "accepted",
+      "after_clock": 162.355
+    },
+    {
+      "request_id": 117,
+      "clock": 163.555,
+      "receipt_state": "rejected",
+      "after_clock": 164.28
+    },
+    {
+      "request_id": 129,
+      "clock": 179.18,
+      "receipt_state": "accepted",
+      "after_clock": null
+    },
+    {
+      "request_id": 130,
+      "clock": 179.18,
+      "receipt_state": "accepted",
+      "after_clock": null
+    }
+  ],
+  "rod_checks": [
+    {
+      "request_id": 84,
+      "clock": 140.805,
+      "receipt_state": "accepted",
+      "after_clock": 141.58,
+      "observable_changes": {
+        "causally_attributed": false,
+        "elapsed_game_seconds": 0.7750000000000057,
+        "resource_deltas": {
+          "gold": 10,
+          "lumber": 0,
+          "food_used": 0,
+          "food_cap": 0,
+          "gold_gathered": 10,
+          "lumber_gathered": 0
+        },
+        "source_displacement": 23.9489002620368,
+        "source_alive_after": true,
+        "newly_observed_own_units": [
+          {
+            "handle": [
+              12316,
+              39227
+            ],
+            "type": "uske",
+            "alive": true
+          },
+          {
+            "handle": [
+              12478,
+              39244
+            ],
+            "type": "uske",
+            "alive": true
+          }
+        ],
+        "source_before": {
+          "inventory": [
+            "stwp",
+            "rnec",
+            null,
+            null,
+            null,
+            null
+          ],
+          "abilities": [
+            {
+              "code": "AIrd",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AUdc",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AItp",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AInv",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AHer",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Aatk",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Amov",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Ablr",
+              "level": 1,
+              "cooldown": 0.0
+            }
+          ]
+        },
+        "source_after": {
+          "inventory": [
+            "stwp",
+            "rnec",
+            null,
+            null,
+            null,
+            null
+          ],
+          "abilities": [
+            {
+              "code": "AIrd",
+              "level": 1,
+              "cooldown": 21.354995727539062
+            },
+            {
+              "code": "AUdc",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AItp",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AInv",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AHer",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Aatk",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Amov",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Ablr",
+              "level": 1,
+              "cooldown": 0.0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request_id": 117,
+      "clock": 163.555,
+      "receipt_state": "rejected",
+      "after_clock": 164.28,
+      "observable_changes": {
+        "causally_attributed": false,
+        "elapsed_game_seconds": 0.7249999999999943,
+        "resource_deltas": {
+          "gold": 0,
+          "lumber": 20,
+          "food_used": 0,
+          "food_cap": 0,
+          "gold_gathered": 0,
+          "lumber_gathered": 20
+        },
+        "source_displacement": 0.0,
+        "source_alive_after": true,
+        "newly_observed_own_units": [],
+        "source_before": {
+          "inventory": [
+            "stwp",
+            "rnec",
+            "rat6",
+            null,
+            null,
+            null
+          ],
+          "abilities": [
+            {
+              "code": "AIt6",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AIrd",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AUdc",
+              "level": 1,
+              "cooldown": 2.51019287109375
+            },
+            {
+              "code": "AItp",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AInv",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AHer",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Aatk",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Amov",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Ablr",
+              "level": 1,
+              "cooldown": 0.0
+            }
+          ]
+        },
+        "source_after": {
+          "inventory": [
+            "stwp",
+            "rnec",
+            "rat6",
+            null,
+            null,
+            null
+          ],
+          "abilities": [
+            {
+              "code": "AIt6",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AIrd",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AUdc",
+              "level": 1,
+              "cooldown": 1.7866973876953125
+            },
+            {
+              "code": "AItp",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AInv",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AHer",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Aatk",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Amov",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Ablr",
+              "level": 1,
+              "cooldown": 0.0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request_id": 118,
+      "clock": 166.555,
+      "receipt_state": "accepted",
+      "after_clock": 167.455,
+      "observable_changes": {
+        "causally_attributed": false,
+        "elapsed_game_seconds": 0.9000000000000057,
+        "resource_deltas": {
+          "gold": 0,
+          "lumber": 20,
+          "food_used": 0,
+          "food_cap": 0,
+          "gold_gathered": 0,
+          "lumber_gathered": 20
+        },
+        "source_displacement": 0.0,
+        "source_alive_after": true,
+        "newly_observed_own_units": [
+          {
+            "handle": [
+              12350,
+              44782
+            ],
+            "type": "uske",
+            "alive": true
+          },
+          {
+            "handle": [
+              13502,
+              44765
+            ],
+            "type": "uske",
+            "alive": true
+          }
+        ],
+        "source_before": {
+          "inventory": [
+            "stwp",
+            "rnec",
+            "rat6",
+            null,
+            null,
+            null
+          ],
+          "abilities": [
+            {
+              "code": "AIt6",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AIrd",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AUdc",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AItp",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AInv",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AHer",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Aatk",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Amov",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Ablr",
+              "level": 1,
+              "cooldown": 0.0
+            }
+          ]
+        },
+        "source_after": {
+          "inventory": [
+            "stwp",
+            "rnec",
+            "rat6",
+            null,
+            null,
+            null
+          ],
+          "abilities": [
+            {
+              "code": "AIt6",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AIrd",
+              "level": 1,
+              "cooldown": 21.482635498046875
+            },
+            {
+              "code": "AUdc",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AItp",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AInv",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "AHer",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Aatk",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Amov",
+              "level": 1,
+              "cooldown": 0.0
+            },
+            {
+              "code": "Ablr",
+              "level": 1,
+              "cooldown": 0.0
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "training_labels": 0,
+  "model_training": false,
+  "new_live_run": false,
+  "limitations": [
+    "selection IDs are not recorded per request; no inferred link",
+    "first later observation after receipt within 2 game seconds only; not complete effect detection",
+    "all observed changes remain noncausal; newly observed does not prove newly spawned",
+    "environment notes are reviewer judgments, not automatic causal labels",
+    "old native slot/mode remain missing; no reconstruction from diagnostic events"
+  ],
+  "tests": {
+    "targeted": 8,
+    "added": 6,
+    "full": 2201,
+    "seconds": 26.118,
+    "failures": 0,
+    "errors": 0,
+    "log": "artifacts/stage2-chain-full-tests-20261104.log"
+  },
+  "user_direction": "Rod issue resolved; continue AlphaStar learning plan without blocking on the isolated rejection"
+}

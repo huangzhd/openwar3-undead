@@ -1,0 +1,222 @@
+{
+  "schema": "dayuan-teacher-groups-v1",
+  "episode": "20261104-164214",
+  "dataset_use": "diagnostic_only",
+  "training_actor_approved": false,
+  "source_manifest_sha256": "99c56bc152e1e7d6a5d27762009ee561155af0addd2fdcc628ab7a9c1a65bb00",
+  "map_sha256": "d90622d9bf4d250c7fcc69e78d8c5ed5360608c90bd54006ac8c1d1319141883",
+  "input_hashes": {
+    "interface-contract.json": "4bd09c0d2f5261eb82303c48d85646699cf76cda2a93f2e35d351d2cac104638",
+    "source-manifest.json": "2a68ef9b4412825f9b24ec626402513eca7a95d61ab3fef35223d2bd7125b24c",
+    "source-audit.json": "e855e8f92a590fb7f25c13de1609852ba0434b62755e7511be42e52c5c5a8ab8",
+    "result.json": "4343a0a2c527e0dad65da96cc430cad54abdaa290f399c2ae06a14e74a12b832",
+    "trajectory.jsonl": "e78e5890768d6c2ee05bbca4ed5b78d4f94dc7ac8d7dd7dcad80f13786c46dc5"
+  },
+  "dependencies_sha256": "46b392592494ce6aa883243999b981bb9464226a586f96b085472550748bb485",
+  "termination": {
+    "schema": "dayuan-outcome-v1",
+    "classification": "time_limit",
+    "outcome": "timeout",
+    "reason": "game_time_limit",
+    "terminated": false,
+    "truncated": true,
+    "reward": null
+  },
+  "observations": 310,
+  "ticks": 220,
+  "monitored_requests": 127,
+  "batches": 127,
+  "ticks_with_labels": 72,
+  "partially_labeled_ticks": 12,
+  "empty_monitored_ticks": 133,
+  "labels": 92,
+  "operations": {
+    "move": 73,
+    "gather_gold": 3,
+    "train": 6,
+    "build": 5,
+    "learn_skill": 1,
+    "hold": 3,
+    "upgrade_hall": 1
+  },
+  "excluded": {
+    "target_not_currently_observable": 4,
+    "unsupported_queue_or_mode": 6,
+    "tick_insufficient_gold": 1,
+    "unsupported_order_or_arguments": 7,
+    "tick_target_not_visible_enemy_alive": 15,
+    "tick_invalid_coil_target": 2
+  },
+  "selection_records": 220,
+  "linked_requests": 42,
+  "execution_scopes": {
+    "pre_selection": 26,
+    "scout": 55,
+    "skills": 1,
+    "army": 42,
+    "items": 3
+  },
+  "game_seconds": 180.54,
+  "wall_seconds": 71.08,
+  "speed_history": [
+    {
+      "clock": 1.18,
+      "percent": 400
+    }
+  ],
+  "source_files": 114,
+  "dependencies": 78,
+  "source_unchanged": true,
+  "cleanup_confirmed": true,
+  "export_recomputed_equal": true,
+  "groups_sha256": "265d828e027e1d7ecaa6625b28b85382a564882bf0642a76b0ae3b02126fb89f",
+  "parallel_tick_count": 14,
+  "parallel_examples": [
+    {
+      "tick": 112,
+      "requests": [
+        {
+          "id": 21,
+          "clock": 67.08,
+          "selection_id": null,
+          "execution_scope": "pre_selection",
+          "execution_action": null
+        },
+        {
+          "id": 22,
+          "clock": 67.305,
+          "selection_id": null,
+          "execution_scope": "scout",
+          "execution_action": null
+        }
+      ]
+    },
+    {
+      "tick": 129,
+      "requests": [
+        {
+          "id": 29,
+          "clock": 79.855,
+          "selection_id": null,
+          "execution_scope": "pre_selection",
+          "execution_action": null
+        },
+        {
+          "id": 30,
+          "clock": 80.305,
+          "selection_id": null,
+          "execution_scope": "scout",
+          "execution_action": null
+        }
+      ]
+    },
+    {
+      "tick": 158,
+      "requests": [
+        {
+          "id": 52,
+          "clock": 112.48,
+          "selection_id": null,
+          "execution_scope": "pre_selection",
+          "execution_action": null
+        },
+        {
+          "id": 53,
+          "clock": 112.48,
+          "selection_id": null,
+          "execution_scope": "pre_selection",
+          "execution_action": null
+        },
+        {
+          "id": 54,
+          "clock": 113.03,
+          "selection_id": null,
+          "execution_scope": "scout",
+          "execution_action": null
+        }
+      ]
+    },
+    {
+      "tick": 166,
+      "requests": [
+        {
+          "id": 62,
+          "clock": 122.58,
+          "selection_id": null,
+          "execution_scope": "scout",
+          "execution_action": null
+        },
+        {
+          "id": 63,
+          "clock": 122.805,
+          "selection_id": null,
+          "execution_scope": "skills",
+          "execution_action": null
+        },
+        {
+          "id": 64,
+          "clock": 122.805,
+          "selection_id": 166,
+          "execution_scope": "army",
+          "execution_action": "CREEP"
+        }
+      ]
+    },
+    {
+      "tick": 168,
+      "requests": [
+        {
+          "id": 66,
+          "clock": 124.63,
+          "selection_id": null,
+          "execution_scope": "scout",
+          "execution_action": null
+        },
+        {
+          "id": 67,
+          "clock": 124.88,
+          "selection_id": null,
+          "execution_scope": "items",
+          "execution_action": null
+        },
+        {
+          "id": 68,
+          "clock": 124.88,
+          "selection_id": 168,
+          "execution_scope": "army",
+          "execution_action": "CREEP"
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    "combat-review.json",
+    "core-strategy-review.json",
+    "dk-review.json",
+    "equipment-review.json",
+    "hero-rules-review.json",
+    "map-review.json",
+    "opening-timing-review.json",
+    "stability-review.json",
+    "tactical-review.json"
+  ],
+  "tests": {
+    "total": 2206,
+    "seconds": 21.617,
+    "failures": 0,
+    "errors": 0,
+    "log": "artifacts/teacher-selection-verified-full-20261104.log"
+  },
+  "failures_retained": [
+    "initial offline audit invalid_selection_value: cached clock 2.005 versus fresh tick observation 2.205; corrected reader only",
+    "summary script KeyError counts on metadata _review; limited iteration to C1-C8"
+  ],
+  "limitations": [
+    "selection snapshots are per tick, not claims of a fresh high-level decision each tick",
+    "scope links identify executor context, not causal success or tactical quality",
+    "shopping and skeleton_scout concurrency tested offline only; not observed in this short live run",
+    "controller cached clock may precede recorder fresh observation; original clocks retained",
+    "35 excluded requests retained; 92 diagnostic labels are not approved demonstrations",
+    "post-run offline reader clock check corrected; raw run unchanged"
+  ]
+}

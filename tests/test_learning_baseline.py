@@ -113,6 +113,17 @@ class BaselineTests(unittest.TestCase):
         self.assertTrue(row['terminal_candidate'])
         self.assertEqual(row['opponent_fairness'],'native_KFAI_unverified')
         self.assertFalse(inventory([folder])['training_actor_approved'])
+        # USER actor uses no competing native AI. Mixing either old/new half
+        # must not make an unverified run qualify.
+        result['launch_settings']['verified_players'][0]['controller']=0
+        (folder/'result.json').write_text(json.dumps(result),encoding='utf-8')
+        self.assertFalse(inspect_run(folder)['terminal_candidate'])
+        result['launch_settings']['native_ai_paused_players']=[]
+        (folder/'result.json').write_text(json.dumps(result),encoding='utf-8')
+        self.assertFalse(inspect_run(folder)['terminal_candidate'])
+        result['launch_settings'].update(active_player_slots=[0,2],player_slot_states=[1,0,1])
+        (folder/'result.json').write_text(json.dumps(result),encoding='utf-8')
+        self.assertTrue(inspect_run(folder)['terminal_candidate'])
         result['launch_settings']['native_ai_paused_players']=[1,2]
         (folder/'result.json').write_text(json.dumps(result),encoding='utf-8')
         self.assertFalse(inspect_run(folder)['terminal_candidate'])

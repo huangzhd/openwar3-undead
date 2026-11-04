@@ -1,5 +1,17 @@
 # 阶段2读取器与模型编码
 
+## 教师v2的选择与并行执行
+
+新记录按tick保存selection快照，主力请求用selection_id引用；execution_action保存发令时实际战术。pre_selection、support、scout、skills、items、shopping、skeleton_scout与army分开；独立任务selection_id为null，不能据此判断漏发或失败。同tick允许多单位多命令多批次，按原batch/index保序。子任务范围是调用位置，不是每条命令完整意图。
+
+读取器支持v1/v2，旧版不补字段。v2选择快照作为诊断元数据附于分组，未添加到模型input或decision；语料按trajectory_schema等来源字段隔离。控制器clock可略早于tick采样，ID/事件顺序绑定，不按时间邻近猜关联。采集窗口内未知/省略/拒绝不自动成为好示范，效果仍需后续观察与人工质量审核。
+
+## 离线战术与执行复核
+
+`python -m learning.tactical_review artifacts/局号 --out 新文件.json` 输出v2报告，复用冻结源码和清理核验。execution_chains仅按原始请求ID关联回执及其后第一份严格更晚的P1观察，间隔超过2游戏秒则留空。保留原件行号/哈希、窗口内其他请求、单位位移/可见血量差/己方新观察句柄/背包与能力状态；newly_observed不等于新出生，接受不等于效果成功，所有变化均不作因果标签。
+
+旧轨迹的逐请求选择关系、缺失动作参数保留未知，不从events补入actor训练输入。`--notes`仍支持原案例，另支持执行链ID及environment类别；人工意见与事实分开。报告只供诊断，训练标签0。当前160516结果及限制见[evidence/execution-chain-20261104.json](evidence/execution-chain-20261104.json)。
+
 ## 整局留出与示范质量
 
 可用 `python -m learning.teacher_dataset <episode> --order-review` 对已审计的规则轨迹做按单位统计。以本局单位句柄、全部动作参数和下令关联的观察时钟为准，任一未收录请求中断比较。长局528次待命覆盖221个周期，84个周期向多个单位发送待命，同一周期最多16个不同单位。同一单位在两游戏秒内原样重发可确认8次，其中7次在同一周期。短局164个移动标签中同口径确认4次重发。以上均为两个特定样本的诊断；是否应当重发需结合当时状态复盘。两局原件哈希、全操作计数已独立用SQL窗口复算。[分操作统计和可定位的原始请求](evidence/rule-order-review-20261103.json)

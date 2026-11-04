@@ -131,6 +131,10 @@ class TrajectoryRecorder:
         self.teacher = policy=='rule_teacher'
         self.tick_id=self.teacher_batch=0
         self.teacher_input=None
+        self.selection_id=0
+        self.active_selection=None
+        self.execution_scope='pre_selection'
+        self.execution_state=None
         if policy not in ('rule','external_primitives','rule_teacher'):raise ValueError('Unsupported trajectory policy')
         raw = game.world.read()
         self.boundary = ObservationBoundary(game.pid, getattr(raw, 'epoch', None))
@@ -266,6 +270,8 @@ class TrajectoryRecorder:
         self.observe()
         self.tick_id+=1
         self.teacher_input=self.last_observation
+        self.active_selection=None
+        self.execution_scope='pre_selection'
         self.write('tick_begin',tick=self.tick_id,observation_id=self.observation_id)
         complete=False
         try:
@@ -273,7 +279,22 @@ class TrajectoryRecorder:
             complete=True
         finally:
             self.teacher_input=None
+            self.active_selection=None
+            self.execution_scope='pre_selection'
             self.write('tick_end',tick=self.tick_id,complete=complete)
+
+    def teacher_selection(self, **selection):
+        if not self.teacher or self.teacher_input is None:
+            raise RuntimeError('Selection outside teacher tick')
+        self.selection_id+=1
+        self.active_selection=self.selection_id
+        self.write('selection',id=self.selection_id,tick=self.tick_id,
+                   observation_id=self.observation_id,**selection)
+
+    def teacher_scope(self, scope):
+        from learning.teacher import SCOPES
+        if scope not in SCOPES:raise ValueError('Unknown execution scope')
+        self.execution_scope=scope
 
     def commands(self, calls, *args, **kwargs):
         calls = list(calls)
@@ -294,6 +315,9 @@ class TrajectoryRecorder:
                 if candidate is None:payload=None
                 extra=dict(tick=self.tick_id if self.teacher_input is not None else None,batch=self.teacher_batch,
                            batch_index=ordinal,batch_count=len(selected),candidate=candidate)
+                linked=self.active_selection if self.execution_scope=='army' else None
+                extra.update(selection_id=linked,execution_scope=self.execution_scope,
+                             execution_action=self.execution_state() if linked and self.execution_state else None)
                 if candidate is not None:
                     extra['arguments']=dict(extra=call.args[9],mode=call.args[10])
             self.action_id += 1

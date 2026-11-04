@@ -1,0 +1,47 @@
+{
+  "schema": "dayuan-github-delivery-check-v1",
+  "date": "2026-11-04",
+  "authorization": "先把当前代码上传到github",
+  "base_head": "857adb84ec6009e53b6762d82808ceb86721562c",
+  "branch": "main",
+  "remote": "https://github.com/huangzhd/openwar3-undead.git",
+  "remote_base_matches": true,
+  "python": {
+    "tests": 2206,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "seconds": 24.422,
+    "environment": {
+      "PYTHONUTF8": "1"
+    },
+    "initial_attempt": {
+      "tests": 2206,
+      "errors": 5,
+      "cause": "Tests read UTF-8 state files with default GBK encoding"
+    }
+  },
+  "node": {
+    "tests": 15,
+    "failures": 0,
+    "skipped": 0
+  },
+  "logs": {
+    "artifacts/github-delivery-python-20261104.log": "95f4de0eebd2ba4bd92e4be471c27b5353a16c2fa59937125366c0f795f693ff",
+    "artifacts/github-delivery-python-utf8-20261104.log": "d662a356ac1d42697b20c9a86353bc1f7f98b54d30b57deaf9dd2dc7d5928c49",
+    "artifacts/github-delivery-node-20261104.log": "d5d196140a69698228af11aa906837879b83764ce34b495576d18c6f130291d4"
+  },
+  "new_games": false,
+  "model_training": false,
+  "stage2": "partial",
+  "delivery_result": "See Git history and origin/main; this file records pre-commit validation, not a claim of push success.",
+  "excluded": [
+    "vendor",
+    "artifacts",
+    "models",
+    "game clients",
+    "ReplayKit executable and patch archive",
+    "raw replays"
+  ],
+  "next_step": "User reviews B 2:31.10-3:20.70 and C 2:38.22-3:27.72; playback validation not requested"
+}

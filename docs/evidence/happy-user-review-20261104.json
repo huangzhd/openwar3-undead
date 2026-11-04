@@ -1,0 +1,333 @@
+{
+  "schema": "dayuan-human-tactical-user-review-v1",
+  "date": "2026-11-04",
+  "source": "explicit_user_review_in_project_chat",
+  "scope": "three supplied Happy LR versus Human replays",
+  "replays": {
+    "A": {
+      "file": "LookAround_vs_Happy__w3arena__lastrefuge__v3_126.w3g",
+      "local_path": "artifacts/replay-intake-20261103/user-happy-lr.w3g",
+      "sha256": "f5123932751472494473df18c66f165cd2d02f058478adc0178f1c3be417ea7a",
+      "player_id": 7,
+      "opponent": "LookAround",
+      "map": "Maps\\w3arena\\w3arena__lastrefuge__v3.w3x"
+    },
+    "B": {
+      "file": "Happy__vs_LookAround_(2)LastRefuge-1.3_126.w3g",
+      "local_path": "artifacts/replay-intake-20261103/user-happy-lr-second.w3g",
+      "sha256": "ec9657fc1f8b1fc5e165daba8cc7233a834c65d71b04a6a2f018188c4e2b9149",
+      "player_id": 3,
+      "opponent": "LookAround",
+      "map": "Maps\\Download\\(2)LastRefuge-1.3.w3x"
+    },
+    "C": {
+      "file": "u2.chaemiko_vs_Happy__w3arena__lastrefuge__v3_126.w3g",
+      "local_path": "artifacts/replay-intake-20261103/user-happy-lr-third.w3g",
+      "sha256": "e08690855f03fdf4d3a961ff6400f74ae755996c3c7ca1a7873ad89f7dea4a92",
+      "player_id": 3,
+      "opponent": "u2.chaemiko",
+      "map": "Maps\\w3arena\\w3arena__lastrefuge__v3.w3x"
+    }
+  },
+  "items": [
+    {
+      "review_item": 1,
+      "references": [
+        {
+          "replay": "A",
+          "sha256": "f5123932751472494473df18c66f165cd2d02f058478adc0178f1c3be417ea7a",
+          "player_id": 7,
+          "times_ms": [
+            4800,
+            8100,
+            31320,
+            55440,
+            66900,
+            73860
+          ]
+        },
+        {
+          "replay": "B",
+          "sha256": "ec9657fc1f8b1fc5e165daba8cc7233a834c65d71b04a6a2f018188c4e2b9149",
+          "player_id": 3,
+          "times_ms": [
+            4300,
+            6800,
+            31800,
+            55000,
+            66400,
+            74100
+          ]
+        },
+        {
+          "replay": "C",
+          "sha256": "e08690855f03fdf4d3a961ff6400f74ae755996c3c7ca1a7873ad89f7dea4a92",
+          "player_id": 3,
+          "times_ms": [
+            4620,
+            8400,
+            31860,
+            56580,
+            66960,
+            74160
+          ]
+        }
+      ],
+      "reviewer": "user",
+      "verdict": "learn_fixed_procedure",
+      "user_assessment": "1，2，3可以学习，这些为固定流程，不需要按照局势判断；",
+      "application": "开局建筑顺序与首发DK作为本次LR对人族参考范围的固定流程；不重启逐秒开局优化。"
+    },
+    {
+      "review_item": 2,
+      "references": [
+        {
+          "replay": "A",
+          "sha256": "f5123932751472494473df18c66f165cd2d02f058478adc0178f1c3be417ea7a",
+          "player_id": 7,
+          "times_ms": [
+            126480
+          ]
+        },
+        {
+          "replay": "B",
+          "sha256": "ec9657fc1f8b1fc5e165daba8cc7233a834c65d71b04a6a2f018188c4e2b9149",
+          "player_id": 3,
+          "times_ms": [
+            136100
+          ]
+        },
+        {
+          "replay": "C",
+          "sha256": "e08690855f03fdf4d3a961ff6400f74ae755996c3c7ca1a7873ad89f7dea4a92",
+          "player_id": 3,
+          "times_ms": [
+            135420
+          ]
+        }
+      ],
+      "reviewer": "user",
+      "verdict": "learn_fixed_procedure",
+      "user_assessment": "1，2，3可以学习，这些为固定流程，不需要按照局势判断；",
+      "application": "死亡缠绕首技能作为固定流程，不再标记为等待局势选择。"
+    },
+    {
+      "review_item": 3,
+      "references": [
+        {
+          "replay": "A",
+          "sha256": "f5123932751472494473df18c66f165cd2d02f058478adc0178f1c3be417ea7a",
+          "player_id": 7,
+          "times_ms": [
+            162240
+          ]
+        },
+        {
+          "replay": "B",
+          "sha256": "ec9657fc1f8b1fc5e165daba8cc7233a834c65d71b04a6a2f018188c4e2b9149",
+          "player_id": 3,
+          "times_ms": [
+            161100
+          ]
+        },
+        {
+          "replay": "C",
+          "sha256": "e08690855f03fdf4d3a961ff6400f74ae755996c3c7ca1a7873ad89f7dea4a92",
+          "player_id": 3,
+          "times_ms": [
+            164340
+          ]
+        }
+      ],
+      "reviewer": "user",
+      "verdict": "learn_fixed_procedure",
+      "user_assessment": "1，2，3可以学习，这些为固定流程，不需要按照局势判断；",
+      "application": "升二本作为固定流程，不再以对方开矿或压力为由要求战术判断；不绕过资源/前置等执行合法性检查。"
+    },
+    {
+      "review_item": 4,
+      "references": [
+        {
+          "replay": "B",
+          "sha256": "ec9657fc1f8b1fc5e165daba8cc7233a834c65d71b04a6a2f018188c4e2b9149",
+          "player_id": 3,
+          "times_ms": [
+            151100,
+            158700,
+            200700
+          ]
+        }
+      ],
+      "reviewer": "user",
+      "verdict": "learn_conditional_harassment",
+      "user_assessment": "4，5为前期骚扰流程，主要是因为敌方为人族，默认对方采用一本开矿战术，前期我方策略为干扰对方练级，拖慢对方开矿进度，找机会抢野怪、杀农民或者压低大法师血量，具体需要根据具体局势判断。",
+      "application": "对人族默认一本开矿是策略先验，不标成已观察到开矿；按可见局势选择抢怪、杀农民或压大法师。"
+    },
+    {
+      "review_item": 5,
+      "references": [
+        {
+          "replay": "C",
+          "sha256": "e08690855f03fdf4d3a961ff6400f74ae755996c3c7ca1a7873ad89f7dea4a92",
+          "player_id": 3,
+          "times_ms": [
+            158220,
+            162120,
+            207720
+          ]
+        }
+      ],
+      "reviewer": "user",
+      "verdict": "learn_conditional_harassment",
+      "user_assessment": "4，5为前期骚扰流程，主要是因为敌方为人族，默认对方采用一本开矿战术，前期我方策略为干扰对方练级，拖慢对方开矿进度，找机会抢野怪、杀农民或者压低大法师血量，具体需要根据具体局势判断。",
+      "application": "归入前期骚扰，不再仅凭营地区域订单解释为己方常规练级；具体目标与切换条件仍需对齐当时状态。"
+    },
+    {
+      "review_item": 6,
+      "references": [
+        {
+          "replay": "B",
+          "sha256": "ec9657fc1f8b1fc5e165daba8cc7233a834c65d71b04a6a2f018188c4e2b9149",
+          "player_id": 3,
+          "times_ms": [
+            302700,
+            361400
+          ]
+        },
+        {
+          "replay": "C",
+          "sha256": "e08690855f03fdf4d3a961ff6400f74ae755996c3c7ca1a7873ad89f7dea4a92",
+          "player_id": 3,
+          "times_ms": [
+            310320,
+            367320
+          ]
+        }
+      ],
+      "reviewer": "user",
+      "verdict": "learn_priority_pressure",
+      "user_assessment": "6也是针对人族开矿战术，优先出lich和屠宰场的雕像压制，三本科技可以稍微晚一些；",
+      "application": "优先巫妖及屠宰场雕像压制，三本可后置；雕像/屠宰场优先级来自用户战术解释，本次已解析订单未提供其精确时点，不补造。"
+    },
+    {
+      "review_item": 7,
+      "references": [
+        {
+          "replay": "A",
+          "sha256": "f5123932751472494473df18c66f165cd2d02f058478adc0178f1c3be417ea7a",
+          "player_id": 7,
+          "times_ms": [
+            889680
+          ]
+        }
+      ],
+      "reviewer": "user",
+      "verdict": "reference_lower_priority",
+      "user_assessment": "7是总攻，但是A这局采用的是天鬼/憎恶战术，不是常规的蜘蛛毁灭，可以参考，但不优先学习；",
+      "application": "确认总攻意图；按天鬼/憎恶分支隔离，不把本场总攻时点或阵容当作蜘蛛/毁灭的默认示范。"
+    },
+    {
+      "review_item": 8,
+      "references": [
+        {
+          "replay": "A",
+          "sha256": "f5123932751472494473df18c66f165cd2d02f058478adc0178f1c3be417ea7a",
+          "player_id": 7,
+          "times_ms": [
+            568560,
+            632040
+          ]
+        }
+      ],
+      "reviewer": "user",
+      "verdict": "valid_alternative_branch",
+      "user_assessment": "8是有效战术分支；",
+      "application": "先三本后巫妖保留为有效分支，不标成错误或负面样本；不因此改写B/C主线。"
+    },
+    {
+      "review_item": 9,
+      "references": [
+        {
+          "replay": "C",
+          "sha256": "e08690855f03fdf4d3a961ff6400f74ae755996c3c7ca1a7873ad89f7dea4a92",
+          "player_id": 3,
+          "times_ms": [
+            8400,
+            9180
+          ]
+        }
+      ],
+      "reviewer": "user",
+      "verdict": "exclude_site_correction",
+      "user_assessment": "9为选址修正，我们可以选择固定的建造位置，这一条无需学习；",
+      "application": "两条订单是同一首塔选址修正；不学习换点操作，不按两座塔计数，现有固定布局保持。"
+    },
+    {
+      "review_item": 10,
+      "references": [
+        {
+          "replay": "B",
+          "sha256": "ec9657fc1f8b1fc5e165daba8cc7233a834c65d71b04a6a2f018188c4e2b9149",
+          "player_id": 3,
+          "times_ms": [
+            66400,
+            66500
+          ]
+        },
+        {
+          "replay": "C",
+          "sha256": "e08690855f03fdf4d3a961ff6400f74ae755996c3c7ca1a7873ad89f7dea4a92",
+          "player_id": 3,
+          "times_ms": [
+            66960,
+            67080
+          ]
+        }
+      ],
+      "reviewer": "user",
+      "verdict": "exclude_habitual_repeat",
+      "user_assessment": "10为习惯性连点，无实际意义",
+      "application": "保留首个DK生产意图，重复点击不作为额外模仿目标；原始订单不删除。"
+    },
+    {
+      "review_item": 11,
+      "references": [
+        {
+          "replay": "B",
+          "sha256": "ec9657fc1f8b1fc5e165daba8cc7233a834c65d71b04a6a2f018188c4e2b9149",
+          "player_id": 3,
+          "times_ms": [
+            177700,
+            178600
+          ]
+        }
+      ],
+      "reviewer": "user",
+      "verdict": "exclude_site_correction",
+      "user_assessment": "11也为选址修正，是同一座",
+      "application": "两条订单归于同一座塔的选址修正，不当作两座建筑或两个生产意图；原始订单保留。"
+    }
+  ],
+  "priority": [
+    "fixed_opening_1_2_3",
+    "conditional_early_harassment_4_5",
+    "lich_statue_pressure_6",
+    "alternative_gargoyle_abomination_reference_7_8"
+  ],
+  "evidence_sources": {
+    "docs/evidence/happy-lr-series-20261103.json": "f35a02eb52463f3815dfeb4d55c286efafc244c98e3e74d7d35a51cebd7ab584",
+    "docs/evidence/happy-scouting-windows-20261103.json": "d53a482ede824c5981428845969500563dad776a12739871daba61fa56a3705d",
+    "docs/evidence/happy-lr-second-20261103.json": "e3def39d62cc195890f6d634a3321e8f081307bc1570ca6c520328327b257dca",
+    "docs/evidence/happy-lr-third-20261103.json": "fa2cc51839d557bb8330d4e9cdbe9465f487fab0f0197105e76b54133c518141"
+  },
+  "tactical_review_complete": true,
+  "player_view_reconstructed": false,
+  "engine_effects_verified": false,
+  "training_labels_generated": 0,
+  "training_started": false,
+  "limitations": [
+    "User tactical interpretation is recorded separately from parsed order evidence.",
+    "No inferred hidden enemy state, building completion or unrecorded slaughterhouse/statue timestamps.",
+    "Fixed procedures remain subject to execution legality; accepted opening timing deviations unchanged."
+  ]
+}

@@ -9,7 +9,7 @@ from learning.dataset import canonical,digest,load_bytes,native_payload,parse,re
 from learning.model_codec import encode_action,decode_decision,encode_observation,model_contract
 from learning.observation_schema import validate as validate_observation
 from learning.outcome import classify_outcome
-from learning.teacher import POLICY,ACTION,TRAJECTORY
+from learning.teacher import POLICY,ACTION,TRAJECTORY,LEGACY_TRAJECTORY,SCOPES,TACTICS
 
 
 def audit_episode(folder, *, order_review=False):
@@ -19,17 +19,18 @@ def audit_episode(folder, *, order_review=False):
     contract,manifest,audit,result=(parse(blobs[name]) for name in names[:4])
     require(contract.get('policy')==POLICY and contract.get('schema')=='dayuan-interface-contract-v1'
             and contract.get('candidate_schema')==SCHEMA and contract.get('action_version')==ACTION
-            and contract.get('trajectory_schema')==TRAJECTORY and contract.get('observation_version')=='strict-p1-observation-v5',
+            and contract.get('trajectory_schema') in (TRAJECTORY,LEGACY_TRAJECTORY) and contract.get('observation_version')=='strict-p1-observation-v5',
             'teacher_contract_required')
     binding=verify_frozen_run(folder,contract,manifest,audit,result)
     records=rows(blobs[names[-1]])
     head=records[0]
-    require(head.get('event')=='header' and head.get('schema')==TRAJECTORY and head.get('policy')==POLICY
+    linked_version=contract['trajectory_schema']==TRAJECTORY
+    require(head.get('event')=='header' and head.get('schema')==contract['trajectory_schema'] and head.get('policy')==POLICY
             and head.get('player')==1 and head.get('epoch')==binding['epoch']
             and head.get('training_actor_approved') is False,'invalid_teacher_header')
     context=dict(schema=SCHEMA,bounds=checked_bounds(head['bounds']))
     observations={};groups=[];requests={};receipts={};batches={}
-    current=None
+    current=None;selections={}
     end=records[-1]
     term=result['termination']
     expected=classify_outcome(result['result'],result['reason'],natural_confirmed=term['classification']=='natural_terminal')
@@ -52,11 +53,42 @@ def audit_episode(folder, *, order_review=False):
                     and all(i in receipts for i in current['requests']),'invalid_teacher_tick_end')
             current['complete']=row['complete']
             current=None
+        elif event=='selection':
+            require(linked_version and current is not None and 'selection' not in current,
+                    'selection_outside_tick_or_duplicate')
+            require(set(row)=={'event','id','tick','observation_id','clock','choice_clock','source',
+                              'requested','rule','resolved','safety','continuous_creeping'}, 'invalid_selection_fields')
+            require(type(row['id']) is int and row['id']==len(selections)+1
+                    and row['tick']==current['tick'] and row['observation_id']==len(observations),
+                    'invalid_selection_binding')
+            require(row['source'] in ('rule','external_override')
+                    and all(row[k] in TACTICS for k in ('requested','rule','resolved'))
+                    and all(type(row[k]) is bool for k in ('safety','continuous_creeping'))
+                    and all(type(row[k]) in (int,float) for k in ('clock','choice_clock'))
+                    and 0<=row['choice_clock']<=row['clock']
+                    # Controller snapshot clock can lag the recorder's fresh world read.
+                    # IDs/order bind the records; these are not exact engine timestamps.
+                    and abs(row['clock']-observations[current['observation_id']]['clock'])<=MAX_AGE,
+                    'invalid_selection_value')
+            current['selection']=row['id'];selections[row['id']]=row
         elif event=='action_request':
             ident=row['id'];oid=row['observation_id']
             require(type(ident) is int and ident==len(requests)+1 and oid==len(observations) and oid>0
                     and row['clock']==observations[oid]['clock'],'invalid_teacher_request_link')
             require(row['tick']==(current['tick'] if current else None),'teacher_tick_mismatch')
+            if linked_version:
+                require(all(k in row for k in ('selection_id','execution_scope','execution_action')),
+                        'missing_execution_link')
+                scope=row['execution_scope'];link=row['selection_id']
+                require(scope in SCOPES, 'invalid_execution_scope')
+                if scope=='army':
+                    require(current is not None and type(link) is int and link==current.get('selection')
+                            and row['execution_action'] in TACTICS, 'invalid_execution_selection')
+                else:
+                    require(link is None and row['execution_action'] is None, 'independent_scope_selection_leak')
+            else:
+                require(not any(k in row for k in ('selection_id','execution_scope','execution_action')),
+                        'legacy_selection_fields')
             batch=row['batch'];idx=row['batch_index'];size=row['batch_count']
             require(all(type(v) is int for v in (batch,idx,size)) and 0<=idx<size,'invalid_teacher_batch')
             if idx==0:
@@ -111,10 +143,13 @@ def audit_episode(folder, *, order_review=False):
             operations[a['op']]+=1
             labels.append(dict(request=req['id'],issue_observation_id=req['observation_id'],batch=req['batch'],
                                ordinal=req['batch_index'],batch_count=req['batch_count'],decision=label))
+            if linked_version:
+                labels[-1].update({k:req[k] for k in ('selection_id','execution_scope','execution_action')})
         missing=len(group['requests'])-len(labels)
         partial+=int(missing>0)
         examples.append(dict(tick=group['tick'],observation_id=group['observation_id'],input=encoded.features,
                              labels=labels,omitted_requests=missing))
+        if linked_version:examples[-1]['selection']=selections.get(group.get('selection'))
     outside=sum(r['tick'] is None for r in requests.values())
     if outside:excludes['outside_teacher_tick']=outside
     require(sum(operations.values())+sum(excludes.values())==len(requests),'teacher_coverage_mismatch')
@@ -126,6 +161,10 @@ def audit_episode(folder, *, order_review=False):
                 batches=len(batches),ticks_with_labels=len(examples),partially_labeled_ticks=partial,
                 empty_monitored_ticks=sum(not g['requests'] for g in groups),labels=sum(operations.values()),
                 operations=dict(operations),excluded=dict(excludes))
+    if linked_version:
+        report.update(selection_records=len(selections),
+                      linked_requests=sum(r['selection_id'] is not None for r in requests.values()),
+                      execution_scopes=dict(Counter(r['execution_scope'] for r in requests.values())))
     if order_review:
         from learning.teacher_order_review import review_requests
         retained={label['request'] for group in examples for label in group['labels']}

@@ -17,10 +17,10 @@ def patch_script(script, starts):
     standard_init = 'Trig_Melee_Initialization_Actions'
     if script.count('function ' + original_init + ' takes') != 1:
         raise ValueError('Unexpected KFAI melee initialization')
-    patched = scenario_script(script.replace(original_init, standard_init), starts).decode('utf-8')
+    patched = scenario_script(script.replace(original_init, standard_init), starts, actor_user=True).decode('utf-8')
     patched = patched.replace(standard_init, original_init)
-    # Keep both participants in active computer slots. Gate the separate hero AI,
-    # which upstream otherwise enables for every computer independent of Melee_AI_On.
+    # P1 uses a user slot so neutral-passive corpses remain valid rod targets.
+    # Gate the separate hero AI independently; only P2 may register native AI.
     old = 'GetPlayerController(GetOwningPlayer(hero)) == MAP_CONTROL_COMPUTER and IsUnitInGroup(hero, AIsystem___group_AI_hero) == false'
     if patched.count(old) != 1:
         raise ValueError('Unexpected KFAI hero AI registration')
@@ -55,7 +55,7 @@ def prepare_map(alias='LR', strategy_trace=False):
     archive = Mpq(blob)
     starts = sorted(catalog['starts'], key=lambda s: s['slot'])
     members = {'war3map.j': patch_script(archive.read('war3map.j').decode('utf-8'), starts),
-               'war3map.w3i': lobby_metadata(archive.read('war3map.w3i'), starts)}
+               'war3map.w3i': lobby_metadata(archive.read('war3map.w3i'), starts, actor_user=True)}
     if strategy_trace:
         from kfai_strategy import patch_human_ai, HUMAN_AI_MEMBER
         members[HUMAN_AI_MEMBER] = patch_human_ai(archive.read(HUMAN_AI_MEMBER))

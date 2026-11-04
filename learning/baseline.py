@@ -71,12 +71,17 @@ def inspect_run(folder):
     if not natural:issues.append('no_natural_terminal')
     ai_isolation = settings.get('native_ai_paused') is True
     if profile in NATIVE_PROFILES:
+        # Preserve the recorded old computer-actor contract, separately grouped
+        # by frozen source/map. New KFAI maps use a USER actor with no native AI.
+        actor_setup = (settings.get('native_ai_paused_players'),settings.get('verified_players'),
+                       settings.get('active_player_slots'))
+        isolated_actor = actor_setup == (
+            [1],[dict(slot=1,controller=1,race=3),dict(slot=2,controller=1,race=1)],[0,1,2]) or (
+            actor_setup == ([],[dict(slot=1,controller=0,race=3),dict(slot=2,controller=1,race=1)],[0,2])
+            and settings.get('player_slot_states') == [1,0,1])
         ai_isolation = (settings.get('native_ai_paused') is False
-                        and settings.get('native_ai_paused_players') == [1]
-                        and settings.get('opponent_fairness') == 'native_KFAI_unverified'
-                        and settings.get('active_player_slots') == [0, 1, 2]
-                        and settings.get('verified_players') == [dict(slot=1, controller=1, race=3),
-                                                                 dict(slot=2, controller=1, race=1)])
+                        and isolated_actor
+                        and settings.get('opponent_fairness') == 'native_KFAI_unverified')
     if not (settings.get('mode') == 'bot_vs_bot' and settings.get('fair') is True
             and settings.get('observer_player') == 0 and settings.get('controlled_player') == 1
             and settings.get('opponent_player') == 2 and ai_isolation):

@@ -1,0 +1,66 @@
+{
+  "schema": "dayuan-replaykit-install-v1",
+  "recorded_at": "2026-11-04T20:42:28.4889298+08:00",
+  "status": "installed_verified_playback_validation_not_requested",
+  "installed": true,
+  "playback_verified": false,
+  "original_client": "D:\\War3_1.27a\\Warcraft III Frozen Throne 1.27a publish",
+  "isolated_client": "D:\\War3_ReplayKit_1.27a",
+  "client_version": "1.27.0.52240",
+  "verified_copied_files": 485,
+  "replaykit_version": "1.25",
+  "patch_archive_version": 4,
+  "files": [
+    {
+      "file": "ReplayKit.exe",
+      "bytes": 1481216,
+      "sha256": "FC5A328A8B8A1736DA83C485E5E8B0C8A6EC91C219484F090F3E6FBB7593D573"
+    },
+    {
+      "file": "ReplayKitPatch.mpq",
+      "bytes": 197734747,
+      "sha256": "6434019AEE767337E9343AAE71A16D2A4CF3C01BB5FD2140F27CFDE9E56994C2"
+    }
+  ],
+  "sources": [
+    "https://sourceforge.net/projects/replaykit/files/Old%20Releases/v1.25/ReplayKit.exe",
+    "https://www.mediafire.com/file/lj9edmeg0u1meer/ReplayKitPatch.mpq/file"
+  ],
+  "source_tag": "v1.25",
+  "source_commit": "ce97626ef57a46d0514101cb2baa49e5ab033e78",
+  "installation_findings": [
+    "Source targets Warcraft 1.27a build 52240.",
+    "Installation requires a Yes/No dialog; totalsilence returns 0 and declines installation.",
+    "ReplayKit locates adjacent war3.exe and writes HKCU InstallPath. Existing registry exported before any execution.",
+    "Installer registers W3G association and builds ReplayKitBackup.mpq.",
+    "No executable launched; no original client files changed."
+  ],
+  "evidence_directory": "artifacts/replaykit-install-20261104",
+  "download_failures": [
+    "Direct MediaFire requests returned HTTP 403.",
+    "Direct SourceForge executable download timed out after 35 seconds at 502688/1481216 bytes.",
+    "Initial direct source clone interrupted.",
+    "Using configured local proxy succeeded for source, executable and patch archive."
+  ],
+  "trained": false,
+  "committed": false,
+  "pushed": false,
+  "user_choice": "User will manually complete installation; no computer-use permission granted.",
+  "installation_verification": {
+    "checked_at": "2026-11-04T20:47:09.0427798+08:00",
+    "verification": "artifacts/replaykit-install-20261104/verification.json",
+    "backup_files_verified": 4,
+    "original_client_files_verified": 485,
+    "association": "Warcraft3.Replay",
+    "command": "\"D:\\War3_ReplayKit_1.27a\\ReplayKit.exe\" \"%1\" -names -colors",
+    "replay_b": "D:\\War3_ReplayKit_1.27a\\Replay\\Happy_B_original_1.26.w3g",
+    "map_b": "D:\\War3_ReplayKit_1.27a\\Maps\\Download\\(2)LastRefuge-1.3.w3x",
+    "map_b_xoro_matches": true,
+    "map_b_sha1_matches": true,
+    "w3arena_v3_found": false,
+    "game_launched_by_agent": false,
+    "computer_use_used": false,
+    "initial_audit_error": "Fixed NUL-terminated patch header string parsing after first report print failed under GBK; final audit succeeded."
+  },
+  "latest_user_direction": "User has another replay viewing method. Stop playback-environment validation; provide replay identifiers, game timestamps and concrete tactical/effect questions for user review."
+}

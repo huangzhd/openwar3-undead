@@ -4,6 +4,79 @@ import json
 from pathlib import Path
 
 from learning.dataset import canonical, digest, load_bytes, parse, require, rows, verify_frozen_run
+from learning.observation_schema import validate as validate_observation
+from learning.effects import transition_facts
+
+
+def execution_chains(trajectory, episode, fingerprint, observation_version):
+    """Join recorded request IDs only; never infer a selection or missing native args."""
+    observations = {}; requests = {}; receipts = {}; ordered = []
+    selections = {r['id']:r for r in trajectory if r.get('event')=='selection'}
+    last_clock = -1
+    for line, row in enumerate(trajectory, 1):
+        event = row.get('event')
+        if event == 'observation':
+            ident = row['id']; obs = row['observation']
+            require(ident not in observations, 'duplicate_observation')
+            validate_observation(obs, observation_version)
+            require(obs['clock'] >= last_clock, 'observation_clock_regressed')
+            last_clock = obs['clock']
+            observations[ident] = (line, obs)
+            ordered.append((line, ident, obs))
+        elif event == 'action_request':
+            ident = row['id']
+            require(ident not in requests, 'duplicate_request')
+            require(row.get('observation_id') in observations, 'missing_or_future_request_observation')
+            require(row['clock'] == observations[row['observation_id']][1]['clock'], 'request_clock_mismatch')
+            requests[ident] = (line, row)
+        elif event == 'action_receipt':
+            ident = row['id']
+            require(ident in requests and ident not in receipts, 'unmatched_or_duplicate_receipt')
+            require(row.get('accepted') is None or type(row.get('accepted')) is bool, 'invalid_acceptance')
+            receipts[ident] = (line, row)
+    chains = []
+    for ident, (line, req) in requests.items():
+        before_line, before = observations[req['observation_id']]
+        receipt_line, receipt = receipts.get(ident, (None, {}))
+        state = ('unknown' if receipt.get('status') == 99 or receipt.get('accepted') is None
+                 else 'accepted' if receipt['accepted'] else 'rejected')
+        later = next(((ln, oid, obs) for ln, oid, obs in ordered
+                      if receipt_line is not None and ln > receipt_line and obs['clock'] > req['clock']), None)
+        # A bounded observation comparison is evidence, not a spell-effect detector.
+        if later and later[2]['clock'] - req['clock'] > 2:
+            later = None
+        action = req.get('action')
+        facts = None
+        if later and action:
+            after = later[2]
+            minimal = dict(op='observed_native', unit=action.get('unit', []))
+            if action.get('target') is not None: minimal['target'] = action['target']
+            facts = transition_facts(minimal, before, after)
+            old = {tuple(u['handle']):u for u in before['units']}
+            new = {tuple(u['handle']):u for u in after['units']}
+            facts['newly_observed_own_units'] = [fields(u, ('handle','type','alive'))
+                for h,u in new.items() if h not in old and u['owner'] == 1]
+            h = tuple(action.get('unit', []))
+            for side, units in (('before', old), ('after', new)):
+                u = units.get(h)
+                facts['source_'+side] = (fields(u, ('inventory','abilities'))
+                                         if u and u['owner'] == 1 else None)
+        chains.append(dict(id=digest(canonical([episode,fingerprint,ident])), request_id=ident,
+            clock=req['clock'], request_line=line, observation_id=req['observation_id'],
+            observation_line=before_line, action=action, eligibility=req.get('eligibility'),
+            selection_link=req.get('selection_id'),
+            selection=selections.get(req.get('selection_id')),
+            selection_status=('recorded' if req.get('selection_id') is not None else
+                              'independent_scope' if 'execution_scope' in req else 'not_recorded_per_request'),
+            execution_scope=req.get('execution_scope'),execution_action=req.get('execution_action'),
+            execution_source='rule', receipt_line=receipt_line, receipt=receipt or None,
+            receipt_state=state, after_observation_id=later[1] if later else None,
+            after_line=later[0] if later else None, after_clock=later[2]['clock'] if later else None,
+            intervening_request_ids=[i for i,(ln,_) in requests.items()
+                                     if later and line < ln < later[0]],
+            observable_changes=facts, effect='unverified', attribution='undetermined',
+            needs_review=state!='accepted' or facts is None, whole_game_cause='not_established'))
+    return chains
 
 
 def fields(row, keys):
@@ -95,13 +168,13 @@ def cases_from_events(events, episode, fingerprint):
 
 def annotate(report, notes):
     require(type(notes) is list,'invalid_notes')
-    by_id={c['id']:c for c in report['cases']}
+    by_id={c['id']:c for c in report['cases'] + report.get('execution_chains', [])}
     staged={}
     for note in notes:
         require(type(note) is dict and set(note)=={'id','judgment','explanation'},'invalid_note_fields')
         key=note['id']
         require(isinstance(key,str) and key in by_id and key not in staged,'unmatched_or_duplicate_case')
-        require(note['judgment'] in ('decision','execution','both','information','reasonable','undetermined')
+        require(note['judgment'] in ('decision','execution','both','environment','information','reasonable','undetermined')
                 and isinstance(note['explanation'],str) and 0<len(note['explanation'].strip())<=1500,'invalid_judgment')
         staged[key]=dict(source='human_review',**fields(note,('judgment','explanation')))
     for key,value in staged.items():by_id[key]['human_review']=value
@@ -113,10 +186,27 @@ def review(folder):
         ('interface-contract.json','source-manifest.json','source-audit.json','result.json'))
     require(contract.get('policy') in ('rule','rule_teacher'),'rule_episode_required')
     binding=verify_frozen_run(folder,contract,manifest,audit,result)
+    if contract['policy']=='rule_teacher':
+        from learning.teacher_dataset import audit_episode
+        audit_episode(folder) # validate explicit links before exposing them in review
     blob=load_bytes(folder,'events.jsonl')
     fingerprint=digest(blob)
-    return dict(schema='dayuan-tactical-review-v1',episode=folder.name,binding=binding,
+    trajectory_blob=load_bytes(folder,'trajectory.jsonl')
+    require(all(line.strip() for line in trajectory_blob.decode('utf-8-sig').splitlines()),
+            'blank_trajectory_line')
+    trajectory=rows(trajectory_blob)
+    require(trajectory[0].get('event')=='header' and trajectory[0].get('player')==1
+            and trajectory[0].get('epoch')==binding['epoch']
+            and trajectory[0].get('policy')==contract['policy']
+            and trajectory[0].get('schema')==contract['trajectory_schema'], 'trajectory_binding_mismatch')
+    return dict(schema='dayuan-tactical-review-v2',episode=folder.name,binding=binding,
                 events_sha256=fingerprint,policy=contract['policy'],outcome=result['termination'],
+                trajectory_sha256=digest(trajectory_blob),
+                source_hashes={name:digest(load_bytes(folder,name)) for name in
+                    ('interface-contract.json','source-manifest.json','source-audit.json','result.json')},
+                baseline_context=fields(contract, ('source_manifest_sha256','map_sha256','speed','dependencies')),
+                execution_chains=execution_chains(trajectory,folder.name,digest(trajectory_blob),
+                                                  contract['observation_version']),
                 use='retrospective_diagnostic_only',training_labels=0,
                 cases=cases_from_events(rows(blob),folder.name,fingerprint))
 
@@ -132,7 +222,8 @@ def main():
     with args.out.open('x',encoding='utf8') as f:
         json.dump(report,f,ensure_ascii=False,indent=2);f.write('\n')
     print(json.dumps(dict(episode=report['episode'],cases=len(report['cases']),
-                          needs_review=sum(c['needs_review'] for c in report['cases']))))
+                          execution_chains=len(report['execution_chains']),
+                          needs_review=sum(c['needs_review'] for c in report['cases'] + report['execution_chains']))))
 
 
 if __name__=='__main__':main()
